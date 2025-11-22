@@ -18,7 +18,7 @@ func InitViper(dir, fileName, fileType string) *viper.Viper {
 	if err := config.ReadInConfig(); err != nil {
 		configFile := path.Join(dir, fileName) + "." + fileType // 完整配置文件路径
 		// 系统初始化过程中发生错误直接 panic, logger 还未初始化, 不能用 logger.fatal()
-		panic(fmt.Errorf("go-postery viper : 解析 [%s] 配置文件出错 > %s", configFile, err))
+		panic(fmt.Errorf("go-postery InitViper : 解析 [%s] 配置文件出错 %s", configFile, err))
 	}
 
 	return config

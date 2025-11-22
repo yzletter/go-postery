@@ -1,0 +1,7 @@
+mysql:
+  host: localhost         # 地址
+  port: 3306              # 端口号
+  user: go_postery_tester # 用户名
+  password: 123456        # 密码
+  dbName: go_postery      # 数据库名
+  logFileName: db.log     # 日志文件名
