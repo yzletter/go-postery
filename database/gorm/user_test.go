@@ -10,17 +10,17 @@ import (
 	"github.com/yzletter/go-postery/utils"
 )
 
+func init() {
+	utils.InitSlog("../../log/go_postery.log")
+	database.ConnectToDB("../../conf", "db", "yaml", "../../log")
+}
+
 // Hash 返回字符串 MD5 哈希后 32 位的十六进制编码结果
 func hash(password string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(password))
 	digest := hasher.Sum(nil)
 	return hex.EncodeToString(digest)
-}
-
-func init() {
-	utils.InitSlog("../../log/go_postery.log")
-	database.ConnectToDB("../../conf", "db", "yaml", "../../log")
 }
 
 func TestRegisterUser(t *testing.T) {
@@ -43,4 +43,40 @@ func TestRegisterUser(t *testing.T) {
 	}
 }
 
+func TestLogOffUser(t *testing.T) {
+	var uid = 7
+	// 删前查询
+	user := database.GetUserById(uid)
+	fmt.Println(user)
+
+	err := database.LogOffUser(uid)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		fmt.Println("首次删除成功")
+	}
+
+	// 删完后再查询
+	user = database.GetUserById(uid)
+	fmt.Println(user)
+
+	// 再删一次
+	err = database.LogOffUser(uid)
+	if err == nil {
+		t.Fatal(err)
+	} else {
+		fmt.Println("重复删除失败")
+	}
+}
+
+func TestUpdatePassword(t *testing.T) {
+	var uid = 9
+	err := database.UpdatePassword(uid, hash("123456"), hash("654321"))
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 // go test -v ./database/gorm -run=^TestRegisterUser$ -count=1
+// go test -v ./database/gorm -run=^TestLogOffUser$ -count=1
+// go test -v ./database/gorm -run=^TestUpdatePassword$ -count=1

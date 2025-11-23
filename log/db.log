@@ -4,3 +4,45 @@
 
 2025/11/23 16:41:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:21 Error 1062 (23000): Duplicate entry 'yzletter' for key 'user.idx_name'
 [3.004ms] [rows:0] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:31:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:46
+[2.797ms] [rows:1] DELETE FROM `user` WHERE `user`.`id` = 1
+
+2025/11/23 17:32:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:21
+[1.840ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:32:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:21 Error 1062 (23000): Duplicate entry 'yzletter' for key 'user.idx_name'
+[0.667ms] [rows:0] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:34:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:46
+[2.267ms] [rows:1] DELETE FROM `user` WHERE `user`.`id` = 5
+
+2025/11/23 17:34:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:46
+[0.167ms] [rows:0] DELETE FROM `user` WHERE `user`.`id` = 5
+
+2025/11/23 17:43:45 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
+[2.337ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:43:45 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22 Error 1062 (23000): Duplicate entry 'yzletter' for key 'user.idx_name'
+[0.666ms] [rows:0] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:44:25 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.818ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 7 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/23 17:44:25 /Users/yzletter/go_project/go-postery/database/gorm/user.go:46
+[1.032ms] [rows:1] DELETE FROM `user` WHERE `user`.`id` = 7
+
+2025/11/23 17:44:25 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.149ms] [rows:0] SELECT * FROM `user` WHERE `user`.`id` = 7 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/23 17:44:25 /Users/yzletter/go_project/go-postery/database/gorm/user.go:46
+[0.124ms] [rows:0] DELETE FROM `user` WHERE `user`.`id` = 7
+
+2025/11/23 17:52:53 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
+[2.901ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:52:53 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22 Error 1062 (23000): Duplicate entry 'yzletter' for key 'user.idx_name'
+[0.609ms] [rows:0] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 17:53:54 /Users/yzletter/go_project/go-postery/database/gorm/user.go:75
+[1.436ms] [rows:1] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'

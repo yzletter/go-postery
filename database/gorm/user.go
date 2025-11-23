@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/database/model"
+	"gorm.io/gorm"
 )
 
 // RegisterUser 传入 name 和 password 注册新用户, 返回 Id 和可能的错误
@@ -19,7 +20,6 @@ func RegisterUser(name, password string) (int, error) {
 
 	// 到 MySQL 中创建新记录
 	err := GoPosteryDB.Create(&user).Error // 需要传指针
-	// 错误处理
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) { // 判断是否为 MySQL 错误
@@ -34,4 +34,53 @@ func RegisterUser(name, password string) (int, error) {
 
 	// 返回 Id
 	return user.Id, nil
+}
+
+// LogOffUser 根据传入的 id 注销用户
+func LogOffUser(uid int) error {
+	// 将模型绑定到结构体
+	user := model.User{
+		Id: uid,
+	}
+	// 删除记录
+	tx := GoPosteryDB.Delete(&user)
+	if tx.Error != nil {
+		// 系统层面错误
+		slog.Error("go-postery LogOffUser : 用户注销失败", "uid", uid, "error", tx.Error)
+		return fmt.Errorf("用户注销失败，请稍后重试")
+	} else if tx.RowsAffected == 0 {
+		// 业务层面错误
+		return fmt.Errorf("用户注销失败, uid %d 不存在", uid)
+	}
+	return nil
+}
+
+// GetUserById 根据 Id 查找用户
+func GetUserById(uid int) *model.User {
+	user := model.User{Id: uid}
+	tx := GoPosteryDB.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
+	if tx.Error != nil {
+		// 若错误不是记录未找到, 记录系统错误
+		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			slog.Error("go-postery GetUserById : 查找用户失败", "uid", uid, "error", tx.Error)
+		}
+		return nil
+	}
+
+	return &user
+}
+
+// UpdatePassword 根据传入的用户 id, 新旧密码更改用户密码
+func UpdatePassword(uid int, oldPass, newPass string) error {
+	tx := GoPosteryDB.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
+	if tx.Error != nil {
+		// 系统错误
+		slog.Error("go-postery UpdatePassword : 密码更改失败", "uid", uid, "error", tx.Error)
+		return fmt.Errorf("更改用户密码失败, 请稍后再试")
+	} else if tx.RowsAffected == 0 {
+		// 业务错误
+		return fmt.Errorf("用户 id 或旧密码错误")
+	}
+
+	return nil
 }
