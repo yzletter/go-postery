@@ -1,0 +1,6 @@
+
+2025/11/23 16:41:02 /Users/yzletter/go_project/go-postery/database/gorm/user.go:21 Error 1062 (23000): Duplicate entry 'yzletter' for key 'user.idx_name'
+[2.134ms] [rows:0] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/23 16:41:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:21 Error 1062 (23000): Duplicate entry 'yzletter' for key 'user.idx_name'
+[3.004ms] [rows:0] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter','e10adc3949ba59abbe56e057f20f883e')
