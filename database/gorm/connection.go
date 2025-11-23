@@ -29,22 +29,23 @@ func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 	dbName := viper.GetString("mysql.dbName")
 	logFileName := viper.GetString("mysql.logFileName")
 
-	// 拼接完整的请求路径 user:password@tcp(host:port)/dbName?charset=utf8mb4&parseTime=True&loc=local
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=local", user, password, host, port, dbName)
+	// 拼接完整的请求路径 user:password@tcp(host:port)/dbName?charset=utf8mb4&parseTime=True&loc=Local
+	// 使用 UTF-8mb4 编码, 解析时间为 Go 语言的时间类型, 按系统时区解析时间字段
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, dbName)
 
 	// 设置 logger 相关配置
 	logFile, err := os.OpenFile(path.Join(logDir, logFileName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm) // 打开日志文件
 	if err != nil {
 		panic(fmt.Errorf("go-postery ConnectToDB : 打开目标 logger 文件失败 %s", err))
 	}
-	loggerConfig := logger.Config{
+	loggerConfig := logger.Config{ // logger 相关配置
 		SlowThreshold:             100 * time.Millisecond, // 超过此阈值为慢查询
 		Colorful:                  false,                  // 禁用颜色, 可提高性能
 		IgnoreRecordNotFoundError: true,                   // 忽略 RecordNotFound 这种错误日志
 		LogLevel:                  logger.Info,            // 日志最低阈值
 	}
 	myDBLogger := logger.New(
-		log.New(logFile, "\r\n", log.LstdFlags), // io writer，可以输出到文件，也可以输出到os.Stdout
+		log.New(logFile, "\r\n", log.LstdFlags), // 每条 message 的前面都加上 \r\n, message 自动包含日期和时间
 		loggerConfig,
 	)
 
@@ -59,13 +60,13 @@ func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 		Logger: myDBLogger, // 日志控制
 	}
 
-	// 建立连接
+	// 建立 MySQL 连接
 	db, err := gorm.Open(mysql.Open(dataSourceName), gormConfig) // 生成一个 *gorm.DB
 	if err != nil {
 		panic(fmt.Errorf("go-postery ConnectToDB : 连接到数据库出错 %s", err))
 	}
 
-	// Mysql 连接池参数配置
+	// 设置连接池相关配置
 	sqlDB, _ := db.DB()
 	sqlDB.SetMaxIdleConns(10)  // 连接池中空闲连接数目上限, 超出此上限就把相应的连接关闭掉
 	sqlDB.SetMaxOpenConns(100) // 最多打开链接数目上限
