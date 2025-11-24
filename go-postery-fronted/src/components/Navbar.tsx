@@ -1,28 +1,12 @@
-import { useState, FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, Home, Search, X, LogOut, LogIn, User } from 'lucide-react'
+import { MessageSquare, Plus, Home, LogOut, LogIn, User } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
-
-  const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`)
-    } else {
-      navigate('/')
-    }
-  }
-
-  const handleClearSearch = () => {
-    setSearchQuery('')
-    navigate('/')
-  }
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
@@ -35,39 +19,7 @@ export default function Navbar() {
             </span>
           </Link>
           
-          {/* 搜索框 */}
-          <form 
-            onSubmit={handleSearch}
-            className="flex-1 max-w-2xl mx-4"
-          >
-            <div className="relative">
-              <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${
-                isSearchFocused ? 'text-primary-600' : 'text-gray-400'
-              } transition-colors`}>
-                <Search className="h-5 w-5" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                placeholder="搜索帖子..."
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-          </form>
-          
-          <div className="flex items-center space-x-4 flex-shrink-0">
+          <div className="flex items-center space-x-4 flex-shrink-0 ml-auto">
             <Link
               to="/"
               className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"

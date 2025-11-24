@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2 } from 'lucide-react'
 import { Post } from '../types'
 import { formatDistanceToNow } from 'date-fns'
@@ -87,9 +87,6 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<Post[]> 
 }
 
 export default function Home() {
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  const [searchQuery, setSearchQuery] = useState<string>('')
   const [posts, setPosts] = useState<Post[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -98,12 +95,6 @@ export default function Home() {
   const observerTarget = useRef<HTMLDivElement>(null)
 
   const pageSize = 10
-
-  // 从 URL 参数中读取搜索关键词
-  useEffect(() => {
-    const search = searchParams.get('search')
-    setSearchQuery(search || '')
-  }, [searchParams])
 
   // 加载帖子数据
   const loadPosts = useCallback(async (page: number, reset: boolean = false) => {
@@ -130,15 +121,14 @@ export default function Home() {
     }
   }, [isLoading])
 
-  // 当搜索改变时，重置并重新加载
+  // 初始加载帖子
   useEffect(() => {
     setIsInitialLoading(true)
     setCurrentPage(1)
     setHasMore(true)
     setPosts([])
     loadPosts(1, true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery])
+  }, [])
 
   // 无限滚动：监听滚动到底部
   useEffect(() => {
@@ -163,45 +153,8 @@ export default function Home() {
     }
   }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts])
 
-  // 搜索筛选（只搜索标题、内容、作者）
-  const filteredPosts = posts.filter(post => {
-    const searchMatch = !searchQuery || 
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author.name.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return searchMatch
-  })
-
   return (
     <div className="space-y-6">
-      {/* 搜索结果显示 */}
-      {searchQuery && (
-        <div className="card bg-primary-50 border-primary-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">
-                搜索关键词: <span className="font-semibold text-primary-700">"{searchQuery}"</span>
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                找到 {filteredPosts.length} 个结果
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setSearchParams({}, { replace: true })
-              }}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-            >
-              清除搜索
-            </button>
-          </div>
-        </div>
-      )}
-
-
-
       {/* 初始加载状态 */}
       {isInitialLoading && (
         <div className="card text-center py-12">
@@ -214,7 +167,7 @@ export default function Home() {
       {!isInitialLoading && (
         <>
           <div className="space-y-4">
-            {filteredPosts.map(post => (
+            {posts.map(post => (
               <Link
                 key={post.id}
                 to={`/post/${post.id}`}
@@ -278,7 +231,7 @@ export default function Home() {
           )}
 
           {/* 已经到底了提示 */}
-          {!hasMore && !isInitialLoading && filteredPosts.length > 0 && (
+          {!hasMore && !isInitialLoading && posts.length > 0 && (
             <div className="card text-center py-8 bg-gray-50 border-dashed border-2 border-gray-200">
               <div className="flex flex-col items-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
@@ -291,7 +244,7 @@ export default function Home() {
           )}
 
           {/* 空状态 */}
-          {filteredPosts.length === 0 && !isLoading && (
+          {posts.length === 0 && !isLoading && (
             <div className="card text-center py-12">
               <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">暂无帖子</p>
