@@ -142,3 +142,6 @@
 
 2025/11/24 15:43:55 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
 [3.016ms] [rows:1] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/24 15:54:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
+[3.767ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter3','c33367701511b4f6020ec61ded352059')

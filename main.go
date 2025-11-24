@@ -28,6 +28,7 @@ func main() {
 	}))
 
 	// 定义路由
+	r.POST("/register", handler.RegisterHandlerFunc)     // 用户注册
 	r.POST("/login", handler.LoginHandlerFunc)           // 用户登录
 	r.GET("/logout", handler.LogoutHandlerFunc)          // 用户退出
 	r.POST("/modifypass", handler.ModifyPassHandlerFunc) // 修改密码

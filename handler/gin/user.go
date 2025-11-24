@@ -72,6 +72,24 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "密码修改成功")
 }
 
+// RegisterHandlerFunc 用户注册 Handler
+func RegisterHandlerFunc(ctx *gin.Context) {
+	var registerRequest model.RegisterRequest
+	err := ctx.ShouldBind(&registerRequest)
+	if err != nil {
+		// 参数绑定失败
+		ctx.String(http.StatusBadRequest, "用户名或密码错误")
+		return
+	}
+
+	_, err = database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
+	if err != nil {
+		ctx.String(http.StatusBadRequest, err.Error())
+		return
+	}
+}
+
+// GetUidFromCookie 从 Cookie 中获取 uid
 func GetUidFromCookie(ctx *gin.Context) int {
 	for _, cookie := range ctx.Request.Cookies() {
 		if cookie.Name == "uid" {
