@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, User, Mail, Lock, Key, Save, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Lock, Key, Save, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Profile() {
@@ -88,18 +88,6 @@ export default function Profile() {
               />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">{user.name}</h2>
-            <div className="space-y-3 text-left">
-              {user.email && (
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">{user.email}</span>
-                </div>
-              )}
-              <div className="flex items-center space-x-2 text-gray-600">
-                <User className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">用户 ID: {user.id}</span>
-              </div>
-            </div>
           </div>
         </div>
 
