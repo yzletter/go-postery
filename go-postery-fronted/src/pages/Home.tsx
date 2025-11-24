@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { MessageSquare, Eye, Heart, Clock, Loader2 } from 'lucide-react'
+import { MessageSquare, Clock, Loader2 } from 'lucide-react'
 import { Post } from '../types'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -58,9 +58,7 @@ const generateMockPost = (id: string, index: number): Post => {
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.id}${index}`
     },
     createdAt: new Date(Date.now() - (index * 60 * 60 * 1000)).toISOString(),
-    views: Math.floor(Math.random() * 1000) + 100,
-    likes: Math.floor(Math.random() * 200) + 10,
-    comments: Math.floor(Math.random() * 100) + 5,
+
 
   }
 }
@@ -260,20 +258,7 @@ export default function Home() {
                         </span>
                       </div>
                       
-                      <div className="flex items-center space-x-4">
-                        <span className="flex items-center space-x-1">
-                          <Eye className="h-4 w-4" />
-                          <span>{post.views}</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <Heart className="h-4 w-4" />
-                          <span>{post.likes}</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <MessageSquare className="h-4 w-4" />
-                          <span>{post.comments}</span>
-                        </span>
-                      </div>
+
                     </div>
                   </div>
                 </div>

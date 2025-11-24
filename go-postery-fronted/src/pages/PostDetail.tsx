@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Eye, Heart, MessageSquare, Clock, ThumbsUp } from 'lucide-react'
+import { ArrowLeft, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Post, Comment } from '../types'
@@ -33,9 +33,7 @@ const mockPost: Post = {
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
   },
   createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  views: 256,
-  likes: 42,
-  comments: 18,
+
 
 }
 
@@ -49,7 +47,7 @@ const mockComments: Comment[] = [
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=developer'
     },
     createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    likes: 12,
+
   },
   {
     id: '2',
@@ -60,19 +58,15 @@ const mockComments: Comment[] = [
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=designer'
     },
     createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    likes: 5,
+
   },
 ]
 
 export default function PostDetail() {
   useParams<{ id: string }>() // 获取帖子ID（当前使用模拟数据）
-  const [liked, setLiked] = useState(false)
+
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState(mockComments)
-
-  const handleLike = () => {
-    setLiked(!liked)
-  }
 
   const handleSubmitComment = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -87,7 +81,7 @@ export default function PostDetail() {
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'
       },
       createdAt: new Date().toISOString(),
-      likes: 0,
+
     }
 
     setComments([newComment, ...comments])
@@ -138,21 +132,7 @@ export default function PostDetail() {
 
 
 
-          {/* 统计信息 */}
-          <div className="flex items-center space-x-6 text-sm text-gray-500 pb-4 border-b border-gray-200">
-            <span className="flex items-center space-x-1">
-              <Eye className="h-4 w-4" />
-              <span>{mockPost.views} 次浏览</span>
-            </span>
-            <span className="flex items-center space-x-1">
-              <Heart className="h-4 w-4" />
-              <span>{mockPost.likes} 个赞</span>
-            </span>
-            <span className="flex items-center space-x-1">
-              <MessageSquare className="h-4 w-4" />
-              <span>{mockPost.comments} 条评论</span>
-            </span>
-          </div>
+
         </div>
 
         {/* 正文内容 */}
@@ -162,20 +142,7 @@ export default function PostDetail() {
           </div>
         </div>
 
-        {/* 操作按钮 */}
-        <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
-          <button
-            onClick={handleLike}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-              liked
-                ? 'bg-primary-100 text-primary-700'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <ThumbsUp className={`h-5 w-5 ${liked ? 'fill-current' : ''}`} />
-            <span>点赞</span>
-          </button>
-        </div>
+
       </article>
 
       {/* 评论区域 */}
@@ -225,10 +192,6 @@ export default function PostDetail() {
                   <p className="text-gray-700">{comment.content}</p>
                 </div>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <button className="flex items-center space-x-1 hover:text-primary-600 transition-colors">
-                    <ThumbsUp className="h-4 w-4" />
-                    <span>{comment.likes}</span>
-                  </button>
                   <button className="hover:text-primary-600 transition-colors">
                     回复
                   </button>
