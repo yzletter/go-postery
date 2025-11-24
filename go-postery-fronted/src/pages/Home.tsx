@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { MessageSquare, Eye, Heart, Clock, Tag, Loader2 } from 'lucide-react'
+import { MessageSquare, Eye, Heart, Clock, Loader2 } from 'lucide-react'
 import { Post } from '../types'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -16,20 +16,7 @@ const generateMockPost = (id: string, index: number): Post => {
     { id: '5', name: '产品经理' },
     { id: '6', name: '测试工程师' },
   ]
-  const tagsList = [
-    ['公告', '欢迎'],
-    ['React', '前端', '技术'],
-    ['设计', 'UI/UX'],
-    ['Go', '后端', '性能'],
-    ['Vue', 'JavaScript'],
-    ['Python', '数据分析'],
-    ['TypeScript', '开发'],
-    ['Node.js', '服务端'],
-  ]
-
   const author = authors[index % authors.length]
-  const category = categories[index % categories.length]
-  const tags = tagsList[index % tagsList.length]
 
   const titles = [
     '欢迎来到 Go Postery 论坛！',
@@ -74,8 +61,7 @@ const generateMockPost = (id: string, index: number): Post => {
     views: Math.floor(Math.random() * 1000) + 100,
     likes: Math.floor(Math.random() * 200) + 10,
     comments: Math.floor(Math.random() * 100) + 5,
-    tags,
-    category
+
   }
 }
 
@@ -104,7 +90,7 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<Post[]> 
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedCategory, setSelectedCategory] = useState<string>('全部')
+
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [posts, setPosts] = useState<Post[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -112,7 +98,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const observerTarget = useRef<HTMLDivElement>(null)
-  const categories = ['全部', '公告', '技术讨论', '设计', '问答']
+
   const pageSize = 10
 
   // 从 URL 参数中读取搜索关键词
@@ -146,7 +132,7 @@ export default function Home() {
     }
   }, [isLoading])
 
-  // 当分类或搜索改变时，重置并重新加载
+  // 当搜索改变时，重置并重新加载
   useEffect(() => {
     setIsInitialLoading(true)
     setCurrentPage(1)
@@ -154,7 +140,7 @@ export default function Home() {
     setPosts([])
     loadPosts(1, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, searchQuery])
+  }, [searchQuery])
 
   // 无限滚动：监听滚动到底部
   useEffect(() => {
@@ -179,19 +165,14 @@ export default function Home() {
     }
   }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts])
 
-  // 筛选帖子：先按分类，再按搜索关键词
+  // 搜索筛选（只搜索标题、内容、作者）
   const filteredPosts = posts.filter(post => {
-    // 分类筛选
-    const categoryMatch = selectedCategory === '全部' || post.category === selectedCategory
-    
-    // 搜索筛选（搜索标题、内容、标签、作者）
     const searchMatch = !searchQuery || 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (post.tags && post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+      post.author.name.toLowerCase().includes(searchQuery.toLowerCase())
     
-    return categoryMatch && searchMatch
+    return searchMatch
   })
 
   return (
@@ -221,24 +202,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 分类筛选 */}
-      <div className="card">
-        <div className="flex flex-wrap gap-2">
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === category
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       {/* 初始加载状态 */}
       {isInitialLoading && (
@@ -267,16 +231,11 @@ export default function Home() {
                   />
                   
                   <div className="flex-1 min-w-0">
-                    {/* 标题和分类 */}
+                    {/* 标题 */}
                     <div className="flex items-start justify-between mb-2">
                       <h2 className="text-xl font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
                         {post.title}
                       </h2>
-                      {post.category && (
-                        <span className="ml-3 px-3 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full flex-shrink-0">
-                          {post.category}
-                        </span>
-                      )}
                     </div>
 
                     {/* 内容预览 */}
@@ -284,20 +243,7 @@ export default function Home() {
                       {post.content}
                     </p>
 
-                    {/* 标签 */}
-                    {post.tags && post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.map(tag => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center space-x-1 text-xs text-gray-500"
-                          >
-                            <Tag className="h-3 w-3" />
-                            <span>{tag}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+
 
                     {/* 元信息 */}
                     <div className="flex items-center justify-between text-sm text-gray-500">

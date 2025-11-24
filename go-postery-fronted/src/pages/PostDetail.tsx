@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Eye, Heart, MessageSquare, Clock, Tag, ThumbsUp } from 'lucide-react'
+import { ArrowLeft, Eye, Heart, MessageSquare, Clock, ThumbsUp } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Post, Comment } from '../types'
@@ -36,8 +36,7 @@ const mockPost: Post = {
   views: 256,
   likes: 42,
   comments: 18,
-  tags: ['公告', '欢迎'],
-  category: '公告'
+
 }
 
 const mockComments: Comment[] = [
@@ -114,11 +113,6 @@ export default function PostDetail() {
             <h1 className="text-3xl font-bold text-gray-900 flex-1">
               {mockPost.title}
             </h1>
-            {mockPost.category && (
-              <span className="ml-4 px-3 py-1 bg-primary-100 text-primary-700 text-sm font-medium rounded-full">
-                {mockPost.category}
-              </span>
-            )}
           </div>
 
           {/* 作者信息 */}
@@ -142,20 +136,7 @@ export default function PostDetail() {
             </div>
           </div>
 
-          {/* 标签 */}
-          {mockPost.tags && mockPost.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {mockPost.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center space-x-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
-                >
-                  <Tag className="h-3 w-3" />
-                  <span>{tag}</span>
-                </span>
-              ))}
-            </div>
-          )}
+
 
           {/* 统计信息 */}
           <div className="flex items-center space-x-6 text-sm text-gray-500 pb-4 border-b border-gray-200">

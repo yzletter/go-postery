@@ -19,8 +19,7 @@ export interface Post {
   views: number
   likes: number
   comments: number
-  tags?: string[]
-  category?: string
+
 }
 
 export interface Comment {
