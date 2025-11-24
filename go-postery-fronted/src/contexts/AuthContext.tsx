@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { User } from '../types'
+import { md5Hash } from '../utils/crypto'
 
 interface AuthContextType {
   user: User | null
@@ -155,13 +156,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
       const token = localStorage.getItem('token')
       
+      // 对旧密码和新密码进行MD5哈希
+      const hashedOldPassword = md5Hash(oldPassword)
+      const hashedNewPassword = md5Hash(newPassword)
+      
       const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
-        body: JSON.stringify({ oldPassword, newPassword }),
+        body: JSON.stringify({ oldPassword: hashedOldPassword, newPassword: hashedNewPassword }),
       })
 
       if (!response.ok) {

@@ -25,7 +25,7 @@ func hash(password string) string {
 
 func TestRegisterUser(t *testing.T) {
 	// 注册一次 yzletter, 结果应为成功
-	id1, err := database.RegisterUser("yzletter", hash("123456"))
+	id1, err := database.RegisterUser("yzletter2", hash("123456"))
 	if err != nil {
 		fmt.Printf("用户[%d]注册失败 \n", id1)
 		t.Fatal()
@@ -77,6 +77,18 @@ func TestUpdatePassword(t *testing.T) {
 	}
 }
 
+func TestGetUserByName(t *testing.T) {
+	// 注册一次 yzletter, 结果应为成功
+	id, _ := database.RegisterUser("getuserbyname", hash("123456"))
+	user := database.GetUserById(id)
+	if user != nil {
+		result := database.GetUserByName(user.Name)
+		fmt.Println(result)
+	}
+	_ = database.LogOffUser(id)
+}
+
 // go test -v ./database/gorm -run=^TestRegisterUser$ -count=1
 // go test -v ./database/gorm -run=^TestLogOffUser$ -count=1
 // go test -v ./database/gorm -run=^TestUpdatePassword$ -count=1
+// go test -v ./database/gorm -run=^TestGetUserByName$ -count=1

@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lock, User, LogIn, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { md5Hash } from '../utils/crypto'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -29,7 +30,9 @@ export default function Login() {
           setIsLoading(false)
           return
         }
-        success = await login(username, password)
+        // 对密码进行MD5哈希，生成32位哈希值
+        const hashedPassword = md5Hash(password)
+        success = await login(username, hashedPassword)
       } else {
         if (!name.trim()) {
           setError('请输入用户名')
@@ -46,7 +49,9 @@ export default function Login() {
           setIsLoading(false)
           return
         }
-        success = await register(name, password)
+        // 对密码进行MD5哈希，生成32位哈希值
+        const hashedPassword = md5Hash(password)
+        success = await register(name, hashedPassword)
       }
 
       if (success) {

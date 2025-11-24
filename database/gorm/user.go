@@ -70,6 +70,21 @@ func GetUserById(uid int) *model.User {
 	return &user
 }
 
+// GetUserByName 根据 name 查找用户
+func GetUserByName(name string) *model.User {
+	user := model.User{}
+	tx := GoPosteryDB.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
+	if tx.Error != nil {
+		// 若错误不是记录未找到, 记录系统错误
+		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			slog.Error("go-postery GetUserByName : 查找用户失败", "uid", name, "error", tx.Error)
+		}
+		return nil
+	}
+
+	return &user
+}
+
 // UpdatePassword 根据传入的用户 id, 新旧密码更改用户密码
 func UpdatePassword(uid int, oldPass, newPass string) error {
 	tx := GoPosteryDB.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
