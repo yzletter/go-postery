@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2 } from 'lucide-react'
-import { Post } from '../types'
+import { Post, ApiResponse } from '../types'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+
 // 生成模拟数据的函数
 const generateMockPost = (id: string, index: number): Post => {
-  const categories = ['公告', '技术讨论', '设计', '问答']
   const authors = [
     { id: '1', name: '管理员' },
     { id: '2', name: '前端开发者' },
@@ -66,24 +67,105 @@ const generateMockPost = (id: string, index: number): Post => {
 // 总数据量限制
 const TOTAL_POSTS_LIMIT = 20
 
-// 模拟 API 获取帖子列表
+// API 获取帖子列表
 const fetchPosts = async (page: number, pageSize: number = 10): Promise<Post[]> => {
-  // 模拟网络延迟
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  const startIndex = (page - 1) * pageSize
-  const posts: Post[] = []
-  
-  // 限制总数据量为 20 条
-  const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
-  const currentPageSize = Math.min(pageSize, remainingPosts)
-  
-  for (let i = 0; i < currentPageSize; i++) {
-    const index = startIndex + i
-    posts.push(generateMockPost(`${page}-${i + 1}`, index))
+  try {
+    // 暂时禁用后端调用，使用模拟数据
+    console.log('帖子列表API调用已禁用，使用模拟数据')
+    
+    // 模拟网络延迟
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // 返回模拟数据
+    const posts: Post[] = []
+    const startIndex = (page - 1) * pageSize
+    
+    // 限制总数据量为 20 条
+    const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
+    const currentPageSize = Math.min(pageSize, remainingPosts)
+    
+    for (let i = 0; i < currentPageSize; i++) {
+      const index = startIndex + i
+      posts.push(generateMockPost(`${page}-${i + 1}`, index))
+    }
+    
+    return posts
+    
+    /* 原始的后端调用代码，暂时注释
+    const response = await fetch(`${API_BASE_URL}/posts?page=${page}&pageSize=${pageSize}`, {
+      credentials: 'include', // 关键：确保Cookie随请求发送
+    })
+    
+    // 检查响应状态
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
+    }
+    
+    // 检查内容类型
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('响应不是JSON格式')
+    }
+    
+    const result: ApiResponse = await response.json()
+    
+    // 根据API文档：code为0表示成功，1表示失败
+    if (result.code !== 0) {
+      throw new Error(result.msg || '获取帖子列表失败')
+    }
+
+    // 根据API文档，帖子列表在data.posts中
+    const responseData = result.data
+    if (!responseData || !responseData.posts) {
+      throw new Error('帖子列表响应数据格式错误')
+    }
+    
+    return responseData.posts
+    */
+  } catch (error) {
+    console.error('Failed to fetch posts:', error)
+    // 如果后端不可用，使用模拟数据（仅用于开发演示）
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.warn('后端 API 不可用，使用模拟帖子数据（仅用于开发）')
+      // 模拟网络延迟
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const startIndex = (page - 1) * pageSize
+      const posts: Post[] = []
+      
+      // 限制总数据量为 20 条
+      const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
+      const currentPageSize = Math.min(pageSize, remainingPosts)
+      
+      for (let i = 0; i < currentPageSize; i++) {
+        const index = startIndex + i
+        posts.push(generateMockPost(`${page}-${i + 1}`, index))
+      }
+      
+      return posts
+    }
+    // 处理响应格式错误的情况，也使用模拟数据
+    if (error instanceof Error && error.message.includes('响应数据格式错误')) {
+      console.warn('后端响应格式错误，使用模拟帖子数据（仅用于开发）')
+      // 模拟网络延迟
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const startIndex = (page - 1) * pageSize
+      const posts: Post[] = []
+      
+      // 限制总数据量为 20 条
+      const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
+      const currentPageSize = Math.min(pageSize, remainingPosts)
+      
+      for (let i = 0; i < currentPageSize; i++) {
+        const index = startIndex + i
+        posts.push(generateMockPost(`${page}-${i + 1}`, index))
+      }
+      
+      return posts
+    }
+    throw error
   }
-  
-  return posts
 }
 
 export default function Home() {

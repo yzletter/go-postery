@@ -2,7 +2,8 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { Post } from '../types'
+import { useState, useEffect } from 'react'
+import { Post, ApiResponse } from '../types'
 
 // 模拟数据
 const mockPost: Post = {
@@ -35,12 +36,85 @@ const mockPost: Post = {
 
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+
 // 模拟评论数据已移除
 
 export default function PostDetail() {
-  useParams<{ id: string }>() // 获取帖子ID（当前使用模拟数据）
+  const { id } = useParams<{ id: string }>() // 获取帖子ID
+  const [post, setPost] = useState<Post | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!id) return
+      
+      setIsLoading(true)
+      try {
+        // 暂时禁用后端调用，使用模拟数据
+        console.log('帖子详情API调用已禁用，使用模拟数据')
+        
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // 返回模拟数据
+        setPost(mockPost)
+        return
+        
+        /* 原始的后端调用代码，暂时注释
+        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+          credentials: 'include', // 关键：确保Cookie随请求发送
+        })
+        const result: ApiResponse = await response.json()
+        
+        // 根据API文档：code为0表示成功，1表示失败
+        if (result.code !== 0) {
+          throw new Error(result.msg || '获取帖子详情失败')
+        }
+
+        // 根据API文档，帖子详情在data中
+        const responseData = result.data
+        if (!responseData) {
+          throw new Error('帖子详情响应数据格式错误')
+        }
+        
+        setPost(responseData)
+        */
+      } catch (error) {
+        console.error('Failed to fetch post:', error)
+        // API调用已禁用，错误处理也相应简化
+        console.warn('帖子详情API调用已禁用，保持使用模拟数据')
+        setPost(mockPost)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPost()
+  }, [id])
 
   // 评论功能已移除
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="card text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">加载中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!post) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="card text-center py-12">
+          <p className="text-gray-500">帖子不存在</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -59,23 +133,23 @@ export default function PostDetail() {
         <div className="mb-6">
           <div className="flex items-start justify-between mb-4">
             <h1 className="text-3xl font-bold text-gray-900 flex-1">
-              {mockPost.title}
+              {post.title}
             </h1>
           </div>
 
           {/* 作者信息 */}
           <div className="flex items-center space-x-4 mb-4">
             <img
-              src={mockPost.author.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mockPost.author.id}`}
-              alt={mockPost.author.name}
+              src={post.author.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+              alt={post.author.name}
               className="w-10 h-10 rounded-full"
             />
             <div>
-              <div className="font-medium text-gray-900">{mockPost.author.name}</div>
+              <div className="font-medium text-gray-900">{post.author.name}</div>
               <div className="text-sm text-gray-500 flex items-center space-x-1">
                 <Clock className="h-3 w-3" />
                 <span>
-                  {formatDistanceToNow(new Date(mockPost.createdAt), {
+                  {formatDistanceToNow(new Date(post.createdAt), {
                     addSuffix: true,
                     locale: zhCN
                   })}
@@ -86,13 +160,12 @@ export default function PostDetail() {
 
 
 
-
         </div>
 
         {/* 正文内容 */}
         <div className="prose prose-gray max-w-none mb-6">
           <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-            {mockPost.content}
+            {post.content}
           </div>
         </div>
 

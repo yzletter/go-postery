@@ -49,12 +49,16 @@ export default function Profile() {
     try {
       const success = await changePassword(oldPassword, newPassword)
       if (success) {
-        setSuccess('密码修改成功！')
+        // 清空表单
         setOldPassword('')
         setNewPassword('')
         setConfirmPassword('')
-        // 3秒后清除成功消息
-        setTimeout(() => setSuccess(''), 3000)
+        
+        // 弹出确认对话框，点击确认后跳转到首页
+        const shouldNavigate = window.confirm('密码修改成功！是否返回首页？')
+        if (shouldNavigate) {
+          navigate('/')
+        }
       } else {
         setError('修改密码失败，请检查旧密码是否正确')
       }

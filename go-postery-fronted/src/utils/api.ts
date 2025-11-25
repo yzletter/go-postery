@@ -22,6 +22,7 @@ export async function authenticatedFetch(
   return fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include', // 关键：确保Cookie随请求发送
   })
 }
 

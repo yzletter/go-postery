@@ -4,12 +4,29 @@
 
 本文档描述了 Go Postery 论坛前端所需的后端 API 接口规范。基于前端代码分析，后端需要提供用户认证、帖子管理等功能。
 
+## 统一响应格式
+
+所有 API 响应都使用以下统一格式：
+
+```go
+type Resp struct {
+    Code int         `json:"code"`           // 业务码 
+    Msg  string      `json:"msg"`            // 信息 
+    Data interface{} `json:"data,omitempty"` // 数据（可选）
+}
+```
+
+**业务码说明：**
+- `0`: 请求成功
+- `1`: 请求失败（通用错误码）
+- 所有不成功的请求统一返回业务码 `1`
+
 ## 接口规范
 
 ### 1. 认证相关接口
 
 #### 1.1 用户登录
-**接口地址**: `POST /login` 或 `POST /api/auth/login`
+**接口地址**: `POST /login/submit` 或 `POST /api/auth/login`
 
 **请求参数**:
 ```json
@@ -22,25 +39,26 @@
 **成功响应** (200 OK):
 ```json
 {
-  "user": {
-    "id": "string, 用户唯一标识",
-    "name": "string, 用户名",
-    "email": "string, optional, 用户邮箱（可选，前端已删除显示）",
-    "avatar": "string, optional, 头像URL"
-  },
-  "token": "string, JWT访问令牌"
+  "code": 0,
+  "msg": "登录成功",
+  "data": {
+    "user": {
+      "name": "string, 用户名",
+    },
+  }
 }
 ```
 
-**错误响应** (400/401):
+**错误响应** (400/401):**错误响应：**
 ```json
 {
-  "message": "string, 错误信息"
+  "code": 1,
+  "msg": "用户名或密码错误"
 }
 ```
 
 #### 1.2 用户注册
-**接口地址**: `POST /api/auth/register`
+**接口地址**: `POST /register/submit` 或 `POST /api/auth/register`
 
 **请求参数**:
 ```json
@@ -50,21 +68,29 @@
 }
 ```
 
-**成功响应** (201 Created):
+**成功响应** (200 OK):
 ```json
 {
-  "user": {
-    "id": "string, 用户唯一标识",
-    "name": "string, 用户名",
-    "email": "string, optional, 用户邮箱",
-    "avatar": "string, optional, 头像URL"
-  },
-  "token": "string, JWT访问令牌"
+  "code": 0,
+  "msg": "注册成功",
+  "data": {
+    "user": {
+      "name": "string, 用户名",
+    },
+  }
+}
+```
+
+**错误响应** (400):**错误响应：**
+```json
+{
+  "code": 1,
+  "msg": "用户名已存在"
 }
 ```
 
 #### 1.3 修改密码
-**接口地址**: `POST /api/auth/change-password`
+**接口地址**: `POST /modify_pass/submit` 或 `POST /api/auth/change-password`
 
 **请求头**:
 ```
@@ -75,15 +101,42 @@ Content-Type: application/json
 **请求参数**:
 ```json
 {
-  "oldPassword": "string, required, 旧密码（MD5哈希）",
-  "newPassword": "string, required, 新密码（MD5哈希）"
+  "old_pass": "string, required, 旧密码（MD5哈希）",
+  "new_pass": "string, required, 新密码（MD5哈希）"
 }
 ```
 
 **成功响应** (200 OK):
 ```json
 {
-  "message": "密码修改成功"
+  "code": 0,
+  "msg": "密码修改成功",
+}
+```
+
+**错误响应** (400):**错误响应：**
+```json
+{
+  "code": 1,
+  "msg": "旧密码错误"
+}
+```
+
+#### 1.4 用户登出
+**接口地址**: `GET /logout` 或 `GET /api/auth/logout`
+
+**请求头**:
+```
+Authorization: Bearer {token}
+```
+
+**请求参数**: 无
+
+**成功响应** (200 OK):
+```json
+{
+  "code": 0,
+  "msg": "登出成功",
 }
 ```
 
@@ -99,22 +152,26 @@ Content-Type: application/json
 **成功响应** (200 OK):
 ```json
 {
-  "posts": [
-    {
-      "id": "string, 帖子唯一标识",
-      "title": "string, 帖子标题",
-      "content": "string, 帖子内容",
-      "author": {
-        "id": "string, 作者ID",
-        "name": "string, 作者名称",
-        "avatar": "string, optional, 作者头像URL"
-      },
-      "createdAt": "string, ISO 8601格式时间",
-      "updatedAt": "string, optional, 更新时间"
-    }
-  ],
-  "total": "integer, 总帖子数",
-  "hasMore": "boolean, 是否还有更多数据"
+  "code": 0,
+  "msg": "获取帖子列表成功",
+  "data": {
+    "posts": [
+      {
+        "id": "string, 帖子唯一标识",
+        "title": "string, 帖子标题",
+        "content": "string, 帖子内容",
+        "author": {
+          "id": "string, 作者ID",
+          "name": "string, 作者名称",
+          "avatar": "string, optional, 作者头像URL"
+        },
+        "createdAt": "string, ISO 8601格式时间",
+        "updatedAt": "string, optional, 更新时间"
+      }
+    ],
+    "total": "integer, 总帖子数",
+    "hasMore": "boolean, 是否还有更多数据"
+  }
 }
 ```
 
@@ -127,16 +184,20 @@ Content-Type: application/json
 **成功响应** (200 OK):
 ```json
 {
-  "id": "string, 帖子唯一标识",
-  "title": "string, 帖子标题",
-  "content": "string, 帖子内容",
-  "author": {
-    "id": "string, 作者ID",
-    "name": "string, 作者名称",
-    "avatar": "string, optional, 作者头像URL"
-  },
-  "createdAt": "string, ISO 8601格式时间",
-  "updatedAt": "string, optional, 更新时间"
+  "code": 0,
+  "msg": "获取帖子详情成功",
+  "data": {
+    "id": "string, 帖子唯一标识",
+    "title": "string, 帖子标题",
+    "content": "string, 帖子内容",
+    "author": {
+      "id": "string, 作者ID",
+      "name": "string, 作者名称",
+      "avatar": "string, optional, 作者头像URL"
+    },
+    "createdAt": "string, ISO 8601格式时间",
+    "updatedAt": "string, optional, 更新时间"
+  }
 }
 ```
 
@@ -160,15 +221,19 @@ Content-Type: application/json
 **成功响应** (201 Created):
 ```json
 {
-  "id": "string, 新创建帖子的ID",
-  "title": "string, 帖子标题",
-  "content": "string, 帖子内容",
-  "author": {
-    "id": "string, 作者ID",
-    "name": "string, 作者名称",
-    "avatar": "string, optional, 作者头像URL"
-  },
-  "createdAt": "string, ISO 8601格式时间"
+  "code": 0,
+  "msg": "帖子创建成功",
+  "data": {
+    "id": "string, 新创建帖子的ID",
+    "title": "string, 帖子标题",
+    "content": "string, 帖子内容",
+    "author": {
+      "id": "string, 作者ID",
+      "name": "string, 作者名称",
+      "avatar": "string, optional, 作者头像URL"
+    },
+    "createdAt": "string, ISO 8601格式时间"
+  }
 }
 ```
 
@@ -179,8 +244,6 @@ Content-Type: application/json
 interface User {
   id: string        // 用户唯一标识
   name: string      // 用户名
-  email?: string    // 用户邮箱（可选，前端已删除显示）
-  avatar?: string   // 头像URL（可选）
 }
 ```
 
@@ -193,10 +256,9 @@ interface Post {
   author: {
     id: string         // 作者ID
     name: string       // 作者名称
-    avatar?: string    // 作者头像URL（可选）
   }
   createdAt: string    // 创建时间（ISO 8601格式）
-  updatedAt?: string   // 更新时间（可选）
+  updatedAt: string    // 更新时间（ISO 8601格式）
 }
 ```
 
