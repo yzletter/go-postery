@@ -19,7 +19,7 @@ func main() {
 
 	// 配置跨域
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // 允许域名跨域
+		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

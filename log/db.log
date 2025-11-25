@@ -202,3 +202,174 @@
 
 2025/11/25 16:57:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
 [0.844ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:11:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[14.346ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:12:39 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.475ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:12:52 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[18.798ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:31:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.444ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:32:14 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.317ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:32:50 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.010ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:33:15 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.921ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:33:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.925ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:33:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.980ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:34:39 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.442ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:39:18 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[2.154ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:40:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.965ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:40:54 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.446ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:47:16 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.093ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:47:53 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.185ms] [rows:0] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 22:48:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.494ms] [rows:1] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 22:52:03 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[2.832ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:52:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.494ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:57:15 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.840ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:57:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.134ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 22:57:48 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.073ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:02:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.593ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:09:41 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.240ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:18:11 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.999ms] [rows:0] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 23:21:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.239ms] [rows:0] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 23:21:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.969ms] [rows:1] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 23:24:45 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[3.701ms] [rows:1] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 23:25:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.966ms] [rows:0] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 23:25:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.541ms] [rows:1] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 23:25:35 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.677ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:25:54 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.456ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 23:28:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.328ms] [rows:1] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='96e79218965eb72c92a549dd5a330112'
+
+2025/11/25 23:28:52 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.857ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:31:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.068ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:31:41 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.706ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:34:34 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.572ms] [rows:0] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:34:50 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.479ms] [rows:1] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='96e79218965eb72c92a549dd5a330112'
+
+2025/11/25 23:35:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.750ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:36:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.547ms] [rows:0] UPDATE `user` SET `password`='1a100d2c0dab19c4430e7d73762b3423' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:36:45 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.807ms] [rows:0] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='1a100d2c0dab19c4430e7d73762b3423'
+
+2025/11/25 23:37:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.835ms] [rows:0] UPDATE `user` SET `password`='1a100d2c0dab19c4430e7d73762b3423' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:37:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.458ms] [rows:0] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='1a100d2c0dab19c4430e7d73762b3423'
+
+2025/11/25 23:38:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.893ms] [rows:0] UPDATE `user` SET `password`='1a100d2c0dab19c4430e7d73762b3423' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:38:10 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.652ms] [rows:0] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='73882ab1fa529d7273da0db6b49cc4f3'
+
+2025/11/25 23:39:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.906ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 23:40:32 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.333ms] [rows:1] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='96e79218965eb72c92a549dd5a330112'
+
+2025/11/25 23:42:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[3.017ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:42:54 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.291ms] [rows:1] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='96e79218965eb72c92a549dd5a330112'
+
+2025/11/25 23:43:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.613ms] [rows:0] UPDATE `user` SET `password`='e3ceb5881a0a1fdaad01296d7554868d' WHERE id=9 and password='96e79218965eb72c92a549dd5a330112'
+
+2025/11/25 23:43:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.247ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=9 and password='e3ceb5881a0a1fdaad01296d7554868d'
+
+2025/11/25 23:43:45 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
+[1.266ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('sylar','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/25 23:47:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[3.412ms] [rows:1] SELECT * FROM `user` WHERE name='sylar' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:49:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.946ms] [rows:1] SELECT * FROM `user` WHERE name='sylar' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:49:42 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
+[2.711ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('sylar2','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/25 23:55:13 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
+[5.224ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('sylar3','e10adc3949ba59abbe56e057f20f883e')
+
+2025/11/25 23:55:13 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.554ms] [rows:1] SELECT * FROM `user` WHERE name='sylar3' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 23:55:30 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[2.951ms] [rows:1] UPDATE `user` SET `password`='96e79218965eb72c92a549dd5a330112' WHERE id=17 and password='e10adc3949ba59abbe56e057f20f883e'

@@ -1,0 +1,17 @@
+time="2025-11-25 22:11:56.449" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:12:39.887" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:12:52.759" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:31:37.733" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:32:14.787" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:33:27.845" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:34:39.393" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:39:18.226" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:40:26.408" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:40:54.606" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:46:37.007" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=0
+time="2025-11-25 22:47:16.249" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:47:53.518" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9
+time="2025-11-25 22:48:01.923" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9
+time="2025-11-25 22:52:09.102" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:57:28.494" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
+time="2025-11-25 22:57:48.208" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9

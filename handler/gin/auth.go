@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ func AuthHandlerFunc(ctx *gin.Context) {
 	// 获取登录 uid
 	jwtToken := getJWTFromCookie(ctx)
 	uid := getUidFromJWT(jwtToken)
-
+	slog.Info("Auth", "uid", uid)
 	// 判断 uid 是否合法
 	if uid == 0 {
 		ctx.Redirect(http.StatusTemporaryRedirect, "/login") // 未登录, 进行重定向
