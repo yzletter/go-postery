@@ -12,7 +12,7 @@ import (
 
 func init() {
 	utils.InitSlog("../../log/go_postery.log")
-	database.ConnectToDB("../../conf", "db", "yaml", "../../log")
+	database.ConnectToDB("../../conf", "db", utils.YAML, "../../log")
 }
 
 // Hash 返回字符串 MD5 哈希后 32 位的十六进制编码结果

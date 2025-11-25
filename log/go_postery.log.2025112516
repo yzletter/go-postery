@@ -1,0 +1,4 @@
+time="2025-11-25 16:43:33.632" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:37 msg=登录成功 uid=9
+time="2025-11-25 16:52:11.716" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:37 msg=登录成功 uid=9
+time="2025-11-25 16:56:56.501" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:37 msg=登录成功 uid=9
+time="2025-11-25 16:57:56.726" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:37 msg=登录成功 uid=9

@@ -1,12 +1,15 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	database "github.com/yzletter/go-postery/database/gorm"
 	"github.com/yzletter/go-postery/handler/model"
+	"github.com/yzletter/go-postery/utils"
 )
 
 // LoginHandlerFunc 用户登录 Handler
@@ -31,8 +34,25 @@ func LoginHandlerFunc(ctx *gin.Context) {
 		return
 	}
 
-	// 设置 Cookie
-	ctx.SetCookie("uid", strconv.Itoa(user.Id), 86400, "/", "localhost", false, true)
+	slog.Info("登录成功", "uid", user.Id)
+
+	// 使用 JWT
+	payload := utils.JwtPayload{
+		Issue:       "yzletter",
+		IssueAt:     time.Now().Unix(),                              // 签发日期为当前时间
+		Expiration:  time.Now().Add(86400 * 7 * time.Second).Unix(), // 7 天后过期
+		UserDefined: map[string]any{"uid": user.Id},                 // 用户自定义字段
+	}
+
+	jwtToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
+	if err != nil {
+		// jwt 生成失败
+		slog.Error("jwt 生成失败", "error", err)
+		ctx.String(http.StatusInternalServerError, "jwt 生成失败")
+	} else {
+		// 生成成功, 放入 Cookies
+		ctx.SetCookie(JWT_COOKIE_NAME, jwtToken, 86400*7, "/", "localhost", false, true)
+	}
 
 	// 默认情况下也返回200
 	ctx.String(http.StatusOK, "登录成功")
@@ -41,7 +61,7 @@ func LoginHandlerFunc(ctx *gin.Context) {
 // LogoutHandlerFunc 用户登出 Handler
 func LogoutHandlerFunc(ctx *gin.Context) {
 	// 设置 Cookie
-	ctx.SetCookie("uid", "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(JWT_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 }
 
 // ModifyPassHandlerFunc 修改密码 Handler
@@ -54,10 +74,10 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "密码输入错误")
 		return
 	}
-	uid := GetUidFromCookie(ctx)
-	if uid == 0 {
-		// 没有登录
-		ctx.String(http.StatusBadRequest, "请先登录")
+
+	uid, ok := ctx.Value(UID_IN_CTX).(int)
+	if !ok {
+		ctx.String(http.StatusForbidden, "请先登录") // 没有登录
 		return
 	}
 
@@ -89,7 +109,7 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	}
 }
 
-// GetUidFromCookie 从 Cookie 中获取 uid
+// GetUidFromCookie 从 Cookie 中获取 uid (JWT 引入后废弃)
 func GetUidFromCookie(ctx *gin.Context) int {
 	for _, cookie := range ctx.Request.Cookies() {
 		if cookie.Name == "uid" {

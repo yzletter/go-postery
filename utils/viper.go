@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	YAML = "yaml"
+)
+
 // InitViper 初始化 Viper 读取配置, 传入目录、文件名、文件类型, 返回一个 viper.Viper 指针
 func InitViper(dir, fileName, fileType string) *viper.Viper {
 	config := viper.New()          // 创建 *Viper 对象

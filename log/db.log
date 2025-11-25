@@ -145,3 +145,60 @@
 
 2025/11/24 15:54:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:22
 [3.767ms] [rows:1] INSERT INTO `user` (`name`,`password`) VALUES ('yzletter3','c33367701511b4f6020ec61ded352059')
+
+2025/11/25 16:43:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[2.059ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:43:33 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.501ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:47:35 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[3.711ms] [rows:1] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 16:47:53 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.538ms] [rows:0] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 16:47:58 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.450ms] [rows:1] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 16:48:55 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[3.851ms] [rows:0] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 16:49:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[8.582ms] [rows:1] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 16:50:42 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.054ms] [rows:0] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 16:50:46 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.469ms] [rows:1] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 16:51:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.606ms] [rows:0] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 16:51:07 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.921ms] [rows:1] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 16:52:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.168ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:52:07 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.597ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:52:11 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.483ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:52:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[0.519ms] [rows:0] UPDATE `user` SET `password`='c33367701511b4f6020ec61ded352059' WHERE id=9 and password='e10adc3949ba59abbe56e057f20f883e'
+
+2025/11/25 16:52:31 /Users/yzletter/go_project/go-postery/database/gorm/user.go:90
+[1.457ms] [rows:1] UPDATE `user` SET `password`='e10adc3949ba59abbe56e057f20f883e' WHERE id=9 and password='c33367701511b4f6020ec61ded352059'
+
+2025/11/25 16:56:52 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.135ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:56:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.593ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/25 16:57:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[0.844ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1

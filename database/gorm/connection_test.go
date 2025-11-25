@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	database "github.com/yzletter/go-postery/database/gorm"
+	"github.com/yzletter/go-postery/utils"
 )
 
 func TestConnection(t *testing.T) {
-	database.ConnectToDB("../../conf", "db", "yaml", "../../log")
+	database.ConnectToDB("../../conf", "db", utils.YAML, "../../log")
 	sqlDB, err := database.GoPosteryDB.DB()
 	if err != nil {
 		t.Fatalf("获取 sql.DB 失败: %v", err)
