@@ -27,12 +27,12 @@ create table if not exists user
 create table if not exists post
 (
     id          int auto_increment comment '帖子 id, 自增',
-    user_id     varchar(20) not null comment '发布者 id',
+    user_id     int not null comment '发布者 id',
     create_time datetime default current_timestamp comment '帖子创建时间',
     update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
     delete_time datetime default null comment '帖子删除时间',
     tittle      varchar(100) comment '标题',
     content     text comment '正文',
     primary key (id),
-    unique key idx_user (user_id)
+    key idx_user (user_id)
 ) default charset = utf8mb4 comment '帖子信息表';

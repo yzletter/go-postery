@@ -15,10 +15,10 @@ func main() {
 	utils.InitSlog("./log/go_postery.log")
 	database.ConnectToDB("./conf", "db", utils.YAML, "./log")
 
-	r := gin.Default()
+	engine := gin.Default()
 
 	// 配置跨域
-	r.Use(cors.New(cors.Config{
+	engine.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -28,12 +28,12 @@ func main() {
 	}))
 
 	// 定义路由
-	r.POST("/register/submit", handler.RegisterHandlerFunc)                               // 用户注册
-	r.POST("/login/submit", handler.LoginHandlerFunc)                                     // 用户登录
-	r.GET("/logout", handler.LogoutHandlerFunc)                                           // 用户退出
-	r.POST("/modify_pass/submit", handler.AuthHandlerFunc, handler.ModifyPassHandlerFunc) // 修改密码
+	engine.POST("/register/submit", handler.RegisterHandlerFunc)                               // 用户注册
+	engine.POST("/login/submit", handler.LoginHandlerFunc)                                     // 用户登录
+	engine.GET("/logout", handler.LogoutHandlerFunc)                                           // 用户退出
+	engine.POST("/modify_pass/submit", handler.AuthHandlerFunc, handler.ModifyPassHandlerFunc) // 修改密码
 
-	if err := r.Run("localhost:8080"); err != nil {
+	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
 	}
 }

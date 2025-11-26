@@ -1,0 +1,1 @@
+time="2025-11-26 16:10:46.694" level=ERROR source=/Users/yzletter/go_project/go-postery/database/gorm/post.go:25 msg=帖子发布失败 tittle="Error 1062 (23000): Duplicate entry '9' for key 'post.idx_user'"

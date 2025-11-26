@@ -15,14 +15,6 @@ func init() {
 	database.ConnectToDB("../../conf", "db", utils.YAML, "../../log")
 }
 
-// Hash 返回字符串 MD5 哈希后 32 位的十六进制编码结果
-func hash(password string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(password))
-	digest := hasher.Sum(nil)
-	return hex.EncodeToString(digest)
-}
-
 func TestRegisterUser(t *testing.T) {
 	// 注册一次 yzletter, 结果应为成功
 	id1, err := database.RegisterUser("yzletter2", hash("123456"))
@@ -86,6 +78,14 @@ func TestGetUserByName(t *testing.T) {
 		fmt.Println(result)
 	}
 	_ = database.LogOffUser(id)
+}
+
+// 返回字符串 MD5 哈希后 32 位的十六进制编码结果
+func hash(password string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(password))
+	digest := hasher.Sum(nil)
+	return hex.EncodeToString(digest)
 }
 
 // go test -v ./database/gorm -run=^TestRegisterUser$ -count=1
