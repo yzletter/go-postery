@@ -1,46 +1,49 @@
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Clock } from 'lucide-react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Clock, Edit, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useState, useEffect } from 'react'
 import { Post, ApiResponse } from '../types'
 
-// 模拟数据
-const mockPost: Post = {
-  id: '1',
-  title: '欢迎来到 Go Postery 论坛！',
-  content: `这是一个现代化的论坛平台，欢迎大家分享想法和讨论话题。
-
-## 主要特性
-
-- 🎨 现代化的用户界面设计
-- ⚡ 快速响应和流畅交互
-- 📱 完全响应式设计，支持移动端
-- 💬 实时评论和互动
-
-## 使用指南
-
-1. 注册账号并完善个人信息
-2. 浏览感兴趣的板块和话题
-3. 发布你的第一个帖子
-4. 参与讨论，与其他用户互动
-
-希望你能在这里找到志同道合的朋友，分享知识和经验！`,
-  author: {
-    id: '1',
-    name: '管理员'
-  },
-  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
-
-// 模拟评论数据已移除
-
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
+  const navigate = useNavigate()
   const [post, setPost] = useState<Post | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthor, setIsAuthor] = useState(false)
+
+  // 创建一个函数来检查帖子是否属于当前用户
+  const checkPostOwnership = async (postId: string): Promise<boolean> => {
+    try {
+      // 使用GET请求，参数名为id而不是postId
+      const response = await fetch(`http://localhost:8080/posts/belong?id=${postId}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP错误: ${response.status}`)
+      }
+      
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('响应不是JSON格式')
+      }
+      
+      const result: ApiResponse = await response.json()
+      
+      if (result.code !== 0) {
+        throw new Error(result.msg || '检查帖子所有权失败')
+      }
+      
+      // 根据API文档，data字段应该是"true"或"false"字符串
+      // 需要将其转换为布尔值
+      return result.data === "true" || result.data === true
+    } catch (error) {
+      console.error('检查帖子所有权失败:', error)
+      return false
+    }
+  }
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -80,6 +83,10 @@ export default function PostDetail() {
         }
         
         setPost(responseData)
+        
+        // 检查帖子所有权
+        const ownership = await checkPostOwnership(id)
+        setIsAuthor(ownership)
       } catch (error) {
         console.error('Failed to fetch post:', error)
         // 接口测试期间，直接抛出错误而不是回退到模拟数据
@@ -91,6 +98,49 @@ export default function PostDetail() {
 
     fetchPost()
   }, [id])
+
+  // 删除帖子功能
+  const handleDeletePost = async () => {
+    // 确保id存在且用户确认删除操作
+    if (!id || !window.confirm('确定要删除这篇帖子吗？此操作不可撤销。')) {
+      return
+    }
+    
+    try {
+      // 发送GET请求到后端API (更新路径为/posts/delete/:id)
+      const response = await fetch(`http://localhost:8080/posts/delete/${id}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+      
+      // 检查响应状态
+      if (!response.ok) {
+        throw new Error(`HTTP错误: ${response.status}`)
+      }
+      
+      // 检查内容类型
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('响应不是JSON格式')
+      }
+      
+      // 解析响应数据
+      const result = await response.json()
+      
+      // 根据API文档：code为0表示成功，1表示失败
+      if (result.code !== 0) {
+        throw new Error(result.msg || '删除帖子失败')
+      }
+      
+      // 删除成功，显示成功消息并导航回主页
+      alert(result.msg || '帖子删除成功')
+      navigate('/')
+    } catch (error) {
+      // 处理错误情况
+      console.error('删除帖子失败:', error)
+      alert('删除帖子失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
 
   // 评论功能已移除
 
@@ -134,6 +184,25 @@ export default function PostDetail() {
             <h1 className="text-3xl font-bold text-gray-900 flex-1">
               {post.title}
             </h1>
+            {/* 操作按钮 */}
+            {isAuthor && (
+              <div className="flex space-x-2 ml-4">
+                <Link
+                  to={`/edit/${post.id}`}
+                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  编辑
+                </Link>
+                <button
+                  onClick={handleDeletePost}
+                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  删除
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 作者信息 */}
@@ -156,9 +225,6 @@ export default function PostDetail() {
               </div>
             </div>
           </div>
-
-
-
         </div>
 
         {/* 正文内容 */}
@@ -167,12 +233,7 @@ export default function PostDetail() {
             {post.content}
           </div>
         </div>
-
-
       </article>
-
-      {/* 评论功能已移除 */}
     </div>
   )
 }
-

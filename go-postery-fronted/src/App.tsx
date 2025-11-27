@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import PostDetail from './pages/PostDetail'
 import CreatePost from './pages/CreatePost'
+import EditPost from './pages/EditPost'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
 import { useAuth } from './contexts/AuthContext'
@@ -28,6 +29,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/post/:id" element={<PostDetail />} />
+      <Route path="/edit/:id" element={<EditPost />} />
       <Route path="/login" element={<Login />} />
       <Route
         path="/create"
