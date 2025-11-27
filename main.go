@@ -36,8 +36,9 @@ func main() {
 	engine.POST("/modify_pass/submit", handler.AuthHandlerFunc, handler.ModifyPassHandlerFunc) // 修改密码
 
 	// 帖子模块
-	engine.GET("/posts", handler.GetPostsHandler)
-	engine.GET("/posts/:pid", handler.GetPostDetailHandler)
+	engine.GET("/posts", handler.GetPostsHandler)                                    // 获取帖子列表
+	engine.GET("/posts/:pid", handler.GetPostDetailHandler)                          // 获取帖子详情
+	engine.POST("/posts/new", handler.AuthHandlerFunc, handler.CreateNewPostHandler) // 创建帖子
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

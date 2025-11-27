@@ -13,22 +13,27 @@ export default function CreatePost() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    // 暂时禁用后端调用，直接跳转到首页
-    console.log('创建帖子API调用已禁用，直接跳转到首页')
-    alert('帖子创建功能已禁用（仅用于用户接口测试），点击确定返回首页')
-    navigate('/')
-    return
-    
-    /* 原始的后端调用代码，暂时注释
-        const response = await fetch(`${API_BASE_URL}/posts`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({ title, content }),
-          credentials: 'include', // 关键：确保Cookie随请求发送
-        })
+    try {
+      // 修改路由为 localhost:8080/posts/new
+      const response = await fetch('http://localhost:8080/posts/new', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, content }),
+        credentials: 'include', // 关键：确保Cookie随请求发送
+      })
+
+      // 检查响应状态
+      if (!response.ok) {
+        throw new Error(`HTTP错误: ${response.status}`)
+      }
+      
+      // 检查内容类型
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('响应不是JSON格式')
+      }
 
       const result: ApiResponse = await response.json()
       
@@ -37,25 +42,14 @@ export default function CreatePost() {
         throw new Error(result.msg || '创建帖子失败')
       }
 
-      console.log('帖子创建成功:', result.data)
+      // 后端只返回帖子ID，直接跳转到首页
+      console.log('帖子创建成功，帖子ID:', result.data)
       navigate('/')
+      
     } catch (error) {
       console.error('Failed to create post:', error)
-      // 如果后端不可用，使用模拟创建（仅用于开发演示）
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.warn('后端 API 不可用，使用模拟创建帖子（仅用于开发）')
-        navigate('/')
-        return
-      }
-      // 处理响应格式错误的情况，也使用模拟创建
-      if (error instanceof Error && error.message.includes('响应数据格式错误')) {
-        console.warn('后端响应格式错误，使用模拟创建帖子（仅用于开发）')
-        navigate('/')
-        return
-      }
       alert('创建帖子失败: ' + (error instanceof Error ? error.message : '未知错误'))
     }
-    */
   }
 
   return (

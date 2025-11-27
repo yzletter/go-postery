@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	database "github.com/yzletter/go-postery/database/gorm"
+	"github.com/yzletter/go-postery/handler/model"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -98,7 +99,7 @@ func GetPostDetailHandler(ctx *gin.Context) {
 	} else {
 		slog.Warn("could not get name of user", "uid", post.UserId)
 	}
-	
+
 	resp := utils.Resp{
 		Code: 0,
 		Msg:  "获取帖子详情成功",
@@ -111,6 +112,47 @@ func GetPostDetailHandler(ctx *gin.Context) {
 				"name": post.UserName,
 			},
 			"createdAt": post.ViewTime,
+		},
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// CreateNewPostHandler 创建帖子
+func CreateNewPostHandler(ctx *gin.Context) {
+	// 直接从 ctx 中拿 uid
+	uid := ctx.Value(UID_IN_CTX).(int)
+
+	// 参数绑定
+	var createRequest model.CreateRequest
+	err := ctx.ShouldBind(&createRequest)
+	if err != nil {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "创建帖子参数错误",
+			Data: nil,
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	// 创建帖子
+	pid, err := database.CreatePost(uid, createRequest.Title, createRequest.Content)
+	if err != nil {
+		// 创建帖子失败
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "创建帖子失败,请稍后重试",
+			Data: nil,
+		}
+		ctx.JSON(http.StatusInternalServerError, resp)
+		return
+	}
+
+	resp := utils.Resp{
+		Code: 0,
+		Msg:  "创建帖子成功",
+		Data: gin.H{
+			"id": pid,
 		},
 	}
 	ctx.JSON(http.StatusOK, resp)
