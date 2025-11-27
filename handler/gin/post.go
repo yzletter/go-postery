@@ -119,8 +119,8 @@ func GetPostDetailHandler(ctx *gin.Context) {
 
 // CreateNewPostHandler 创建帖子
 func CreateNewPostHandler(ctx *gin.Context) {
-	// 直接从 ctx 中拿 uid
-	uid := ctx.Value(UID_IN_CTX).(int)
+	// 直接从 ctx 中拿 loginUid
+	loginUid := ctx.Value(UID_IN_CTX).(int)
 
 	// 参数绑定
 	var createRequest model.CreateRequest
@@ -136,7 +136,7 @@ func CreateNewPostHandler(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	pid, err := database.CreatePost(uid, createRequest.Title, createRequest.Content)
+	pid, err := database.CreatePost(loginUid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		resp := utils.Resp{
@@ -156,4 +156,53 @@ func CreateNewPostHandler(ctx *gin.Context) {
 		},
 	}
 	ctx.JSON(http.StatusOK, resp)
+}
+
+// DeletePostHandler 删除帖子
+func DeletePostHandler(ctx *gin.Context) {
+	// 直接从 ctx 中拿 loginUid
+	loginUid := ctx.Value(UID_IN_CTX).(int)
+
+	// 再拿帖子 pid
+	pid, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil || pid == 0 {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "帖子 id 获取失败",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	// 判断登录用户是否是作者
+	post := database.GetPostByID(pid)
+	if post == nil || loginUid != post.UserId {
+		// 无权限删除
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "无权限删除该帖子",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+
+	}
+
+	// 进行删除
+	err = database.DeletePost(pid)
+	if err != nil {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "帖子删除失败",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	resp := utils.Resp{
+		Code: 0,
+		Msg:  "帖子删除成功",
+	}
+	ctx.JSON(http.StatusOK, resp)
+	return
+
 }

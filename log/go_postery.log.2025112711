@@ -1,1 +1,5 @@
 time="2025-11-27 11:01:29.772" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 11:17:17.369" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 11:19:17.705" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9
+time="2025-11-27 11:19:44.226" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9999
+time="2025-11-27 11:19:48.969" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
