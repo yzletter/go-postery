@@ -1,0 +1,3 @@
+time="2025-11-27 21:07:20.741" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:19 msg="signal interrupt has come, start exiting ..."
+time="2025-11-27 21:07:20.742" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:103 msg="close GoPosteryDB succeed"
+time="2025-11-27 21:07:20.742" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:24 msg="all task has finished"

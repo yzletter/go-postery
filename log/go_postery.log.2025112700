@@ -1,5 +1,0 @@
-time="2025-11-27 00:17:35.535" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9
-time="2025-11-27 00:41:05.005" level=WARN source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:35 msg="could not get name of user" uid=6
-time="2025-11-27 00:41:08.885" level=WARN source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:35 msg="could not get name of user" uid=6
-time="2025-11-27 00:44:08.173" level=WARN source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:35 msg="could not get name of user" uid=6
-time="2025-11-27 00:44:22.171" level=WARN source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:35 msg="could not get name of user" uid=6

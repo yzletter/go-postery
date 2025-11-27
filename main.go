@@ -16,6 +16,7 @@ func main() {
 	SlogConfPath := "./log/go_postery.log"
 	utils.InitSlog(SlogConfPath)                              // 初始化 slog
 	service.InitCrontab()                                     // 初始化 定时任务
+	service.InitSmoothExit()                                  // 初始化 优雅退出
 	database.ConnectToDB("./conf", "db", utils.YAML, "./log") // 初始化数据库
 
 	engine := gin.Default()

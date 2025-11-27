@@ -91,3 +91,16 @@ func Ping() {
 		return
 	}
 }
+
+func CloseConnection() {
+	if GoPosteryDB != nil {
+		sqlDB, _ := GoPosteryDB.DB()
+		err := sqlDB.Close()
+		if err != nil {
+			slog.Info("close GoPosteryDB failed")
+			return
+		}
+		slog.Info("close GoPosteryDB succeed")
+		return
+	}
+}
