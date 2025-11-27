@@ -176,7 +176,14 @@ func DeletePostHandler(ctx *gin.Context) {
 
 	// 判断登录用户是否是作者
 	post := database.GetPostByID(pid)
-	if post == nil || loginUid != post.UserId {
+	if post == nil {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "当前帖子不存在",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	} else if loginUid != post.UserId {
 		// 无权限删除
 		resp := utils.Resp{
 			Code: 1,
@@ -184,7 +191,6 @@ func DeletePostHandler(ctx *gin.Context) {
 		}
 		ctx.JSON(http.StatusBadRequest, resp)
 		return
-
 	}
 
 	// 进行删除
@@ -204,5 +210,59 @@ func DeletePostHandler(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, resp)
 	return
+}
 
+// UpdatePostHandler 修改帖子
+func UpdatePostHandler(ctx *gin.Context) {
+	// 直接从 ctx 中拿 loginUid
+	loginUid := ctx.Value(UID_IN_CTX).(int)
+
+	// 参数绑定
+	var updateRequest model.CreateRequest
+	err := ctx.ShouldBind(&updateRequest)
+	if err != nil || updateRequest.Id == 0 {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "修改帖子参数错误",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	// 判断登录用户是否是作者
+	post := database.GetPostByID(updateRequest.Id)
+	if post == nil {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "当前帖子不存在",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	} else if loginUid != post.UserId {
+		// 无权限删除
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "无权限修改该帖子",
+		}
+		ctx.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	// 修改
+	err = database.UpdatePost(updateRequest.Id, updateRequest.Title, updateRequest.Content)
+	if err != nil {
+		resp := utils.Resp{
+			Code: 1,
+			Msg:  "修改失败，请稍后重试",
+		}
+		ctx.JSON(http.StatusInternalServerError, resp)
+		return
+	}
+
+	resp := utils.Resp{
+		Code: 0,
+		Msg:  "帖子修改成功",
+	}
+	ctx.JSON(http.StatusOK, resp)
+	return
 }

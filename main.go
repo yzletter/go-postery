@@ -39,7 +39,8 @@ func main() {
 	engine.GET("/posts", handler.GetPostsHandler)                                       // 获取帖子列表
 	engine.GET("/posts/:pid", handler.GetPostDetailHandler)                             // 获取帖子详情
 	engine.POST("/posts/new", handler.AuthHandlerFunc, handler.CreateNewPostHandler)    // 创建帖子
-	engine.GET("/posts/delete/:id", handler.AuthHandlerFunc, handler.DeletePostHandler) // 创建帖子
+	engine.GET("/posts/delete/:id", handler.AuthHandlerFunc, handler.DeletePostHandler) // 删除帖子
+	engine.POST("/posts/update", handler.AuthHandlerFunc, handler.UpdatePostHandler)    // 修改帖子
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

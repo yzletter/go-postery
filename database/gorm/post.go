@@ -60,6 +60,8 @@ func UpdatePost(pid int, title, content string) error {
 		return errors.New("帖子修改失败")
 	} else {
 		if tx.RowsAffected == 0 {
+			slog.Error("帖子不存在", "pid", pid)
+
 			return fmt.Errorf("帖子 %d 不存在", pid)
 		} else {
 			return nil
