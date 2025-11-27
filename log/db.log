@@ -136,3 +136,21 @@
 
 2025/11/27 15:18:52 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
 [0.270ms] [rows:0] UPDATE `post` SET `content`='修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:36:49 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.574ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:36:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.969ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:37:49 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.972ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:37:50 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.156ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:37:52 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.844ms] [rows:0] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 212 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:37:53 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[2.180ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1

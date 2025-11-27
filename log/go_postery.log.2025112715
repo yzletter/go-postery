@@ -30,3 +30,9 @@ time="2025-11-27 15:18:50.815" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-11-27 15:18:51.381" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
 time="2025-11-27 15:18:51.780" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
 time="2025-11-27 15:18:52.917" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:36:49.096" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:286 msg=Auth uid=9999
+time="2025-11-27 15:36:51.703" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:286 msg=Auth uid=9999
+time="2025-11-27 15:37:49.026" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 15:37:50.154" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 15:37:52.128" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 15:37:53.912" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999

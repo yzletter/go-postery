@@ -266,3 +266,55 @@ func UpdatePostHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 	return
 }
+
+// PostBelongHandler 查询帖子作者是否为当前登录用户
+func PostBelongHandler(ctx *gin.Context) {
+	// 获取帖子 id
+	pid, err := strconv.Atoi(ctx.Query("id"))
+	if err != nil {
+		resp := utils.Resp{
+			Code: 0,
+			Msg:  "帖子不属于当前用户",
+			Data: "false",
+		}
+		ctx.JSON(http.StatusOK, resp)
+		return
+	}
+
+	// 获取登录 uid
+	jwtToken := getJWTFromCookie(ctx)
+	loginUid := getUidFromJWT(jwtToken)
+	slog.Info("Auth", "uid", loginUid)
+
+	if loginUid == 0 {
+		// 未登录, 后面不用看了
+		resp := utils.Resp{
+			Code: 0,
+			Msg:  "帖子不属于当前用户",
+			Data: "false",
+		}
+		ctx.JSON(http.StatusOK, resp)
+		return
+	}
+
+	// 判断登录用户是否是作者
+	post := database.GetPostByID(pid)
+	if post == nil || loginUid != post.UserId {
+		resp := utils.Resp{
+			Code: 0,
+			Msg:  "帖子不属于当前用户",
+			Data: "false",
+		}
+		ctx.JSON(http.StatusOK, resp)
+		return
+	}
+
+	// 属于
+	resp := utils.Resp{
+		Code: 0,
+		Msg:  "帖子属于当前用户",
+		Data: "true",
+	}
+	ctx.JSON(http.StatusOK, resp)
+	return
+}
