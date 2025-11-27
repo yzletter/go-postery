@@ -49,24 +49,27 @@ func DeletePost(pid int) error {
 
 // UpdatePost 修改帖子
 func UpdatePost(pid int, title, content string) error {
-	tx := GoPosteryDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid).
-		Updates(map[string]interface{}{
-			"title":   title,
-			"content": content,
-		})
+	tx := GoPosteryDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid)
+
+	var count int64
+	tx.Count(&count)
+
+	if count == 0 {
+		slog.Error("帖子不存在", "pid", pid)
+		return fmt.Errorf("帖子 %d 不存在", pid)
+	}
+
+	// 修改
+	tx.Updates(map[string]interface{}{
+		"title":   title,
+		"content": content,
+	})
 	if tx.Error != nil {
 		//	修改失败
 		slog.Error("帖子修改失败", "pid", pid, "error", tx.Error)
 		return errors.New("帖子修改失败")
-	} else {
-		if tx.RowsAffected == 0 {
-			slog.Error("帖子不存在", "pid", pid)
-
-			return fmt.Errorf("帖子 %d 不存在", pid)
-		} else {
-			return nil
-		}
 	}
+	return nil
 }
 
 // GetPostByID 根据帖子 id 获取帖子信息

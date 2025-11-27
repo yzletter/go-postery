@@ -52,3 +52,87 @@
 
 2025/11/27 15:11:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:53
 [0.323ms] [rows:0] UPDATE `post` SET `content`='1123',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:77
+[0.738ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:53
+[0.243ms] [rows:0] UPDATE `post` SET `content`='1123',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:02 /Users/yzletter/go_project/go-postery/database/gorm/post.go:77
+[1.542ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:02 /Users/yzletter/go_project/go-postery/database/gorm/post.go:53
+[3.873ms] [rows:0] UPDATE `post` SET `content`='1123',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:20 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.857ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:20 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.332ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:20 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.460ms] [rows:0] UPDATE `post` SET `content`='1123',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.515ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.813ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.343ms] [rows:0] UPDATE `post` SET `content`='1123',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.507ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.195ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.235ms] [rows:0] UPDATE `post` SET `content`='1123',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:39 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.590ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:39 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.205ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:39 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[3.261ms] [rows:1] UPDATE `post` SET `content`='修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:50 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.569ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:50 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.389ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:50 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.248ms] [rows:0] UPDATE `post` SET `content`='修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.564ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.224ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.300ms] [rows:0] UPDATE `post` SET `content`='修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.934ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.269ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:51 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.570ms] [rows:0] UPDATE `post` SET `content`='修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:52 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.493ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 15:18:52 /Users/yzletter/go_project/go-postery/database/gorm/post.go:55
+[0.254ms] [rows:1] SELECT count(*) FROM `post` WHERE id=211 and delete_time is null
+
+2025/11/27 15:18:52 /Users/yzletter/go_project/go-postery/database/gorm/post.go:63
+[0.270ms] [rows:0] UPDATE `post` SET `content`='修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试修改测试',`title`='修改测试修改测试修改测试' WHERE id=211 and delete_time is null

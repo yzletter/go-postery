@@ -18,3 +18,15 @@ time="2025-11-27 15:11:50.825" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-11-27 15:11:50.827" level=ERROR source=/Users/yzletter/go_project/go-postery/database/gorm/post.go:63 msg=帖子不存在 pid=211
 time="2025-11-27 15:11:51.184" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
 time="2025-11-27 15:11:51.186" level=ERROR source=/Users/yzletter/go_project/go-postery/database/gorm/post.go:63 msg=帖子不存在 pid=211
+time="2025-11-27 15:18:01.943" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:01.944" level=ERROR source=/Users/yzletter/go_project/go-postery/database/gorm/post.go:63 msg=帖子不存在 pid=211
+time="2025-11-27 15:18:02.855" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:02.861" level=ERROR source=/Users/yzletter/go_project/go-postery/database/gorm/post.go:63 msg=帖子不存在 pid=211
+time="2025-11-27 15:18:20.611" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:21.532" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:22.156" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:39.992" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:50.815" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:51.381" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:51.780" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 15:18:52.917" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
