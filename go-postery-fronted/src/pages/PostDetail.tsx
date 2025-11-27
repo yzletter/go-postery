@@ -127,7 +127,7 @@ export default function PostDetail() {
       </Link>
 
       {/* 帖子内容 */}
-      <article className="card">
+      <article className="card px-12">
         {/* 标题和元信息 */}
         <div className="mb-6">
           <div className="flex items-start justify-between mb-4">
@@ -162,8 +162,8 @@ export default function PostDetail() {
         </div>
 
         {/* 正文内容 */}
-        <div className="prose prose-gray max-w-none mb-6">
-          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+        <div className="prose prose-gray max-w-none mb-6 px-4">
+          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-lg">
             {post.content}
           </div>
         </div>

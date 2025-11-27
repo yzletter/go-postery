@@ -28,10 +28,16 @@ func main() {
 	}))
 
 	// 定义路由
+
+	// 用户模块
 	engine.POST("/register/submit", handler.RegisterHandlerFunc)                               // 用户注册
 	engine.POST("/login/submit", handler.LoginHandlerFunc)                                     // 用户登录
 	engine.GET("/logout", handler.LogoutHandlerFunc)                                           // 用户退出
 	engine.POST("/modify_pass/submit", handler.AuthHandlerFunc, handler.ModifyPassHandlerFunc) // 修改密码
+
+	// 帖子模块
+	engine.GET("/posts", handler.GetPostsHandler)
+	engine.GET("/posts/:pid", handler.GetPostDetailHandler)
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

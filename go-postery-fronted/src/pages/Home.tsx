@@ -146,6 +146,11 @@ export default function Home() {
     
     setIsLoading(true)
     try {
+      // 如果不是初始加载（即加载更多），添加1秒延时
+      if (!reset) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      
       const newPosts = await fetchPosts(page, pageSize)
       
       if (reset) {

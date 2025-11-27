@@ -11,12 +11,12 @@ import (
 )
 
 // CreatePost 新建帖子
-func CreatePost(uid int, tittle, content string) (int, error) {
+func CreatePost(uid int, title, content string) (int, error) {
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
 		UserId:     uid,     // 作者id
-		Tittle:     tittle,  // 标题
+		Title:      title,   // 标题
 		Content:    content, // 正文
 		CreateTime: &now,
 		DeleteTime: nil, // 须显示指定为 nil, 写入数据库为 null,
@@ -24,7 +24,7 @@ func CreatePost(uid int, tittle, content string) (int, error) {
 
 	// 新建数据
 	if err := GoPosteryDB.Create(&post).Error; err != nil {
-		slog.Error("帖子发布失败", "tittle", err)
+		slog.Error("帖子发布失败", "title", err)
 		return 0, errors.New("帖子发布失败")
 	}
 
@@ -48,10 +48,10 @@ func DeletePost(pid int) error {
 }
 
 // UpdatePost 修改帖子
-func UpdatePost(pid int, tittle, content string) error {
+func UpdatePost(pid int, title, content string) error {
 	tx := GoPosteryDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid).
 		Updates(map[string]interface{}{
-			"tittle":  tittle,
+			"title":   title,
 			"content": content,
 		})
 	if tx.Error != nil {
@@ -86,7 +86,7 @@ func GetPostByID(pid int) *model.Post {
 }
 
 // GetPostByPage 翻页查询帖子, 页号从 1 开始, 返回帖子总数和帖子列表
-func GetPostByPage(pageNumber, pageSize int) (int, []*model.Post) {
+func GetPostByPage(pageNo, pageSize int) (int, []*model.Post) {
 	// 获取帖子总数
 	var total int64
 	tx := GoPosteryDB.Model(&model.Post{}).Where("delete_time is null").Count(&total)
@@ -97,11 +97,10 @@ func GetPostByPage(pageNumber, pageSize int) (int, []*model.Post) {
 
 	// 获取当前页的帖子
 	var posts []*model.Post
-
-	// 已经查询过 pageSize * (pageNumber - 1) 条数据, 当前页需要 pageSize 条数据，并按发布时间降序排列
-	tx = GoPosteryDB.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNumber - 1)).Find(&posts)
+	// 已经查询过 pageSize * (pageNo - 1) 条数据, 当前页需要 pageSize 条数据，并按发布时间降序排列
+	tx = GoPosteryDB.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
 	if tx.Error != nil {
-		slog.Error("获取当前页帖子失败", "pageNumber", pageNumber, "pageSize", pageSize, "error", tx.Error)
+		slog.Error("获取当前页帖子失败", "pageNo", pageNo, "pageSize", pageSize, "error", tx.Error)
 		return 0, nil
 	}
 
