@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	database "github.com/yzletter/go-postery/database/gorm"
 	handler "github.com/yzletter/go-postery/handler/gin"
 	"github.com/yzletter/go-postery/service"
@@ -31,7 +32,14 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// 全局中间件
+	engine.Use(handler.MetricHandler) // Prometheus 监控中间件
+
 	// 定义路由
+
+	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
+		promhttp.Handler().ServeHTTP(ctx.Writer, ctx.Request) // 固定写法
+	})
 
 	// 用户模块
 	engine.POST("/register/submit", handler.RegisterHandlerFunc)                               // 用户注册

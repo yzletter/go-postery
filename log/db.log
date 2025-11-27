@@ -5167,3 +5167,2913 @@
 
 2025/11/27 20:39:11 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
 [0.207ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.857ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[4.642ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.581ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 7 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.945ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.482ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 51 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.204ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.191ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.117ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.391ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.176ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.265ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:56 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.941ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 16 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.567ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[3.374ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.542ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.229ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.422ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.271ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.209ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.164ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.440ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[7.434ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.458ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.290ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.305ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.251ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.226ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.161ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:10:59 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.139ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.973ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[4.626ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[4.528ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.068ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.256ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.249ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.223ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.410ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.216ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.149ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.393ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.923ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.285ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.130ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.159ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.143ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.126ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.289ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.111ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.119ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.345ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.420ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.287ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.209ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.257ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.195ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.280ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.194ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.133ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.297ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.435ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.444ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.201ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.246ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.209ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.170ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.169ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.525ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.921ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.557ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.357ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.888ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.437ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.431ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.215ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.161ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.163ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.117ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.118ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.113ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.108ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.117ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.109ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.113ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.464ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.277ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.254ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.260ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.170ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.273ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.163ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.195ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.180ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.409ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.379ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.180ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.123ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.225ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.124ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.121ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.118ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.132ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.290ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.314ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.354ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.425ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.470ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.217ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.113ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.110ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.108ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.105ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.195ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.162ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.207ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.417ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.791ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.450ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.515ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.312ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.347ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.280ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.297ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.322ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.441ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.466ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.279ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.817ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.698ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.250ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.530ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.213ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.203ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.256ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.944ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.031ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.316ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.163ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.975ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.342ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.354ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.227ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.745ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.395ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:09 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.067ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.277ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:09 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.578ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.254ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:16 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.633ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:16 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.340ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:16 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.223ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:16 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.197ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:16 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[3.332ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:16 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.061ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.077ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.882ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.444ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.221ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.182ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.110ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.120ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.114ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.586ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.519ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.785ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.229ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.266ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.169ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.143ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.167ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 73 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.244ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 47 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.700ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.271ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:17 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.215ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.907ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.893ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.233ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 7 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.145ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.167ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 51 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.120ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:20 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 16 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.827ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.679ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 20
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.302ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 53 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 63 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.189ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 8 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.136ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 3 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.145ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.135ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 12 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 5 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.215ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 6 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 13 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.973ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[2.096ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 30
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.492ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 92 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.412ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 88 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.734ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 22 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.278ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 82 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.181ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 50 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.176ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 21 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.162ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 57 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 33 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 98 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.132ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 71 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.912ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.486ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 40
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.344ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 4 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.230ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 29 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.190ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 19 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.313ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 95 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.240ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 91 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.150ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 58 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.185ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 84 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 37 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.118ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 75 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.244ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 27 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:11:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.448ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:11:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.763ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 50
+
+2025/11/27 21:11:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.516ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 14 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.710ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.263ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.238ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.181ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.185ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.238ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.604ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.208ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.208ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.201ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.572ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.331ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.324ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.328ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.181ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.240ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.138ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.212ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.149ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.222ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.123ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:08 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.119ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.410ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.206ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.217ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.154ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.154ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.180ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.180ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.130ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.116ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.126ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.263ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.193ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.355ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[5.374ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.669ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.463ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.163ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.154ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.144ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.181ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.447ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.409ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.150ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:09 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.486ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.372ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.047ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.772ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 53 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.308ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 8 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 3 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.597ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.581ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 20
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.229ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 12 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.138ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 6 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 13 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 92 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.116ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 22 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.117ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 82 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.227ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 50 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 21 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.345ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 57 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 98 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.855ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.819ms] [rows:8] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 30
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.280ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 71 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 4 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 29 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.139ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 91 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 58 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.133ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 84 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.172ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 75 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 27 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.783ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.398ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.204ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.166ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.156ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.176ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.689ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.578ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.389ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.501ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.472ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.301ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.477ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.258ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.427ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.325ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[11.415ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.509ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.322ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.556ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.536ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.282ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.231ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.317ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.270ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.262ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.331ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.286ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.490ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.324ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.638ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.324ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.815ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.574ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.541ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.197ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.169ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.196ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.334ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.598ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.165ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.490ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.366ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.453ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.580ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.440ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.882ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.413ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.280ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.347ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.139ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.267ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.322ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.154ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.118ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.286ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.350ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.188ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.155ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:29 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[4.632ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[2.074ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.451ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.499ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.189ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.139ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.175ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.193ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.138ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 53 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.252ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 8 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 3 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:36 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.835ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.743ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 20
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.300ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 12 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.183ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 6 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 13 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.322ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 92 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.352ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 22 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.741ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 82 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.510ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 50 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 21 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.750ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 57 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.398ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 98 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.490ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.897ms] [rows:8] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 30
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.214ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 71 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.214ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 4 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.123ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 29 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 91 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.121ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 58 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.132ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 84 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.122ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 75 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:12:38 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 27 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.535ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.452ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.344ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.394ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.212ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.438ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.469ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.294ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.289ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.523ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.175ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.188ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.260ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.315ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.266ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.278ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.461ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.198ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.182ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.212ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:18:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.242ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.687ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.558ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.196ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.144ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.030ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.449ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.575ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.371ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.459ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.357ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.326ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.343ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.341ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.164ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.165ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.890ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.372ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.372ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.173ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.155ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.150ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.177ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.871ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.598ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.310ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.162ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.182ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.255ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.208ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.144ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.184ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.808ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.222ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.291ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.318ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.878ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.321ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.235ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.210ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.471ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.220ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.224ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.149ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:20:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.901ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[2.291ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[4.635ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.521ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.190ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.235ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.509ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.180ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.125ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.196ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.112ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.379ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.441ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.259ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.245ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.218ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.124ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.139ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.153ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.097ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.176ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.184ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.092ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.089ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.177ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.533ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.204ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.155ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.317ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.188ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.206ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.419ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.356ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.781ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.284ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.120ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.219ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.184ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.337ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.107ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.187ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.201ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.247ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.226ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.355ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 21:38:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.285ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.762ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[5.602ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.892ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.704ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.379ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[12.047ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.624ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.229ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.192ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.144ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.278ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.376ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.136ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.264ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.121ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.108ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.148ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.104ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.112ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.109ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.104ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.414ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.358ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.194ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.164ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.149ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.186ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.162ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.348ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.620ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.292ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.186ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.148ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.496ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.085ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.636ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.238ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.165ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:00:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.226ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.768ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.411ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.250ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.172ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.122ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.120ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.124ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.356ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.606ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.683ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.284ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.356ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.293ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.289ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.287ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.202ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.185ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.186ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.248ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:24 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.181ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.998ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.351ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.535ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.704ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.746ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.458ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.280ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.834ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.328ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 53 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.331ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 8 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.293ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 3 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.166ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.892ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.667ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 20
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.339ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 12 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.191ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 6 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.156ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 13 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 92 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.136ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 22 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.135ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 82 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.117ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 50 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 21 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.113ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 57 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.130ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 98 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.143ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 186 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.250ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.428ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 186 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.209ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.297ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 186 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:23:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.188ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 186 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[2.549ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.784ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.031ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.156ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.237ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.169ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.232ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.423ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.180ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.719ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.913ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.294ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.153ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.133ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.153ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:19 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.161ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.332ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.469ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.236ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.159ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.124ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.109ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.118ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.115ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.101ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.122ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.263ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.357ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.662ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.337ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.357ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.366ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.514ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.173ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.307ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.216ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:21 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.727ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.843ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.233ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.170ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.145ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.148ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.148ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.354ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.232ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 53 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.136ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 8 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.138ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 3 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.119ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.025ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.156ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 20
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.018ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 12 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.396ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 6 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.195ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 13 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.253ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 92 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.406ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 22 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.924ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 82 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.409ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 50 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.166ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 21 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.178ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 57 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:22 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.258ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 98 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.425ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.465ms] [rows:8] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 30
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.178ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 71 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 4 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 29 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.229ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 91 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.495ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 58 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.183ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 84 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.128ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 75 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:23 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.213ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 27 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.753ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.711ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.277ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.199ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.184ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.368ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.468ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.222ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.143ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.172ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.453ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.397ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.221ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.213ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.239ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.125ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.121ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.109ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:24:27 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[4.104ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[3.250ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[2.375ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.567ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.551ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.239ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.267ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.501ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.580ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.256ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.175ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.183ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.153ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.644ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.051ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.309ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.288ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.239ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.187ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.215ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.122ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.140ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.110ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:28:37 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.110ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[9.973ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.533ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.377ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.219ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.175ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.186ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.231ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.480ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.390ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.210ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.271ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.186ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.758ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.470ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.280ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.601ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.474ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.591ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[12.992ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.333ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.248ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:00 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.144ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.008ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.243ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 10
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.260ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 77 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.130ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 42 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.135ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 69 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 64 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.264ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.146ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 53 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.430ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 8 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.748ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 3 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.418ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 17 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.758ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.928ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10 OFFSET 20
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.381ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 12 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.327ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 6 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.319ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 13 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.357ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 92 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.292ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 22 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.250ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 82 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.256ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 50 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.262ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 21 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.375ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 57 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:01 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.872ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 98 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:03 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.901ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 173 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:03 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.206ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:03 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.206ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 173 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:03 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.265ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:03 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.442ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 173 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:03 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.209ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 173 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[1.096ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.677ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.344ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.188ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.148ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.240ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.136ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.122ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.849ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.960ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.901ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[2.078ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.193ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.178ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.157ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.153ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.183ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.157ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:04 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.143ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:05 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.888ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:05 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.369ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:05 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.409ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:05 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.193ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:05 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[1.118ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:05 /Users/yzletter/go_project/go-postery/database/gorm/post.go:80
+[0.977ms] [rows:1] SELECT * FROM `post` WHERE delete_time is null AND `post`.`id` = 211 ORDER BY `post`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.668ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.486ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.247ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.223ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.304ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.405ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.557ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.167ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.175ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.163ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.277ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.565ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.296ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.372ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.205ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.204ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.161ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.135ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.319ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.122ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:06 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.115ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:76
+[1.363ms] [rows:1] SELECT * FROM `user` WHERE name='yzletter' ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.567ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.120ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.315ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.171ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.232ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[3.454ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[4.803ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.455ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.203ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.166ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.137ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.268ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.337ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.361ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.213ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.162ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.254ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.163ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.152ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.173ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.258ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.224ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:12 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.191ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 45 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:26
+[4.180ms] [rows:1] INSERT INTO `post` (`user_id`,`title`,`content`,`create_time`,`delete_time`) VALUES (9999,'测试Prometheus','测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus测试Prometheus','2025-11-27 22:30:26.919',NULL)
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[4.169ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[3.038ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.700ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[4.017ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.884ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.352ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.234ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.287ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.194ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.198ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.243ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.210ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.402ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.458ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.206ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.126ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.211ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.142ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:26 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.141ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.582ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[1.073ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.415ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.645ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.274ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.793ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.398ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[1.150ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.316ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.164ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.157ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.195ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:97
+[0.282ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/post.go:106
+[0.391ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.185ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.165ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.191ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.318ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.475ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.332ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.207ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.193ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.339ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/11/27 22:30:28 /Users/yzletter/go_project/go-postery/database/gorm/user.go:61
+[0.236ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 34 ORDER BY `user`.`id` LIMIT 1

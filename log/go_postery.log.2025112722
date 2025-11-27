@@ -1,0 +1,23 @@
+time="2025-11-27 22:03:23.458" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-27 22:10:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-27 22:19:17.259" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:19 msg="signal interrupt has come, start exiting ..."
+time="2025-11-27 22:19:17.259" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:103 msg="close GoPosteryDB succeed"
+time="2025-11-27 22:19:17.259" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:24 msg="all task has finished"
+time="2025-11-27 22:20:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-27 22:23:27.818" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:23:27.819" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:24:09.053" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:19 msg="signal interrupt has come, start exiting ..."
+time="2025-11-27 22:24:09.053" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:103 msg="close GoPosteryDB succeed"
+time="2025-11-27 22:24:09.053" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:24 msg="all task has finished"
+time="2025-11-27 22:28:37.940" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9999
+time="2025-11-27 22:29:39.008" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:19 msg="signal interrupt has come, start exiting ..."
+time="2025-11-27 22:29:39.008" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:103 msg="close GoPosteryDB succeed"
+time="2025-11-27 22:29:39.008" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:24 msg="all task has finished"
+time="2025-11-27 22:30:00.006" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-27 22:30:03.531" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:30:03.533" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:30:05.363" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:30:05.366" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:30:12.898" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9999
+time="2025-11-27 22:30:26.918" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 22:40:00.007" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
