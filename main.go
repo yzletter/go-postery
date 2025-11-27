@@ -42,6 +42,7 @@ func main() {
 	engine.GET("/posts/delete/:id", handler.AuthHandlerFunc, handler.DeletePostHandler) // 删除帖子
 	engine.POST("/posts/update", handler.AuthHandlerFunc, handler.UpdatePostHandler)    // 修改帖子
 	engine.GET("/posts/belong", handler.PostBelongHandler)                              // 查询帖子是否归属当前登录用户
+
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
 	}
