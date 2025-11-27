@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"path"
 	"time"
@@ -75,4 +76,18 @@ func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 
 	// 赋给全局变量 GoPosteryDB
 	GoPosteryDB = db
+}
+
+// Ping ping 一下数据库 保持连接
+func Ping() {
+	if GoPosteryDB != nil {
+		sqlDB, _ := GoPosteryDB.DB()
+		err := sqlDB.Ping()
+		if err != nil {
+			slog.Info("ping GoPosteryDB failed")
+			return
+		}
+		slog.Info("ping GoPosteryDB succeed")
+		return
+	}
 }

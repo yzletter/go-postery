@@ -7,13 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 	database "github.com/yzletter/go-postery/database/gorm"
 	handler "github.com/yzletter/go-postery/handler/gin"
+	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 )
 
 func main() {
 	// 初始化
-	utils.InitSlog("./log/go_postery.log")
-	database.ConnectToDB("./conf", "db", utils.YAML, "./log")
+	SlogConfPath := "./log/go_postery.log"
+	utils.InitSlog(SlogConfPath)                              // 初始化 slog
+	service.InitCrontab()                                     // 初始化 定时任务
+	database.ConnectToDB("./conf", "db", utils.YAML, "./log") // 初始化数据库
 
 	engine := gin.Default()
 
