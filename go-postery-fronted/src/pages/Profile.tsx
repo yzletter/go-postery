@@ -86,7 +86,7 @@ export default function Profile() {
           <div className="card text-center">
             <div className="mb-4">
               <img
-                src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
                 alt={user.name}
                 className="w-24 h-24 rounded-full mx-auto border-4 border-primary-100"
               />

@@ -61,8 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newUser: User = {
         id: responseData.user.id || Date.now().toString(),
         name: responseData.user.name,
-        email: responseData.user.email || `${username}@example.com`,
-        avatar: responseData.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`
+        email: responseData.user.email || `${username}@example.com`
       }
       
       setUser(newUser)
@@ -86,8 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const newUser: User = {
             id: Date.now().toString(),
             name: username,
-            email: `${username}@example.com`, // 模拟邮箱
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+            email: `${username}@example.com` // 模拟邮箱
           }
           setUser(newUser)
           // 模拟Cookie认证：创建模拟token并保存
@@ -106,8 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const newUser: User = {
             id: Date.now().toString(),
             name: username,
-            email: `${username}@example.com`, // 模拟邮箱
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+            email: `${username}@example.com` // 模拟邮箱
           }
           setUser(newUser)
           localStorage.setItem('user', JSON.stringify(newUser))
@@ -149,8 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newUser: User = {
         id: responseData.user.id || Date.now().toString(),
         name: responseData.user.name,
-        email: responseData.user.email,
-        avatar: responseData.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`
+        email: responseData.user.email
       }
       
       setUser(newUser)
@@ -168,8 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const newUser: User = {
             id: Date.now().toString(),
             name: name,
-            email: email,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
+            email: email
           }
           setUser(newUser)
           // 模拟注册时也保存token
@@ -187,8 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const newUser: User = {
             id: Date.now().toString(),
             name: name,
-            email: email,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`
+            email: email
           }
           setUser(newUser)
           localStorage.setItem('user', JSON.stringify(newUser))

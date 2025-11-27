@@ -8,7 +8,6 @@ export interface User {
   id: string
   name: string
   email?: string // 邮箱变为可选
-  avatar?: string
 }
 
 export interface Post {
@@ -18,12 +17,8 @@ export interface Post {
   author: {
     id: string
     name: string
-    avatar?: string
   }
   createdAt: string
-  updatedAt?: string
-
-
 }
 
 export interface Comment {
@@ -32,7 +27,6 @@ export interface Comment {
   author: {
     id: string
     name: string
-    avatar?: string
   }
   createdAt: string
   replies?: Comment[]

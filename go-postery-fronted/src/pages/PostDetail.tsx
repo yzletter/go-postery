@@ -28,12 +28,9 @@ const mockPost: Post = {
 希望你能在这里找到志同道合的朋友，分享知识和经验！`,
   author: {
     id: '1',
-    name: '管理员',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+    name: '管理员'
   },
-  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-
-
+  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
@@ -51,20 +48,24 @@ export default function PostDetail() {
       
       setIsLoading(true)
       try {
-        // 暂时禁用后端调用，使用模拟数据
-        console.log('帖子详情API调用已禁用，使用模拟数据')
+        // 启用后端调用进行接口测试
+        console.log('帖子详情API调用已启用，进行接口测试')
         
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        // 返回模拟数据
-        setPost(mockPost)
-        return
-        
-        /* 原始的后端调用代码，暂时注释
-        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+        const response = await fetch(`http://localhost:8080/posts/${id}`, {
           credentials: 'include', // 关键：确保Cookie随请求发送
         })
+        
+        // 检查响应状态
+        if (!response.ok) {
+          throw new Error(`HTTP错误: ${response.status}`)
+        }
+        
+        // 检查内容类型
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('响应不是JSON格式')
+        }
+        
         const result: ApiResponse = await response.json()
         
         // 根据API文档：code为0表示成功，1表示失败
@@ -79,12 +80,10 @@ export default function PostDetail() {
         }
         
         setPost(responseData)
-        */
       } catch (error) {
         console.error('Failed to fetch post:', error)
-        // API调用已禁用，错误处理也相应简化
-        console.warn('帖子详情API调用已禁用，保持使用模拟数据')
-        setPost(mockPost)
+        // 接口测试期间，直接抛出错误而不是回退到模拟数据
+        throw error
       } finally {
         setIsLoading(false)
       }
@@ -110,7 +109,7 @@ export default function PostDetail() {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="card text-center py-12">
-          <p className="text-gray-500">帖子不存在</p>
+          <p className="text-gray-500">帖子不存在或加载失败</p>
         </div>
       </div>
     )
@@ -140,7 +139,7 @@ export default function PostDetail() {
           {/* 作者信息 */}
           <div className="flex items-center space-x-4 mb-4">
             <img
-              src={post.author.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
               alt={post.author.name}
               className="w-10 h-10 rounded-full"
             />

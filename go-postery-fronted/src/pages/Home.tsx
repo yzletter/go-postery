@@ -55,8 +55,7 @@ const generateMockPost = (id: string, index: number): Post => {
     content: contents[index % contents.length],
     author: {
       id: author.id,
-      name: author.name,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.id}${index}`
+      name: author.name
     },
     createdAt: new Date(Date.now() - (index * 60 * 60 * 1000)).toISOString(),
 
@@ -70,29 +69,10 @@ const TOTAL_POSTS_LIMIT = 20
 // API 获取帖子列表
 const fetchPosts = async (page: number, pageSize: number = 10): Promise<Post[]> => {
   try {
-    // 暂时禁用后端调用，使用模拟数据
-    console.log('帖子列表API调用已禁用，使用模拟数据')
+    // 启用后端调用进行接口测试
+    console.log('帖子列表API调用已启用，进行接口测试')
     
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // 返回模拟数据
-    const posts: Post[] = []
-    const startIndex = (page - 1) * pageSize
-    
-    // 限制总数据量为 20 条
-    const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
-    const currentPageSize = Math.min(pageSize, remainingPosts)
-    
-    for (let i = 0; i < currentPageSize; i++) {
-      const index = startIndex + i
-      posts.push(generateMockPost(`${page}-${i + 1}`, index))
-    }
-    
-    return posts
-    
-    /* 原始的后端调用代码，暂时注释
-    const response = await fetch(`${API_BASE_URL}/posts?page=${page}&pageSize=${pageSize}`, {
+    const response = await fetch(`http://localhost:8080/posts?pageNo=${page}&pageSize=${pageSize}`, {
       credentials: 'include', // 关键：确保Cookie随请求发送
     })
     
@@ -121,49 +101,31 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<Post[]> 
     }
     
     return responseData.posts
+    
+    /* 模拟数据代码，暂时注释
+    console.log('帖子列表API调用已禁用，使用模拟数据')
+    
+    // 模拟网络延迟
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    // 返回模拟数据
+    const posts: Post[] = []
+    const startIndex = (page - 1) * pageSize
+    
+    // 限制总数据量为 20 条
+    const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
+    const currentPageSize = Math.min(pageSize, remainingPosts)
+    
+    for (let i = 0; i < currentPageSize; i++) {
+      const index = startIndex + i
+      posts.push(generateMockPost(`${page}-${i + 1}`, index))
+    }
+    
+    return posts
     */
   } catch (error) {
     console.error('Failed to fetch posts:', error)
-    // 如果后端不可用，使用模拟数据（仅用于开发演示）
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.warn('后端 API 不可用，使用模拟帖子数据（仅用于开发）')
-      // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const startIndex = (page - 1) * pageSize
-      const posts: Post[] = []
-      
-      // 限制总数据量为 20 条
-      const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
-      const currentPageSize = Math.min(pageSize, remainingPosts)
-      
-      for (let i = 0; i < currentPageSize; i++) {
-        const index = startIndex + i
-        posts.push(generateMockPost(`${page}-${i + 1}`, index))
-      }
-      
-      return posts
-    }
-    // 处理响应格式错误的情况，也使用模拟数据
-    if (error instanceof Error && error.message.includes('响应数据格式错误')) {
-      console.warn('后端响应格式错误，使用模拟帖子数据（仅用于开发）')
-      // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const startIndex = (page - 1) * pageSize
-      const posts: Post[] = []
-      
-      // 限制总数据量为 20 条
-      const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
-      const currentPageSize = Math.min(pageSize, remainingPosts)
-      
-      for (let i = 0; i < currentPageSize; i++) {
-        const index = startIndex + i
-        posts.push(generateMockPost(`${page}-${i + 1}`, index))
-      }
-      
-      return posts
-    }
+    // 接口测试期间，直接抛出错误而不是回退到模拟数据
     throw error
   }
 }
@@ -253,12 +215,13 @@ export default function Home() {
               <Link
                 key={post.id}
                 to={`/post/${post.id}`}
-                className="card block hover:shadow-lg transition-all"
+                className="card block hover:shadow-lg transition-all mx-auto"
+                style={{ width: '90%', padding: '1.575rem' }}  /* 原p-6为1.5rem，增加5%高度到1.575rem */
               >
                 <div className="flex items-start space-x-4">
                   {/* 用户头像 */}
                   <img
-                    src={post.author.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
                     alt={post.author.name}
                     className="w-12 h-12 rounded-full flex-shrink-0"
                   />

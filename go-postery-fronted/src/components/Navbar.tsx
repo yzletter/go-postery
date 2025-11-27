@@ -43,7 +43,7 @@ export default function Navbar() {
                     className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <img
-                      src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
                       alt={user.name}
                       className="w-8 h-8 rounded-full"
                     />
