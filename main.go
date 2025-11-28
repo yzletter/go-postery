@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	database "github.com/yzletter/go-postery/database/gorm"
+	"github.com/yzletter/go-postery/database/redis"
 	handler "github.com/yzletter/go-postery/handler/gin"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
@@ -15,11 +16,14 @@ import (
 func main() {
 	// 初始化
 	SlogConfPath := "./log/go_postery.log"
-	utils.InitSlog(SlogConfPath)                              // 初始化 slog
-	service.InitCrontab()                                     // 初始化 定时任务
-	service.InitSmoothExit()                                  // 初始化 优雅退出
-	database.ConnectToDB("./conf", "db", utils.YAML, "./log") // 初始化数据库
+	utils.InitSlog(SlogConfPath) // 初始化 slog
+	service.InitCrontab()        // 初始化 定时任务
+	service.InitSmoothExit()     // 初始化 优雅退出
 
+	database.ConnectToMySQL("./conf", "db", utils.YAML, "./log") // 初始化 MySQL 数据库
+	redis.ConnectToRedis("./conf", "redis", utils.YAML)          // 初始化 Redis 数据库
+
+	// 初始化 gin
 	engine := gin.Default()
 
 	// 配置跨域

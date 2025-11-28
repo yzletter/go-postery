@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	database "github.com/yzletter/go-postery/database/gorm"
+	"github.com/yzletter/go-postery/database/redis"
 )
 
 func InitSmoothExit() {
@@ -20,8 +21,10 @@ func InitSmoothExit() {
 
 		// 退出前具体要做的工作
 		database.CloseConnection() // 这里以关闭数据库连接为例
+		redis.CloseConnection()
 
 		slog.Info("all task has finished")
+
 		// 退出所有进程
 		os.Exit(0)
 	}

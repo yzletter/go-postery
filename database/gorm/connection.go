@@ -19,8 +19,8 @@ var (
 	GoPosteryMySQLDB *gorm.DB // 定义全局数据库变量 GoPosteryMySQLDB
 )
 
-// ConnectToDB 连接到 MySQL 数据库, 生成一个 *gorm.DB 赋给全局数据库变量 GoPosteryMySQLDB
-func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
+// ConnectToMySQL 连接到 MySQL 数据库, 生成一个 *gorm.DB 赋给全局数据库变量 GoPosteryMySQLDB
+func ConnectToMySQL(confDir, confFileName, confFileType, logDir string) {
 	// 读取 MySQL 相关配置
 	viper := utils.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
 	host := viper.GetString("mysql.host")
@@ -37,7 +37,7 @@ func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 	// 设置 logger 相关配置
 	logFile, err := os.OpenFile(path.Join(logDir, logFileName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm) // 打开日志文件
 	if err != nil {
-		panic(fmt.Errorf("go-postery ConnectToDB : 打开目标 logger 文件失败 %s", err))
+		panic(fmt.Errorf("go-postery ConnectToMySQL : 打开目标 logger 文件失败 %s", err))
 	}
 	loggerConfig := logger.Config{ // logger 相关配置
 		SlowThreshold:             100 * time.Millisecond, // 超过此阈值为慢查询
@@ -64,9 +64,11 @@ func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 	// 建立 MySQL 连接
 	db, err := gorm.Open(mysql.Open(dataSourceName), gormConfig) // 生成一个 *gorm.DB
 	if err != nil {
-		panic(fmt.Errorf("go-postery ConnectToDB : 连接到数据库出错 %s", err))
+		slog.Error("connect to MySQL failed", "error", err)
+		panic(fmt.Errorf("go-postery ConnectToMySQL : 连接到数据库出错 %s", err))
 	}
-
+	slog.Info("connect to MySQL succeed")
+	
 	// 设置连接池相关配置
 	sqlDB, _ := db.DB()
 	sqlDB.SetMaxIdleConns(10)  // 连接池中空闲连接数目上限, 超出此上限就把相应的连接关闭掉

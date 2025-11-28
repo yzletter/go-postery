@@ -8,7 +8,7 @@ import (
 )
 
 func TestConnection(t *testing.T) {
-	database.ConnectToDB("../../conf", "db", utils.YAML, "../../log")
+	database.ConnectToMySQL("../../conf", "db", utils.YAML, "../../log")
 	sqlDB, err := database.GoPosteryMySQLDB.DB()
 	if err != nil {
 		t.Fatalf("获取 sql.DB 失败: %v", err)

@@ -12,7 +12,7 @@ import (
 
 func init() {
 	utils.InitSlog("../../log/go_postery.log")
-	database.ConnectToDB("../../conf", "db", utils.YAML, "../../log")
+	database.ConnectToMySQL("../../conf", "db", utils.YAML, "../../log")
 }
 
 func TestRegisterUser(t *testing.T) {
