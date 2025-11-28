@@ -105,3 +105,53 @@ time="2025-11-28 15:05:38.928" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-11-28 15:05:38.929" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
 time="2025-11-28 15:05:38.929" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313493 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:9999 Name:yzletter]]}"
 time="2025-11-28 15:05:38.929" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:9999 Name:yzletter}"
+time="2025-11-28 15:07:18.084" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:188 msg=注册成功 user="{Id:10000 Name:sylar}"
+time="2025-11-28 15:07:33.154" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313638 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10000 Name:sylar]]}"
+time="2025-11-28 15:07:33.154" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10000 Name:sylar}"
+time="2025-11-28 15:07:33.154" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user="&{Id:10000 Name:sylar}"
+time="2025-11-28 15:07:33.156" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313638 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10000 Name:sylar]]}"
+time="2025-11-28 15:07:33.156" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10000 Name:sylar}"
+time="2025-11-28 15:07:33.156" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user="&{Id:10000 Name:sylar}"
+time="2025-11-28 15:07:51.055" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
+time="2025-11-28 15:07:51.055" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:297 msg=Auth error="redis: nil"
+time="2025-11-28 15:07:51.057" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
+time="2025-11-28 15:07:51.067" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:297 msg=Auth error="redis: nil"
+time="2025-11-28 15:07:52.661" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
+time="2025-11-28 15:07:52.678" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:297 msg=Auth error="redis: nil"
+time="2025-11-28 15:07:52.679" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
+time="2025-11-28 15:07:52.680" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:297 msg=Auth error="redis: nil"
+time="2025-11-28 15:08:02.964" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:32 msg="Auth verify AccessToken ..." user=<nil>
+time="2025-11-28 15:08:02.965" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:48 msg="Auth verify RefreshToken failed"
+time="2025-11-28 15:09:29.470" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:32 msg="Auth verify AccessToken ..." user=<nil>
+time="2025-11-28 15:09:29.471" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:48 msg="Auth verify RefreshToken failed"
+time="2025-11-28 15:10:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-28 15:10:00.013" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"
+time="2025-11-28 15:11:21.159" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:20 msg="signal interrupt has come, start exiting ..."
+time="2025-11-28 15:11:21.159" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:105 msg="close GoPosteryMySQLDB succeed"
+time="2025-11-28 15:11:21.159" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:64 msg="close GoPosteryRedisClient succeed"
+time="2025-11-28 15:11:21.159" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:26 msg="all task has finished"
+time="2025-11-28 15:11:25.532" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:70 msg="connect to MySQL succeed"
+time="2025-11-28 15:11:25.536" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:40 msg="connect to Redis succeed"
+time="2025-11-28 15:11:59.101" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:188 msg=注册成功 user="{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:00.417" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313919 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10001 Name:sylar]]}"
+time="2025-11-28 15:12:00.417" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:00.417" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user="&{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:00.439" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313919 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10001 Name:sylar]]}"
+time="2025-11-28 15:12:00.439" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:00.439" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user="&{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:09.413" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
+time="2025-11-28 15:12:09.414" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313919 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10001 Name:sylar]]}"
+time="2025-11-28 15:12:09.414" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:09.415" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:289 msg=Auth user=<nil>
+time="2025-11-28 15:12:09.415" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313919 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10001 Name:sylar]]}"
+time="2025-11-28 15:12:09.415" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:18.530" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:89 msg="成功从 Token 中校验出 payload" payload="&{ID: Issue:yzletter Audience: Subject: IssueAt:1764313919 NotBefore:0 Expiration:0 UserDefined:map[userInfo:map[Id:10001 Name:sylar]]}"
+time="2025-11-28 15:12:18.530" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:96 msg="成功从 Token 中拿出 userinfo" user="{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:18.530" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:32 msg="Auth verify AccessToken ..." user="&{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:18.530" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:36 msg="Auth verify AccessToken succeed" user="&{Id:10001 Name:sylar}"
+time="2025-11-28 15:12:29.778" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:20 msg="signal interrupt has come, start exiting ..."
+time="2025-11-28 15:12:29.779" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:105 msg="close GoPosteryMySQLDB succeed"
+time="2025-11-28 15:12:29.779" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:64 msg="close GoPosteryRedisClient succeed"
+time="2025-11-28 15:12:29.779" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:26 msg="all task has finished"
+time="2025-11-28 15:12:40.806" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:70 msg="connect to MySQL succeed"
+time="2025-11-28 15:12:40.807" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:40 msg="connect to Redis succeed"

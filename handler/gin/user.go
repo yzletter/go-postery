@@ -212,7 +212,7 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	redis.GoPosteryRedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400)
+	redis.GoPosteryRedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
