@@ -6,18 +6,18 @@ import (
 	"fmt"
 	"testing"
 
-	database "github.com/yzletter/go-postery/database/gorm"
+	database2 "github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/utils"
 )
 
 func init() {
 	utils.InitSlog("../../log/go_postery.log")
-	database.ConnectToMySQL("../../conf", "db", utils.YAML, "../../log")
+	database2.ConnectToMySQL("../../conf", "db", utils.YAML, "../../log")
 }
 
 func TestRegisterUser(t *testing.T) {
 	// 注册一次 yzletter, 结果应为成功
-	id1, err := database.RegisterUser("yzletter2", hash("123456"))
+	id1, err := database2.RegisterUser("yzletter2", hash("123456"))
 	if err != nil {
 		fmt.Printf("用户[%d]注册失败 \n", id1)
 		t.Fatal()
@@ -26,7 +26,7 @@ func TestRegisterUser(t *testing.T) {
 	}
 
 	// 再注册一次 yzletter, 结果应为失败
-	id2, err := database.RegisterUser("yzletter", hash("123456"))
+	id2, err := database2.RegisterUser("yzletter", hash("123456"))
 	if err == nil {
 		fmt.Printf("用户[%d]重复成功 \n", id2)
 		t.Fatal()
@@ -38,10 +38,10 @@ func TestRegisterUser(t *testing.T) {
 func TestLogOffUser(t *testing.T) {
 	var uid = 7
 	// 删前查询
-	user := database.GetUserById(uid)
+	user := database2.GetUserById(uid)
 	fmt.Println(user)
 
-	err := database.LogOffUser(uid)
+	err := database2.LogOffUser(uid)
 	if err != nil {
 		t.Fatal(err)
 	} else {
@@ -49,11 +49,11 @@ func TestLogOffUser(t *testing.T) {
 	}
 
 	// 删完后再查询
-	user = database.GetUserById(uid)
+	user = database2.GetUserById(uid)
 	fmt.Println(user)
 
 	// 再删一次
-	err = database.LogOffUser(uid)
+	err = database2.LogOffUser(uid)
 	if err == nil {
 		t.Fatal(err)
 	} else {
@@ -63,7 +63,7 @@ func TestLogOffUser(t *testing.T) {
 
 func TestUpdatePassword(t *testing.T) {
 	var uid = 9
-	err := database.UpdatePassword(uid, hash("123456"), hash("654321"))
+	err := database2.UpdatePassword(uid, hash("123456"), hash("654321"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,13 +71,13 @@ func TestUpdatePassword(t *testing.T) {
 
 func TestGetUserByName(t *testing.T) {
 	// 注册一次 yzletter, 结果应为成功
-	id, _ := database.RegisterUser("getuserbyname", hash("123456"))
-	user := database.GetUserById(id)
+	id, _ := database2.RegisterUser("getuserbyname", hash("123456"))
+	user := database2.GetUserById(id)
 	if user != nil {
-		result := database.GetUserByName(user.Name)
+		result := database2.GetUserByName(user.Name)
 		fmt.Println(result)
 	}
-	_ = database.LogOffUser(id)
+	_ = database2.LogOffUser(id)
 }
 
 // 返回字符串 MD5 哈希后 32 位的十六进制编码结果

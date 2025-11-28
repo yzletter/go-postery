@@ -1,4 +1,4 @@
-package handler
+package middleware
 
 import (
 	"encoding/json"
@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/database/redis"
-	"github.com/yzletter/go-postery/handler/model"
+	"github.com/yzletter/go-postery/dto"
+	"github.com/yzletter/go-postery/repository/redis"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -27,8 +27,8 @@ var (
 // AuthHandlerFunc 身份认证中间件
 func AuthHandlerFunc(ctx *gin.Context) {
 	// 尝试通过 AccessToken 认证
-	accessToken := getTokenFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME)
-	userInfo := getUserInfoFromJWT(accessToken)
+	accessToken := GetTokenFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME)
+	userInfo := GetUserInfoFromJWT(accessToken)
 	slog.Info("Auth verify AccessToken ...", "user", userInfo)
 
 	if userInfo != nil {
@@ -41,7 +41,7 @@ func AuthHandlerFunc(ctx *gin.Context) {
 	}
 
 	// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
-	refreshToken := getTokenFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME)
+	refreshToken := GetTokenFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME)
 	result := redis.GoPosteryRedisClient.Get(REFRESH_KEY_PREFIX + refreshToken)
 	if result.Err() != nil { // 没拿到 redis 中存的 accessToken
 		// RefreshToken 也认证不通过, 没招了
@@ -54,7 +54,7 @@ func AuthHandlerFunc(ctx *gin.Context) {
 
 	// 如果 redis 能拿到, 重新放到 Cookie 中
 	accessToken = result.Val()
-	userInfo = getUserInfoFromJWT(accessToken)
+	userInfo = GetUserInfoFromJWT(accessToken)
 	if userInfo == nil {
 		// 虽然拿到了, 但是有问题 (很小概率)
 		slog.Info("Auth verify redis-AccessToken succeed", "user", userInfo)
@@ -70,8 +70,8 @@ func AuthHandlerFunc(ctx *gin.Context) {
 	}
 }
 
-// 从 cookie 中获取值
-func getTokenFromCookie(ctx *gin.Context, cookieName string) string {
+// GetTokenFromCookie 从 cookie 中获取值
+func GetTokenFromCookie(ctx *gin.Context, cookieName string) string {
 	cookie, err := ctx.Request.Cookie(cookieName)
 	if err != nil {
 		return ""
@@ -79,8 +79,8 @@ func getTokenFromCookie(ctx *gin.Context, cookieName string) string {
 	return cookie.Value
 }
 
-// 从 JWT Token 中获取 uid
-func getUserInfoFromJWT(jwtToken string) *model.UserInformation {
+// GetUserInfoFromJWT 从 JWT Token 中获取 uid
+func GetUserInfoFromJWT(jwtToken string) *dto.UserInformation {
 	payload, err := utils.VerifyJWT(jwtToken, JWTConfig.GetString("secret")) // 加密的 key 从配置文件中读取
 	if err != nil {
 		return nil // jwt 校验失败
@@ -91,7 +91,7 @@ func getUserInfoFromJWT(jwtToken string) *model.UserInformation {
 	for k, v := range payload.UserDefined {
 		if k == USERINFO_IN_JWT_PAYLOAD {
 			bs, _ := json.Marshal(v)
-			var userInfo model.UserInformation
+			var userInfo dto.UserInformation
 			_ = json.Unmarshal(bs, &userInfo)
 			slog.Info("成功从 Token 中拿出 userinfo", "user", userInfo)
 			return &userInfo // Json 反序列化 map[string]any 时，数字会被解析成 float64，而不是 int

@@ -6,9 +6,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	database "github.com/yzletter/go-postery/database/gorm"
-	"github.com/yzletter/go-postery/database/redis"
-	"github.com/yzletter/go-postery/handler/model"
+	"github.com/yzletter/go-postery/dto"
+	"github.com/yzletter/go-postery/middleware"
+	database2 "github.com/yzletter/go-postery/repository/gorm"
+	"github.com/yzletter/go-postery/repository/redis"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -28,11 +29,11 @@ func GetPostsHandler(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, posts := database.GetPostByPage(pageNo, pageSize)
+	total, posts := database2.GetPostByPage(pageNo, pageSize)
 	postsBack := []gin.H{}
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		user := database.GetUserById(post.UserId)
+		user := database2.GetUserById(post.UserId)
 		if user != nil {
 			post.UserName = user.Name
 		} else {
@@ -82,7 +83,7 @@ func GetPostDetailHandler(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	post := database.GetPostByID(pid)
+	post := database2.GetPostByID(pid)
 	if post == nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -94,7 +95,7 @@ func GetPostDetailHandler(ctx *gin.Context) {
 	}
 
 	// 获取作者用户名
-	user := database.GetUserById(post.UserId)
+	user := database2.GetUserById(post.UserId)
 	if user != nil {
 		post.UserName = user.Name
 	} else {
@@ -121,10 +122,10 @@ func GetPostDetailHandler(ctx *gin.Context) {
 // CreateNewPostHandler 创建帖子
 func CreateNewPostHandler(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(UID_IN_CTX).(int)
+	loginUid := ctx.Value(middleware.UID_IN_CTX).(int)
 
 	// 参数绑定
-	var createRequest model.CreateRequest
+	var createRequest dto.CreateRequest
 	err := ctx.ShouldBind(&createRequest)
 	if err != nil {
 		resp := utils.Resp{
@@ -137,7 +138,7 @@ func CreateNewPostHandler(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	pid, err := database.CreatePost(loginUid, createRequest.Title, createRequest.Content)
+	pid, err := database2.CreatePost(loginUid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		resp := utils.Resp{
@@ -162,7 +163,7 @@ func CreateNewPostHandler(ctx *gin.Context) {
 // DeletePostHandler 删除帖子
 func DeletePostHandler(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(UID_IN_CTX).(int)
+	loginUid := ctx.Value(middleware.UID_IN_CTX).(int)
 
 	// 再拿帖子 pid
 	pid, err := strconv.Atoi(ctx.Param("id"))
@@ -176,7 +177,7 @@ func DeletePostHandler(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	post := database.GetPostByID(pid)
+	post := database2.GetPostByID(pid)
 	if post == nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -195,7 +196,7 @@ func DeletePostHandler(ctx *gin.Context) {
 	}
 
 	// 进行删除
-	err = database.DeletePost(pid)
+	err = database2.DeletePost(pid)
 	if err != nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -216,10 +217,10 @@ func DeletePostHandler(ctx *gin.Context) {
 // UpdatePostHandler 修改帖子
 func UpdatePostHandler(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(UID_IN_CTX).(int)
+	loginUid := ctx.Value(middleware.UID_IN_CTX).(int)
 
 	// 参数绑定
-	var updateRequest model.CreateRequest
+	var updateRequest dto.UpdateRequest
 	err := ctx.ShouldBind(&updateRequest)
 	if err != nil || updateRequest.Id == 0 {
 		resp := utils.Resp{
@@ -231,7 +232,7 @@ func UpdatePostHandler(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	post := database.GetPostByID(updateRequest.Id)
+	post := database2.GetPostByID(updateRequest.Id)
 	if post == nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -250,7 +251,7 @@ func UpdatePostHandler(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = database.UpdatePost(updateRequest.Id, updateRequest.Title, updateRequest.Content)
+	err = database2.UpdatePost(updateRequest.Id, updateRequest.Title, updateRequest.Content)
 	if err != nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -283,15 +284,15 @@ func PostBelongHandler(ctx *gin.Context) {
 	}
 
 	// 获取登录 uid
-	accessToken := getTokenFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME)
-	userInfo := getUserInfoFromJWT(accessToken)
+	accessToken := middleware.GetTokenFromCookie(ctx, middleware.ACCESS_TOKEN_COOKIE_NAME)
+	userInfo := middleware.GetUserInfoFromJWT(accessToken)
 
 	slog.Info("Auth", "user", userInfo)
 
 	if userInfo == nil || userInfo.Id == 0 {
 		// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
-		refreshToken := getTokenFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME)
-		result := redis.GoPosteryRedisClient.Get(REFRESH_KEY_PREFIX + refreshToken)
+		refreshToken := middleware.GetTokenFromCookie(ctx, middleware.REFRESH_TOKEN_COOKIE_NAME)
+		result := redis.GoPosteryRedisClient.Get(middleware.REFRESH_KEY_PREFIX + refreshToken)
 		if result.Err() != nil { // 没拿到 redis 中存的 accessToken
 			// RefreshToken 也认证不通过, 没招了, 未登录, 后面不用看了
 			slog.Info("Auth", "error", result.Err())
@@ -307,7 +308,7 @@ func PostBelongHandler(ctx *gin.Context) {
 
 		// 如果 redis 能拿到, 重新放到 Cookie 中
 		accessToken = result.Val()
-		userInfo = getUserInfoFromJWT(accessToken)
+		userInfo = middleware.GetUserInfoFromJWT(accessToken)
 		if userInfo == nil {
 			// 虽然拿到了, 但是有问题 (很小概率)
 			resp := utils.Resp{
@@ -320,11 +321,11 @@ func PostBelongHandler(ctx *gin.Context) {
 		}
 
 		// 拿到了 AccessToken, 并且一切正常, 放入 Cookie 继续判断
-		ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+		ctx.SetCookie(middleware.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	}
 
 	// 判断登录用户是否是作者
-	post := database.GetPostByID(pid)
+	post := database2.GetPostByID(pid)
 	if post == nil || userInfo.Id != post.UserId {
 		resp := utils.Resp{
 			Code: 0,

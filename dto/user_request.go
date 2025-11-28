@@ -1,4 +1,4 @@
-package model
+package dto
 
 // UserInformation 用于存放进 ctx 的用户信息
 type UserInformation struct {

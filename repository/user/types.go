@@ -1,6 +1,8 @@
 package repository
 
-import "github.com/yzletter/go-postery/database/model"
+import (
+	"github.com/yzletter/go-postery/model"
+)
 
 // UserRepository 定义接口
 type UserRepository interface {

@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/rs/xid"
-	"github.com/yzletter/go-postery/database/redis"
+	"github.com/yzletter/go-postery/dto"
+	"github.com/yzletter/go-postery/middleware"
+	"github.com/yzletter/go-postery/repository/gorm"
+	"github.com/yzletter/go-postery/repository/redis"
 
 	"github.com/gin-gonic/gin"
-	database "github.com/yzletter/go-postery/database/gorm"
-	"github.com/yzletter/go-postery/handler/model"
 	"github.com/yzletter/go-postery/utils"
 )
 
 // LoginHandlerFunc 用户登录 Handler
 func LoginHandlerFunc(ctx *gin.Context) {
-	var loginRequest = model.LoginRequest{}
+	var loginRequest = dto.LoginRequest{}
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
@@ -49,7 +50,7 @@ func LoginHandlerFunc(ctx *gin.Context) {
 	}
 
 	// 将 user info 放入 jwt
-	userInfo := model.UserInformation{
+	userInfo := dto.UserInformation{
 		Id:   user.Id,
 		Name: user.Name,
 	}
@@ -62,11 +63,11 @@ func LoginHandlerFunc(ctx *gin.Context) {
 	// 生成 AccessToken
 	payload := utils.JwtPayload{
 		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                                 // 签发日期为当前时间
-		Expiration:  0,                                                 // 永不过期
-		UserDefined: map[string]any{USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+		IssueAt:     time.Now().Unix(),                                            // 签发日期为当前时间
+		Expiration:  0,                                                            // 永不过期
+		UserDefined: map[string]any{middleware.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	accessToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
+	accessToken, err := utils.GenJWT(payload, middleware.JWTConfig.GetString("secret"))
 	if err != nil {
 		// AccessToken 生成失败
 		slog.Error("AccessToken 生成失败", "error", err)
@@ -78,10 +79,10 @@ func LoginHandlerFunc(ctx *gin.Context) {
 	}
 
 	// 将双 Token 放进 Cookie
-	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
-	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	ctx.SetCookie(middleware.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
+	ctx.SetCookie(middleware.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	redis.GoPosteryRedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	redis.GoPosteryRedisClient.Set(middleware.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
@@ -99,8 +100,8 @@ func LoginHandlerFunc(ctx *gin.Context) {
 // LogoutHandlerFunc 用户登出 Handler
 func LogoutHandlerFunc(ctx *gin.Context) {
 	// 设置 Cookie 里的双 Token 都置为 -1
-	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
-	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(middleware.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(middleware.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 
 	resp := utils.Resp{
 		Code: 0,
@@ -111,7 +112,7 @@ func LogoutHandlerFunc(ctx *gin.Context) {
 
 // ModifyPassHandlerFunc 修改密码 Handler
 func ModifyPassHandlerFunc(ctx *gin.Context) {
-	var modifyPassRequest model.ModifyPasswordRequest
+	var modifyPassRequest dto.ModifyPasswordRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
@@ -125,7 +126,7 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, ok := ctx.Value(UID_IN_CTX).(int)
+	uid, ok := ctx.Value(middleware.UID_IN_CTX).(int)
 	if !ok {
 		// 没有登录
 		resp := utils.Resp{
@@ -157,7 +158,7 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 
 // RegisterHandlerFunc 用户注册 Handler
 func RegisterHandlerFunc(ctx *gin.Context) {
-	var registerRequest model.RegisterRequest
+	var registerRequest dto.RegisterRequest
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
 		// 参数绑定失败
@@ -180,7 +181,7 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	}
 
 	// 将 user info 放入 jwt
-	userInfo := model.UserInformation{
+	userInfo := dto.UserInformation{
 		Id:   uid,
 		Name: registerRequest.Name,
 	}
@@ -193,11 +194,11 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	// 生成 AccessToken
 	payload := utils.JwtPayload{
 		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                                 // 签发日期为当前时间
-		Expiration:  0,                                                 // 永不过期
-		UserDefined: map[string]any{USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+		IssueAt:     time.Now().Unix(),                                            // 签发日期为当前时间
+		Expiration:  0,                                                            // 永不过期
+		UserDefined: map[string]any{middleware.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	accessToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
+	accessToken, err := utils.GenJWT(payload, middleware.JWTConfig.GetString("secret"))
 	if err != nil {
 		// AccessToken 生成失败
 		slog.Error("AccessToken 生成失败", "error", err)
@@ -209,10 +210,10 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	}
 
 	// 将双 Token 放进 Cookie
-	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
-	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	ctx.SetCookie(middleware.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
+	ctx.SetCookie(middleware.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	redis.GoPosteryRedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	redis.GoPosteryRedisClient.Set(middleware.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{

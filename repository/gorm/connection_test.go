@@ -3,7 +3,7 @@ package database_test
 import (
 	"testing"
 
-	database "github.com/yzletter/go-postery/database/gorm"
+	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/utils"
 )
 

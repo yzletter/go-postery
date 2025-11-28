@@ -4,8 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/robfig/cron/v3"
-	database "github.com/yzletter/go-postery/database/gorm"
-	"github.com/yzletter/go-postery/database/redis"
+	"github.com/yzletter/go-postery/repository/gorm"
+	"github.com/yzletter/go-postery/repository/redis"
 )
 
 func InitCrontab() {
