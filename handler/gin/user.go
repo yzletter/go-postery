@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/xid"
+	"github.com/yzletter/go-postery/database/redis"
+
 	"github.com/gin-gonic/gin"
 	database "github.com/yzletter/go-postery/database/gorm"
 	"github.com/yzletter/go-postery/handler/model"
@@ -45,29 +48,40 @@ func LoginHandlerFunc(ctx *gin.Context) {
 		return
 	}
 
-	slog.Info("登录成功", "uid", user.Id)
+	// 将 user info 放入 jwt
+	userInfo := model.UserInformation{
+		Id:   user.Id,
+		Name: user.Name,
+	}
 
-	// 使用 JWT
+	slog.Info("登录成功", "user", userInfo)
+
+	// 生成 RefreshToken
+	refreshToken := xid.New().String() //	生成一个随机的字符串
+
+	// 生成 AccessToken
 	payload := utils.JwtPayload{
 		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                              // 签发日期为当前时间
-		Expiration:  time.Now().Add(86400 * 7 * time.Second).Unix(), // 7 天后过期
-		UserDefined: map[string]any{"uid": user.Id},                 // 用户自定义字段
+		IssueAt:     time.Now().Unix(),                                 // 签发日期为当前时间
+		Expiration:  0,                                                 // 永不过期
+		UserDefined: map[string]any{USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-
-	jwtToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
+	accessToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
 	if err != nil {
-		// jwt 生成失败
-		slog.Error("jwt 生成失败", "error", err)
+		// AccessToken 生成失败
+		slog.Error("AccessToken 生成失败", "error", err)
 		resp := utils.Resp{
 			Code: 1,
-			Msg:  "jwt 生成失败",
+			Msg:  "AccessToken 生成失败",
 		}
 		ctx.JSON(http.StatusInternalServerError, resp)
-	} else {
-		// 生成成功, 放入 Cookies
-		ctx.SetCookie(JWT_COOKIE_NAME, jwtToken, 86400*7, "/", "localhost", false, true)
 	}
+
+	// 将双 Token 放进 Cookie
+	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
+	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	// < session_refreshToken, accessToken > 放入 redis
+	redis.GoPosteryRedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
@@ -84,8 +98,10 @@ func LoginHandlerFunc(ctx *gin.Context) {
 
 // LogoutHandlerFunc 用户登出 Handler
 func LogoutHandlerFunc(ctx *gin.Context) {
-	// 设置 Cookie 里的 JWT 为 -1
-	ctx.SetCookie(JWT_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+	// 设置 Cookie 里的双 Token 都置为 -1
+	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+
 	resp := utils.Resp{
 		Code: 0,
 		Msg:  "登出成功",
@@ -153,7 +169,7 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 		return
 	}
 
-	_, err = database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
+	uid, err := database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
 	if err != nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -163,40 +179,40 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 		return
 	}
 
-	slog.Info("注册成功", "name", registerRequest.Name)
-
-	// 记录注册用户登录态
-	user := database.GetUserByName(registerRequest.Name)
-	if user == nil {
-		// 根据 name 未找到 user
-		resp := utils.Resp{
-			Code: 1,
-			Msg:  "用户名或密码错误",
-		}
-		ctx.JSON(http.StatusBadRequest, resp)
-		return
+	// 将 user info 放入 jwt
+	userInfo := model.UserInformation{
+		Id:   uid,
+		Name: registerRequest.Name,
 	}
-	// 使用 JWT
+
+	slog.Info("注册成功", "user", userInfo)
+
+	// 生成 RefreshToken
+	refreshToken := xid.New().String() //	生成一个随机的字符串
+
+	// 生成 AccessToken
 	payload := utils.JwtPayload{
 		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                              // 签发日期为当前时间
-		Expiration:  time.Now().Add(86400 * 7 * time.Second).Unix(), // 7 天后过期
-		UserDefined: map[string]any{"uid": user.Id},                 // 用户自定义字段
+		IssueAt:     time.Now().Unix(),                                 // 签发日期为当前时间
+		Expiration:  0,                                                 // 永不过期
+		UserDefined: map[string]any{USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-
-	jwtToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
+	accessToken, err := utils.GenJWT(payload, JWTConfig.GetString("secret"))
 	if err != nil {
-		// jwt 生成失败
-		slog.Error("jwt 生成失败", "error", err)
+		// AccessToken 生成失败
+		slog.Error("AccessToken 生成失败", "error", err)
 		resp := utils.Resp{
 			Code: 1,
-			Msg:  "jwt 生成失败",
+			Msg:  "AccessToken 生成失败",
 		}
 		ctx.JSON(http.StatusInternalServerError, resp)
-	} else {
-		// 生成成功, 放入 Cookies
-		ctx.SetCookie(JWT_COOKIE_NAME, jwtToken, 86400*7, "/", "localhost", false, true)
 	}
+
+	// 将双 Token 放进 Cookie
+	ctx.SetCookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
+	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	// < session_refreshToken, accessToken > 放入 redis
+	redis.GoPosteryRedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{

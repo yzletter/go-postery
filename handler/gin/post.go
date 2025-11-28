@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	database "github.com/yzletter/go-postery/database/gorm"
+	"github.com/yzletter/go-postery/database/redis"
 	"github.com/yzletter/go-postery/handler/model"
 	"github.com/yzletter/go-postery/utils"
 )
@@ -282,24 +283,49 @@ func PostBelongHandler(ctx *gin.Context) {
 	}
 
 	// 获取登录 uid
-	jwtToken := getJWTFromCookie(ctx)
-	loginUid := getUidFromJWT(jwtToken)
-	slog.Info("Auth", "uid", loginUid)
+	accessToken := getTokenFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME)
+	userInfo := getUserInfoFromJWT(accessToken)
 
-	if loginUid == 0 {
-		// 未登录, 后面不用看了
-		resp := utils.Resp{
-			Code: 0,
-			Msg:  "帖子不属于当前用户",
-			Data: "false",
+	slog.Info("Auth", "user", userInfo)
+
+	if userInfo == nil || userInfo.Id == 0 {
+		// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
+		refreshToken := getTokenFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME)
+		result := redis.GoPosteryRedisClient.Get(REFRESH_KEY_PREFIX + refreshToken)
+		if result.Err() != nil { // 没拿到 redis 中存的 accessToken
+			// RefreshToken 也认证不通过, 没招了, 未登录, 后面不用看了
+			slog.Info("Auth", "error", result.Err())
+
+			resp := utils.Resp{
+				Code: 0,
+				Msg:  "帖子不属于当前用户",
+				Data: "false",
+			}
+			ctx.JSON(http.StatusOK, resp)
+			return
 		}
-		ctx.JSON(http.StatusOK, resp)
-		return
+
+		// 如果 redis 能拿到, 重新放到 Cookie 中
+		accessToken = result.Val()
+		userInfo = getUserInfoFromJWT(accessToken)
+		if userInfo == nil {
+			// 虽然拿到了, 但是有问题 (很小概率)
+			resp := utils.Resp{
+				Code: 0,
+				Msg:  "帖子不属于当前用户",
+				Data: "false",
+			}
+			ctx.JSON(http.StatusOK, resp)
+			return
+		}
+
+		// 拿到了 AccessToken, 并且一切正常, 放入 Cookie 继续判断
+		ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	}
 
 	// 判断登录用户是否是作者
 	post := database.GetPostByID(pid)
-	if post == nil || loginUid != post.UserId {
+	if post == nil || userInfo.Id != post.UserId {
 		resp := utils.Resp{
 			Code: 0,
 			Msg:  "帖子不属于当前用户",

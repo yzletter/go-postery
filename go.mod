@@ -10,6 +10,7 @@ require (
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/prometheus/client_golang v1.23.2
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/rs/xid v1.6.0
 	github.com/spf13/viper v1.21.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.1

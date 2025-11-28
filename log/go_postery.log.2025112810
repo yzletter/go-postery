@@ -24,3 +24,5 @@ time="2025-11-28 10:42:02.057" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-11-28 10:42:02.057" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:105 msg="close GoPosteryMySQLDB succeed"
 time="2025-11-28 10:42:02.057" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:64 msg="close GoPosteryRedisClient succeed"
 time="2025-11-28 10:42:02.057" level=INFO source=/Users/yzletter/go_project/go-postery/service/smooth.go:26 msg="all task has finished"
+time="2025-11-28 10:50:04.858" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:70 msg="connect to MySQL succeed"
+time="2025-11-28 10:50:04.860" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:40 msg="connect to Redis succeed"

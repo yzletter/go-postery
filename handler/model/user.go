@@ -1,5 +1,11 @@
 package model
 
+// UserInformation 用于存放进 ctx 的用户信息
+type UserInformation struct {
+	Id   int
+	Name string
+}
+
 // LoginRequest 定义前端提交登录表单信息的模型映射
 type LoginRequest struct {
 	Name     string `json:"name" form:"name" binding:"required,gte=2"`          // 长度 >= 2
