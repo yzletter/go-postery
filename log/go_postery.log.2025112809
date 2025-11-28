@@ -1,0 +1,5 @@
+time="2025-11-28 09:19:33.928" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-28 09:20:00.007" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-28 09:30:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-28 09:40:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-28 09:50:00.039" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"

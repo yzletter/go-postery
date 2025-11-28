@@ -19,7 +19,7 @@ func RegisterUser(name, password string) (int, error) {
 	}
 
 	// 到 MySQL 中创建新记录
-	err := GoPosteryDB.Create(&user).Error // 需要传指针
+	err := GoPosteryMySQLDB.Create(&user).Error // 需要传指针
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) { // 判断是否为 MySQL 错误
@@ -43,7 +43,7 @@ func LogOffUser(uid int) error {
 		Id: uid,
 	}
 	// 删除记录
-	tx := GoPosteryDB.Delete(&user)
+	tx := GoPosteryMySQLDB.Delete(&user)
 	if tx.Error != nil {
 		// 系统层面错误
 		slog.Error("go-postery LogOffUser : 用户注销失败", "uid", uid, "error", tx.Error)
@@ -58,7 +58,7 @@ func LogOffUser(uid int) error {
 // GetUserById 根据 Id 查找用户
 func GetUserById(uid int) *model.User {
 	user := model.User{Id: uid}
-	tx := GoPosteryDB.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
+	tx := GoPosteryMySQLDB.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -73,7 +73,7 @@ func GetUserById(uid int) *model.User {
 // GetUserByName 根据 name 查找用户
 func GetUserByName(name string) *model.User {
 	user := model.User{}
-	tx := GoPosteryDB.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
+	tx := GoPosteryMySQLDB.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -87,7 +87,7 @@ func GetUserByName(name string) *model.User {
 
 // UpdatePassword 根据传入的用户 id, 新旧密码更改用户密码
 func UpdatePassword(uid int, oldPass, newPass string) error {
-	tx := GoPosteryDB.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
+	tx := GoPosteryMySQLDB.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
 	if tx.Error != nil {
 		// 系统错误
 		slog.Error("go-postery UpdatePassword : 密码更改失败", "uid", uid, "error", tx.Error)

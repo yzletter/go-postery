@@ -23,7 +23,7 @@ func CreatePost(uid int, title, content string) (int, error) {
 	}
 
 	// 新建数据
-	if err := GoPosteryDB.Create(&post).Error; err != nil {
+	if err := GoPosteryMySQLDB.Create(&post).Error; err != nil {
 		slog.Error("帖子发布失败", "title", err)
 		return 0, errors.New("帖子发布失败")
 	}
@@ -33,7 +33,7 @@ func CreatePost(uid int, title, content string) (int, error) {
 
 // DeletePost 根据帖子 id 删除帖子
 func DeletePost(pid int) error {
-	tx := GoPosteryDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid).Update("delete_time", time.Now())
+	tx := GoPosteryMySQLDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		// 删除失败
 		slog.Error("帖子删除失败", "pid", pid, "error", tx.Error)
@@ -49,7 +49,7 @@ func DeletePost(pid int) error {
 
 // UpdatePost 修改帖子
 func UpdatePost(pid int, title, content string) error {
-	tx := GoPosteryDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid)
+	tx := GoPosteryMySQLDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid)
 
 	var count int64
 	tx.Count(&count)
@@ -77,7 +77,7 @@ func GetPostByID(pid int) *model.Post {
 	post := &model.Post{
 		Id: pid,
 	}
-	tx := GoPosteryDB.Select("*").Where("delete_time is null").First(post) // find 不会报 ErrNotFound
+	tx := GoPosteryMySQLDB.Select("*").Where("delete_time is null").First(post) // find 不会报 ErrNotFound
 	if tx.Error != nil {
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) { // 并非未找到, 而是其他错误
 			slog.Error("帖子查找失败", "pid", pid, "error", tx.Error)
@@ -94,7 +94,7 @@ func GetPostByID(pid int) *model.Post {
 func GetPostByPage(pageNo, pageSize int) (int, []*model.Post) {
 	// 获取帖子总数
 	var total int64
-	tx := GoPosteryDB.Model(&model.Post{}).Where("delete_time is null").Count(&total)
+	tx := GoPosteryMySQLDB.Model(&model.Post{}).Where("delete_time is null").Count(&total)
 	if tx.Error != nil {
 		slog.Error("获取帖子总数失败", "error", tx.Error)
 		return 0, nil
@@ -103,7 +103,7 @@ func GetPostByPage(pageNo, pageSize int) (int, []*model.Post) {
 	// 获取当前页的帖子
 	var posts []*model.Post
 	// 已经查询过 pageSize * (pageNo - 1) 条数据, 当前页需要 pageSize 条数据，并按发布时间降序排列
-	tx = GoPosteryDB.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
+	tx = GoPosteryMySQLDB.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
 	if tx.Error != nil {
 		slog.Error("获取当前页帖子失败", "pageNo", pageNo, "pageSize", pageSize, "error", tx.Error)
 		return 0, nil

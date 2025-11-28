@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	GoPosteryDB *gorm.DB // 定义全局数据库变量 GoPosteryDB
+	GoPosteryMySQLDB *gorm.DB // 定义全局数据库变量 GoPosteryMySQLDB
 )
 
-// ConnectToDB 连接到 MySQL 数据库, 生成一个 *gorm.DB 赋给全局数据库变量 GoPosteryDB
+// ConnectToDB 连接到 MySQL 数据库, 生成一个 *gorm.DB 赋给全局数据库变量 GoPosteryMySQLDB
 func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 	// 读取 MySQL 相关配置
 	viper := utils.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
@@ -74,33 +74,33 @@ func ConnectToDB(confDir, confFileName, confFileType, logDir string) {
 	// 单个连接的连接时间上限, 超时会自动关闭, 因为数据库本身可能也对NoActive连接设置了超时时间, 我们的应对办法: 定期 ping, 或者 SetConnMaxLifetime
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// 赋给全局变量 GoPosteryDB
-	GoPosteryDB = db
+	// 赋给全局变量 GoPosteryMySQLDB
+	GoPosteryMySQLDB = db
 }
 
 // Ping ping 一下数据库 保持连接
 func Ping() {
-	if GoPosteryDB != nil {
-		sqlDB, _ := GoPosteryDB.DB()
+	if GoPosteryMySQLDB != nil {
+		sqlDB, _ := GoPosteryMySQLDB.DB()
 		err := sqlDB.Ping()
 		if err != nil {
-			slog.Info("ping GoPosteryDB failed")
+			slog.Info("ping GoPosteryMySQLDB failed")
 			return
 		}
-		slog.Info("ping GoPosteryDB succeed")
+		slog.Info("ping GoPosteryMySQLDB succeed")
 		return
 	}
 }
 
 func CloseConnection() {
-	if GoPosteryDB != nil {
-		sqlDB, _ := GoPosteryDB.DB()
+	if GoPosteryMySQLDB != nil {
+		sqlDB, _ := GoPosteryMySQLDB.DB()
 		err := sqlDB.Close()
 		if err != nil {
-			slog.Info("close GoPosteryDB failed")
+			slog.Info("close GoPosteryMySQLDB failed")
 			return
 		}
-		slog.Info("close GoPosteryDB succeed")
+		slog.Info("close GoPosteryMySQLDB succeed")
 		return
 	}
 }

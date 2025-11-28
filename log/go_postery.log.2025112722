@@ -21,3 +21,14 @@ time="2025-11-27 22:30:05.366" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-11-27 22:30:12.898" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9999
 time="2025-11-27 22:30:26.918" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
 time="2025-11-27 22:40:00.007" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-27 22:50:00.112" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:90 msg="ping GoPosteryDB succeed"
+time="2025-11-27 22:52:23.122" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:52:23.126" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:52:37.396" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 22:52:48.670" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 22:53:00.621" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/auth.go:26 msg=Auth uid=9999
+time="2025-11-27 22:53:03.801" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:53:03.804" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:53:04.827" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:53:04.828" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/post.go:287 msg=Auth uid=9999
+time="2025-11-27 22:53:13.696" level=INFO source=/Users/yzletter/go_project/go-postery/handler/gin/user.go:48 msg=登录成功 uid=9999
