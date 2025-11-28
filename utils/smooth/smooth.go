@@ -1,4 +1,4 @@
-package service
+package smooth
 
 import (
 	"log/slog"

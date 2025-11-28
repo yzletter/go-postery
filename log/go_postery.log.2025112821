@@ -1,0 +1,8 @@
+time="2025-11-28 21:00:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"
+time="2025-11-28 21:00:00.019" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-28 21:10:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-28 21:10:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"
+time="2025-11-28 21:20:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-28 21:20:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"
+time="2025-11-28 21:56:05.795" level=INFO source=/Users/yzletter/go_project/go-postery/database/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-28 21:56:05.798" level=INFO source=/Users/yzletter/go_project/go-postery/database/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"

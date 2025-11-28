@@ -226,16 +226,3 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
-
-// GetUidFromCookie 从 Cookie 中获取 uid (JWT 引入后废弃)
-//func GetUidFromCookie(ctx *gin.Context) int {
-//	for _, cookie := range ctx.Request.Cookies() {
-//		if cookie.Name == "uid" {
-//			uid, err := strconv.Atoi(cookie.Value)
-//			if err == nil {
-//				return uid
-//			}
-//		}
-//	}
-//	return 0
-//}

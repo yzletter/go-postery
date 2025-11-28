@@ -1,341 +1,49 @@
-# Go Postery 后端 API 文档
+# Go Postery 后端接口约定
 
-## 概述
+本文件总结了前端当前代码中的所有后端调用需求，便于后端按约定实现或联调。
 
-本文档描述了 Go Postery 论坛前端所需的后端 API 接口规范。基于前端代码分析，后端需要提供用户认证、帖子管理等功能。
+## 通用
+- 响应统一：`ApiResponse { code: number; msg?: string; data?: any }`，`code === 0` 视为成功。
+- 默认基址：帖子接口多处写死 `http://localhost:8080/...`，可用环境变量覆盖：
+  - `VITE_API_BASE_URL`（帖子相关）
+  - `VITE_AUTH_API_URL`（认证相关）
+- 所有请求都带 `credentials: 'include'`，后端需允许跨域并下发/校验 Cookie（建议 JWT 放 HttpOnly Cookie）。
+- 登录/注册/修改密码前端会先对密码做 MD5，再将哈希值作为参数提交。
+- 前端要求 `Content-Type: application/json`，否则会报“响应不是JSON格式”。
 
-## 统一响应格式
+## 认证接口
+- `POST /login/submit`
+  - Body: `{ name, password }`（password 已 MD5）
+  - 返回: `data.user`；会话凭证应通过 Cookie 下发
+- `POST /register/submit`
+  - Body: `{ name, password }`（已 MD5）
+  - 返回: `data.user`
+- `POST /modify_pass/submit`
+  - Body: `{ old_pass, new_pass }`（均 MD5）
+  - 返回: `code = 0` 即视为成功
+- `GET /logout`
+  - 凭 Cookie 退出登录；`code = 0` 即视为成功
 
-所有 API 响应都使用以下统一格式：
+## 帖子接口
+- `GET /posts?pageNo={page}&pageSize={pageSize}`
+  - 返回: `data.posts: Post[]`
+- `POST /posts/new`
+  - Body: `{ title, content }`
+  - 返回: `data` 内含新帖 id 即可
+- `GET /posts/{id}`
+  - 返回: `data: Post`
+- `POST /posts/update`
+  - Body: `{ id: number, title, content }`
+  - 返回: `code = 0` 视为成功
+- `GET /posts/delete/{id}`
+  - 删除帖子；`code = 0` 视为成功
+- `GET /posts/belong?id={postId}`
+  - 返回: `data` 为 `"true"`/`"false"`（或布尔值），表示当前用户是否为作者
 
-```go
-type Resp struct {
-    Code int         `json:"code"`           // 业务码 
-    Msg  string      `json:"msg"`            // 信息 
-    Data interface{} `json:"data,omitempty"` // 数据（可选）
-}
-```
+## 数据模型（前端期待）
+- `Post`: `{ id, title, content, author: { id, name }, createdAt }`
+- `User`: `{ id, name, email? }`
 
-**业务码说明：**
-- `0`: 请求成功
-- `1`: 请求失败（通用错误码）
-- 所有不成功的请求统一返回业务码 `1`
-
-## 接口规范
-
-### 1. 认证相关接口
-
-#### 1.1 用户登录
-**接口地址**: `POST /login/submit` 或 `POST /api/auth/login`
-
-**请求参数**:
-```json
-{
-  "name": "string, required, 用户名",
-  "password": "string, required, 密码（MD5哈希）"
-}
-```
-
-**成功响应** (200 OK):
-```json
-{
-  "code": 0,
-  "msg": "登录成功",
-  "data": {
-    "user": {
-      "name": "string, 用户名",
-    },
-  }
-}
-```
-
-**错误响应** (400/401):**错误响应：**
-```json
-{
-  "code": 1,
-  "msg": "用户名或密码错误"
-}
-```
-
-#### 1.2 用户注册
-**接口地址**: `POST /register/submit` 或 `POST /api/auth/register`
-
-**请求参数**:
-```json
-{
-  "name": "string, required, 用户名",
-  "password": "string, required, 密码（MD5哈希）"
-}
-```
-
-**成功响应** (200 OK):
-```json
-{
-  "code": 0,
-  "msg": "注册成功",
-  "data": {
-    "user": {
-      "name": "string, 用户名",
-    },
-  }
-}
-```
-
-**错误响应** (400):**错误响应：**
-```json
-{
-  "code": 1,
-  "msg": "用户名已存在"
-}
-```
-
-#### 1.3 修改密码
-**接口地址**: `POST /modify_pass/submit` 或 `POST /api/auth/change-password`
-
-**请求头**:
-```
-Authorization: Bearer {token}
-Content-Type: application/json
-```
-
-**请求参数**:
-```json
-{
-  "old_pass": "string, required, 旧密码（MD5哈希）",
-  "new_pass": "string, required, 新密码（MD5哈希）"
-}
-```
-
-**成功响应** (200 OK):
-```json
-{
-  "code": 0,
-  "msg": "密码修改成功",
-}
-```
-
-**错误响应** (400):**错误响应：**
-```json
-{
-  "code": 1,
-  "msg": "旧密码错误"
-}
-```
-
-#### 1.4 用户登出
-**接口地址**: `GET /logout` 或 `GET /api/auth/logout`
-
-**请求头**:
-```
-Authorization: Bearer {token}
-```
-
-**请求参数**: 无
-
-**成功响应** (200 OK):
-```json
-{
-  "code": 0,
-  "msg": "登出成功",
-}
-```
-
-### 2. 帖子相关接口
-
-#### 2.1 获取帖子列表
-**接口地址**: `GET /api/posts?page={页码}&pageSize={每页数量}`
-
-**查询参数**:
-- `page`: integer, optional, 页码，默认1
-- `pageSize`: integer, optional, 每页数量，默认10
-
-**成功响应** (200 OK):
-```json
-{
-  "code": 0,
-  "msg": "获取帖子列表成功",
-  "data": {
-    "posts": [
-      {
-        "id": "string, 帖子唯一标识",
-        "title": "string, 帖子标题",
-        "content": "string, 帖子内容",
-        "author": {
-          "id": "string, 作者ID",
-          "name": "string, 作者名称",
-          "avatar": "string, optional, 作者头像URL"
-        },
-        "createdAt": "string, ISO 8601格式时间",
-        "updatedAt": "string, optional, 更新时间"
-      }
-    ],
-    "total": "integer, 总帖子数",
-    "hasMore": "boolean, 是否还有更多数据"
-  }
-}
-```
-
-#### 2.2 获取单个帖子详情
-**接口地址**: `GET /api/posts/{postId}`
-
-**路径参数**:
-- `postId`: string, required, 帖子ID
-
-**成功响应** (200 OK):
-```json
-{
-  "code": 0,
-  "msg": "获取帖子详情成功",
-  "data": {
-    "id": "string, 帖子唯一标识",
-    "title": "string, 帖子标题",
-    "content": "string, 帖子内容",
-    "author": {
-      "id": "string, 作者ID",
-      "name": "string, 作者名称",
-      "avatar": "string, optional, 作者头像URL"
-    },
-    "createdAt": "string, ISO 8601格式时间",
-    "updatedAt": "string, optional, 更新时间"
-  }
-}
-```
-
-#### 2.3 创建新帖子
-**接口地址**: `POST /api/posts`
-
-**请求头**:
-```
-Authorization: Bearer {token}
-Content-Type: application/json
-```
-
-**请求参数**:
-```json
-{
-  "title": "string, required, 帖子标题",
-  "content": "string, required, 帖子内容"
-}
-```
-
-**成功响应** (201 Created):
-```json
-{
-  "code": 0,
-  "msg": "帖子创建成功",
-  "data": {
-    "id": "string, 新创建帖子的ID",
-    "title": "string, 帖子标题",
-    "content": "string, 帖子内容",
-    "author": {
-      "id": "string, 作者ID",
-      "name": "string, 作者名称",
-      "avatar": "string, optional, 作者头像URL"
-    },
-    "createdAt": "string, ISO 8601格式时间"
-  }
-}
-```
-
-### 3. 数据类型定义
-
-#### User 类型
-```typescript
-interface User {
-  id: string        // 用户唯一标识
-  name: string      // 用户名
-}
-```
-
-#### Post 类型
-```typescript
-interface Post {
-  id: string           // 帖子唯一标识
-  title: string        // 帖子标题
-  content: string      // 帖子内容
-  author: {
-    id: string         // 作者ID
-    name: string       // 作者名称
-  }
-  createdAt: string    // 创建时间（ISO 8601格式）
-  updatedAt: string    // 更新时间（ISO 8601格式）
-}
-```
-
-## 实现要求
-
-### 1. 认证机制
-- 使用 JWT (JSON Web Token) 进行用户认证
-- Token 有效期建议设置为 24 小时
-- 在请求头中通过 `Authorization: Bearer {token}` 传递
-
-### 2. 密码处理
-- 前端传输的密码已经是 MD5 哈希值
-- 后端需要能够处理 MD5 格式的密码
-- 建议在后端再进行一次加密存储
-
-### 3. 头像处理
-- 如果用户没有上传头像，前端会使用 DiceBear API 生成默认头像
-- 默认头像格式：`https://api.dicebear.com/7.x/avataaars/svg?seed={用户ID或用户名}`
-- 后端可以存储用户自定义头像 URL
-
-### 4. 时间格式
-- 所有时间字段必须使用 ISO 8601 格式字符串
-- 示例：`2024-01-15T10:30:00.000Z`
-
-### 5. 分页处理
-- 帖子列表接口支持分页查询
-- 默认每页 10 条记录
-- 需要返回总记录数和是否还有更多数据
-
-### 6. 错误处理
-- 所有错误响应应包含明确的错误信息
-- HTTP 状态码应符合 RESTful 规范
-- 错误信息格式：`{ "message": "错误描述" }`
-
-## 环境配置
-
-前端通过环境变量配置 API 地址：
-- `VITE_API_BASE_URL`: 主要 API 地址（默认：http://localhost:8080/api）
-- `VITE_AUTH_API_URL`: 认证 API 地址（默认：http://localhost:8080）
-
-## 重要变更说明
-
-1. **邮箱显示已删除**：根据最近的修改，邮箱显示已从 Profile 页面和 Navbar 用户菜单中删除，因此 `email` 字段变为可选。
-
-2. **搜索功能已删除**：前端搜索功能已被移除，后端不需要提供搜索相关的接口。
-
-3. **评论功能已删除**：评论功能已从详情页面移除，后端暂时不需要提供评论相关的接口。
-
-## 示例代码
-
-### 后端 Go 语言示例结构
-
-```go
-// 用户模型
-type User struct {
-    ID       string `json:"id"`
-    Name     string `json:"name"`
-    Email    string `json:"email,omitempty"` // omitempty 使其可选
-    Avatar   string `json:"avatar,omitempty"` // omitempty 使其可选
-    Password string `json:"-"` // 不返回给前端
-}
-
-// 帖子模型
-type Post struct {
-    ID        string    `json:"id"`
-    Title     string    `json:"title"`
-    Content   string    `json:"content"`
-    Author    Author    `json:"author"`
-    CreatedAt time.Time `json:"createdAt"`
-    UpdatedAt time.Time `json:"updatedAt,omitempty"` // omitempty 使其可选
-}
-
-type Author struct {
-    ID     string `json:"id"`
-    Name   string `json:"name"`
-    Avatar string `json:"avatar,omitempty"` // omitempty 使其可选
-}
-```
-
-这个文档详细描述了后端需要实现的所有接口，包括请求参数、响应格式和实现要求。你可以根据这个文档来开发后端 API。
+## 需要后端注意的点
+- 所有接口需支持 Cookie 方式的身份凭证，并配置跨域允许携带 Cookie。
+- 帖子接口目前路径有的包含 `/api` 有的没有，如需统一可在前端调整，但当前实现按上述路径调用。

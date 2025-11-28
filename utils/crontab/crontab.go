@@ -1,4 +1,4 @@
-package service
+package crontab
 
 import (
 	"log/slog"
