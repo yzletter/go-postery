@@ -15,8 +15,8 @@ type JwtService struct {
 }
 
 // NewJwtService 构造函数
-func NewJwtService(secret string) JwtService {
-	return JwtService{
+func NewJwtService(secret string) *JwtService {
+	return &JwtService{
 		Secret: secret,
 		// 默认的 JWT Header
 		Header: JwtHeader{

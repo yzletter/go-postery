@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto"
 	"github.com/yzletter/go-postery/middleware"
+	"github.com/yzletter/go-postery/middleware/auth"
 	database2 "github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/repository/redis"
 	"github.com/yzletter/go-postery/utils"
@@ -122,7 +123,7 @@ func GetPostDetailHandler(ctx *gin.Context) {
 // CreateNewPostHandler 创建帖子
 func CreateNewPostHandler(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(middleware.UID_IN_CTX).(int)
+	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
 
 	// 参数绑定
 	var createRequest dto.CreateRequest
@@ -163,7 +164,7 @@ func CreateNewPostHandler(ctx *gin.Context) {
 // DeletePostHandler 删除帖子
 func DeletePostHandler(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(middleware.UID_IN_CTX).(int)
+	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
 
 	// 再拿帖子 pid
 	pid, err := strconv.Atoi(ctx.Param("id"))
@@ -217,7 +218,7 @@ func DeletePostHandler(ctx *gin.Context) {
 // UpdatePostHandler 修改帖子
 func UpdatePostHandler(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(middleware.UID_IN_CTX).(int)
+	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
 
 	// 参数绑定
 	var updateRequest dto.UpdateRequest
@@ -284,15 +285,15 @@ func PostBelongHandler(ctx *gin.Context) {
 	}
 
 	// 获取登录 uid
-	accessToken := middleware.GetTokenFromCookie(ctx, middleware.ACCESS_TOKEN_COOKIE_NAME)
+	accessToken := middleware.GetTokenFromCookie(ctx, auth.ACCESS_TOKEN_COOKIE_NAME)
 	userInfo := middleware.GetUserInfoFromJWT(accessToken)
 
 	slog.Info("Auth", "user", userInfo)
 
 	if userInfo == nil || userInfo.Id == 0 {
 		// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
-		refreshToken := middleware.GetTokenFromCookie(ctx, middleware.REFRESH_TOKEN_COOKIE_NAME)
-		result := redis.GoPosteryRedisClient.Get(middleware.REFRESH_KEY_PREFIX + refreshToken)
+		refreshToken := middleware.GetTokenFromCookie(ctx, auth.REFRESH_TOKEN_COOKIE_NAME)
+		result := redis.GoPosteryRedisClient.Get(auth.REFRESH_KEY_PREFIX + refreshToken)
 		if result.Err() != nil { // 没拿到 redis 中存的 accessToken
 			// RefreshToken 也认证不通过, 没招了, 未登录, 后面不用看了
 			slog.Info("Auth", "error", result.Err())
@@ -321,7 +322,7 @@ func PostBelongHandler(ctx *gin.Context) {
 		}
 
 		// 拿到了 AccessToken, 并且一切正常, 放入 Cookie 继续判断
-		ctx.SetCookie(middleware.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+		ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	}
 
 	// 判断登录用户是否是作者

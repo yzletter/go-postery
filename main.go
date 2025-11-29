@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	handler2 "github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/middleware"
+	"github.com/yzletter/go-postery/middleware/auth"
 	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/repository/redis"
 	service "github.com/yzletter/go-postery/service/jwt"
@@ -39,12 +40,12 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 注册 JwtService
-	JwtService := service.NewJwtService("123456")
-	// 注册 AuthHandler
-	AuthHandler := middleware.NewAuthHandler(JwtService, redis.GoPosteryRedisClient)
-	// 构建 AuthHandlerFunc
-	AuthHandlerFunc := AuthHandler.Build()
+	// Service 层
+	JwtService := service.NewJwtService("123456") // 注册 JwtService
+	// Handler 层
+	AuthHandler := auth.NewAuthHandler(JwtService, redis.GoPosteryRedisClient) // 注册 AuthHandler todo 会换成 infra
+	// HandlerFunc 层
+	AuthHandlerFunc := AuthHandler.Build() // 构建 AuthHandlerFunc
 
 	// 全局中间件
 	engine.Use(middleware.MetricHandler) // Prometheus 监控中间件
