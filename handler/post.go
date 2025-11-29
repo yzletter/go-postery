@@ -285,7 +285,7 @@ func PostBelongHandler(ctx *gin.Context) {
 	}
 
 	// 获取登录 uid
-	accessToken := middleware.GetTokenFromCookie(ctx, auth.ACCESS_TOKEN_COOKIE_NAME)
+	accessToken := utils.GetValueFromCookie(ctx, auth.ACCESS_TOKEN_COOKIE_NAME)
 	userInfo := middleware.GetUserInfoFromJWT(accessToken)
 
 	slog.Info("Auth", "user", userInfo)

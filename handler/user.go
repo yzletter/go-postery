@@ -5,19 +5,34 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/middleware/auth"
 	"github.com/yzletter/go-postery/repository/gorm"
-	"github.com/yzletter/go-postery/repository/redis"
+	"github.com/yzletter/go-postery/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/utils"
 )
 
-// LoginHandlerFunc 用户登录 Handler
-func LoginHandlerFunc(ctx *gin.Context) {
+type UserHandler struct {
+	JwtService  *service.JwtService
+	UserService *service.UserService
+	RedisClient redis.Cmdable
+}
+
+// NewUserHandler 构造函数
+func NewUserHandler(redisClient redis.Cmdable, jwtService *service.JwtService, userService *service.UserService) *UserHandler {
+	return &UserHandler{
+		RedisClient: redisClient,
+		JwtService:  jwtService,
+		UserService: userService,
+	}
+}
+
+// Login 用户登录 Handler
+func (userHandler *UserHandler) Login(ctx *gin.Context) {
 	var loginRequest = dto.LoginRequest{}
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&loginRequest)
@@ -62,13 +77,13 @@ func LoginHandlerFunc(ctx *gin.Context) {
 	refreshToken := xid.New().String() //	生成一个随机的字符串
 
 	// 生成 AccessToken
-	payload := utils.JwtPayload{
+	payload := service.JwtPayload{
 		Issue:       "yzletter",
 		IssueAt:     time.Now().Unix(),                                      // 签发日期为当前时间
 		Expiration:  0,                                                      // 永不过期
 		UserDefined: map[string]any{auth.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	accessToken, err := utils.GenJWT(payload, middleware.JWTConfig.GetString("secret"))
+	accessToken, err := userHandler.JwtService.GenToken(payload)
 	if err != nil {
 		// AccessToken 生成失败
 		slog.Error("AccessToken 生成失败", "error", err)
@@ -83,7 +98,7 @@ func LoginHandlerFunc(ctx *gin.Context) {
 	ctx.SetCookie(auth.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	redis.GoPosteryRedisClient.Set(auth.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	userHandler.RedisClient.Set(auth.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
@@ -98,8 +113,8 @@ func LoginHandlerFunc(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// LogoutHandlerFunc 用户登出 Handler
-func LogoutHandlerFunc(ctx *gin.Context) {
+// Logout 用户登出 Handler
+func (userHandler *UserHandler) Logout(ctx *gin.Context) {
 	// 设置 Cookie 里的双 Token 都置为 -1
 	ctx.SetCookie(auth.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
@@ -111,8 +126,8 @@ func LogoutHandlerFunc(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// ModifyPassHandlerFunc 修改密码 Handler
-func ModifyPassHandlerFunc(ctx *gin.Context) {
+// ModifyPass 修改密码 Handler
+func (userHandler *UserHandler) ModifyPass(ctx *gin.Context) {
 	var modifyPassRequest dto.ModifyPasswordRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
@@ -157,8 +172,8 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// RegisterHandlerFunc 用户注册 Handler
-func RegisterHandlerFunc(ctx *gin.Context) {
+// Register 用户注册 Handler
+func (userHandler *UserHandler) Register(ctx *gin.Context) {
 	var registerRequest dto.RegisterRequest
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
@@ -193,13 +208,13 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	refreshToken := xid.New().String() //	生成一个随机的字符串
 
 	// 生成 AccessToken
-	payload := utils.JwtPayload{
+	payload := service.JwtPayload{
 		Issue:       "yzletter",
 		IssueAt:     time.Now().Unix(),                                      // 签发日期为当前时间
 		Expiration:  0,                                                      // 永不过期
 		UserDefined: map[string]any{auth.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	accessToken, err := utils.GenJWT(payload, middleware.JWTConfig.GetString("secret"))
+	accessToken, err := userHandler.JwtService.GenToken(payload)
 	if err != nil {
 		// AccessToken 生成失败
 		slog.Error("AccessToken 生成失败", "error", err)
@@ -214,7 +229,7 @@ func RegisterHandlerFunc(ctx *gin.Context) {
 	ctx.SetCookie(auth.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	redis.GoPosteryRedisClient.Set(auth.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	userHandler.RedisClient.Set(auth.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{

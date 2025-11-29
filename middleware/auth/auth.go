@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/yzletter/go-postery/dto"
-	service "github.com/yzletter/go-postery/service/jwt"
+	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -18,7 +18,7 @@ type AuthHandler struct {
 }
 
 // NewAuthHandler 构造函数
-func NewAuthHandler(jwtService *service.JwtService, redisClient redis.Cmdable) *AuthHandler {
+func NewAuthHandler(redisClient redis.Cmdable, jwtService *service.JwtService) *AuthHandler {
 	return &AuthHandler{
 		JwtService:  jwtService,
 		RedisClient: redisClient,
@@ -26,11 +26,11 @@ func NewAuthHandler(jwtService *service.JwtService, redisClient redis.Cmdable) *
 }
 
 // Build 返回 gin.HandlerFunc
-func (auth *AuthHandler) Build() gin.HandlerFunc {
+func (authHandler *AuthHandler) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 尝试通过 AccessToken 认证
 		accessToken := utils.GetValueFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
-		userInfo := auth.GetUserInfoFromJWT(accessToken)
+		userInfo := authHandler.GetUserInfoFromJWT(accessToken)
 
 		// AccessToken 认证直接通过
 		if userInfo != nil {
@@ -45,7 +45,7 @@ func (auth *AuthHandler) Build() gin.HandlerFunc {
 
 		// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
 		refreshToken := utils.GetValueFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME) // 获取 RefreshToken
-		result := auth.RedisClient.Get(REFRESH_KEY_PREFIX + refreshToken)        // 从 Redis 尝试获取 AccessToken
+		result := authHandler.RedisClient.Get(REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
 		if result.Err() != nil {
 			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
 			slog.Info("AuthHandler 认证 RefreshToken 失败, 需重新登录 ...")
@@ -55,7 +55,7 @@ func (auth *AuthHandler) Build() gin.HandlerFunc {
 
 		// 如果 redis 能拿到, 重新放到 Cookie 中
 		accessToken = result.Val()
-		userInfo = auth.GetUserInfoFromJWT(accessToken)
+		userInfo = authHandler.GetUserInfoFromJWT(accessToken)
 		if userInfo == nil {
 			// 虽然拿到了, 但是有问题 (很小概率)
 			slog.Error("AuthHandler 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
@@ -74,9 +74,9 @@ func (auth *AuthHandler) Build() gin.HandlerFunc {
 }
 
 // GetUserInfoFromJWT 从 JWT Token 中获取 uid
-func (auth *AuthHandler) GetUserInfoFromJWT(jwtToken string) *dto.UserInformation {
+func (authHandler *AuthHandler) GetUserInfoFromJWT(jwtToken string) *dto.UserInformation {
 	// 校验 JWT Token
-	payload, err := auth.JwtService.VerifyToken(jwtToken)
+	payload, err := authHandler.JwtService.VerifyToken(jwtToken)
 	if err != nil { // JWT Token 校验失败
 		slog.Error("AuthHandler 校验 JWT Token 失败 ...", "err", err)
 		return nil

@@ -109,7 +109,7 @@ src/
   { "user": { "id": "...", "name": "...", "email": "..." }, "token": "jwt_token" }
   ```
 
-- `POST /api/auth/register` - 用户注册
+- `POST /api/authHandler/register` - 用户注册
   ```json
   // 请求
   { "name": "用户名", "password": "password123" }
@@ -118,7 +118,7 @@ src/
   { "user": { "id": "...", "name": "...", "email": "..." }, "token": "jwt_token" }
   ```
 
-- `POST /api/auth/logout` - 用户登出（可选）
+- `POST /api/authHandler/logout` - 用户登出（可选）
   - 需要 Authorization header: `Bearer {token}`
 
 ### 模拟模式

@@ -6,12 +6,12 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	handler2 "github.com/yzletter/go-postery/handler"
+	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/middleware/auth"
 	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/repository/redis"
-	service "github.com/yzletter/go-postery/service/jwt"
+	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/crontab"
 	"github.com/yzletter/go-postery/utils/smooth"
@@ -42,10 +42,15 @@ func main() {
 
 	// Service 层
 	JwtService := service.NewJwtService("123456") // 注册 JwtService
+	UserService := service.NewUserService(nil)    // 注册 UserService
+
 	// Handler 层
-	AuthHandler := auth.NewAuthHandler(JwtService, redis.GoPosteryRedisClient) // 注册 AuthHandler todo 会换成 infra
-	// HandlerFunc 层
-	AuthHandlerFunc := AuthHandler.Build() // 构建 AuthHandlerFunc
+	// todo 会换成 infra
+	AuthHandler := auth.NewAuthHandler(redis.GoPosteryRedisClient, JwtService)                 // 注册 AuthHandler
+	UserHandler := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
+
+	// 中间件层, 本质为 gin.HandlerFunc
+	AuthMiddleWare := AuthHandler.Build() // 构建 AuthHandlerFunc
 
 	// 全局中间件
 	engine.Use(middleware.MetricHandler) // Prometheus 监控中间件
@@ -57,18 +62,18 @@ func main() {
 	})
 
 	// 用户模块
-	engine.POST("/register/submit", handler2.RegisterHandlerFunc)                       // 用户注册
-	engine.POST("/login/submit", handler2.LoginHandlerFunc)                             // 用户登录
-	engine.GET("/logout", handler2.LogoutHandlerFunc)                                   // 用户退出
-	engine.POST("/modify_pass/submit", AuthHandlerFunc, handler2.ModifyPassHandlerFunc) // 修改密码
+	engine.POST("/register/submit", UserHandler.Register)                      // 用户注册
+	engine.POST("/login/submit", UserHandler.Login)                            // 用户登录
+	engine.GET("/logout", UserHandler.Logout)                                  // 用户退出
+	engine.POST("/modify_pass/submit", AuthMiddleWare, UserHandler.ModifyPass) // 修改密码
 
 	// 帖子模块
-	engine.GET("/posts", handler2.GetPostsHandler)                               // 获取帖子列表
-	engine.GET("/posts/:pid", handler2.GetPostDetailHandler)                     // 获取帖子详情
-	engine.POST("/posts/new", AuthHandlerFunc, handler2.CreateNewPostHandler)    // 创建帖子
-	engine.GET("/posts/delete/:id", AuthHandlerFunc, handler2.DeletePostHandler) // 删除帖子
-	engine.POST("/posts/update", AuthHandlerFunc, handler2.UpdatePostHandler)    // 修改帖子
-	engine.GET("/posts/belong", handler2.PostBelongHandler)                      // 查询帖子是否归属当前登录用户
+	engine.GET("/posts", handler2.GetPostsHandler)                              // 获取帖子列表
+	engine.GET("/posts/:pid", handler2.GetPostDetailHandler)                    // 获取帖子详情
+	engine.POST("/posts/new", AuthMiddleWare, handler2.CreateNewPostHandler)    // 创建帖子
+	engine.GET("/posts/delete/:id", AuthMiddleWare, handler2.DeletePostHandler) // 删除帖子
+	engine.POST("/posts/update", AuthMiddleWare, handler2.UpdatePostHandler)    // 修改帖子
+	engine.GET("/posts/belong", handler2.PostBelongHandler)                     // 查询帖子是否归属当前登录用户
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
