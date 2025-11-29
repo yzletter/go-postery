@@ -7,15 +7,28 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/middleware/auth"
 	database2 "github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/repository/redis"
+	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 )
 
-// GetPostsHandler 获取帖子列表
-func GetPostsHandler(ctx *gin.Context) {
+type PostHandler struct {
+	AuthHandler auth.AuthHandler
+	JwtService  *service.JwtService
+	PostService *service.PostService
+}
+
+func NewPostHandler(jwtService *service.JwtService, postService *service.PostService) *PostHandler {
+	return &PostHandler{
+		JwtService:  jwtService,
+		PostService: postService,
+	}
+}
+
+// GetPosts 获取帖子列表
+func (postHandler *PostHandler) GetPosts(ctx *gin.Context) {
 	// 从 /posts?pageNo=1&pageSize=2 路由中拿出 pageNo 和 pageSize
 	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
@@ -70,8 +83,8 @@ func GetPostsHandler(ctx *gin.Context) {
 	return
 }
 
-// GetPostDetailHandler 获取帖子详情
-func GetPostDetailHandler(ctx *gin.Context) {
+// GetPostDetail 获取帖子详情
+func (postHandler *PostHandler) GetPostDetail(ctx *gin.Context) {
 	// 从路由中获取 pid 参数
 	pid, err := strconv.Atoi(ctx.Param("pid"))
 	if err != nil {
@@ -120,8 +133,8 @@ func GetPostDetailHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// CreateNewPostHandler 创建帖子
-func CreateNewPostHandler(ctx *gin.Context) {
+// CreateNewPost 创建帖子
+func (postHandler *PostHandler) CreateNewPost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
 
@@ -161,8 +174,8 @@ func CreateNewPostHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// DeletePostHandler 删除帖子
-func DeletePostHandler(ctx *gin.Context) {
+// DeletePost 删除帖子
+func (postHandler *PostHandler) DeletePost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
 
@@ -215,8 +228,8 @@ func DeletePostHandler(ctx *gin.Context) {
 	return
 }
 
-// UpdatePostHandler 修改帖子
-func UpdatePostHandler(ctx *gin.Context) {
+// UpdatePost 修改帖子
+func (postHandler *PostHandler) UpdatePost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
 
@@ -270,8 +283,8 @@ func UpdatePostHandler(ctx *gin.Context) {
 	return
 }
 
-// PostBelongHandler 查询帖子作者是否为当前登录用户
-func PostBelongHandler(ctx *gin.Context) {
+// PostBelong 查询帖子作者是否为当前登录用户
+func (postHandler *PostHandler) PostBelong(ctx *gin.Context) {
 	// 获取帖子 id
 	pid, err := strconv.Atoi(ctx.Query("id"))
 	if err != nil {
@@ -286,13 +299,14 @@ func PostBelongHandler(ctx *gin.Context) {
 
 	// 获取登录 uid
 	accessToken := utils.GetValueFromCookie(ctx, auth.ACCESS_TOKEN_COOKIE_NAME)
-	userInfo := middleware.GetUserInfoFromJWT(accessToken)
+	// todo 鉴权
+	userInfo := postHandler.AuthHandler.GetUserInfoFromJWT(accessToken)
 
 	slog.Info("Auth", "user", userInfo)
 
 	if userInfo == nil || userInfo.Id == 0 {
 		// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
-		refreshToken := middleware.GetTokenFromCookie(ctx, auth.REFRESH_TOKEN_COOKIE_NAME)
+		refreshToken := utils.GetValueFromCookie(ctx, auth.REFRESH_TOKEN_COOKIE_NAME)
 		result := redis.GoPosteryRedisClient.Get(auth.REFRESH_KEY_PREFIX + refreshToken)
 		if result.Err() != nil { // 没拿到 redis 中存的 accessToken
 			// RefreshToken 也认证不通过, 没招了, 未登录, 后面不用看了
@@ -309,7 +323,7 @@ func PostBelongHandler(ctx *gin.Context) {
 
 		// 如果 redis 能拿到, 重新放到 Cookie 中
 		accessToken = result.Val()
-		userInfo = middleware.GetUserInfoFromJWT(accessToken)
+		userInfo = postHandler.AuthHandler.GetUserInfoFromJWT(accessToken)
 		if userInfo == nil {
 			// 虽然拿到了, 但是有问题 (很小概率)
 			resp := utils.Resp{

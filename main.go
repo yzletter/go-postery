@@ -43,11 +43,13 @@ func main() {
 	// Service 层
 	JwtService := service.NewJwtService("123456") // 注册 JwtService
 	UserService := service.NewUserService(nil)    // 注册 UserService
+	PostService := service.NewPostService(nil)    // 注册 PostService
 
 	// Handler 层
 	// todo 会换成 infra
 	AuthHandler := auth.NewAuthHandler(redis.GoPosteryRedisClient, JwtService)                 // 注册 AuthHandler
 	UserHandler := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
+	PostHandler := handler.NewPostHandler(JwtService, PostService)
 
 	// 中间件层, 本质为 gin.HandlerFunc
 	AuthMiddleWare := AuthHandler.Build() // 构建 AuthHandlerFunc
@@ -68,12 +70,12 @@ func main() {
 	engine.POST("/modify_pass/submit", AuthMiddleWare, UserHandler.ModifyPass) // 修改密码
 
 	// 帖子模块
-	engine.GET("/posts", handler2.GetPostsHandler)                              // 获取帖子列表
-	engine.GET("/posts/:pid", handler2.GetPostDetailHandler)                    // 获取帖子详情
-	engine.POST("/posts/new", AuthMiddleWare, handler2.CreateNewPostHandler)    // 创建帖子
-	engine.GET("/posts/delete/:id", AuthMiddleWare, handler2.DeletePostHandler) // 删除帖子
-	engine.POST("/posts/update", AuthMiddleWare, handler2.UpdatePostHandler)    // 修改帖子
-	engine.GET("/posts/belong", handler2.PostBelongHandler)                     // 查询帖子是否归属当前登录用户
+	engine.GET("/posts", PostHandler.GetPosts)                              // 获取帖子列表
+	engine.GET("/posts/:pid", PostHandler.GetPostDetail)                    // 获取帖子详情
+	engine.POST("/posts/new", AuthMiddleWare, PostHandler.CreateNewPost)    // 创建帖子
+	engine.GET("/posts/delete/:id", AuthMiddleWare, PostHandler.DeletePost) // 删除帖子
+	engine.POST("/posts/update", AuthMiddleWare, PostHandler.UpdatePost)    // 修改帖子
+	engine.GET("/posts/belong", PostHandler.PostBelong)                     // 查询帖子是否归属当前登录用户
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
