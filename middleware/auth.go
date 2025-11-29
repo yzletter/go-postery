@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/repository/redis"
+	service "github.com/yzletter/go-postery/service/jwt"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -20,74 +21,95 @@ const (
 	REFRESH_KEY_PREFIX        = "session_"
 )
 
-var (
-	JWTConfig = utils.InitViper("./conf", "jwt", utils.YAML)
-)
+// AuthHandler 鉴权中间件的 Handler
+type AuthHandler struct {
+	JwtService  service.JwtService
+	RedisClient redis.Cmdable
+}
 
-// AuthHandlerFunc 身份认证中间件
-func AuthHandlerFunc(ctx *gin.Context) {
-	// 尝试通过 AccessToken 认证
-	accessToken := GetTokenFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME)
-	userInfo := GetUserInfoFromJWT(accessToken)
-	slog.Info("Auth verify AccessToken ...", "user", userInfo)
-
-	if userInfo != nil {
-		// AccessToken 认证直接通过
-		slog.Info("Auth verify AccessToken succeed", "user", userInfo)
-		// 把 userInfo 放入上下文, 以便后续中间件直接使用
-		ctx.Set(UID_IN_CTX, userInfo.Id)
-		ctx.Set(UNAME_IN_CTX, userInfo.Name)
-		return
-	}
-
-	// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
-	refreshToken := GetTokenFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME)
-	result := redis.GoPosteryRedisClient.Get(REFRESH_KEY_PREFIX + refreshToken)
-	if result.Err() != nil { // 没拿到 redis 中存的 accessToken
-		// RefreshToken 也认证不通过, 没招了
-		slog.Info("Auth verify RefreshToken failed")
-
-		ctx.Redirect(http.StatusTemporaryRedirect, "/login") // 未登录, 进行重定向
-		ctx.Abort()                                          // 当前中间件执行完, 后续中间件不执行
-		return
-	}
-
-	// 如果 redis 能拿到, 重新放到 Cookie 中
-	accessToken = result.Val()
-	userInfo = GetUserInfoFromJWT(accessToken)
-	if userInfo == nil {
-		// 虽然拿到了, 但是有问题 (很小概率)
-		slog.Info("Auth verify redis-AccessToken succeed", "user", userInfo)
-		ctx.Redirect(http.StatusTemporaryRedirect, "/login") // 未登录, 进行重定向
-		ctx.Abort()                                          // 当前中间件执行完, 后续中间件不执行
-		return
-	} else {
-		ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
-		slog.Info("Auth", "user", userInfo)
-		// 把 userInfo 放入上下文, 以便后续中间件直接使用
-		ctx.Set(UID_IN_CTX, userInfo.Id)
-		ctx.Set(UNAME_IN_CTX, userInfo.Name)
+// NewAuthHandler 构造函数
+func NewAuthHandler(jwtService service.JwtService, redisClient redis.Cmdable) *AuthHandler {
+	return &AuthHandler{
+		JwtService:  jwtService,
+		RedisClient: redisClient,
 	}
 }
 
-// GetTokenFromCookie 从 cookie 中获取值
-func GetTokenFromCookie(ctx *gin.Context, cookieName string) string {
-	cookie, err := ctx.Request.Cookie(cookieName)
-	if err != nil {
-		return ""
+// Build 返回 gin.HandlerFunc
+func (auth *AuthHandler) Build() gin.HandlerFunc {
+
+	// 定义需要返回的 gin.HandlerFunc
+	var AuthHandlerFunc func(ctx *gin.Context)
+
+	// gin.HandlerFunc 的具体实现
+	AuthHandlerFunc = func(ctx *gin.Context) {
+		// 尝试通过 AccessToken 认证
+		accessToken := utils.GetValueFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME)
+		userInfo := auth.GetUserInfoFromJWT(accessToken)
+		// todo 日志
+		slog.Info("Auth verify AccessToken ...", "user", userInfo)
+
+		if userInfo != nil {
+			// AccessToken 认证直接通过
+			// todo 日志
+			slog.Info("Auth verify AccessToken succeed", "user", userInfo)
+
+			// 把 userInfo 放入上下文, 以便后续中间件直接使用
+			ctx.Set(UID_IN_CTX, userInfo.Id)
+			ctx.Set(UNAME_IN_CTX, userInfo.Name)
+			return
+		}
+
+		// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
+		refreshToken := utils.GetValueFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME)
+		result := auth.RedisClient.Get(REFRESH_KEY_PREFIX + refreshToken)
+		if result.Err() != nil { // 没拿到 redis 中存的 accessToken
+			// RefreshToken 也认证不通过, 没招了
+			// todo 日志
+			slog.Info("Auth verify RefreshToken failed")
+
+			ctx.Redirect(http.StatusTemporaryRedirect, "/login") // 未登录, 进行重定向
+			ctx.Abort()                                          // 当前中间件执行完, 后续中间件不执行
+			return
+		}
+
+		// 如果 redis 能拿到, 重新放到 Cookie 中
+		accessToken = result.Val()
+		userInfo = auth.GetUserInfoFromJWT(accessToken)
+		if userInfo == nil {
+			// 虽然拿到了, 但是有问题 (很小概率)
+			// todo 日志
+			slog.Info("Auth verify redis-AccessToken succeed", "user", userInfo)
+			ctx.Redirect(http.StatusTemporaryRedirect, "/login") // 未登录, 进行重定向
+			ctx.Abort()                                          // 当前中间件执行完, 后续中间件不执行
+			return
+		} else {
+			ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+			// todo 日志
+			slog.Info("Auth", "user", userInfo)
+
+			// 把 userInfo 放入上下文, 以便后续中间件直接使用
+			ctx.Set(UID_IN_CTX, userInfo.Id)
+			ctx.Set(UNAME_IN_CTX, userInfo.Name)
+		}
 	}
-	return cookie.Value
+
+	// 返回 gin.HandlerFunc
+	return AuthHandlerFunc
 }
 
 // GetUserInfoFromJWT 从 JWT Token 中获取 uid
-func GetUserInfoFromJWT(jwtToken string) *dto.UserInformation {
-	payload, err := utils.VerifyJWT(jwtToken, JWTConfig.GetString("secret")) // 加密的 key 从配置文件中读取
+func (auth *AuthHandler) GetUserInfoFromJWT(jwtToken string) *dto.UserInformation {
+	// 解析 JWT Token
+	payload, err := auth.JwtService.VerifyToken(jwtToken)
 	if err != nil {
+		// todo 日志
 		return nil // jwt 校验失败
 	}
-
+	// todo 日志
 	slog.Info("成功从 Token 中校验出 payload", "payload", payload)
 
+	// 获取用户信息
 	for k, v := range payload.UserDefined {
 		if k == USERINFO_IN_JWT_PAYLOAD {
 			bs, _ := json.Marshal(v)
