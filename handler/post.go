@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/handler/auth"
 	database2 "github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
@@ -132,7 +131,7 @@ func (postHandler *PostHandler) GetPostDetail(ctx *gin.Context) {
 // CreateNewPost 创建帖子
 func (postHandler *PostHandler) CreateNewPost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
+	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
 	var createRequest dto.CreateRequest
@@ -173,7 +172,7 @@ func (postHandler *PostHandler) CreateNewPost(ctx *gin.Context) {
 // DeletePost 删除帖子
 func (postHandler *PostHandler) DeletePost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
+	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 再拿帖子 pid
 	pid, err := strconv.Atoi(ctx.Param("id"))
@@ -227,7 +226,7 @@ func (postHandler *PostHandler) DeletePost(ctx *gin.Context) {
 // UpdatePost 修改帖子
 func (postHandler *PostHandler) UpdatePost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(auth.UID_IN_CTX).(int)
+	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
 	var updateRequest dto.UpdateRequest
@@ -294,7 +293,7 @@ func (postHandler *PostHandler) PostBelong(ctx *gin.Context) {
 	}
 
 	// 前面中间件放了 uid 在 ctx, 直接拿 uid
-	uid, ok := ctx.Value(auth.UID_IN_CTX).(int)
+	uid, ok := ctx.Value(service.UID_IN_CTX).(int)
 	if !ok {
 		// 未登录
 		resp := utils.Resp{

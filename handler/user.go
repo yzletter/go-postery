@@ -8,7 +8,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/handler/auth"
 	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/service"
 
@@ -79,9 +78,9 @@ func (userHandler *UserHandler) Login(ctx *gin.Context) {
 	// 生成 AccessToken
 	payload := service.JwtPayload{
 		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                                      // 签发日期为当前时间
-		Expiration:  0,                                                      // 永不过期
-		UserDefined: map[string]any{auth.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+		IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
+		Expiration:  0,                                                         // 永不过期
+		UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
 	accessToken, err := userHandler.JwtService.GenToken(payload)
 	if err != nil {
@@ -95,10 +94,10 @@ func (userHandler *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	// 将双 Token 放进 Cookie
-	ctx.SetCookie(auth.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
-	ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
+	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	userHandler.RedisClient.Set(auth.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	userHandler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
@@ -116,8 +115,8 @@ func (userHandler *UserHandler) Login(ctx *gin.Context) {
 // Logout 用户登出 Handler
 func (userHandler *UserHandler) Logout(ctx *gin.Context) {
 	// 设置 Cookie 里的双 Token 都置为 -1
-	ctx.SetCookie(auth.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
-	ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 
 	resp := utils.Resp{
 		Code: 0,
@@ -142,7 +141,7 @@ func (userHandler *UserHandler) ModifyPass(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, ok := ctx.Value(auth.UID_IN_CTX).(int)
+	uid, ok := ctx.Value(service.UID_IN_CTX).(int)
 	if !ok {
 		// 没有登录
 		resp := utils.Resp{
@@ -210,9 +209,9 @@ func (userHandler *UserHandler) Register(ctx *gin.Context) {
 	// 生成 AccessToken
 	payload := service.JwtPayload{
 		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                                      // 签发日期为当前时间
-		Expiration:  0,                                                      // 永不过期
-		UserDefined: map[string]any{auth.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+		IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
+		Expiration:  0,                                                         // 永不过期
+		UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
 	accessToken, err := userHandler.JwtService.GenToken(payload)
 	if err != nil {
@@ -226,10 +225,10 @@ func (userHandler *UserHandler) Register(ctx *gin.Context) {
 	}
 
 	// 将双 Token 放进 Cookie
-	ctx.SetCookie(auth.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
-	ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
+	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	userHandler.RedisClient.Set(auth.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	userHandler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
