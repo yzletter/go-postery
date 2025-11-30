@@ -22,8 +22,8 @@ func NewPostHandler(postService *service.PostService) *PostHandler {
 	}
 }
 
-// GetPosts 获取帖子列表
-func (handler *PostHandler) GetPosts(ctx *gin.Context) {
+// List 获取帖子列表
+func (handler *PostHandler) List(ctx *gin.Context) {
 	// 从 /posts?pageNo=1&pageSize=2 路由中拿出 pageNo 和 pageSize
 	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
@@ -78,8 +78,8 @@ func (handler *PostHandler) GetPosts(ctx *gin.Context) {
 	return
 }
 
-// GetPostDetail 获取帖子详情
-func (handler *PostHandler) GetPostDetail(ctx *gin.Context) {
+// Detail 获取帖子详情
+func (handler *PostHandler) Detail(ctx *gin.Context) {
 	// 从路由中获取 pid 参数
 	pid, err := strconv.Atoi(ctx.Param("pid"))
 	if err != nil {
@@ -128,8 +128,8 @@ func (handler *PostHandler) GetPostDetail(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// CreateNewPost 创建帖子
-func (handler *PostHandler) CreateNewPost(ctx *gin.Context) {
+// Create 创建帖子
+func (handler *PostHandler) Create(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
@@ -169,8 +169,8 @@ func (handler *PostHandler) CreateNewPost(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// DeletePost 删除帖子
-func (handler *PostHandler) DeletePost(ctx *gin.Context) {
+// Delete 删除帖子
+func (handler *PostHandler) Delete(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
@@ -223,8 +223,8 @@ func (handler *PostHandler) DeletePost(ctx *gin.Context) {
 	return
 }
 
-// UpdatePost 修改帖子
-func (handler *PostHandler) UpdatePost(ctx *gin.Context) {
+// Update 修改帖子
+func (handler *PostHandler) Update(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
@@ -278,8 +278,8 @@ func (handler *PostHandler) UpdatePost(ctx *gin.Context) {
 	return
 }
 
-// PostBelong 查询帖子作者是否为当前登录用户
-func (handler *PostHandler) PostBelong(ctx *gin.Context) {
+// Belong 查询帖子作者是否为当前登录用户
+func (handler *PostHandler) Belong(ctx *gin.Context) {
 	// 获取帖子 id
 	pid, err := strconv.Atoi(ctx.Query("id"))
 	if err != nil {

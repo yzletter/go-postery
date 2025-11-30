@@ -7,14 +7,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
+
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository/gorm"
-	postRepository "github.com/yzletter/go-postery/repository/post"
 	"github.com/yzletter/go-postery/repository/redis"
+
+	postRepository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
+
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/crontab"
@@ -25,8 +28,9 @@ func main() {
 	// 初始化
 	SlogConfPath := "./log/go_postery.log"
 	utils.InitSlog(SlogConfPath) // 初始化 slog
-	crontab.InitCrontab()        // 初始化 定时任务
-	smooth.InitSmoothExit()      // 初始化 优雅退出
+
+	crontab.InitCrontab()   // 初始化 定时任务
+	smooth.InitSmoothExit() // 初始化 优雅退出
 
 	database.ConnectToMySQL("./conf", "db", utils.YAML, "./log") // 初始化 MySQL 数据库
 	redis.ConnectToRedis("./conf", "redis", utils.YAML)          // 初始化 Redis 数据库
@@ -85,14 +89,14 @@ func main() {
 	engine.POST("/modify_pass/submit", AuthRequiredMdl, UserHdl.ModifyPass) // 修改密码
 
 	// 帖子模块
-	engine.GET("/posts", PostHdl.GetPosts)           // 获取帖子列表
-	engine.GET("/posts/:pid", PostHdl.GetPostDetail) // 获取帖子详情
+	engine.GET("/posts", PostHdl.List)        // 获取帖子列表
+	engine.GET("/posts/:pid", PostHdl.Detail) // 获取帖子详情
 	// 强制登录
-	engine.POST("/posts/new", AuthRequiredMdl, PostHdl.CreateNewPost)    // 创建帖子
-	engine.GET("/posts/delete/:id", AuthRequiredMdl, PostHdl.DeletePost) // 删除帖子
-	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.UpdatePost)    // 修改帖子
+	engine.POST("/posts/new", AuthRequiredMdl, PostHdl.Create)       // 创建帖子
+	engine.GET("/posts/delete/:id", AuthRequiredMdl, PostHdl.Delete) // 删除帖子
+	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.Update)    // 修改帖子
 	// 非强制要求登录
-	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.PostBelong) // 查询帖子是否归属当前登录用户
+	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
