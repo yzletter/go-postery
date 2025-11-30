@@ -47,6 +47,7 @@ func main() {
 
 	// Handler 层
 	// todo 会换成 infra
+	MetricHandler := handler.NewMetricHandler()
 	AuthHandler := auth.NewAuthHandler(redis.GoPosteryRedisClient, JwtService)                 // 注册 AuthHandler
 	UserHandler := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
 	PostHandler := handler.NewPostHandler(PostService)
@@ -54,12 +55,12 @@ func main() {
 	// 中间件层, 本质为 gin.HandlerFunc
 	AuthRequiredMiddleware := middleware.AuthRequiredMiddleware(AuthHandler) // AuthRequiredMiddleware 强制登录
 	AuthOptionalMiddleware := middleware.AuthOptionalMiddleware(AuthHandler) // AuthOptionalMiddleware 非强制要求登录
+	MetricMiddleware := middleware.MetricMiddleware(MetricHandler)           // MetricMiddleware 用于 Prometheus 监控中间件
 
 	// 全局中间件
-	engine.Use(middleware.MetricMiddleware) // Prometheus 监控中间件
+	engine.Use(MetricMiddleware) // Prometheus 监控中间件
 
 	// 定义路由
-
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
 		promhttp.Handler().ServeHTTP(ctx.Writer, ctx.Request) // 固定写法
 	})

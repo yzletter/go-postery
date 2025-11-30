@@ -5,30 +5,26 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-)
-
-var (
-	// Counter是一个积累量（单调增），跟历史值有关
-	requestCounter = promauto.NewCounterVec(prometheus.CounterOpts{Name: "request_counter"}, []string{"service", "interface"}) //此处指定了2个Label
-	// Gauge是每个记录是独立的
-	requestTimer = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "request_timer"}, []string{"service", "interface"})
+	"github.com/yzletter/go-postery/handler"
 )
 
 // MetricMiddleware 返回每个接口的调用次数和调用时间
-func MetricMiddleware(ctx *gin.Context) {
-	// 记录开始时间
-	start := time.Now()
+func MetricMiddleware(metricHandler *handler.MetricHandler) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		// 记录开始时间
+		start := time.Now()
 
-	// 执行后面的中间件
-	ctx.Next()
+		// 执行后面的中间件
+		ctx.Next()
 
-	// 当前接口调用 url, 需要对路径进行处理
-	path := mapURL(ctx)
+		// 当前接口调用 url, 需要对路径进行处理
+		path := mapURL(ctx)
 
-	requestCounter.WithLabelValues("gopostery", path).Inc()                                        // 计数器 + 1 即可
-	requestTimer.WithLabelValues("gopostery", path).Set(float64(time.Since(start).Milliseconds())) // 计时器记录从 start 到现在过了多久
+		// 对该路径的请求进行统计
+		metricHandler.CounterAdd(path)      // 计数器 +1
+		metricHandler.TimerSet(path, start) // 计时器记录时间
+
+	}
 }
 
 var mpRestful = map[string]string{"id": "id"}
