@@ -1,0 +1,4 @@
+time="2025-11-30 11:08:57.927" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-30 11:08:57.937" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"
+time="2025-11-30 11:25:24.949" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-30 11:25:24.949" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"

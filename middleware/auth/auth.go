@@ -25,52 +25,95 @@ func NewAuthHandler(redisClient redis.Cmdable, jwtService *service.JwtService) *
 	}
 }
 
+// todo 区分强制鉴权，非强制鉴权 AuthRequriedMiddle 和 OptionalAuthMiddleware
 // Build 返回 gin.HandlerFunc
-func (authHandler *AuthHandler) Build() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		// 尝试通过 AccessToken 认证
-		accessToken := utils.GetValueFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
-		userInfo := authHandler.GetUserInfoFromJWT(accessToken)
+func (authHandler *AuthHandler) AuthRequired(ctx *gin.Context) {
+	// 尝试通过 AccessToken 认证
+	accessToken := utils.GetValueFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
+	userInfo := authHandler.GetUserInfoFromJWT(accessToken)
 
-		// AccessToken 认证直接通过
-		if userInfo != nil {
-			slog.Info("AuthHandler 认证 AccessToken 成功 ...", "UserInfo", userInfo)
-
-			// 把 userInfo 放入上下文, 以便后续中间件直接使用
-			setUserToContext(ctx, userInfo)
-			ctx.Next()
-		}
-
-		slog.Info("AuthHandler 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
-
-		// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
-		refreshToken := utils.GetValueFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME) // 获取 RefreshToken
-		result := authHandler.RedisClient.Get(REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
-		if result.Err() != nil {
-			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
-			slog.Info("AuthHandler 认证 RefreshToken 失败, 需重新登录 ...")
-			ctx.Abort() // 当前中间件执行完, 后续中间件不执行
-			return
-		}
-
-		// 如果 redis 能拿到, 重新放到 Cookie 中
-		accessToken = result.Val()
-		userInfo = authHandler.GetUserInfoFromJWT(accessToken)
-		if userInfo == nil {
-			// 虽然拿到了, 但是有问题 (很小概率)
-			slog.Error("AuthHandler 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
-			ctx.Abort() // 当前中间件执行完, 后续中间件不执行
-			return
-		}
-
-		// 拿到了, 并且也没问题, 放到 Cookie 中
-		ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
-		slog.Info("AuthHandler 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
+	// AccessToken 认证直接通过
+	if userInfo != nil {
+		slog.Info("AuthHandler 认证 AccessToken 成功 ...", "UserInfo", userInfo)
 
 		// 把 userInfo 放入上下文, 以便后续中间件直接使用
 		setUserToContext(ctx, userInfo)
 		ctx.Next()
 	}
+
+	slog.Info("AuthHandler 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
+
+	// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
+	refreshToken := utils.GetValueFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME) // 获取 RefreshToken
+	result := authHandler.RedisClient.Get(REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
+	if result.Err() != nil {
+		// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
+		slog.Info("AuthHandler 认证 RefreshToken 失败, 需重新登录 ...")
+		ctx.Abort() // 当前中间件执行完, 后续中间件不执行
+		return
+	}
+
+	// 如果 redis 能拿到, 重新放到 Cookie 中
+	accessToken = result.Val()
+	userInfo = authHandler.GetUserInfoFromJWT(accessToken)
+	if userInfo == nil {
+		// 虽然拿到了, 但是有问题 (很小概率)
+		slog.Error("AuthHandler 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
+		ctx.Abort() // 当前中间件执行完, 后续中间件不执行
+		return
+	}
+
+	// 拿到了, 并且也没问题, 放到 Cookie 中
+	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	slog.Info("AuthHandler 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
+
+	// 把 userInfo 放入上下文, 以便后续中间件直接使用
+	setUserToContext(ctx, userInfo)
+	ctx.Next()
+}
+func (authHandler *AuthHandler) AuthOptional(ctx *gin.Context) {
+	// 尝试通过 AccessToken 认证
+	accessToken := utils.GetValueFromCookie(ctx, ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
+	userInfo := authHandler.GetUserInfoFromJWT(accessToken)
+
+	// AccessToken 认证直接通过
+	if userInfo != nil {
+		slog.Info("AuthHandler 认证 AccessToken 成功 ...", "UserInfo", userInfo)
+
+		// 把 userInfo 放入上下文, 以便后续中间件直接使用
+		setUserToContext(ctx, userInfo)
+		ctx.Next()
+	}
+
+	slog.Info("AuthHandler 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
+
+	// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
+	refreshToken := utils.GetValueFromCookie(ctx, REFRESH_TOKEN_COOKIE_NAME) // 获取 RefreshToken
+	result := authHandler.RedisClient.Get(REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
+	if result.Err() != nil {
+		// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
+		slog.Info("AuthHandler 认证 RefreshToken 失败, 需重新登录 ...")
+		ctx.Next()
+		return
+	}
+
+	// 如果 redis 能拿到, 重新放到 Cookie 中
+	accessToken = result.Val()
+	userInfo = authHandler.GetUserInfoFromJWT(accessToken)
+	if userInfo == nil {
+		// 虽然拿到了, 但是有问题 (很小概率)
+		slog.Error("AuthHandler 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
+		ctx.Next()
+		return
+	}
+
+	// 拿到了, 并且也没问题, 放到 Cookie 中
+	ctx.SetCookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+	slog.Info("AuthHandler 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
+
+	// 把 userInfo 放入上下文, 以便后续中间件直接使用
+	setUserToContext(ctx, userInfo)
+	ctx.Next()
 }
 
 // GetUserInfoFromJWT 从 JWT Token 中获取 uid

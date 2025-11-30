@@ -49,10 +49,11 @@ func main() {
 	// todo 会换成 infra
 	AuthHandler := auth.NewAuthHandler(redis.GoPosteryRedisClient, JwtService)                 // 注册 AuthHandler
 	UserHandler := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
-	PostHandler := handler.NewPostHandler(JwtService, PostService)
+	PostHandler := handler.NewPostHandler(PostService)
 
 	// 中间件层, 本质为 gin.HandlerFunc
-	AuthMiddleWare := AuthHandler.Build() // 构建 AuthHandlerFunc
+	AuthRequiredMiddleWare := AuthHandler.AuthRequired // AuthRequiredMiddleWare 强制登录
+	AuthOptionalMiddleWare := AuthHandler.AuthOptional // AuthOptionalMiddleWare 非强制要求登录
 
 	// 全局中间件
 	engine.Use(middleware.MetricHandler) // Prometheus 监控中间件
@@ -64,18 +65,18 @@ func main() {
 	})
 
 	// 用户模块
-	engine.POST("/register/submit", UserHandler.Register)                      // 用户注册
-	engine.POST("/login/submit", UserHandler.Login)                            // 用户登录
-	engine.GET("/logout", UserHandler.Logout)                                  // 用户退出
-	engine.POST("/modify_pass/submit", AuthMiddleWare, UserHandler.ModifyPass) // 修改密码
+	engine.POST("/register/submit", UserHandler.Register)                              // 用户注册
+	engine.POST("/login/submit", UserHandler.Login)                                    // 用户登录
+	engine.GET("/logout", UserHandler.Logout)                                          // 用户退出
+	engine.POST("/modify_pass/submit", AuthRequiredMiddleWare, UserHandler.ModifyPass) // 修改密码
 
 	// 帖子模块
-	engine.GET("/posts", PostHandler.GetPosts)                              // 获取帖子列表
-	engine.GET("/posts/:pid", PostHandler.GetPostDetail)                    // 获取帖子详情
-	engine.POST("/posts/new", AuthMiddleWare, PostHandler.CreateNewPost)    // 创建帖子
-	engine.GET("/posts/delete/:id", AuthMiddleWare, PostHandler.DeletePost) // 删除帖子
-	engine.POST("/posts/update", AuthMiddleWare, PostHandler.UpdatePost)    // 修改帖子
-	engine.GET("/posts/belong", PostHandler.PostBelong)                     // 查询帖子是否归属当前登录用户
+	engine.GET("/posts", PostHandler.GetPosts)                                      // 获取帖子列表
+	engine.GET("/posts/:pid", PostHandler.GetPostDetail)                            // 获取帖子详情
+	engine.POST("/posts/new", AuthRequiredMiddleWare, PostHandler.CreateNewPost)    // 创建帖子
+	engine.GET("/posts/delete/:id", AuthRequiredMiddleWare, PostHandler.DeletePost) // 删除帖子
+	engine.POST("/posts/update", AuthRequiredMiddleWare, PostHandler.UpdatePost)    // 修改帖子
+	engine.GET("/posts/belong", AuthOptionalMiddleWare, PostHandler.PostBelong)     // 查询帖子是否归属当前登录用户
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

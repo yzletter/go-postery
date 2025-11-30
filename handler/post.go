@@ -9,20 +9,16 @@ import (
 	"github.com/yzletter/go-postery/dto"
 	"github.com/yzletter/go-postery/middleware/auth"
 	database2 "github.com/yzletter/go-postery/repository/gorm"
-	"github.com/yzletter/go-postery/repository/redis"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 )
 
 type PostHandler struct {
-	AuthHandler auth.AuthHandler
-	JwtService  *service.JwtService
 	PostService *service.PostService
 }
 
-func NewPostHandler(jwtService *service.JwtService, postService *service.PostService) *PostHandler {
+func NewPostHandler(postService *service.PostService) *PostHandler {
 	return &PostHandler{
-		JwtService:  jwtService,
 		PostService: postService,
 	}
 }
@@ -297,51 +293,22 @@ func (postHandler *PostHandler) PostBelong(ctx *gin.Context) {
 		return
 	}
 
-	// 获取登录 uid
-	accessToken := utils.GetValueFromCookie(ctx, auth.ACCESS_TOKEN_COOKIE_NAME)
-	// todo 鉴权
-	userInfo := postHandler.AuthHandler.GetUserInfoFromJWT(accessToken)
-
-	slog.Info("Auth", "user", userInfo)
-
-	if userInfo == nil || userInfo.Id == 0 {
-		// AccessToken 认证不通过, 尝试通过 RefreshToken  认证
-		refreshToken := utils.GetValueFromCookie(ctx, auth.REFRESH_TOKEN_COOKIE_NAME)
-		result := redis.GoPosteryRedisClient.Get(auth.REFRESH_KEY_PREFIX + refreshToken)
-		if result.Err() != nil { // 没拿到 redis 中存的 accessToken
-			// RefreshToken 也认证不通过, 没招了, 未登录, 后面不用看了
-			slog.Info("Auth", "error", result.Err())
-
-			resp := utils.Resp{
-				Code: 0,
-				Msg:  "帖子不属于当前用户",
-				Data: "false",
-			}
-			ctx.JSON(http.StatusOK, resp)
-			return
+	// 前面中间件放了 uid 在 ctx, 直接拿 uid
+	uid, ok := ctx.Value(auth.UID_IN_CTX).(int)
+	if !ok {
+		// 未登录
+		resp := utils.Resp{
+			Code: 0,
+			Msg:  "帖子不属于当前用户",
+			Data: "false",
 		}
-
-		// 如果 redis 能拿到, 重新放到 Cookie 中
-		accessToken = result.Val()
-		userInfo = postHandler.AuthHandler.GetUserInfoFromJWT(accessToken)
-		if userInfo == nil {
-			// 虽然拿到了, 但是有问题 (很小概率)
-			resp := utils.Resp{
-				Code: 0,
-				Msg:  "帖子不属于当前用户",
-				Data: "false",
-			}
-			ctx.JSON(http.StatusOK, resp)
-			return
-		}
-
-		// 拿到了 AccessToken, 并且一切正常, 放入 Cookie 继续判断
-		ctx.SetCookie(auth.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
+		ctx.JSON(http.StatusOK, resp)
+		return
 	}
 
 	// 判断登录用户是否是作者
 	post := database2.GetPostByID(pid)
-	if post == nil || userInfo.Id != post.UserId {
+	if post == nil || uid != post.UserId {
 		resp := utils.Resp{
 			Code: 0,
 			Msg:  "帖子不属于当前用户",
