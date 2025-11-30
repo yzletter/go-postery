@@ -73,3 +73,7 @@ time="2025-11-30 14:31:33.964" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-11-30 14:31:33.964" level=INFO source=/Users/yzletter/go_project/go-postery/middleware/auth/auth.go:137 msg="AuthHandler 获得 UserInfo 成功 ... " userInfo="{Id:9999 Name:yzletter}"
 time="2025-11-30 14:31:33.964" level=INFO source=/Users/yzletter/go_project/go-postery/middleware/auth/auth.go:112 msg="AuthHandler 认证 RefreshToken 成功 ..." UserInfo="&{Id:9999 Name:yzletter}"
 time="2025-11-30 14:31:33.964" level=INFO source=/Users/yzletter/go_project/go-postery/middleware/auth/auth.go:151 msg="用户信息放入上下文成功 ..." UserInfo="&{Id:9999 Name:yzletter}"
+time="2025-11-30 14:40:00.006" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-30 14:40:00.007" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"
+time="2025-11-30 14:50:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
+time="2025-11-30 14:50:00.010" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"

@@ -16,8 +16,8 @@ var (
 	requestTimer = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "request_timer"}, []string{"service", "interface"})
 )
 
-// MetricHandler 返回每个接口的调用次数和调用时间
-func MetricHandler(ctx *gin.Context) {
+// MetricMiddleware 返回每个接口的调用次数和调用时间
+func MetricMiddleware(ctx *gin.Context) {
 	// 记录开始时间
 	start := time.Now()
 

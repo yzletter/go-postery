@@ -8,7 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/middleware/auth"
+	"github.com/yzletter/go-postery/handler/auth"
 	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/service"
 

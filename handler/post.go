@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto"
-	"github.com/yzletter/go-postery/middleware/auth"
+	"github.com/yzletter/go-postery/handler/auth"
 	database2 "github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
