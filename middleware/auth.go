@@ -10,11 +10,11 @@ import (
 )
 
 // AuthRequiredMiddleware 强制登录
-func AuthRequiredMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
+func AuthRequiredMiddleware(authService *service.AuthService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 尝试通过 AccessToken 认证
 		accessToken := utils.GetValueFromCookie(ctx, service.ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
-		userInfo := authHandler.GetUserInfoFromJWT(accessToken)
+		userInfo := authService.GetUserInfoFromJWT(accessToken)
 
 		// AccessToken 认证直接通过
 		if userInfo != nil {
@@ -29,7 +29,7 @@ func AuthRequiredMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
 
 		// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
 		refreshToken := utils.GetValueFromCookie(ctx, service.REFRESH_TOKEN_COOKIE_NAME) // 获取 RefreshToken
-		result := authHandler.RedisClient.Get(service.REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
+		result := authService.RedisClient.Get(service.REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
 		if result.Err() != nil {
 			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
 			slog.Info("AuthService 认证 RefreshToken 失败, 需重新登录 ...")
@@ -39,7 +39,7 @@ func AuthRequiredMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
 
 		// 如果 redis 能拿到, 重新放到 Cookie 中
 		accessToken = result.Val()
-		userInfo = authHandler.GetUserInfoFromJWT(accessToken)
+		userInfo = authService.GetUserInfoFromJWT(accessToken)
 		if userInfo == nil {
 			// 虽然拿到了, 但是有问题 (很小概率)
 			slog.Error("AuthService 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
@@ -58,11 +58,11 @@ func AuthRequiredMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
 }
 
 // AuthOptionalMiddleware 非强制要求登录
-func AuthOptionalMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
+func AuthOptionalMiddleware(authService *service.AuthService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 尝试通过 AccessToken 认证
 		accessToken := utils.GetValueFromCookie(ctx, service.ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
-		userInfo := authHandler.GetUserInfoFromJWT(accessToken)
+		userInfo := authService.GetUserInfoFromJWT(accessToken)
 
 		// AccessToken 认证直接通过
 		if userInfo != nil {
@@ -77,7 +77,7 @@ func AuthOptionalMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
 
 		// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
 		refreshToken := utils.GetValueFromCookie(ctx, service.REFRESH_TOKEN_COOKIE_NAME) // 获取 RefreshToken
-		result := authHandler.RedisClient.Get(service.REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
+		result := authService.RedisClient.Get(service.REFRESH_KEY_PREFIX + refreshToken) // 从 Redis 尝试获取 AccessToken
 		if result.Err() != nil {
 			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
 			slog.Info("AuthService 认证 RefreshToken 失败, 需重新登录 ...")
@@ -87,7 +87,7 @@ func AuthOptionalMiddleware(authHandler *service.AuthService) gin.HandlerFunc {
 
 		// 如果 redis 能拿到, 重新放到 Cookie 中
 		accessToken = result.Val()
-		userInfo = authHandler.GetUserInfoFromJWT(accessToken)
+		userInfo = authService.GetUserInfoFromJWT(accessToken)
 		if userInfo == nil {
 			// 虽然拿到了, 但是有问题 (很小概率)
 			slog.Error("AuthService 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)

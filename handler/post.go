@@ -23,7 +23,7 @@ func NewPostHandler(postService *service.PostService) *PostHandler {
 }
 
 // GetPosts 获取帖子列表
-func (postHandler *PostHandler) GetPosts(ctx *gin.Context) {
+func (handler *PostHandler) GetPosts(ctx *gin.Context) {
 	// 从 /posts?pageNo=1&pageSize=2 路由中拿出 pageNo 和 pageSize
 	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
@@ -79,7 +79,7 @@ func (postHandler *PostHandler) GetPosts(ctx *gin.Context) {
 }
 
 // GetPostDetail 获取帖子详情
-func (postHandler *PostHandler) GetPostDetail(ctx *gin.Context) {
+func (handler *PostHandler) GetPostDetail(ctx *gin.Context) {
 	// 从路由中获取 pid 参数
 	pid, err := strconv.Atoi(ctx.Param("pid"))
 	if err != nil {
@@ -129,7 +129,7 @@ func (postHandler *PostHandler) GetPostDetail(ctx *gin.Context) {
 }
 
 // CreateNewPost 创建帖子
-func (postHandler *PostHandler) CreateNewPost(ctx *gin.Context) {
+func (handler *PostHandler) CreateNewPost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
@@ -170,7 +170,7 @@ func (postHandler *PostHandler) CreateNewPost(ctx *gin.Context) {
 }
 
 // DeletePost 删除帖子
-func (postHandler *PostHandler) DeletePost(ctx *gin.Context) {
+func (handler *PostHandler) DeletePost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
@@ -224,7 +224,7 @@ func (postHandler *PostHandler) DeletePost(ctx *gin.Context) {
 }
 
 // UpdatePost 修改帖子
-func (postHandler *PostHandler) UpdatePost(ctx *gin.Context) {
+func (handler *PostHandler) UpdatePost(ctx *gin.Context) {
 	// 直接从 ctx 中拿 loginUid
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
@@ -279,7 +279,7 @@ func (postHandler *PostHandler) UpdatePost(ctx *gin.Context) {
 }
 
 // PostBelong 查询帖子作者是否为当前登录用户
-func (postHandler *PostHandler) PostBelong(ctx *gin.Context) {
+func (handler *PostHandler) PostBelong(ctx *gin.Context) {
 	// 获取帖子 id
 	pid, err := strconv.Atoi(ctx.Query("id"))
 	if err != nil {

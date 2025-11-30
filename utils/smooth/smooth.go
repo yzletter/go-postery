@@ -12,6 +12,7 @@ import (
 
 func InitSmoothExit() {
 	var listen func()
+	
 	// 监听函数
 	listen = func() {
 		ch := make(chan os.Signal, 1)
@@ -28,5 +29,6 @@ func InitSmoothExit() {
 		// 退出所有进程
 		os.Exit(0)
 	}
+
 	go listen() // 开始监听信号
 }

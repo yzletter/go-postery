@@ -7,9 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
+	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository/gorm"
+	postRepository "github.com/yzletter/go-postery/repository/post"
 	"github.com/yzletter/go-postery/repository/redis"
+	userRepository "github.com/yzletter/go-postery/repository/user"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/crontab"
@@ -39,25 +42,31 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	infraMySQL.Init("./conf", "db", utils.YAML, "./log")
+
+	// Repository 层
+	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB()) // 注册 UserRepository
+	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB()) // 注册 PostRepository
+
 	// Service 层
-	JwtService := service.NewJwtService("123456") // 注册 JwtService
-	UserService := service.NewUserService(nil)    // 注册 UserService
-	PostService := service.NewPostService(nil)    // 注册 PostService
-	MetricService := service.NewMetricService()
+	JwtService := service.NewJwtService("123456")                                 // 注册 JwtService
+	UserService := service.NewUserService(UserRepo)                               // 注册 UserService
+	PostService := service.NewPostService(PostRepo)                               // 注册 PostService
+	MetricService := service.NewMetricService()                                   // 注册 MetricService
 	AuthService := service.NewAuthService(redis.GoPosteryRedisClient, JwtService) // 注册 AuthService
 
 	// Handler 层
 	// todo 会换成 infra
-	UserHandler := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
-	PostHandler := handler.NewPostHandler(PostService)
+	UserHdl := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostService)                                         // 注册 PostHandler
 
-	// 中间件层,
-	AuthRequiredMiddleware := middleware.AuthRequiredMiddleware(AuthService) // AuthRequiredMiddleware 强制登录
-	AuthOptionalMiddleware := middleware.AuthOptionalMiddleware(AuthService) // AuthOptionalMiddleware 非强制要求登录
-	MetricMiddleware := middleware.MetricMiddleware(MetricService)           // MetricMiddleware 用于 Prometheus 监控中间件
+	// 中间件层
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthService) // AuthRequiredMdl 强制登录
+	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthService) // AuthOptionalMdl 非强制要求登录
+	MetricMdl := middleware.MetricMiddleware(MetricService)           // MetricMdl 用于 Prometheus 监控中间件
 
 	// 全局中间件
-	engine.Use(MetricMiddleware) // Prometheus 监控中间件
+	engine.Use(MetricMdl) // Prometheus 监控中间件
 
 	// 定义路由
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
@@ -65,18 +74,21 @@ func main() {
 	})
 
 	// 用户模块
-	engine.POST("/register/submit", UserHandler.Register)                              // 用户注册
-	engine.POST("/login/submit", UserHandler.Login)                                    // 用户登录
-	engine.GET("/logout", UserHandler.Logout)                                          // 用户退出
-	engine.POST("/modify_pass/submit", AuthRequiredMiddleware, UserHandler.ModifyPass) // 修改密码
+	engine.POST("/register/submit", UserHdl.Register) // 用户注册
+	engine.POST("/login/submit", UserHdl.Login)       // 用户登录
+	engine.GET("/logout", UserHdl.Logout)             // 用户退出
+	// 强制登录
+	engine.POST("/modify_pass/submit", AuthRequiredMdl, UserHdl.ModifyPass) // 修改密码
 
 	// 帖子模块
-	engine.GET("/posts", PostHandler.GetPosts)                                      // 获取帖子列表
-	engine.GET("/posts/:pid", PostHandler.GetPostDetail)                            // 获取帖子详情
-	engine.POST("/posts/new", AuthRequiredMiddleware, PostHandler.CreateNewPost)    // 创建帖子
-	engine.GET("/posts/delete/:id", AuthRequiredMiddleware, PostHandler.DeletePost) // 删除帖子
-	engine.POST("/posts/update", AuthRequiredMiddleware, PostHandler.UpdatePost)    // 修改帖子
-	engine.GET("/posts/belong", AuthOptionalMiddleware, PostHandler.PostBelong)     // 查询帖子是否归属当前登录用户
+	engine.GET("/posts", PostHdl.GetPosts)           // 获取帖子列表
+	engine.GET("/posts/:pid", PostHdl.GetPostDetail) // 获取帖子详情
+	// 强制登录
+	engine.POST("/posts/new", AuthRequiredMdl, PostHdl.CreateNewPost)    // 创建帖子
+	engine.GET("/posts/delete/:id", AuthRequiredMdl, PostHdl.DeletePost) // 删除帖子
+	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.UpdatePost)    // 修改帖子
+	// 非强制要求登录
+	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.PostBelong) // 查询帖子是否归属当前登录用户
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

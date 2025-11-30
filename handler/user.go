@@ -31,7 +31,7 @@ func NewUserHandler(redisClient redis.Cmdable, jwtService *service.JwtService, u
 }
 
 // Login 用户登录 Handler
-func (userHandler *UserHandler) Login(ctx *gin.Context) {
+func (handler *UserHandler) Login(ctx *gin.Context) {
 	var loginRequest = dto.LoginRequest{}
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&loginRequest)
@@ -82,7 +82,7 @@ func (userHandler *UserHandler) Login(ctx *gin.Context) {
 		Expiration:  0,                                                         // 永不过期
 		UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	accessToken, err := userHandler.JwtService.GenToken(payload)
+	accessToken, err := handler.JwtService.GenToken(payload)
 	if err != nil {
 		// AccessToken 生成失败
 		slog.Error("AccessToken 生成失败", "error", err)
@@ -97,7 +97,7 @@ func (userHandler *UserHandler) Login(ctx *gin.Context) {
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	userHandler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	handler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
@@ -113,7 +113,7 @@ func (userHandler *UserHandler) Login(ctx *gin.Context) {
 }
 
 // Logout 用户登出 Handler
-func (userHandler *UserHandler) Logout(ctx *gin.Context) {
+func (handler *UserHandler) Logout(ctx *gin.Context) {
 	// 设置 Cookie 里的双 Token 都置为 -1
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
@@ -126,7 +126,7 @@ func (userHandler *UserHandler) Logout(ctx *gin.Context) {
 }
 
 // ModifyPass 修改密码 Handler
-func (userHandler *UserHandler) ModifyPass(ctx *gin.Context) {
+func (handler *UserHandler) ModifyPass(ctx *gin.Context) {
 	var modifyPassRequest dto.ModifyPasswordRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
@@ -172,7 +172,7 @@ func (userHandler *UserHandler) ModifyPass(ctx *gin.Context) {
 }
 
 // Register 用户注册 Handler
-func (userHandler *UserHandler) Register(ctx *gin.Context) {
+func (handler *UserHandler) Register(ctx *gin.Context) {
 	var registerRequest dto.RegisterRequest
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
@@ -213,7 +213,7 @@ func (userHandler *UserHandler) Register(ctx *gin.Context) {
 		Expiration:  0,                                                         // 永不过期
 		UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	accessToken, err := userHandler.JwtService.GenToken(payload)
+	accessToken, err := handler.JwtService.GenToken(payload)
 	if err != nil {
 		// AccessToken 生成失败
 		slog.Error("AccessToken 生成失败", "error", err)
@@ -228,7 +228,7 @@ func (userHandler *UserHandler) Register(ctx *gin.Context) {
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 	// < session_refreshToken, accessToken > 放入 redis
-	userHandler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+	handler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
