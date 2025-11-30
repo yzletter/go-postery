@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
+	infraRedis "github.com/yzletter/go-postery/infra/redis"
+
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository/gorm"
 	postRepository "github.com/yzletter/go-postery/repository/post"
@@ -42,23 +44,25 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	infraMySQL.Init("./conf", "db", utils.YAML, "./log")
+	// Infra 层
+	infraMySQL.Init("./conf", "db", utils.YAML, "./log") // 注册 MySQL
+	infraRedis.Init("./conf", "redis", utils.YAML)       // 注册 Redis
 
 	// Repository 层
 	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB()) // 注册 UserRepository
 	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB()) // 注册 PostRepository
 
 	// Service 层
-	JwtService := service.NewJwtService("123456")                                 // 注册 JwtService
-	UserService := service.NewUserService(UserRepo)                               // 注册 UserService
-	PostService := service.NewPostService(PostRepo)                               // 注册 PostService
-	MetricService := service.NewMetricService()                                   // 注册 MetricService
-	AuthService := service.NewAuthService(redis.GoPosteryRedisClient, JwtService) // 注册 AuthService
+	JwtService := service.NewJwtService("123456")                            // 注册 JwtService
+	UserService := service.NewUserService(UserRepo)                          // 注册 UserService
+	PostService := service.NewPostService(PostRepo)                          // 注册 PostService
+	MetricService := service.NewMetricService()                              // 注册 MetricService
+	AuthService := service.NewAuthService(infraRedis.GetRedis(), JwtService) // 注册 AuthService
 
 	// Handler 层
 	// todo 会换成 infra
-	UserHdl := handler.NewUserHandler(redis.GoPosteryRedisClient, JwtService, UserService) // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostService)                                         // 注册 PostHandler
+	UserHdl := handler.NewUserHandler(infraRedis.GetRedis(), JwtService, UserService) // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostService)                                    // 注册 PostHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthService) // AuthRequiredMdl 强制登录
