@@ -32,13 +32,6 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
 		// 参数绑定失败
-		//resp :=
-		//	response.Response{
-		//		Code: 1,
-		//		Msg:  "用户名或密码错误",
-		//	}
-		//ctx.JSON(http.StatusBadRequest, resp)
-
 		response.ParamError(ctx, "用户名或密码错误")
 		return
 	}
@@ -47,22 +40,12 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 
 	if user == nil {
 		// 根据 name 未找到 user
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "用户名或密码错误",
-		//}
-		//ctx.JSON(http.StatusBadRequest, resp)
 		response.ParamError(ctx, "用户名或密码错误")
 
 		return
 	}
 	if user.PassWord != loginRequest.PassWord {
 		// 密码不正确
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "用户名或密码错误",
-		//}
-		//ctx.JSON(http.StatusBadRequest, resp)
 		response.ParamError(ctx, "用户名或密码错误")
 
 		return
@@ -81,12 +64,6 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "Token 签发失败",
-		//}
-		//ctx.JSON(http.StatusInternalServerError, resp)
-
 		response.ServerError(ctx, "")
 	}
 
@@ -95,17 +72,6 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
 	// 默认情况下也返回200
-	//resp := response.Response{
-	//	Code: 0,
-	//	Msg:  "登录成功",
-	//	Data: gin.H{
-	//		"user": gin.H{
-	//			"name": loginRequest.Name,
-	//		},
-	//	},
-	//}
-	//ctx.JSON(http.StatusOK, resp)
-
 	response.Success(ctx, gin.H{
 		"user": gin.H{
 			"name": loginRequest.Name,
@@ -120,11 +86,6 @@ func (hdl *UserHandler) Logout(ctx *gin.Context) {
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 
-	//resp := response.Response{
-	//	Code: 0,
-	//	Msg:  "登出成功",
-	//}
-	//ctx.JSON(http.StatusOK, resp)
 	response.Success(ctx, nil)
 }
 
@@ -135,11 +96,6 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
 		// 参数绑定失败
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "参数绑定失败",
-		//}
-		//ctx.JSON(http.StatusBadRequest, resp)
 		response.ParamError(ctx, "")
 		return
 	}
@@ -148,12 +104,6 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	uid, ok := ctx.Value(service.UID_IN_CTX).(int)
 	if !ok {
 		// 没有登录
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "请先登录",
-		//}
-		//ctx.JSON(http.StatusForbidden, resp)
-
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
@@ -163,21 +113,11 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	// todo Error
 	if ok == false || err != nil {
 		// 密码更改失败
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  err.Error(),
-		//}
-		//ctx.JSON(http.StatusBadRequest, resp)
 		response.ServerError(ctx, "")
 		return
 	}
 
 	// 默认情况下也返回200
-	//resp := response.Response{
-	//	Code: 0,
-	//	Msg:  "密码修改成功",
-	//}
-	//ctx.JSON(http.StatusOK, resp)
 	response.Success(ctx, nil)
 }
 
@@ -187,26 +127,13 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
 		// 参数绑定失败
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "参数绑定失败",
-		//}
-		//ctx.JSON(http.StatusBadRequest, resp)
-
 		response.Success(ctx, nil)
-
 		return
 	}
 
 	uid, err := hdl.UserService.Register(registerRequest.Name, registerRequest.PassWord)
 
 	if err != nil {
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  err.Error(),
-		//}
-		//ctx.JSON(http.StatusBadRequest, resp)
-
 		response.ServerError(ctx, "")
 		return
 	}
@@ -224,14 +151,7 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
-		//resp := response.Response{
-		//	Code: 1,
-		//	Msg:  "Token 签发失败",
-		//}
-		//ctx.JSON(http.StatusInternalServerError, resp)
-
 		response.ServerError(ctx, "")
-
 	}
 
 	// 将双 Token 放进 Cookie
@@ -239,17 +159,6 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
 	// 默认情况下也返回200
-	//resp := response.Response{
-	//	Code: 0,
-	//	Msg:  "注册成功",
-	//	Data: gin.H{
-	//		"user": gin.H{
-	//			"name": registerRequest.Name,
-	//		},
-	//	},
-	//}
-	//ctx.JSON(http.StatusOK, resp)
-
 	response.Success(ctx, gin.H{
 		"user": gin.H{
 			"name": registerRequest.Name,
