@@ -61,9 +61,8 @@ func main() {
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc) // 注册 AuthSvc
 
 	// Handler 层
-	// todo 会换成 infra
-	UserHdl := handler.NewUserHandler(infraRedis.GetRedis(), JwtSvc, UserSvc) // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)                       // 注册 PostHandler
+	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc) // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)         // 注册 PostHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录

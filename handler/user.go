@@ -3,10 +3,7 @@ package handler
 import (
 	"log/slog"
 	"net/http"
-	"time"
 
-	"github.com/go-redis/redis"
-	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
 
@@ -15,15 +12,15 @@ import (
 )
 
 type UserHandler struct {
+	AuthService *service.AuthService
 	JwtService  *service.JwtService
 	UserService *service.UserService
-	RedisClient redis.Cmdable
 }
 
 // NewUserHandler 构造函数
-func NewUserHandler(redisClient redis.Cmdable, jwtService *service.JwtService, userService *service.UserService) *UserHandler {
+func NewUserHandler(authService *service.AuthService, jwtService *service.JwtService, userService *service.UserService) *UserHandler {
 	return &UserHandler{
-		RedisClient: redisClient,
+		AuthService: authService,
 		JwtService:  jwtService,
 		UserService: userService,
 	}
@@ -73,25 +70,35 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 
 	slog.Info("登录成功", "user", userInfo)
 
-	// todo 解耦 jwt 部分
+	//// 生成 RefreshToken
+	//refreshToken := xid.New().String() //	生成一个随机的字符串
+	//
+	//// 生成 AccessToken
+	//payload := service.JwtPayload{
+	//	Issue:       "yzletter",
+	//	IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
+	//	Expiration:  0,                                                         // 永不过期
+	//	UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+	//}
+	//accessToken, err := handler.JwtService.GenToken(payload)
+	//if err != nil {
+	//	// AccessToken 生成失败
+	//	slog.Error("AccessToken 生成失败", "error", err)
+	//	resp := utils.Resp{
+	//		Code: 1,
+	//		Msg:  "AccessToken 生成失败",
+	//	}
+	//	ctx.JSON(http.StatusInternalServerError, resp)
+	//}
 
-	// 生成 RefreshToken
-	refreshToken := xid.New().String() //	生成一个随机的字符串
-
-	// 生成 AccessToken
-	payload := service.JwtPayload{
-		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
-		Expiration:  0,                                                         // 永不过期
-		UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
-	}
-	accessToken, err := handler.JwtService.GenToken(payload)
+	// 签发双 Token
+	refreshToken, accessToken, err := handler.AuthService.IssueTokenPairForUser(userInfo)
 	if err != nil {
-		// AccessToken 生成失败
-		slog.Error("AccessToken 生成失败", "error", err)
+		// Token 签发失败
+		slog.Error("Token 签发失败", "error", err)
 		resp := utils.Resp{
 			Code: 1,
-			Msg:  "AccessToken 生成失败",
+			Msg:  "Token 签发失败",
 		}
 		ctx.JSON(http.StatusInternalServerError, resp)
 	}
@@ -99,8 +106,9 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 	// 将双 Token 放进 Cookie
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
-	// < session_refreshToken, accessToken > 放入 redis
-	handler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+
+	//// < session_refreshToken, accessToken > 放入 redis
+	//handler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
@@ -204,7 +212,6 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	// todo jwt
 	// 将 user info 放入 jwt
 	userInfo := request.UserInformation{
 		Id:   uid,
@@ -213,23 +220,35 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 
 	slog.Info("注册成功", "user", userInfo)
 
-	// 生成 RefreshToken
-	refreshToken := xid.New().String() //	生成一个随机的字符串
+	//// 生成 RefreshToken
+	//refreshToken := xid.New().String() //	生成一个随机的字符串
+	//
+	//// 生成 AccessToken
+	//payload := service.JwtPayload{
+	//	Issue:       "yzletter",
+	//	IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
+	//	Expiration:  0,                                                         // 永不过期
+	//	UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+	//}
+	//accessToken, err := handler.JwtService.GenToken(payload)
+	//if err != nil {
+	//	// AccessToken 生成失败
+	//	slog.Error("AccessToken 生成失败", "error", err)
+	//	resp := utils.Resp{
+	//		Code: 1,
+	//		Msg:  "AccessToken 生成失败",
+	//	}
+	//	ctx.JSON(http.StatusInternalServerError, resp)
+	//}
 
-	// 生成 AccessToken
-	payload := service.JwtPayload{
-		Issue:       "yzletter",
-		IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
-		Expiration:  0,                                                         // 永不过期
-		UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
-	}
-	accessToken, err := handler.JwtService.GenToken(payload)
+	// 签发双 Token
+	refreshToken, accessToken, err := handler.AuthService.IssueTokenPairForUser(userInfo)
 	if err != nil {
-		// AccessToken 生成失败
-		slog.Error("AccessToken 生成失败", "error", err)
+		// Token 签发失败
+		slog.Error("Token 签发失败", "error", err)
 		resp := utils.Resp{
 			Code: 1,
-			Msg:  "AccessToken 生成失败",
+			Msg:  "Token 签发失败",
 		}
 		ctx.JSON(http.StatusInternalServerError, resp)
 	}
@@ -237,8 +256,9 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 	// 将双 Token 放进 Cookie
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
-	// < session_refreshToken, accessToken > 放入 redis
-	handler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+
+	//// < session_refreshToken, accessToken > 放入 redis
+	//handler.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	// 默认情况下也返回200
 	resp := utils.Resp{
