@@ -11,6 +11,7 @@ import (
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/viper"
+	commentRepository "github.com/yzletter/go-postery/repository/comment"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
@@ -34,19 +35,22 @@ func main() {
 	engine := gin.Default()
 
 	// Repository 层
-	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB()) // 注册 UserRepository
-	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB()) // 注册 PostRepository
+	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB())      // 注册 UserRepository
+	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB())      // 注册 PostRepository
+	CommentRepo := commentRepository.NewCommentRepository(infraMySQL.GetDB()) // 注册 CommentRepository
 
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                        // 注册 JwtSvc
-	UserSvc := service.NewUserService(UserRepo)                      // 注册 UserSvc
-	PostSvc := service.NewPostService(PostRepo)                      // 注册 PostSvc
 	MetricSvc := service.NewMetricService()                          // 注册 MetricSvc
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc) // 注册 AuthSvc
+	UserSvc := service.NewUserService(UserRepo)                      // 注册 UserSvc
+	PostSvc := service.NewPostService(PostRepo)                      // 注册 PostSvc
+	CommentSvc := service.NewCommentService(CommentRepo)             // 注册 CommentSvc
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc) // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)         // 注册 PostHandler
+	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)  // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)          // 注册 PostHandler
+	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc) // 注册 CommentHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
@@ -86,6 +90,9 @@ func main() {
 	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.Update)    // 修改帖子
 	// 非强制要求登录
 	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
+
+	// 评论模块
+	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create) // 创建评论
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/infra/model"
 	"gorm.io/gorm"
 )
 

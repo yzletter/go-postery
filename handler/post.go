@@ -111,11 +111,11 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 
 // Create 创建帖子
 func (hdl *PostHandler) Create(ctx *gin.Context) {
-	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(service.UID_IN_CTX).(int)
+	// 直接从 ctx 中拿当前登录用户 uid
+	uid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
-	var createRequest request.CreateRequest
+	var createRequest request.CreatePostRequest
 	err := ctx.ShouldBind(&createRequest)
 	if err != nil {
 		response.ParamError(ctx, "")
@@ -123,8 +123,8 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	//pid, err := database2.CreatePost(loginUid, createRequest.Title, createRequest.Content)
-	pid, err := hdl.PostService.Create(loginUid, createRequest.Title, createRequest.Content)
+	//pid, err := database2.CreatePost(uid, createRequest.Title, createRequest.Content)
+	pid, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		response.ServerError(ctx, "")
@@ -177,7 +177,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
-	var updateRequest request.UpdateRequest
+	var updateRequest request.UpdatePostRequest
 	err := ctx.ShouldBind(&updateRequest)
 	if err != nil || updateRequest.Id == 0 {
 		response.ParamError(ctx, "")

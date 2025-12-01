@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/infra/model"
 	repository "github.com/yzletter/go-postery/repository/post"
 )
 

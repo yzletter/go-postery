@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/infra/model"
 	"gorm.io/gorm"
 )
 
