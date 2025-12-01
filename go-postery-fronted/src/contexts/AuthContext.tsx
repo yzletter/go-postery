@@ -5,7 +5,7 @@ import { md5Hash } from '../utils/crypto'
 interface AuthContextType {
   user: User | null
   login: (username: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string) => Promise<boolean>
+  register: (name: string, password: string) => Promise<boolean>
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
@@ -16,7 +16,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8080'
+  const AUTH_API_BASE_URL =
+    import.meta.env.VITE_AUTH_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    'http://localhost:8080'
 
   // 从 localStorage 恢复登录状态
   useEffect(() => {
@@ -35,161 +38,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     try {
+      const payloadPassword = password.length === 32 ? password : md5Hash(password)
+
       const response = await fetch(`${AUTH_API_BASE_URL}/login/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: username, password }),
+        body: JSON.stringify({ name: username, password: payloadPassword }),
         credentials: 'include', // 关键：确保Cookie随请求发送
       })
 
       const result: ApiResponse = await response.json()
       
-      // 根据API文档：code为0表示成功，1表示失败
-      if (result.code !== 0) {
+      if (!response.ok || result.code !== 0) {
         throw new Error(result.msg || '登录失败')
       }
 
-      // 根据API文档，登录响应中只有user对象，没有token
-      const responseData = result.data
-      if (!responseData || !responseData.user) {
-        throw new Error('登录响应数据格式错误')
-      }
-      
-      const avatarSeed = responseData.user.name || username
+      const responseData = result.data || {}
+      const responseUser = responseData.user || {}
       const newUser: User = {
-        id: responseData.user.id || Date.now().toString(),
-        name: responseData.user.name,
-        email: responseData.user.email || `${username}@example.com`
+        id: responseUser.id ?? responseUser.Id ?? Date.now(),
+        name: responseUser.name ?? username,
+        email: responseUser.email,
       }
-      
+
       setUser(newUser)
-      
-      // 对于Cookie认证，JWT存储在Cookie中，前端无法直接读取HttpOnly Cookie
-      // 但我们可以创建一个模拟token用于本地状态管理
-      const mockToken = `cookie-auth-${Date.now()}`
-      localStorage.setItem('token', mockToken)
       localStorage.setItem('user', JSON.stringify(newUser))
+      localStorage.setItem('token', `cookie-auth-${Date.now()}`)
       
-      console.log('登录成功：JWT存储在Cookie中，浏览器会自动发送')
       setIsLoading(false)
       return true
     } catch (error) {
       console.error('Login error:', error)
       setIsLoading(false)
-      // 如果后端不可用，使用模拟登录（仅用于开发演示）
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.warn('后端 API 不可用，使用模拟登录（仅用于开发）')
-        if (username && password) {
-          const newUser: User = {
-            id: Date.now().toString(),
-            name: username,
-            email: `${username}@example.com` // 模拟邮箱
-          }
-          setUser(newUser)
-          // 模拟Cookie认证：创建模拟token并保存
-          const mockToken = `mock-cookie-jwt-${Date.now()}`
-          localStorage.setItem('token', mockToken)
-          localStorage.setItem('user', JSON.stringify(newUser))
-          console.log('模拟登录：JWT令牌已保存到localStorage')
-          setIsLoading(false)
-          return true
-        }
-      }
-      // 处理响应格式错误的情况，也使用模拟登录
-      if (error instanceof Error && error.message.includes('响应数据格式错误')) {
-        console.warn('后端响应格式错误，使用模拟登录（仅用于开发）')
-        if (username && password) {
-          const newUser: User = {
-            id: Date.now().toString(),
-            name: username,
-            email: `${username}@example.com` // 模拟邮箱
-          }
-          setUser(newUser)
-          localStorage.setItem('user', JSON.stringify(newUser))
-          setIsLoading(false)
-          return true
-        }
-      }
       return false
     }
   }
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     try {
-      // 根据API文档，注册只需要name和password，但为了向后兼容性保留email参数
+      const payloadPassword = password.length === 32 ? password : md5Hash(password)
+
       const response = await fetch(`${AUTH_API_BASE_URL}/register/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, password }),
+        body: JSON.stringify({ name, password: payloadPassword }),
         credentials: 'include', // 关键：确保Cookie随请求发送
       })
 
       const result: ApiResponse = await response.json()
       
-      // 根据API文档：code为0表示成功，1表示失败
-      if (result.code !== 0) {
+      if (!response.ok || result.code !== 0) {
         throw new Error(result.msg || '注册失败')
       }
 
-      // 根据API文档，注册响应中只有user对象，没有token
-      const responseData = result.data
-      if (!responseData || !responseData.user) {
-        throw new Error('注册响应数据格式错误')
-      }
-      
-      const avatarSeed = responseData.user.name || name
+      const responseData = result.data || {}
+      const responseUser = responseData.user || {}
       const newUser: User = {
-        id: responseData.user.id || Date.now().toString(),
-        name: responseData.user.name,
-        email: responseData.user.email
+        id: responseUser.id ?? responseUser.Id ?? Date.now(),
+        name: responseUser.name ?? name,
+        email: responseUser.email,
       }
-      
+
       setUser(newUser)
-      // 注意：根据API文档，注册响应不包含token，所以不保存token
       localStorage.setItem('user', JSON.stringify(newUser))
+      localStorage.setItem('token', `cookie-auth-${Date.now()}`)
       setIsLoading(false)
       return true
     } catch (error) {
       console.error('Register error:', error)
       setIsLoading(false)
-      // 如果后端不可用，使用模拟注册（仅用于开发演示）
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.warn('后端 API 不可用，使用模拟注册（仅用于开发）')
-        if (name && email && password) {
-          const newUser: User = {
-            id: Date.now().toString(),
-            name: name,
-            email: email
-          }
-          setUser(newUser)
-          // 模拟注册时也保存token
-          const mockToken = `mock-jwt-token-${Date.now()}`
-          localStorage.setItem('token', mockToken)
-          localStorage.setItem('user', JSON.stringify(newUser))
-          setIsLoading(false)
-          return true
-        }
-      }
-      // 处理响应格式错误的情况，也使用模拟注册
-      if (error instanceof Error && error.message.includes('响应数据格式错误')) {
-        console.warn('后端响应格式错误，使用模拟注册（仅用于开发）')
-        if (name && email && password) {
-          const newUser: User = {
-            id: Date.now().toString(),
-            name: name,
-            email: email
-          }
-          setUser(newUser)
-          localStorage.setItem('user', JSON.stringify(newUser))
-          setIsLoading(false)
-          return true
-        }
-      }
       return false
     }
   }
@@ -218,20 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: 'include', // 关键：确保Cookie随请求发送
       })
 
-      // 检查响应状态
-      if (!response.ok) {
-        throw new Error(`HTTP错误: ${response.status}`)
-      }
-      
-      // 检查内容类型
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('响应不是JSON格式')
-      }
-
       const result: ApiResponse = await response.json()
       
-      // 根据API文档：code为0表示成功，1表示失败
       if (result.code !== 0) {
         throw new Error(result.msg || '修改密码失败')
       }
@@ -315,4 +225,3 @@ export function useAuth() {
   }
   return context
 }
-

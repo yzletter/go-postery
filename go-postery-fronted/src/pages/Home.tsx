@@ -5,17 +5,17 @@ import { Post, ApiResponse } from '../types'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 // 生成模拟数据的函数
-const generateMockPost = (id: string, index: number): Post => {
+const generateMockPost = (id: number, index: number): Post => {
   const authors = [
-    { id: '1', name: '管理员' },
-    { id: '2', name: '前端开发者' },
-    { id: '3', name: 'UI设计师' },
-    { id: '4', name: '后端工程师' },
-    { id: '5', name: '产品经理' },
-    { id: '6', name: '测试工程师' },
+    { id: 1, name: '管理员' },
+    { id: 2, name: '前端开发者' },
+    { id: 3, name: 'UI设计师' },
+    { id: 4, name: '后端工程师' },
+    { id: 5, name: '产品经理' },
+    { id: 6, name: '测试工程师' },
   ]
   const author = authors[index % authors.length]
 
@@ -58,49 +58,44 @@ const generateMockPost = (id: string, index: number): Post => {
       name: author.name
     },
     createdAt: new Date(Date.now() - (index * 60 * 60 * 1000)).toISOString(),
-
-
   }
 }
 
 // 总数据量限制
 const TOTAL_POSTS_LIMIT = 20
 
+interface PostListResult {
+  posts: Post[]
+  total: number
+  hasMore: boolean
+}
+
 // API 获取帖子列表
-const fetchPosts = async (page: number, pageSize: number = 10): Promise<Post[]> => {
+const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostListResult> => {
   try {
     // 启用后端调用进行接口测试
     console.log('帖子列表API调用已启用，进行接口测试')
     
-    const response = await fetch(`http://localhost:8080/posts?pageNo=${page}&pageSize=${pageSize}`, {
+    const response = await fetch(`${API_BASE_URL}/posts?pageNo=${page}&pageSize=${pageSize}`, {
       credentials: 'include', // 关键：确保Cookie随请求发送
     })
     
-    // 检查响应状态
-    if (!response.ok) {
-      throw new Error(`HTTP错误: ${response.status}`)
-    }
-    
-    // 检查内容类型
-    const contentType = response.headers.get('content-type')
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('响应不是JSON格式')
-    }
-    
     const result: ApiResponse = await response.json()
     
-    // 根据API文档：code为0表示成功，1表示失败
-    if (result.code !== 0) {
+    if (!response.ok || result.code !== 0) {
       throw new Error(result.msg || '获取帖子列表失败')
     }
 
-    // 根据API文档，帖子列表在data.posts中
     const responseData = result.data
     if (!responseData || !responseData.posts) {
       throw new Error('帖子列表响应数据格式错误')
     }
     
-    return responseData.posts
+    return {
+      posts: responseData.posts,
+      total: responseData.total ?? 0,
+      hasMore: Boolean(responseData.hasMore),
+    }
     
     /* 模拟数据代码，暂时注释
     console.log('帖子列表API调用已禁用，使用模拟数据')
@@ -151,7 +146,7 @@ export default function Home() {
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       
-      const newPosts = await fetchPosts(page, pageSize)
+      const { posts: newPosts, hasMore: hasMoreFromApi } = await fetchPosts(page, pageSize)
       
       if (reset) {
         setPosts(newPosts)
@@ -159,8 +154,7 @@ export default function Home() {
         setPosts(prev => [...prev, ...newPosts])
       }
       
-      // 模拟：如果返回的数据少于 pageSize，说明没有更多数据了
-      setHasMore(newPosts.length === pageSize)
+      setHasMore(hasMoreFromApi)
       setCurrentPage(page)
     } catch (error) {
       console.error('Failed to load posts:', error)
@@ -305,4 +299,3 @@ export default function Home() {
     </div>
   )
 }
-

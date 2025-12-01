@@ -5,6 +5,8 @@ import { zhCN } from 'date-fns/locale'
 import { useState, useEffect } from 'react'
 import { Post, ApiResponse } from '../types'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
   const navigate = useNavigate()
@@ -16,29 +18,18 @@ export default function PostDetail() {
   const checkPostOwnership = async (postId: string): Promise<boolean> => {
     try {
       // 使用GET请求，参数名为id而不是postId
-      const response = await fetch(`http://localhost:8080/posts/belong?id=${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/posts/belong?id=${postId}`, {
         method: 'GET',
         credentials: 'include',
       })
       
-      if (!response.ok) {
-        throw new Error(`HTTP错误: ${response.status}`)
-      }
-      
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('响应不是JSON格式')
-      }
-      
       const result: ApiResponse = await response.json()
       
-      if (result.code !== 0) {
-        throw new Error(result.msg || '检查帖子所有权失败')
+      if (!response.ok || result.code !== 0) {
+        return false
       }
       
-      // 根据API文档，data字段应该是"true"或"false"字符串
-      // 需要将其转换为布尔值
-      return result.data === "true" || result.data === true
+      return true
     } catch (error) {
       console.error('检查帖子所有权失败:', error)
       return false
@@ -54,29 +45,16 @@ export default function PostDetail() {
         // 启用后端调用进行接口测试
         console.log('帖子详情API调用已启用，进行接口测试')
         
-        const response = await fetch(`http://localhost:8080/posts/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
           credentials: 'include', // 关键：确保Cookie随请求发送
         })
         
-        // 检查响应状态
-        if (!response.ok) {
-          throw new Error(`HTTP错误: ${response.status}`)
-        }
-        
-        // 检查内容类型
-        const contentType = response.headers.get('content-type')
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('响应不是JSON格式')
-        }
-        
         const result: ApiResponse = await response.json()
         
-        // 根据API文档：code为0表示成功，1表示失败
-        if (result.code !== 0) {
+        if (!response.ok || result.code !== 0) {
           throw new Error(result.msg || '获取帖子详情失败')
         }
 
-        // 根据API文档，帖子详情在data中
         const responseData = result.data
         if (!responseData) {
           throw new Error('帖子详情响应数据格式错误')
@@ -108,27 +86,14 @@ export default function PostDetail() {
     
     try {
       // 发送GET请求到后端API (更新路径为/posts/delete/:id)
-      const response = await fetch(`http://localhost:8080/posts/delete/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/posts/delete/${id}`, {
         method: 'GET',
         credentials: 'include',
       })
       
-      // 检查响应状态
-      if (!response.ok) {
-        throw new Error(`HTTP错误: ${response.status}`)
-      }
-      
-      // 检查内容类型
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('响应不是JSON格式')
-      }
-      
-      // 解析响应数据
       const result = await response.json()
       
-      // 根据API文档：code为0表示成功，1表示失败
-      if (result.code !== 0) {
+      if (!response.ok || result.code !== 0) {
         throw new Error(result.msg || '删除帖子失败')
       }
       

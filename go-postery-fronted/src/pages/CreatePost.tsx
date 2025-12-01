@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { ApiResponse } from '../types'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 export default function CreatePost() {
   const navigate = useNavigate()
@@ -14,8 +14,7 @@ export default function CreatePost() {
     e.preventDefault()
     
     try {
-      // 修改路由为 localhost:8080/posts/new
-      const response = await fetch('http://localhost:8080/posts/new', {
+      const response = await fetch(`${API_BASE_URL}/posts/new`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,21 +23,9 @@ export default function CreatePost() {
         credentials: 'include', // 关键：确保Cookie随请求发送
       })
 
-      // 检查响应状态
-      if (!response.ok) {
-        throw new Error(`HTTP错误: ${response.status}`)
-      }
-      
-      // 检查内容类型
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('响应不是JSON格式')
-      }
-
       const result: ApiResponse = await response.json()
       
-      // 根据API文档：code为0表示成功，1表示失败
-      if (result.code !== 0) {
+      if (!response.ok || result.code !== 0) {
         throw new Error(result.msg || '创建帖子失败')
       }
 
@@ -124,4 +111,3 @@ export default function CreatePost() {
     </div>
   )
 }
-

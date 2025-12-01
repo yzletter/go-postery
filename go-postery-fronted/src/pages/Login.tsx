@@ -51,7 +51,7 @@ export default function Login() {
         }
         // 对密码进行MD5哈希，生成32位哈希值
         const hashedPassword = md5Hash(password)
-        success = await register(name, `${name}@example.com`, hashedPassword)
+        success = await register(name, hashedPassword)
       }
 
       if (success) {
@@ -272,4 +272,3 @@ export default function Login() {
     </div>
   )
 }
-

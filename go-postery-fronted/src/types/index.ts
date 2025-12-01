@@ -1,21 +1,21 @@
 export interface ApiResponse {
-  code: number // 0表示成功，1表示失败
-  msg?: string // 错误信息
+  code: number // 0 表示成功，非 0 为业务错误码（如 40001、40003、50001）
+  msg?: string // 提示信息
   data?: any // 响应数据
 }
 
 export interface User {
-  id: string
+  id?: number | string
   name: string
-  email?: string // 邮箱变为可选
+  email?: string
 }
 
 export interface Post {
-  id: string
+  id: number
   title: string
   content: string
   author: {
-    id: string
+    id: number
     name: string
   }
   createdAt: string
@@ -31,4 +31,3 @@ export interface Comment {
   createdAt: string
   replies?: Comment[]
 }
-

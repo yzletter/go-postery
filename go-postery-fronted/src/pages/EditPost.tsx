@@ -25,18 +25,9 @@ export default function EditPost() {
           credentials: 'include',
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP错误: ${response.status}`)
-        }
-
-        const contentType = response.headers.get('content-type')
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('响应不是JSON格式')
-        }
-
         const result: ApiResponse = await response.json()
 
-        if (result.code !== 0) {
+        if (!response.ok || result.code !== 0) {
           throw new Error(result.msg || '获取帖子详情失败')
         }
 
@@ -73,18 +64,9 @@ export default function EditPost() {
         credentials: 'include',
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP错误: ${response.status}`)
-      }
-
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('响应不是JSON格式')
-      }
-
       const result: ApiResponse = await response.json()
 
-      if (result.code !== 0) {
+      if (!response.ok || result.code !== 0) {
         throw new Error(result.msg || '更新帖子失败')
       }
 
