@@ -18,8 +18,8 @@ type RegisterRequest struct {
 	PassWord string `json:"password" form:"password" binding:"required,len=32"` // 长度 == 32
 }
 
-// ModifyPasswordRequest 定义前端提交修改密码表单信息的模型映射
-type ModifyPasswordRequest struct {
+// ModifyPassRequest 定义前端提交修改密码表单信息的模型映射
+type ModifyPassRequest struct {
 	OldPass string `json:"old_pass" form:"old_pass" binding:"required,len=32"` // 长度 == 32
 	NewPass string `json:"new_pass" form:"new_pass" binding:"required,len=32"` // 长度 == 32
 }

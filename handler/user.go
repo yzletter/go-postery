@@ -33,19 +33,21 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
 		// 参数绑定失败
-		resp := dto.Resp{
-			Code: 1,
-			Msg:  "用户名或密码错误",
-		}
+		resp :=
+			dto.Response{
+				Code: 1,
+				Msg:  "用户名或密码错误",
+			}
 		ctx.JSON(http.StatusBadRequest, resp)
+
 		return
 	}
-	//user := database.GetUserByName(loginRequest.Name)
+
 	user := hdl.UserService.GetByName(loginRequest.Name)
 
 	if user == nil {
 		// 根据 name 未找到 user
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "用户名或密码错误",
 		}
@@ -54,7 +56,7 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	}
 	if user.PassWord != loginRequest.PassWord {
 		// 密码不正确
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "用户名或密码错误",
 		}
@@ -70,33 +72,12 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 
 	slog.Info("登录成功", "user", userInfo)
 
-	//// 生成 RefreshToken
-	//refreshToken := xid.New().String() //	生成一个随机的字符串
-	//
-	//// 生成 AccessToken
-	//payload := service.JwtPayload{
-	//	Issue:       "yzletter",
-	//	IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
-	//	Expiration:  0,                                                         // 永不过期
-	//	UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
-	//}
-	//accessToken, err := hdl.JwtService.GenToken(payload)
-	//if err != nil {
-	//	// AccessToken 生成失败
-	//	slog.Error("AccessToken 生成失败", "error", err)
-	//	resp := utils.Resp{
-	//		Code: 1,
-	//		Msg:  "AccessToken 生成失败",
-	//	}
-	//	ctx.JSON(http.StatusInternalServerError, resp)
-	//}
-
 	// 签发双 Token
 	refreshToken, accessToken, err := hdl.AuthService.IssueTokenPairForUser(userInfo)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "Token 签发失败",
 		}
@@ -107,11 +88,8 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
-	//// < session_refreshToken, accessToken > 放入 redis
-	//hdl.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
-
 	// 默认情况下也返回200
-	resp := dto.Resp{
+	resp := dto.Response{
 		Code: 0,
 		Msg:  "登录成功",
 		Data: gin.H{
@@ -130,7 +108,7 @@ func (hdl *UserHandler) Logout(ctx *gin.Context) {
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 
-	resp := dto.Resp{
+	resp := dto.Response{
 		Code: 0,
 		Msg:  "登出成功",
 	}
@@ -139,12 +117,12 @@ func (hdl *UserHandler) Logout(ctx *gin.Context) {
 
 // ModifyPass 修改密码 Handler
 func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
-	var modifyPassRequest request.ModifyPasswordRequest
+	var modifyPassRequest request.ModifyPassRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
 		// 参数绑定失败
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "参数绑定失败",
 		}
@@ -156,7 +134,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	uid, ok := ctx.Value(service.UID_IN_CTX).(int)
 	if !ok {
 		// 没有登录
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "请先登录",
 		}
@@ -164,13 +142,12 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 		return
 	}
 
-	//err = database.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
 	ok, err = hdl.UserService.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
 
 	// todo Error
 	if ok == false || err != nil {
 		// 密码更改失败
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  err.Error(),
 		}
@@ -179,7 +156,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	}
 
 	// 默认情况下也返回200
-	resp := dto.Resp{
+	resp := dto.Response{
 		Code: 0,
 		Msg:  "密码修改成功",
 	}
@@ -192,7 +169,7 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
 		// 参数绑定失败
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "参数绑定失败",
 		}
@@ -200,11 +177,10 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	//uid, err := database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
 	uid, err := hdl.UserService.Register(registerRequest.Name, registerRequest.PassWord)
 
 	if err != nil {
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  err.Error(),
 		}
@@ -220,33 +196,12 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 
 	slog.Info("注册成功", "user", userInfo)
 
-	//// 生成 RefreshToken
-	//refreshToken := xid.New().String() //	生成一个随机的字符串
-	//
-	//// 生成 AccessToken
-	//payload := service.JwtPayload{
-	//	Issue:       "yzletter",
-	//	IssueAt:     time.Now().Unix(),                                         // 签发日期为当前时间
-	//	Expiration:  0,                                                         // 永不过期
-	//	UserDefined: map[string]any{service.USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
-	//}
-	//accessToken, err := hdl.JwtService.GenToken(payload)
-	//if err != nil {
-	//	// AccessToken 生成失败
-	//	slog.Error("AccessToken 生成失败", "error", err)
-	//	resp := utils.Resp{
-	//		Code: 1,
-	//		Msg:  "AccessToken 生成失败",
-	//	}
-	//	ctx.JSON(http.StatusInternalServerError, resp)
-	//}
-
 	// 签发双 Token
 	refreshToken, accessToken, err := hdl.AuthService.IssueTokenPairForUser(userInfo)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
-		resp := dto.Resp{
+		resp := dto.Response{
 			Code: 1,
 			Msg:  "Token 签发失败",
 		}
@@ -257,11 +212,8 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, refreshToken, 7*86400, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
-	//// < session_refreshToken, accessToken > 放入 redis
-	//hdl.RedisClient.Set(service.REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
-
 	// 默认情况下也返回200
-	resp := dto.Resp{
+	resp := dto.Response{
 		Code: 0,
 		Msg:  "注册成功",
 		Data: gin.H{

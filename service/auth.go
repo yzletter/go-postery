@@ -77,7 +77,7 @@ func (svc *AuthService) IssueTokenPairForUser(userInfo request.UserInformation) 
 		return "", "", err
 	}
 
-	// 放入 Redis
+	// < session_refreshToken, accessToken > 放入 redis
 	svc.RedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	return refreshToken, accessToken, nil
