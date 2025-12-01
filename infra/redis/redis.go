@@ -62,7 +62,7 @@ func Ping() {
 	}
 }
 
-func CloseConnection() {
+func Close() {
 	if globalRedisClient != nil {
 		err := globalRedisClient.Close()
 		if err != nil {

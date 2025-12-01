@@ -8,7 +8,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/dto/request"
-	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/service"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +43,9 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, resp)
 		return
 	}
-	user := database.GetUserByName(loginRequest.Name)
+	//user := database.GetUserByName(loginRequest.Name)
+	user := handler.UserService.GetByName(loginRequest.Name)
+
 	if user == nil {
 		// 根据 name 未找到 user
 		resp := utils.Resp{
@@ -71,6 +72,8 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	slog.Info("登录成功", "user", userInfo)
+
+	// todo 解耦 jwt 部分
 
 	// 生成 RefreshToken
 	refreshToken := xid.New().String() //	生成一个随机的字符串
@@ -114,6 +117,7 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 
 // Logout 用户登出 Handler
 func (handler *UserHandler) Logout(ctx *gin.Context) {
+	// todo
 	// 设置 Cookie 里的双 Token 都置为 -1
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
@@ -152,8 +156,11 @@ func (handler *UserHandler) ModifyPass(ctx *gin.Context) {
 		return
 	}
 
-	err = database.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
-	if err != nil {
+	//err = database.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
+	ok, err = handler.UserService.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
+
+	// todo Error
+	if ok == false || err != nil {
 		// 密码更改失败
 		resp := utils.Resp{
 			Code: 1,
@@ -185,7 +192,9 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	uid, err := database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
+	//uid, err := database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
+	uid, err := handler.UserService.Register(registerRequest.Name, registerRequest.PassWord)
+
 	if err != nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -195,6 +204,7 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
+	// todo jwt
 	// 将 user info 放入 jwt
 	userInfo := request.UserInformation{
 		Id:   uid,

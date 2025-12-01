@@ -86,7 +86,7 @@ func (repository *GormUserRepository) GetByID(uid int) *model.User {
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			slog.Error("go-postery GetUserById : 查找用户失败", "uid", uid, "error", tx.Error)
+			slog.Error("go-postery GetById : 查找用户失败", "uid", uid, "error", tx.Error)
 		}
 		return nil
 	}

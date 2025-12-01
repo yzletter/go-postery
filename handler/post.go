@@ -44,8 +44,8 @@ func (handler *PostHandler) List(ctx *gin.Context) {
 	postsBack := []gin.H{}
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		//user := database2.GetUserById(post.UserId)
-		user := handler.UserService.GetUserById(post.UserId)
+		//user := database2.GetById(post.UserId)
+		user := handler.UserService.GetById(post.UserId)
 		if user != nil {
 			post.UserName = user.Name
 		} else {
@@ -108,8 +108,8 @@ func (handler *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 获取作者用户名
-	//user := database2.GetUserById(post.UserId)
-	user := handler.UserService.GetUserById(post.UserId)
+	//user := database2.GetById(post.UserId)
+	user := handler.UserService.GetById(post.UserId)
 	if user != nil {
 		post.UserName = user.Name
 	} else {

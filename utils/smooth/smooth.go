@@ -6,13 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/yzletter/go-postery/repository/gorm"
-	"github.com/yzletter/go-postery/repository/redis"
+	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
+	infraRedis "github.com/yzletter/go-postery/infra/redis"
 )
 
 func InitSmoothExit() {
 	var listen func()
-	
+
 	// 监听函数
 	listen = func() {
 		ch := make(chan os.Signal, 1)
@@ -21,8 +21,8 @@ func InitSmoothExit() {
 		slog.Info("signal " + s.String() + " has come, start exiting ...")
 
 		// 退出前具体要做的工作
-		database.CloseConnection() // 这里以关闭数据库连接为例
-		redis.CloseConnection()
+		infraMySQL.Close() // 这里以关闭数据库连接为例
+		infraRedis.Close()
 
 		slog.Info("all task has finished")
 
