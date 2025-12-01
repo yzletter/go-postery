@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, Clock, Loader2 } from 'lucide-react'
+import { MessageSquare, Clock, Loader2, Eye, Heart, Flame } from 'lucide-react'
 import { Post, ApiResponse } from '../types'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -58,6 +58,9 @@ const generateMockPost = (id: number, index: number): Post => {
       name: author.name
     },
     createdAt: new Date(Date.now() - (index * 60 * 60 * 1000)).toISOString(),
+    views: Math.floor(Math.random() * 1000) + 100,
+    likes: Math.floor(Math.random() * 200) + 10,
+    comments: Math.floor(Math.random() * 100) + 5,
   }
 }
 
@@ -69,6 +72,19 @@ interface PostListResult {
   total: number
   hasMore: boolean
 }
+
+const mockHotPosts = [
+  { id: 1, title: 'React 18 并发特性最佳实践', heat: 985 },
+  { id: 2, title: 'Go 微服务网关设计要点', heat: 912 },
+  { id: 3, title: 'Tailwind 设计系统落地经验', heat: 876 },
+  { id: 4, title: '前端性能优化 25 条检查清单', heat: 844 },
+  { id: 5, title: '数据库索引失效的常见原因', heat: 828 },
+  { id: 6, title: 'Vue3 + Vite 项目工程化模板', heat: 801 },
+  { id: 7, title: 'Rust 学习路径与上手案例', heat: 776 },
+  { id: 8, title: 'K8s 部署流水线实战分享', heat: 754 },
+  { id: 9, title: '前后端接口约定与错误码规范', heat: 731 },
+  { id: 10, title: '设计师和工程师协作的 7 个技巧', heat: 702 },
+]
 
 // API 获取帖子列表
 const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostListResult> => {
@@ -91,8 +107,15 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostList
       throw new Error('帖子列表响应数据格式错误')
     }
     
+    const postsWithStats: Post[] = responseData.posts.map((p: Post, idx: number) => ({
+      ...p,
+      views: p.views ?? Math.floor(Math.random() * 500) + 50 + idx,
+      likes: p.likes ?? Math.floor(Math.random() * 80) + 5 + idx,
+      comments: p.comments ?? Math.floor(Math.random() * 40) + idx,
+    }))
+
     return {
-      posts: responseData.posts,
+      posts: postsWithStats,
       total: responseData.total ?? 0,
       hasMore: Boolean(responseData.hasMore),
     }
@@ -197,105 +220,144 @@ export default function Home() {
   }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts])
 
   return (
-    <div className="space-y-6">
-      {/* 初始加载状态 */}
-      {isInitialLoading && (
-        <div className="card text-center py-12">
-          <Loader2 className="h-8 w-8 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">加载中...</p>
-        </div>
-      )}
+    <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(240px,320px)] gap-6 items-start">
+      <section className="space-y-6 lg:-ml-2 xl:-ml-4">
+        {/* 初始加载状态 */}
+        {isInitialLoading && (
+          <div className="card text-center py-12">
+            <Loader2 className="h-8 w-8 text-primary-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">加载中...</p>
+          </div>
+        )}
 
-      {/* 帖子列表 */}
-      {!isInitialLoading && (
-        <>
-          <div className="space-y-4">
-            {posts.map(post => (
-              <Link
-                key={post.id}
-                to={`/post/${post.id}`}
-                className="card block hover:shadow-lg transition-all mx-auto"
-                style={{ width: '90%', padding: '1.575rem' }}  /* 原p-6为1.5rem，增加5%高度到1.575rem */
-              >
-                <div className="flex items-start space-x-4">
-                  {/* 用户头像 */}
-                  <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
-                    alt={post.author.name}
-                    className="w-12 h-12 rounded-full flex-shrink-0"
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    {/* 标题 */}
-                    <div className="flex items-start justify-between mb-2">
-                      <h2 className="text-xl font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
-                        {post.title}
-                      </h2>
-                    </div>
-
-                    {/* 内容预览 */}
-                    <p className="text-gray-600 mb-3 line-clamp-2">
-                      {post.content}
-                    </p>
-
-
-
-                    {/* 元信息 */}
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <div className="flex items-center space-x-4">
-                        <span className="font-medium text-gray-700">{post.author.name}</span>
-                        <span className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            {formatDistanceToNow(new Date(post.createdAt), {
-                              addSuffix: true,
-                              locale: zhCN
-                            })}
-                          </span>
-                        </span>
+        {/* 帖子列表 */}
+        {!isInitialLoading && (
+          <>
+            <div className="space-y-3">
+              {posts.map(post => (
+                <Link
+                  key={post.id}
+                  to={`/post/${post.id}`}
+                  className="card p-4 lg:p-5 block hover:shadow-lg transition-all"
+                >
+                  <div className="flex items-start space-x-4">
+                    {/* 用户头像 */}
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+                      alt={post.author.name}
+                      className="w-11 h-11 rounded-full flex-shrink-0"
+                    />
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* 标题 */}
+                      <div className="flex items-start justify-between mb-1.5">
+                        <h2 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
+                          {post.title}
+                        </h2>
                       </div>
-                      
 
+                      {/* 内容预览 */}
+                      <p className="text-gray-600 mb-2 line-clamp-2 text-sm leading-relaxed">
+                        {post.content}
+                      </p>
+
+                      {/* 元信息 */}
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-medium text-gray-700">{post.author.name}</span>
+                          <span className="flex items-center space-x-1">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              {formatDistanceToNow(new Date(post.createdAt), {
+                                addSuffix: true,
+                                locale: zhCN
+                              })}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-3 text-gray-500">
+                          <span className="flex items-center space-x-1">
+                            <Eye className="h-4 w-4" />
+                            <span>{post.views ?? 0}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Heart className="h-4 w-4" />
+                            <span>{post.likes ?? 0}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>{post.comments ?? 0}</span>
+                          </span>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* 无限滚动触发点 */}
-          <div ref={observerTarget} className="h-10" />
-
-          {/* 加载更多指示器 */}
-          {isLoading && !isInitialLoading && (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-6 w-6 text-primary-600 animate-spin mr-2" />
-              <span className="text-gray-600">加载更多...</span>
+                </Link>
+              ))}
             </div>
-          )}
 
-          {/* 已经到底了提示 */}
-          {!hasMore && !isInitialLoading && posts.length > 0 && (
-            <div className="card text-center py-8 bg-gray-50 border-dashed border-2 border-gray-200">
-              <div className="flex flex-col items-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                  <MessageSquare className="h-6 w-6 text-gray-400" />
-                </div>
-                <p className="text-gray-600 font-medium">已经到底了</p>
-                <p className="text-sm text-gray-500">没有更多帖子可以加载</p>
+            {/* 无限滚动触发点 */}
+            <div ref={observerTarget} className="h-10" />
+
+            {/* 加载更多指示器 */}
+            {isLoading && !isInitialLoading && (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-6 w-6 text-primary-600 animate-spin mr-2" />
+                <span className="text-gray-600">加载更多...</span>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* 空状态 */}
-          {posts.length === 0 && !isLoading && (
-            <div className="card text-center py-12">
-              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">暂无帖子</p>
+            {/* 已经到底了提示 */}
+            {!hasMore && !isInitialLoading && posts.length > 0 && (
+              <div className="card text-center py-8 bg-gray-50 border-dashed border-2 border-gray-200">
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                    <MessageSquare className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <p className="text-gray-600 font-medium">已经到底了</p>
+                  <p className="text-sm text-gray-500">没有更多帖子可以加载</p>
+                </div>
+              </div>
+            )}
+
+            {/* 空状态 */}
+            {posts.length === 0 && !isLoading && (
+              <div className="card text-center py-12">
+                <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">暂无帖子</p>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      <aside className="space-y-4 w-full">
+        <div className="card sticky top-24 max-w-[320px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Flame className="h-5 w-5 text-primary-600" />
+              <h2 className="text-lg font-semibold text-gray-900">热门榜单</h2>
             </div>
-          )}
-        </>
-      )}
+            <span className="text-xs text-gray-500">示例数据</span>
+          </div>
+          <ol className="space-y-3">
+            {mockHotPosts.map((hot, index) => (
+              <li key={hot.id} className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
+                    {hot.title}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">热度 {hot.heat}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </aside>
     </div>
   )
 }

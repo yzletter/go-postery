@@ -2,10 +2,31 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Edit, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { useState, useEffect } from 'react'
-import { Post, ApiResponse } from '../types'
+import { useState, useEffect, FormEvent } from 'react'
+import { Post, ApiResponse, Comment } from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+
+const mockComments: Comment[] = [
+  {
+    id: '1',
+    content: '这个论坛界面真的很漂亮！期待更多功能。',
+    author: {
+      id: '2',
+      name: '前端开发者',
+    },
+    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: '2',
+    content: '感谢分享，学到了很多！',
+    author: {
+      id: '3',
+      name: 'UI设计师',
+    },
+    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+  },
+]
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
@@ -13,6 +34,26 @@ export default function PostDetail() {
   const [post, setPost] = useState<Post | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthor, setIsAuthor] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [comments, setComments] = useState<Comment[]>(mockComments)
+
+  const handleSubmitComment = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!commentText.trim()) return
+
+    const newComment: Comment = {
+      id: Date.now().toString(),
+      content: commentText.trim(),
+      author: {
+        id: 'current-user',
+        name: '当前用户',
+      },
+      createdAt: new Date().toISOString(),
+    }
+
+    setComments([newComment, ...comments])
+    setCommentText('')
+  }
 
   // 创建一个函数来检查帖子是否属于当前用户
   const checkPostOwnership = async (postId: string): Promise<boolean> => {
@@ -107,8 +148,6 @@ export default function PostDetail() {
     }
   }
 
-  // 评论功能已移除
-
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -199,6 +238,67 @@ export default function PostDetail() {
           </div>
         </div>
       </article>
+
+      {/* 评论区域 */}
+      <div className="card">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          评论 ({comments.length})
+        </h2>
+
+        {/* 评论表单 */}
+        <form onSubmit={handleSubmitComment} className="mb-6">
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="写下你的评论..."
+            rows={4}
+            className="textarea mb-3"
+          />
+          <div className="flex justify-end">
+            <button type="submit" className="btn-primary">
+              发表评论
+            </button>
+          </div>
+        </form>
+
+        {/* 评论列表 */}
+        {comments.length === 0 ? (
+          <p className="text-gray-500 text-sm">暂时还没有评论，快来抢沙发吧～</p>
+        ) : (
+          <div className="space-y-6">
+            {comments.map(comment => (
+              <div key={comment.id} className="flex space-x-4">
+                <img
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author.id}`}
+                  alt={comment.author.name}
+                  className="w-10 h-10 rounded-full flex-shrink-0"
+                />
+                <div className="flex-1">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-900">
+                        {comment.author.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {formatDistanceToNow(new Date(comment.createdAt), {
+                          addSuffix: true,
+                          locale: zhCN
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-gray-700">{comment.content}</p>
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <button className="hover:text-primary-600 transition-colors">
+                      回复
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

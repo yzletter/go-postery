@@ -19,6 +19,9 @@ export interface Post {
     name: string
   }
   createdAt: string
+  views?: number
+  likes?: number
+  comments?: number
 }
 
 export interface Comment {
@@ -29,5 +32,6 @@ export interface Comment {
     name: string
   }
   createdAt: string
+  likes?: number
   replies?: Comment[]
 }

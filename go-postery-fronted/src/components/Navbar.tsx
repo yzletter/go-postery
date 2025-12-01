@@ -1,25 +1,48 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, Home, LogOut, LogIn, User } from 'lucide-react'
+import { MessageSquare, Plus, Home, LogOut, LogIn, User, Search } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 gap-4">
-          <Link to="/" className="flex items-center space-x-2 group flex-shrink-0">
+      <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-7">
+        <div className="flex items-center h-16 gap-4">
+          <Link
+            to="/"
+            reloadDocument
+            className="flex items-center space-x-2 group flex-shrink-0 -ml-1 sm:-ml-2"
+          >
             <MessageSquare className="h-8 w-8 text-primary-600 group-hover:text-primary-700 transition-colors" />
             <span className="text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
               Go Postery
             </span>
           </Link>
+
+          <form
+            className="flex-1 max-w-xl hidden sm:block sm:ml-8 md:ml-14"
+            onSubmit={(e) => {
+              e.preventDefault()
+            }}
+          >
+            <div className="relative">
+              <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="搜索帖子标题、内容或作者..."
+                className="input w-full pl-10 pr-4 h-10 bg-gray-50 border-gray-200 focus:border-primary-400 focus:ring-primary-200"
+              />
+            </div>
+          </form>
           
-          <div className="flex items-center space-x-4 flex-shrink-0 ml-auto">
+          <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 ml-auto">
             <Link
               to="/"
               className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
@@ -101,4 +124,3 @@ export default function Navbar() {
     </nav>
   )
 }
-
