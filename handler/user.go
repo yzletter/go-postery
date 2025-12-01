@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/rs/xid"
-	"github.com/yzletter/go-postery/dto"
+	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/repository/gorm"
 	"github.com/yzletter/go-postery/service"
 
@@ -32,7 +32,7 @@ func NewUserHandler(redisClient redis.Cmdable, jwtService *service.JwtService, u
 
 // Login 用户登录 Handler
 func (handler *UserHandler) Login(ctx *gin.Context) {
-	var loginRequest = dto.LoginRequest{}
+	var loginRequest = request.LoginRequest{}
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
@@ -65,7 +65,7 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	// 将 user info 放入 jwt
-	userInfo := dto.UserInformation{
+	userInfo := request.UserInformation{
 		Id:   user.Id,
 		Name: user.Name,
 	}
@@ -127,7 +127,7 @@ func (handler *UserHandler) Logout(ctx *gin.Context) {
 
 // ModifyPass 修改密码 Handler
 func (handler *UserHandler) ModifyPass(ctx *gin.Context) {
-	var modifyPassRequest dto.ModifyPasswordRequest
+	var modifyPassRequest request.ModifyPasswordRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
@@ -173,7 +173,7 @@ func (handler *UserHandler) ModifyPass(ctx *gin.Context) {
 
 // Register 用户注册 Handler
 func (handler *UserHandler) Register(ctx *gin.Context) {
-	var registerRequest dto.RegisterRequest
+	var registerRequest request.RegisterRequest
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
 		// 参数绑定失败
@@ -196,7 +196,7 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 	}
 
 	// 将 user info 放入 jwt
-	userInfo := dto.UserInformation{
+	userInfo := request.UserInformation{
 		Id:   uid,
 		Name: registerRequest.Name,
 	}

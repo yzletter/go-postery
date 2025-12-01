@@ -1,4 +1,4 @@
-package dto
+package request
 
 type CreateRequest struct {
 	Id      int    `json:"id" form:"id"`

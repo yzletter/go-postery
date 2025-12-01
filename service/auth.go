@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/go-redis/redis"
-	"github.com/yzletter/go-postery/dto"
+	"github.com/yzletter/go-postery/dto/request"
 )
 
 const (
@@ -32,7 +32,7 @@ func NewAuthService(redisClient redis.Cmdable, jwtService *JwtService) *AuthServ
 }
 
 // GetUserInfoFromJWT 从 JWT Token 中获取 uid
-func (service *AuthService) GetUserInfoFromJWT(jwtToken string) *dto.UserInformation {
+func (service *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserInformation {
 	// 校验 JWT Token
 	payload, err := service.JwtService.VerifyToken(jwtToken)
 	if err != nil { // JWT Token 校验失败
@@ -47,7 +47,7 @@ func (service *AuthService) GetUserInfoFromJWT(jwtToken string) *dto.UserInforma
 		if k == USERINFO_IN_JWT_PAYLOAD {
 			// todo 待优化
 			bs, _ := json.Marshal(v)
-			var userInfo dto.UserInformation
+			var userInfo request.UserInformation
 			_ = json.Unmarshal(bs, &userInfo)
 			slog.Info("AuthService 获得 UserInfo 成功 ... ", "userInfo", userInfo)
 			return &userInfo

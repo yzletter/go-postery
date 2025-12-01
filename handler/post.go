@@ -6,19 +6,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/dto"
-	database2 "github.com/yzletter/go-postery/repository/gorm"
+	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 )
 
 type PostHandler struct {
 	PostService *service.PostService
+	UserService *service.UserService
 }
 
-func NewPostHandler(postService *service.PostService) *PostHandler {
+func NewPostHandler(postService *service.PostService, userService *service.UserService) *PostHandler {
 	return &PostHandler{
 		PostService: postService,
+		UserService: userService,
 	}
 }
 
@@ -38,11 +39,13 @@ func (handler *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, posts := database2.GetPostByPage(pageNo, pageSize)
+	total, posts := handler.PostService.GetByPage(pageNo, pageSize)
+
 	postsBack := []gin.H{}
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		user := database2.GetUserById(post.UserId)
+		//user := database2.GetUserById(post.UserId)
+		user := handler.UserService.GetUserById(post.UserId)
 		if user != nil {
 			post.UserName = user.Name
 		} else {
@@ -63,8 +66,8 @@ func (handler *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := pageNo*pageSize < total
-
+	//hasMore := pageNo*pageSize < total
+	hasMore := handler.PostService.HasMore(pageNo, pageSize, total)
 	resp := utils.Resp{
 		Code: 0,
 		Msg:  "获取帖子列表成功",
@@ -92,7 +95,8 @@ func (handler *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	post := database2.GetPostByID(pid)
+	//post := database2.GetPostByID(pid)
+	post := handler.PostService.GetById(pid)
 	if post == nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -104,7 +108,8 @@ func (handler *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 获取作者用户名
-	user := database2.GetUserById(post.UserId)
+	//user := database2.GetUserById(post.UserId)
+	user := handler.UserService.GetUserById(post.UserId)
 	if user != nil {
 		post.UserName = user.Name
 	} else {
@@ -134,7 +139,7 @@ func (handler *PostHandler) Create(ctx *gin.Context) {
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
-	var createRequest dto.CreateRequest
+	var createRequest request.CreateRequest
 	err := ctx.ShouldBind(&createRequest)
 	if err != nil {
 		resp := utils.Resp{
@@ -147,7 +152,8 @@ func (handler *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	pid, err := database2.CreatePost(loginUid, createRequest.Title, createRequest.Content)
+	//pid, err := database2.CreatePost(loginUid, createRequest.Title, createRequest.Content)
+	pid, err := handler.PostService.Create(loginUid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		resp := utils.Resp{
@@ -186,7 +192,8 @@ func (handler *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	post := database2.GetPostByID(pid)
+	//post := database2.GetPostByID(pid)
+	post := handler.PostService.GetById(pid)
 	if post == nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -205,7 +212,9 @@ func (handler *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 进行删除
-	err = database2.DeletePost(pid)
+	//err = database2.DeletePost(pid)
+	err = handler.PostService.Delete(pid)
+
 	if err != nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -229,7 +238,7 @@ func (handler *PostHandler) Update(ctx *gin.Context) {
 	loginUid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
-	var updateRequest dto.UpdateRequest
+	var updateRequest request.UpdateRequest
 	err := ctx.ShouldBind(&updateRequest)
 	if err != nil || updateRequest.Id == 0 {
 		resp := utils.Resp{
@@ -241,7 +250,8 @@ func (handler *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	post := database2.GetPostByID(updateRequest.Id)
+	//post := database2.GetPostByID(updateRequest.Id)
+	post := handler.PostService.GetById(updateRequest.Id)
 	if post == nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -260,7 +270,9 @@ func (handler *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = database2.UpdatePost(updateRequest.Id, updateRequest.Title, updateRequest.Content)
+	//err = database2.UpdatePost(updateRequest.Id, updateRequest.Title, updateRequest.Content)
+	err = handler.PostService.Update(updateRequest.Id, updateRequest.Title, updateRequest.Content)
+
 	if err != nil {
 		resp := utils.Resp{
 			Code: 1,
@@ -306,7 +318,8 @@ func (handler *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	post := database2.GetPostByID(pid)
+	//post := database2.GetPostByID(pid)
+	post := handler.PostService.GetById(pid)
 	if post == nil || uid != post.UserId {
 		resp := utils.Resp{
 			Code: 0,

@@ -57,21 +57,21 @@ func main() {
 	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB()) // 注册 PostRepository
 
 	// Service 层
-	JwtService := service.NewJwtService("123456")                            // 注册 JwtService
-	UserService := service.NewUserService(UserRepo)                          // 注册 UserService
-	PostService := service.NewPostService(PostRepo)                          // 注册 PostService
-	MetricService := service.NewMetricService()                              // 注册 MetricService
-	AuthService := service.NewAuthService(infraRedis.GetRedis(), JwtService) // 注册 AuthService
+	JwtSvc := service.NewJwtService("123456")                        // 注册 JwtSvc
+	UserSvc := service.NewUserService(UserRepo)                      // 注册 UserSvc
+	PostSvc := service.NewPostService(PostRepo)                      // 注册 PostSvc
+	MetricSvc := service.NewMetricService()                          // 注册 MetricSvc
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc) // 注册 AuthSvc
 
 	// Handler 层
 	// todo 会换成 infra
-	UserHdl := handler.NewUserHandler(infraRedis.GetRedis(), JwtService, UserService) // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostService)                                    // 注册 PostHandler
+	UserHdl := handler.NewUserHandler(infraRedis.GetRedis(), JwtSvc, UserSvc) // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)                       // 注册 PostHandler
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthService) // AuthRequiredMdl 强制登录
-	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthService) // AuthOptionalMdl 非强制要求登录
-	MetricMdl := middleware.MetricMiddleware(MetricService)           // MetricMdl 用于 Prometheus 监控中间件
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
+	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthSvc) // AuthOptionalMdl 非强制要求登录
+	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 
 	// 全局中间件
 	engine.Use(MetricMdl) // Prometheus 监控中间件

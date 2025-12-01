@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/dto"
+	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 )
@@ -106,7 +106,7 @@ func AuthOptionalMiddleware(authService *service.AuthService) gin.HandlerFunc {
 }
 
 // 将用户信息放入上下文
-func setUserToContext(ctx *gin.Context, userInfo *dto.UserInformation) {
+func setUserToContext(ctx *gin.Context, userInfo *request.UserInformation) {
 	ctx.Set(service.UID_IN_CTX, userInfo.Id)
 	ctx.Set(service.UNAME_IN_CTX, userInfo.Name)
 	slog.Info("用户信息放入上下文成功 ...", "UserInfo", userInfo)
