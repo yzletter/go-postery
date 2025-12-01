@@ -1,0 +1,2 @@
+time="2025-12-02 00:00:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-02 00:00:00.016" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"

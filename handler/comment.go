@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"log/slog"
+
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
+	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
 )
 
@@ -27,6 +30,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	// 获取参数并校验
 	var comment request.CreateCommentRequest
 	if err := ctx.ShouldBind(&comment); err != nil || comment.ParentId < 0 {
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
 	}

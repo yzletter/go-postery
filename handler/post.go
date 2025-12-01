@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
+	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
 )
 
@@ -118,6 +119,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	var createRequest request.CreatePostRequest
 	err := ctx.ShouldBind(&createRequest)
 	if err != nil {
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
 	}
@@ -180,6 +182,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	var updateRequest request.UpdatePostRequest
 	err := ctx.ShouldBind(&updateRequest)
 	if err != nil || updateRequest.Id == 0 {
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
 	}

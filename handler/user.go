@@ -5,6 +5,7 @@ import (
 
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
+	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,7 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
 		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "用户名或密码错误")
 		return
 	}
@@ -41,13 +43,11 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	if user == nil {
 		// 根据 name 未找到 user
 		response.ParamError(ctx, "用户名或密码错误")
-
 		return
 	}
 	if user.PassWord != loginRequest.PassWord {
 		// 密码不正确
 		response.ParamError(ctx, "用户名或密码错误")
-
 		return
 	}
 
@@ -96,6 +96,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
 		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
 	}
@@ -127,6 +128,7 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	err := ctx.ShouldBind(&registerRequest)
 	if err != nil {
 		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Success(ctx, nil)
 		return
 	}
