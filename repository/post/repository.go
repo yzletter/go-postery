@@ -21,7 +21,7 @@ func NewGormPostRepository(db *gorm.DB) *GormPostRepository {
 }
 
 // Create 新建帖子
-func (repository *GormPostRepository) Create(uid int, title, content string) (int, error) {
+func (repo *GormPostRepository) Create(uid int, title, content string) (int, error) {
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
@@ -33,7 +33,7 @@ func (repository *GormPostRepository) Create(uid int, title, content string) (in
 	}
 
 	// 新建数据
-	if err := repository.db.Create(&post).Error; err != nil {
+	if err := repo.db.Create(&post).Error; err != nil {
 		slog.Error("帖子发布失败", "title", err)
 		return 0, errors.New("帖子发布失败")
 	}
@@ -42,8 +42,8 @@ func (repository *GormPostRepository) Create(uid int, title, content string) (in
 }
 
 // Delete 根据帖子 id 删除帖子
-func (repository *GormPostRepository) Delete(pid int) error {
-	tx := repository.db.Model(&model.Post{}).Where("id=? and delete_time is null", pid).Update("delete_time", time.Now())
+func (repo *GormPostRepository) Delete(pid int) error {
+	tx := repo.db.Model(&model.Post{}).Where("id=? and delete_time is null", pid).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		// 删除失败
 		slog.Error("帖子删除失败", "pid", pid, "error", tx.Error)
@@ -58,8 +58,8 @@ func (repository *GormPostRepository) Delete(pid int) error {
 }
 
 // Update 修改帖子
-func (repository *GormPostRepository) Update(pid int, title, content string) error {
-	tx := repository.db.Model(&model.Post{}).Where("id=? and delete_time is null", pid)
+func (repo *GormPostRepository) Update(pid int, title, content string) error {
+	tx := repo.db.Model(&model.Post{}).Where("id=? and delete_time is null", pid)
 
 	var count int64
 	tx.Count(&count)
@@ -83,11 +83,11 @@ func (repository *GormPostRepository) Update(pid int, title, content string) err
 }
 
 // GetByID 根据帖子 id 获取帖子信息
-func (repository *GormPostRepository) GetByID(pid int) *model.Post {
+func (repo *GormPostRepository) GetByID(pid int) *model.Post {
 	post := &model.Post{
 		Id: pid,
 	}
-	tx := repository.db.Select("*").Where("delete_time is null").First(post) // find 不会报 ErrNotFound
+	tx := repo.db.Select("*").Where("delete_time is null").First(post) // find 不会报 ErrNotFound
 	if tx.Error != nil {
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) { // 并非未找到, 而是其他错误
 			slog.Error("帖子查找失败", "pid", pid, "error", tx.Error)
@@ -101,10 +101,10 @@ func (repository *GormPostRepository) GetByID(pid int) *model.Post {
 }
 
 // GetByPage 翻页查询帖子, 页号从 1 开始, 返回帖子总数和帖子列表
-func (repository *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*model.Post) {
+func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*model.Post) {
 	// 获取帖子总数
 	var total int64
-	tx := repository.db.Model(&model.Post{}).Where("delete_time is null").Count(&total)
+	tx := repo.db.Model(&model.Post{}).Where("delete_time is null").Count(&total)
 	if tx.Error != nil {
 		slog.Error("获取帖子总数失败", "error", tx.Error)
 		return 0, nil
@@ -113,7 +113,7 @@ func (repository *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*m
 	// 获取当前页的帖子
 	var posts []*model.Post
 	// 已经查询过 pageSize * (pageNo - 1) 条数据, 当前页需要 pageSize 条数据，并按发布时间降序排列
-	tx = repository.db.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
+	tx = repo.db.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
 	if tx.Error != nil {
 		slog.Error("获取当前页帖子失败", "pageNo", pageNo, "pageSize", pageSize, "error", tx.Error)
 		return 0, nil
@@ -128,7 +128,7 @@ func (repository *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*m
 }
 
 // GetByUid 根据 uid 获取该用户所发帖子
-func (repository *GormPostRepository) GetByUid(uid int) []*model.Post {
+func (repo *GormPostRepository) GetByUid(uid int) []*model.Post {
 	// todo
 	return nil
 }

@@ -19,11 +19,11 @@ func NewMetricService() *MetricService {
 	}
 }
 
-func (service *MetricService) CounterAdd(path string) {
-	service.requestCounter.WithLabelValues("gopostery", path).Inc() // 计数器 + 1 即可
+func (svc *MetricService) CounterAdd(path string) {
+	svc.requestCounter.WithLabelValues("gopostery", path).Inc() // 计数器 + 1 即可
 }
 
-func (service *MetricService) TimerSet(path string, start time.Time) {
-	service.requestTimer.WithLabelValues("gopostery", path).Set(float64(time.Since(start).Milliseconds())) // 计时器记录从 start 到现在过了多久
+func (svc *MetricService) TimerSet(path string, start time.Time) {
+	svc.requestTimer.WithLabelValues("gopostery", path).Set(float64(time.Since(start).Milliseconds())) // 计时器记录从 start 到现在过了多久
 
 }

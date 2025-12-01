@@ -23,7 +23,7 @@ func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
 	}
 }
 
-func (repository *GormUserRepository) Create(name, password string) (int, error) {
+func (repo *GormUserRepository) Create(name, password string) (int, error) {
 	// 将模型绑定到结构体
 	user := model.User{
 		Name:     name,
@@ -31,7 +31,7 @@ func (repository *GormUserRepository) Create(name, password string) (int, error)
 	}
 
 	// 到 MySQL 中创建新记录
-	err := repository.db.Create(&user).Error // 需要传指针
+	err := repo.db.Create(&user).Error // 需要传指针
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) { // 判断是否为 MySQL 错误
@@ -48,13 +48,13 @@ func (repository *GormUserRepository) Create(name, password string) (int, error)
 	return user.Id, nil
 }
 
-func (repository *GormUserRepository) Delete(uid int) (bool, error) {
+func (repo *GormUserRepository) Delete(uid int) (bool, error) {
 	// 将模型绑定到结构体
 	user := model.User{
 		Id: uid,
 	}
 	// 删除记录
-	tx := repository.db.Delete(&user)
+	tx := repo.db.Delete(&user)
 	if tx.Error != nil {
 		// 系统层面错误
 		slog.Error("go-postery LogOffUser : 用户注销失败", "uid", uid, "error", tx.Error)
@@ -66,8 +66,8 @@ func (repository *GormUserRepository) Delete(uid int) (bool, error) {
 	return true, nil
 }
 
-func (repository *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string) (bool, error) {
-	tx := repository.db.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
+func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string) (bool, error) {
+	tx := repo.db.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
 	if tx.Error != nil {
 		// 系统错误
 		slog.Error("go-postery UpdatePassword : 密码更改失败", "uid", uid, "error", tx.Error)
@@ -80,9 +80,9 @@ func (repository *GormUserRepository) UpdatePassword(uid int, oldPass, newPass s
 	return true, nil
 }
 
-func (repository *GormUserRepository) GetByID(uid int) *model.User {
+func (repo *GormUserRepository) GetByID(uid int) *model.User {
 	user := model.User{Id: uid}
-	tx := repository.db.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
+	tx := repo.db.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -94,9 +94,9 @@ func (repository *GormUserRepository) GetByID(uid int) *model.User {
 	return &user
 }
 
-func (repository *GormUserRepository) GetByName(name string) *model.User {
+func (repo *GormUserRepository) GetByName(name string) *model.User {
 	user := model.User{}
-	tx := repository.db.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
+	tx := repo.db.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {

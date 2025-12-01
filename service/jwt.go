@@ -27,14 +27,14 @@ func NewJwtService(secret string) *JwtService {
 }
 
 // GenToken 根据 payload 生成 JWT Token
-func (service *JwtService) GenToken(payload JwtPayload) (string, error) {
+func (svc *JwtService) GenToken(payload JwtPayload) (string, error) {
 	// 参数校验
-	if service.Secret == "" {
+	if svc.Secret == "" {
 		return "", ErrJwtInvalidParam
 	}
 
 	// 1. header 转成 json, 再用 base64 编码, 得到 JWT 第一部分
-	part1, err := marshalBase64Encode(service.Header)
+	part1, err := marshalBase64Encode(svc.Header)
 	if err != nil {
 		return "", err
 	}
@@ -46,16 +46,16 @@ func (service *JwtService) GenToken(payload JwtPayload) (string, error) {
 	}
 
 	// 3. 根据 msg 使用 secret 进行加密得到签名 signature
-	jwtMsg := part1 + "." + part2                      // JWT 信息部分
-	jwtSignature := signSha256(jwtMsg, service.Secret) // JWT 签名部分
+	jwtMsg := part1 + "." + part2                  // JWT 信息部分
+	jwtSignature := signSha256(jwtMsg, svc.Secret) // JWT 签名部分
 
 	return jwtMsg + "." + jwtSignature, nil
 }
 
 // VerifyToken 校验 JWT Token, 获得 payload
-func (service *JwtService) VerifyToken(token string) (*JwtPayload, error) {
+func (svc *JwtService) VerifyToken(token string) (*JwtPayload, error) {
 	// 参数校验
-	if token == "" || service.Secret == "" {
+	if token == "" || svc.Secret == "" {
 		return nil, ErrJwtInvalidParam
 	}
 	parts := strings.SplitN(token, ".", 3)
@@ -70,7 +70,7 @@ func (service *JwtService) VerifyToken(token string) (*JwtPayload, error) {
 
 	// 1. 签名校验
 	// 对 jwtMsg 加密得到 thisSignature 判断与 jwtSignature 是否相同
-	thisSignature := signSha256(jwtMsg, service.Secret)
+	thisSignature := signSha256(jwtMsg, svc.Secret)
 	if thisSignature != jwtSignature {
 		// 签名校验失败
 		return nil, ErrJwtInvalidParam

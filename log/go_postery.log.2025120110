@@ -207,3 +207,5 @@ time="2025-12-01 10:43:11.570" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-12-01 10:43:11.570" level=INFO source=/Users/yzletter/go_project/go-postery/middleware/auth.go:83 msg="AuthService 认证 RefreshToken 失败, 需重新登录 ..."
 time="2025-12-01 10:43:11.570" level=INFO source=/Users/yzletter/go_project/go-postery/middleware/auth.go:83 msg="AuthService 认证 RefreshToken 失败, 需重新登录 ..."
 time="2025-12-01 10:43:16.359" level=INFO source=/Users/yzletter/go_project/go-postery/handler/user.go:71 msg=登录成功 user="{Id:9999 Name:yzletter}"
+time="2025-12-01 10:50:00.007" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-01 10:50:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"

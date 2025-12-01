@@ -30,9 +30,6 @@ func main() {
 	crontab.InitCrontab()   // 初始化 定时任务
 	smooth.InitSmoothExit() // 初始化 优雅退出
 
-	//database.ConnectToMySQL("./conf", "db", utils.YAML, "./log") // 初始化 MySQL 数据库
-	//redis.ConnectToRedis("./conf", "redis", utils.YAML)          // 初始化 Redis 数据库
-
 	// 初始化 gin
 	engine := gin.Default()
 
