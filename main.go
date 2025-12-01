@@ -7,6 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
+	"github.com/yzletter/go-postery/infra/crontab"
+	"github.com/yzletter/go-postery/infra/slog"
+	"github.com/yzletter/go-postery/infra/smooth"
+	"github.com/yzletter/go-postery/infra/viper"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
@@ -16,15 +20,12 @@ import (
 	userRepository "github.com/yzletter/go-postery/repository/user"
 
 	"github.com/yzletter/go-postery/service"
-	"github.com/yzletter/go-postery/utils"
-	"github.com/yzletter/go-postery/utils/crontab"
-	"github.com/yzletter/go-postery/utils/smooth"
 )
 
 func main() {
 	// 初始化
 	SlogConfPath := "./log/go_postery.log"
-	utils.InitSlog(SlogConfPath) // 初始化 slog
+	slog.InitSlog(SlogConfPath) // 初始化 slog
 
 	crontab.InitCrontab()   // 初始化 定时任务
 	smooth.InitSmoothExit() // 初始化 优雅退出
@@ -46,8 +47,8 @@ func main() {
 	}))
 
 	// Infra 层
-	infraMySQL.Init("./conf", "db", utils.YAML, "./log") // 注册 MySQL
-	infraRedis.Init("./conf", "redis", utils.YAML)       // 注册 Redis
+	infraMySQL.Init("./conf", "db", viper.YAML, "./log") // 注册 MySQL
+	infraRedis.Init("./conf", "redis", viper.YAML)       // 注册 Redis
 
 	// Repository 层
 	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB()) // 注册 UserRepository

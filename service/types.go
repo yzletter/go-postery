@@ -4,11 +4,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/yzletter/go-postery/utils"
+	"github.com/yzletter/go-postery/infra/viper"
 )
 
 var (
-	JWTConfig = utils.InitViper("./conf", "jwt", utils.YAML)
+	JWTConfig = viper.InitViper("./conf", "jwt", viper.YAML)
 )
 
 // 可容忍的时间偏移

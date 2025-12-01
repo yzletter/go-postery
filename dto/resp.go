@@ -1,4 +1,4 @@
-package utils
+package dto
 
 // Resp 统一定义后端返回数据格式
 type Resp struct {

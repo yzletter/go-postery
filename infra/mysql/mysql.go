@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/yzletter/go-postery/utils"
+	"github.com/yzletter/go-postery/infra/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -28,7 +28,7 @@ type PoolConfig struct {
 // Init 初始化数据库
 func Init(confDir, confFileName, confFileType, logDir string) {
 	// 读取 MySQL 相关配置
-	viper := utils.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
+	viper := viper.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
 	host := viper.GetString("mysql.host")
 	port := viper.GetInt("mysql.port")
 	user := viper.GetString("mysql.user")

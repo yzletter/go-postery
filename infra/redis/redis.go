@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-redis/redis"
-	"github.com/yzletter/go-postery/utils"
+	"github.com/yzletter/go-postery/infra/viper"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 // Init 连接到 Redis 数据库, 生成一个 *redis.Client 赋给全局数据库变量 globalRedisClient
 func Init(confDir, confFileName, confFileType string) {
 	// 初始化 Viper 进行配置读取
-	viper := utils.InitViper(confDir, confFileName, confFileType)
+	viper := viper.InitViper(confDir, confFileName, confFileType)
 	host := viper.GetString("redis.host")
 	port := viper.GetString("redis.port")
 	db := viper.GetInt("redis.db")
