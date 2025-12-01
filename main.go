@@ -23,29 +23,15 @@ import (
 )
 
 func main() {
-	// 初始化
-	SlogConfPath := "./log/go_postery.log"
-	slog.InitSlog(SlogConfPath) // 初始化 slog
-
-	crontab.InitCrontab()   // 初始化 定时任务
-	smooth.InitSmoothExit() // 初始化 优雅退出
-
-	// 初始化 gin
-	engine := gin.Default()
-
-	// 配置跨域
-	engine.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
 	// Infra 层
 	infraMySQL.Init("./conf", "db", viper.YAML, "./log") // 注册 MySQL
 	infraRedis.Init("./conf", "redis", viper.YAML)       // 注册 Redis
+	slog.InitSlog("./log/go_postery.log")                // 初始化 slog
+	crontab.InitCrontab()                                // 初始化 定时任务
+	smooth.InitSmoothExit()                              // 初始化 优雅退出
+
+	// 初始化 gin
+	engine := gin.Default()
 
 	// Repository 层
 	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB()) // 注册 UserRepository
@@ -68,6 +54,15 @@ func main() {
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 
 	// 全局中间件
+	engine.Use(cors.New(cors.Config{ // 配置跨域
+		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	engine.Use(MetricMdl) // Prometheus 监控中间件
 
 	// 定义路由
