@@ -51,3 +51,7 @@ time="2025-12-02 22:09:36.977" level=INFO source=/Users/yzletter/go_project/go-p
 time="2025-12-02 22:09:36.977" level=INFO source=/Users/yzletter/go_project/go-postery/middleware/auth.go:112 msg="用户信息放入上下文成功 ..." UserInfo="&{Id:10001 Name:sylar}"
 time="2025-12-02 22:10:00.004" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
 time="2025-12-02 22:10:00.005" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-02 22:22:02.762" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-02 22:22:02.764" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-02 22:30:00.005" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-02 22:30:00.006" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
