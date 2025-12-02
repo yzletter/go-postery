@@ -58,6 +58,7 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	cid, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		response.ParamError(ctx, "")
+		return
 	}
 
 	// 调用 Service 层
@@ -72,18 +73,37 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 		}
 		return
 	}
-	
+
+	// 返回数据
 	response.Success(ctx, nil)
 	return
 }
 
 // todo
 
-func (hdl *CommentHandler) Detail(ctx *gin.Context) {
-}
-
 func (hdl *CommentHandler) List(ctx *gin.Context) {
+	// 获取参数
+	pid, err := strconv.Atoi(ctx.Param("post_id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
 
+	comments := hdl.CommentService.List(pid)
+
+	commentsBack := make([]gin.H, 0)
+	for _, comment := range comments {
+		res := gin.H{
+			"id":      comment.Id,
+			"content": comment.Content,
+			"author": gin.H{
+				"name": comment.UserName,
+			},
+			"createdAt": comment.ViewTime,
+		}
+		commentsBack = append(commentsBack, res)
+	}
+	response.Success(ctx, commentsBack)
 }
 
 func (hdl *CommentHandler) Belong(ctx *gin.Context) {

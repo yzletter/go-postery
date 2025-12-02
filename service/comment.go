@@ -4,16 +4,20 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/yzletter/go-postery/infra/model"
 	repository "github.com/yzletter/go-postery/repository/comment"
+	userRepository "github.com/yzletter/go-postery/repository/user"
 )
 
 type CommentService struct {
 	CommentRepository *repository.GormCommentRepository
+	UserRepository    *userRepository.GormUserRepository
 }
 
-func NewCommentService(commentRepository *repository.GormCommentRepository) *CommentService {
+func NewCommentService(commentRepository *repository.GormCommentRepository, userRepository *userRepository.GormUserRepository) *CommentService {
 	return &CommentService{
 		CommentRepository: commentRepository,
+		UserRepository:    userRepository,
 	}
 }
 
@@ -38,4 +42,18 @@ func (svc *CommentService) Delete(uid int, cid int) error {
 		return errors.New("删除失败")
 	}
 	return nil
+}
+
+func (svc *CommentService) List(pid int) []*model.Comment {
+	comments := svc.CommentRepository.GetByPostID(pid)
+	if comments == nil {
+		return nil
+	}
+
+	for _, comment := range comments {
+		name := svc.UserRepository.GetByID(comment.UserId).Name
+		comment.UserName = name
+	}
+
+	return comments
 }

@@ -9706,3 +9706,183 @@
 
 2025/12/02 21:37:33 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:43
 [0.979ms] [rows:1] SELECT * FROM `comment` WHERE delete_time is null AND `comment`.`id` = 1 ORDER BY `comment`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/post/repository.go:107
+[2.554ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/post/repository.go:116
+[3.443ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[1.116ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.831ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[2.324ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.416ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.402ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.150ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.153ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.139ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.131ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/post/repository.go:107
+[0.304ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/post/repository.go:116
+[0.407ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.247ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.166ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.151ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.168ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.135ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.129ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.258ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:00 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.138ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/post/repository.go:107
+[0.785ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/post/repository.go:116
+[0.485ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.194ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.264ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.134ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.160ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.159ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.178ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.253ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.935ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[4.263ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.776ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/post/repository.go:107
+[3.700ms] [rows:1] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/post/repository.go:116
+[0.848ms] [rows:10] SELECT * FROM `post` WHERE delete_time is null ORDER BY create_time desc LIMIT 10
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.369ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.158ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.227ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.154ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 36 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.130ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 81 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.179ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 99 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.147ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 100 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.132ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 60 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.335ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 25 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 21:56:03 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.203ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 67 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 22:09:20 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:33
+[4.236ms] [rows:1] INSERT INTO `comment` (`post_id`,`parent_id`,`user_id`,`content`,`create_time`,`delete_time`) VALUES (213,0,10001,'这是一篇好文章','2025-12-02 22:09:20.983',NULL)
+
+2025/12/02 22:09:25 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:33
+[2.224ms] [rows:1] INSERT INTO `comment` (`post_id`,`parent_id`,`user_id`,`content`,`create_time`,`delete_time`) VALUES (213,0,10001,'这是一篇好文章1','2025-12-02 22:09:25.564',NULL)
+
+2025/12/02 22:09:28 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:33
+[1.273ms] [rows:1] INSERT INTO `comment` (`post_id`,`parent_id`,`user_id`,`content`,`create_time`,`delete_time`) VALUES (213,0,10001,'这是一篇好文章2','2025-12-02 22:09:28.593',NULL)
+
+2025/12/02 22:09:33 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:33
+[1.120ms] [rows:1] INSERT INTO `comment` (`post_id`,`parent_id`,`user_id`,`content`,`create_time`,`delete_time`) VALUES (213,0,10001,'这是一篇好文章3','2025-12-02 22:09:33.259',NULL)
+
+2025/12/02 22:09:36 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:33
+[1.194ms] [rows:1] INSERT INTO `comment` (`post_id`,`parent_id`,`user_id`,`content`,`create_time`,`delete_time`) VALUES (213,0,10001,'这是一篇好文章4','2025-12-02 22:09:36.976',NULL)
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/comment/repository.go:70
+[2.272ms] [rows:6] SELECT * FROM `comment` WHERE post_id = 213 AND delete_time is null
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.425ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 9999 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.132ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10001 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.143ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10001 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.133ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10001 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.127ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10001 ORDER BY `user`.`id` LIMIT 1
+
+2025/12/02 22:10:07 /Users/yzletter/go_project/go-postery/repository/user/repository.go:85
+[0.135ms] [rows:1] SELECT * FROM `user` WHERE `user`.`id` = 10001 ORDER BY `user`.`id` LIMIT 1

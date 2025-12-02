@@ -45,7 +45,7 @@ func main() {
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc) // 注册 AuthSvc
 	UserSvc := service.NewUserService(UserRepo)                      // 注册 UserSvc
 	PostSvc := service.NewPostService(PostRepo)                      // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentRepo)             // 注册 CommentSvc
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)   // 注册 CommentSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
@@ -92,8 +92,9 @@ func main() {
 	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
 
 	// 评论模块
-	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create) // 创建评论
-	engine.GET("/comment/delete/:id", AuthRequiredMdl, CommentHdl.Delete)
+	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create)       // 创建评论
+	engine.GET("/comment/delete/:id", AuthRequiredMdl, CommentHdl.Delete) // 删除评论
+	engine.GET("/comment/list/:post_id", CommentHdl.List)                 // 列出评论
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
