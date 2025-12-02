@@ -35,9 +35,9 @@ func main() {
 	engine := gin.Default()
 
 	// Repository 层
-	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB())      // 注册 UserRepository
-	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB())      // 注册 PostRepository
-	CommentRepo := commentRepository.NewCommentRepository(infraMySQL.GetDB()) // 注册 CommentRepository
+	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB())          // 注册 UserRepository
+	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB())          // 注册 PostRepository
+	CommentRepo := commentRepository.NewGormCommentRepository(infraMySQL.GetDB()) // 注册 CommentRepository
 
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                        // 注册 JwtSvc
@@ -48,9 +48,9 @@ func main() {
 	CommentSvc := service.NewCommentService(CommentRepo)             // 注册 CommentSvc
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)  // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)          // 注册 PostHandler
-	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc) // 注册 CommentHandler
+	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)                   // 注册 PostHandler
+	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
@@ -93,6 +93,7 @@ func main() {
 
 	// 评论模块
 	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create) // 创建评论
+	engine.GET("/comment/delete/:id", AuthRequiredMdl, CommentHdl.Delete)
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

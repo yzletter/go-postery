@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -9,17 +10,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type CommentRepository struct {
+type GormCommentRepository struct {
 	db *gorm.DB
 }
 
-func NewCommentRepository(db *gorm.DB) *CommentRepository {
-	return &CommentRepository{
+func NewGormCommentRepository(db *gorm.DB) *GormCommentRepository {
+	return &GormCommentRepository{
 		db: db,
 	}
 }
 
-func (repo *CommentRepository) Create(pid int, uid int, parentId int, content string) (int, error) {
+func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, content string) (int, error) {
 	now := time.Now()
 	comment := model.Comment{
 		PostId:     pid,      // 所属帖子 id
@@ -34,4 +35,33 @@ func (repo *CommentRepository) Create(pid int, uid int, parentId int, content st
 		return 0, errors.New("评论发表失败")
 	}
 	return comment.Id, nil
+}
+
+func (repo *GormCommentRepository) GetByID(cid int) *model.Comment {
+	comment := &model.Comment{Id: cid}
+	// Find 不报 ErrRecordNotFound
+	tx := repo.db.Select("*").Where("delete_time is null").First(comment)
+	if tx.Error != nil {
+		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) { // 并非未找到, 而是其他错误
+			slog.Error("评论查找失败", "cid", cid, "error", tx.Error)
+		}
+		return nil
+	}
+	// 前端用于展示的时间
+	comment.ViewTime = comment.CreateTime.Format("2006-01-02 15:04:05")
+	return comment
+}
+
+func (repo *GormCommentRepository) Delete(cid int) error {
+	tx := repo.db.Model(&model.Comment{}).Where("id = ?", cid).Update("delete_time", time.Now())
+	if tx.Error != nil {
+		slog.Error("删除失败", "cid", cid)
+		return errors.New("删除失败")
+	} else {
+		if tx.RowsAffected == 0 {
+			return fmt.Errorf("评论 %d 不存在", cid)
+		} else {
+			return nil
+		}
+	}
 }

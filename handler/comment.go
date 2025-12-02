@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto/request"
@@ -13,12 +14,14 @@ import (
 type CommentHandler struct {
 	CommentService *service.CommentService
 	UserService    *service.UserService
+	PostService    *service.PostService
 }
 
-func NewCommentHandler(commentService *service.CommentService, userService *service.UserService) *CommentHandler {
+func NewCommentHandler(commentService *service.CommentService, userService *service.UserService, postService *service.PostService) *CommentHandler {
 	return &CommentHandler{
 		CommentService: commentService,
 		UserService:    userService,
+		PostService:    postService,
 	}
 }
 
@@ -45,4 +48,44 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	response.Success(ctx, gin.H{
 		"id": cid,
 	})
+}
+
+func (hdl *CommentHandler) Delete(ctx *gin.Context) {
+	// 从 ctx 中拿 uid
+	uid := ctx.Value(service.UID_IN_CTX).(int)
+
+	// 从路由中获取参数 cid
+	cid, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+	}
+
+	// 调用 Service 层
+	err = hdl.CommentService.Delete(uid, cid)
+	if err != nil {
+		if err.Error() == "评论不存在" {
+			response.ServerError(ctx, "")
+		} else if err.Error() == "没有删除权限" {
+			response.Unauthorized(ctx, "")
+		} else if err.Error() == "删除失败" {
+			response.ServerError(ctx, "")
+		}
+		return
+	}
+	
+	response.Success(ctx, nil)
+	return
+}
+
+// todo
+
+func (hdl *CommentHandler) Detail(ctx *gin.Context) {
+}
+
+func (hdl *CommentHandler) List(ctx *gin.Context) {
+
+}
+
+func (hdl *CommentHandler) Belong(ctx *gin.Context) {
+
 }

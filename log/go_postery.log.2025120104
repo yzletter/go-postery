@@ -1,2 +1,0 @@
-time="2025-12-01 04:10:44.338" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
-time="2025-12-01 04:10:44.342" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:52 msg="ping GoPosteryRedisClient succeed"

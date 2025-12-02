@@ -1,4 +1,0 @@
-time="2025-11-30 10:36:05.927" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:70 msg="connect to MySQL succeed"
-time="2025-11-30 10:36:05.929" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:40 msg="connect to Redis succeed"
-time="2025-11-30 10:40:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/repository/gorm/connection.go:92 msg="ping GoPosteryMySQLDB succeed"
-time="2025-11-30 10:40:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/repository/redis/connection.go:52 msg="ping globalRedisClient succeed"

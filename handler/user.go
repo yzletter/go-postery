@@ -114,7 +114,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	// todo Error
 	if ok == false || err != nil {
 		// 密码更改失败
-		response.ServerError(ctx, "")
+		response.ParamError(ctx, "")
 		return
 	}
 
