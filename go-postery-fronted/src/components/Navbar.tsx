@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, Home, LogOut, LogIn, User, Search } from 'lucide-react'
+import { MessageSquare, Plus, Home, LogOut, LogIn, User, Search, Settings } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
@@ -8,6 +8,7 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const profileLink = user?.id ? `/users/${user.id}` : '/profile'
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
@@ -86,12 +87,20 @@ export default function Navbar() {
                           <p className="text-sm font-medium text-gray-900">{user.name}</p>
                         </div>
                         <Link
-                          to="/profile"
+                          to={profileLink}
                           onClick={() => setShowUserMenu(false)}
                           className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                           <User className="h-4 w-4" />
-                          <span>个人信息</span>
+                          <span>个人主页</span>
+                        </Link>
+                        <Link
+                          to="/settings"
+                          onClick={() => setShowUserMenu(false)}
+                          className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>设置</span>
                         </Link>
                         <button
                           onClick={() => {

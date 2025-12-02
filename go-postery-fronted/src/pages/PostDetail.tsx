@@ -211,13 +211,25 @@ export default function PostDetail() {
 
           {/* 作者信息 */}
           <div className="flex items-center space-x-4 mb-4">
-            <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
-              alt={post.author.name}
-              className="w-10 h-10 rounded-full"
-            />
+            <Link
+              to={`/users/${post.author.id}`}
+              state={{ username: post.author.name }}
+              className="flex-shrink-0"
+            >
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+                alt={post.author.name}
+                className="w-10 h-10 rounded-full"
+              />
+            </Link>
             <div>
-              <div className="font-medium text-gray-900">{post.author.name}</div>
+              <Link
+                to={`/users/${post.author.id}`}
+                state={{ username: post.author.name }}
+                className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
+              >
+                {post.author.name}
+              </Link>
               <div className="text-sm text-gray-500 flex items-center space-x-1">
                 <Clock className="h-3 w-3" />
                 <span>
@@ -268,17 +280,27 @@ export default function PostDetail() {
           <div className="space-y-6">
             {comments.map(comment => (
               <div key={comment.id} className="flex space-x-4">
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author.id}`}
-                  alt={comment.author.name}
-                  className="w-10 h-10 rounded-full flex-shrink-0"
-                />
+                <Link
+                  to={`/users/${comment.author.id}`}
+                  state={{ username: comment.author.name }}
+                  className="flex-shrink-0"
+                >
+                  <img
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author.id}`}
+                    alt={comment.author.name}
+                    className="w-10 h-10 rounded-full"
+                  />
+                </Link>
                 <div className="flex-1">
                   <div className="bg-gray-50 rounded-lg p-4 mb-2">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">
+                      <Link
+                        to={`/users/${comment.author.id}`}
+                        state={{ username: comment.author.name }}
+                        className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                      >
                         {comment.author.name}
-                      </span>
+                      </Link>
                       <span className="text-xs text-gray-500">
                         {formatDistanceToNow(new Date(comment.createdAt), {
                           addSuffix: true,

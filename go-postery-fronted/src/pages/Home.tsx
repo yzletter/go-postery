@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2, Eye, Heart, Flame } from 'lucide-react'
 import { Post, ApiResponse } from '../types'
 import { formatDistanceToNow } from 'date-fns'
@@ -66,6 +66,9 @@ const generateMockPost = (id: number, index: number): Post => {
 
 // 总数据量限制
 const TOTAL_POSTS_LIMIT = 20
+// 保留模拟数据方法的引用，便于需要时启用本地数据
+void generateMockPost
+void TOTAL_POSTS_LIMIT
 
 interface PostListResult {
   posts: Post[]
@@ -154,6 +157,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
 
   const pageSize = 10
@@ -230,72 +234,94 @@ export default function Home() {
           </div>
         )}
 
-        {/* 帖子列表 */}
-        {!isInitialLoading && (
-          <>
-            <div className="space-y-3">
-              {posts.map(post => (
-                <Link
-                  key={post.id}
-                  to={`/post/${post.id}`}
-                  className="card p-4 lg:p-5 block hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-start space-x-4">
-                    {/* 用户头像 */}
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
-                      alt={post.author.name}
-                      className="w-11 h-11 rounded-full flex-shrink-0"
-                    />
-                    
-                    <div className="flex-1 min-w-0">
-                      {/* 标题 */}
-                      <div className="flex items-start justify-between mb-1.5">
-                        <h2 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
-                          {post.title}
-                        </h2>
-                      </div>
+            {/* 帖子列表 */}
+            {!isInitialLoading && (
+              <>
+                <div className="space-y-3">
+                  {posts.map(post => (
+                    <article
+                      key={post.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => navigate(`/post/${post.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          navigate(`/post/${post.id}`)
+                        }
+                      }}
+                      className="card p-4 lg:p-5 hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      <div className="flex items-start space-x-4">
+                        {/* 用户头像 */}
+                        <Link
+                          to={`/users/${post.author.id}`}
+                          state={{ username: post.author.name }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0"
+                        >
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+                            alt={post.author.name}
+                            className="w-11 h-11 rounded-full"
+                          />
+                        </Link>
+                        
+                        <div className="flex-1 min-w-0">
+                          {/* 标题 */}
+                          <div className="flex items-start justify-between mb-1.5">
+                            <h2 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
+                              {post.title}
+                            </h2>
+                          </div>
 
-                      {/* 内容预览 */}
-                      <p className="text-gray-600 mb-2 line-clamp-2 text-sm leading-relaxed">
-                        {post.content}
-                      </p>
+                          {/* 内容预览 */}
+                          <p className="text-gray-600 mb-2 line-clamp-2 text-sm leading-relaxed">
+                            {post.content}
+                          </p>
 
-                      {/* 元信息 */}
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <div className="flex items-center space-x-3">
-                          <span className="font-medium text-gray-700">{post.author.name}</span>
-                          <span className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              {formatDistanceToNow(new Date(post.createdAt), {
-                                addSuffix: true,
-                                locale: zhCN
-                              })}
-                            </span>
-                          </span>
+                          {/* 元信息 */}
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center space-x-3">
+                              <Link
+                                to={`/users/${post.author.id}`}
+                                state={{ username: post.author.name }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="font-medium text-gray-700 hover:text-primary-600"
+                              >
+                                {post.author.name}
+                              </Link>
+                              <span className="flex items-center space-x-1">
+                                <Clock className="h-4 w-4" />
+                                <span>
+                                  {formatDistanceToNow(new Date(post.createdAt), {
+                                    addSuffix: true,
+                                    locale: zhCN
+                                  })}
+                                </span>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-3 text-gray-500">
+                              <span className="flex items-center space-x-1">
+                                <Eye className="h-4 w-4" />
+                                <span>{post.views ?? 0}</span>
+                              </span>
+                              <span className="flex items-center space-x-1">
+                                <Heart className="h-4 w-4" />
+                                <span>{post.likes ?? 0}</span>
+                              </span>
+                              <span className="flex items-center space-x-1">
+                                <MessageSquare className="h-4 w-4" />
+                                <span>{post.comments ?? 0}</span>
+                              </span>
+                            </div>
+
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-3 text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{post.views ?? 0}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Heart className="h-4 w-4" />
-                            <span>{post.likes ?? 0}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span>{post.comments ?? 0}</span>
-                          </span>
-                        </div>
-
                       </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    </article>
+                  ))}
+                </div>
 
             {/* 无限滚动触发点 */}
             <div ref={observerTarget} className="h-10" />

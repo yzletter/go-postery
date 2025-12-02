@@ -7,6 +7,7 @@ import CreatePost from './pages/CreatePost'
 import EditPost from './pages/EditPost'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 import { useAuth } from './contexts/AuthContext'
 
 // 保护需要登录的路由
@@ -39,11 +40,20 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/users/:userId" element={<Profile />} />
       <Route
         path="/profile"
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />
@@ -67,4 +77,3 @@ function App() {
 }
 
 export default App
-

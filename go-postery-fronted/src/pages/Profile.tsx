@@ -1,77 +1,50 @@
-import { useState, FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Lock, Key, Save, Eye, EyeOff } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import {
+  ArrowLeft,
+  Calendar,
+  Heart,
+  MessageSquare,
+  PenSquare,
+  Settings,
+  Share2,
+  Users,
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+
+const mockRecentPosts = [
+  { id: 1, title: '如何快速搭建一套前后端同构的论坛？', time: '2 小时前', views: 320 },
+  { id: 2, title: 'Go 服务的日志与链路追踪最佳实践', time: '1 天前', views: 210 },
+  { id: 3, title: 'Tailwind 设计系统落地经验分享', time: '3 天前', views: 180 },
+]
 
 export default function Profile() {
   const navigate = useNavigate()
-  const { user, changePassword } = useAuth()
-  const [oldPassword, setOldPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showOldPassword, setShowOldPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  if (!user) {
+  const location = useLocation()
+  const { userId } = useParams<{ userId?: string }>()
+  const { user } = useAuth()
+  const locationState = (location.state as { username?: string } | null) || {}
+  
+  if (!userId && !user) {
     navigate('/login')
     return null
   }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-
-    // 验证新密码长度
-    if (newPassword.length < 6) {
-      setError('新密码长度至少为 6 位')
-      return
-    }
-
-    // 验证两次输入的新密码是否一致
-    if (newPassword !== confirmPassword) {
-      setError('两次输入的新密码不一致')
-      return
-    }
-
-    // 验证新旧密码不能相同
-    if (oldPassword === newPassword) {
-      setError('新密码不能与旧密码相同')
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const success = await changePassword(oldPassword, newPassword)
-      if (success) {
-        // 清空表单
-        setOldPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-        
-        // 弹出确认对话框，点击确认后跳转到首页
-        const shouldNavigate = window.confirm('密码修改成功！是否返回首页？')
-        if (shouldNavigate) {
-          navigate('/')
-        }
-      } else {
-        setError('修改密码失败，请检查旧密码是否正确')
-      }
-    } catch (err) {
-      setError('发生错误，请重试')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const resolvedUserId = userId ?? (user?.id != null ? String(user.id) : '')
+  const isCurrentUser = userId
+    ? Boolean(user && resolvedUserId && String(user.id) === resolvedUserId)
+    : Boolean(user)
+  const displayName =
+    locationState.username ||
+    (isCurrentUser ? user?.name : undefined) ||
+    user?.name ||
+    (resolvedUserId ? `用户 ${resolvedUserId}` : '个人主页')
+  const subtitle = isCurrentUser
+    ? '分享你的想法，构建更好的社区'
+    : `正在查看 ${displayName} 的主页`
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* 返回按钮 */}
+    <div className="max-w-6xl mx-auto space-y-6">
       <Link
         to="/"
         className="inline-flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors"
@@ -80,161 +53,82 @@ export default function Profile() {
         <span>返回首页</span>
       </Link>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* 左侧：用户信息卡片 */}
-        <div className="md:col-span-1">
-          <div className="card text-center">
-            <div className="mb-4">
+      <div className="grid lg:grid-cols-[1.2fr_1fr] gap-6">
+        {/* 个人信息 */}
+        <div className="card lg:col-span-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center space-x-4">
               <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
-                alt={user.name}
-                className="w-24 h-24 rounded-full mx-auto border-4 border-primary-100"
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
+                alt={displayName}
+                className="w-16 h-16 rounded-full border-4 border-primary-100"
               />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
+                <p className="text-gray-500 text-sm">{subtitle}</p>
+                {resolvedUserId && (
+                  <p className="text-xs text-gray-400 mt-1">ID: {resolvedUserId}</p>
+                )}
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{user.name}</h2>
+            {isCurrentUser && (
+              <div className="flex items-center space-x-3">
+                <Link to="/create" className="btn-primary flex items-center space-x-2">
+                  <PenSquare className="h-4 w-4" />
+                  <span>发帖</span>
+                </Link>
+                <Link to="/settings" className="btn-secondary flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>设置</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 右侧：修改密码表单 */}
-        <div className="md:col-span-2">
-          <div className="card">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">修改密码</h1>
-              <p className="text-gray-600">为了账户安全，请定期更换密码</p>
-            </div>
+        {/* 统计卡片 */}
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">创作概览</h2>
+            <span className="text-xs text-gray-500">本周</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <StatItem icon={<PenSquare className="h-5 w-5 text-primary-600" />} label="帖子" value="12" />
+            <StatItem icon={<MessageSquare className="h-5 w-5 text-primary-600" />} label="回复" value="48" />
+            <StatItem icon={<Heart className="h-5 w-5 text-primary-600" />} label="获赞" value="326" />
+            <StatItem icon={<Users className="h-5 w-5 text-primary-600" />} label="关注者" value="89" />
+            <StatItem icon={<Share2 className="h-5 w-5 text-primary-600" />} label="分享" value="34" />
+            <StatItem icon={<Calendar className="h-5 w-5 text-primary-600" />} label="加入" value="2024-01-05" />
+          </div>
+        </div>
 
-            {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* 旧密码 */}
-              <div>
-                <label htmlFor="oldPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  当前密码
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+        {/* 最近动态 */}
+        <div className="card lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">最近动态</h2>
+            <Link to="/create" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              去创作
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {mockRecentPosts.map((post) => (
+              <Link
+                to={`/post/${post.id}`}
+                key={post.id}
+                className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
+                    {post.id}
                   </div>
-                  <input
-                    id="oldPassword"
-                    type={showOldPassword ? 'text' : 'password'}
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    placeholder="输入当前密码"
-                    required
-                    className="input pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowOldPassword(!showOldPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  >
-                    {showOldPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* 新密码 */}
-              <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  新密码
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Key className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-gray-900 font-medium line-clamp-1">{post.title}</p>
+                    <p className="text-xs text-gray-500">更新于 {post.time}</p>
                   </div>
-                  <input
-                    id="newPassword"
-                    type={showNewPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="输入新密码（至少 6 位）"
-                    required
-                    minLength={6}
-                    className="input pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  >
-                    {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">密码长度至少为 6 位</p>
-              </div>
-
-              {/* 确认新密码 */}
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  确认新密码
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Key className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="再次输入新密码"
-                    required
-                    minLength={6}
-                    className="input pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* 提交按钮 */}
-              <div className="pt-4 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-primary flex items-center justify-center space-x-2 w-full"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>修改中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-5 w-5" />
-                      <span>保存新密码</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* 安全提示 */}
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="text-sm font-medium text-blue-900 mb-2">安全提示</h3>
-              <ul className="text-xs text-blue-700 space-y-1">
-                <li>• 密码长度至少为 6 位</li>
-                <li>• 建议使用字母、数字和特殊字符的组合</li>
-                <li>• 不要使用过于简单的密码（如 123456）</li>
-                <li>• 定期更换密码以提高账户安全性</li>
-              </ul>
-            </div>
+                <div className="text-sm text-gray-500">浏览 {post.views}</div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>
@@ -242,3 +136,22 @@ export default function Profile() {
   )
 }
 
+function StatItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode
+  label: string
+  value: string
+}) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+      <div className="flex items-center space-x-2 mb-2">
+        {icon}
+        <span className="text-xs text-gray-500">{label}</span>
+      </div>
+      <div className="text-xl font-bold text-gray-900">{value}</div>
+    </div>
+  )
+}
