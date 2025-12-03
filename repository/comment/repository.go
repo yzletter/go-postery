@@ -20,7 +20,7 @@ func NewGormCommentRepository(db *gorm.DB) *GormCommentRepository {
 	}
 }
 
-func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, content string) (int, error) {
+func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, content string) (model.Comment, error) {
 	now := time.Now()
 	comment := model.Comment{
 		PostId:     pid,      // 所属帖子 id
@@ -32,24 +32,22 @@ func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, conten
 	}
 	if err := repo.db.Create(&comment).Error; err != nil {
 		slog.Error("评论发表失败", "error", err)
-		return 0, errors.New("评论发表失败")
+		return model.Comment{}, errors.New("评论发表失败")
 	}
-	return comment.Id, nil
+	return comment, nil
 }
 
-func (repo *GormCommentRepository) GetByID(cid int) *model.Comment {
-	comment := &model.Comment{Id: cid}
+func (repo *GormCommentRepository) GetByID(cid int) (model.Comment, error) {
+	comment := model.Comment{Id: cid}
 	// Find 不报 ErrRecordNotFound
-	tx := repo.db.Select("*").Where("delete_time is null").First(comment)
+	tx := repo.db.Select("*").Where("delete_time is null").First(&comment)
 	if tx.Error != nil {
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) { // 并非未找到, 而是其他错误
 			slog.Error("评论查找失败", "cid", cid, "error", tx.Error)
 		}
-		return nil
+		return model.Comment{}, errors.New("")
 	}
-	// 前端用于展示的时间
-	comment.ViewTime = comment.CreateTime.Format("2006-01-02 15:04:05")
-	return comment
+	return comment, nil
 }
 
 func (repo *GormCommentRepository) Delete(cid int) error {
@@ -66,8 +64,9 @@ func (repo *GormCommentRepository) Delete(cid int) error {
 	}
 }
 
-func (repo *GormCommentRepository) GetByPostID(pid int) []*model.Comment {
-	var comments []*model.Comment
+func (repo *GormCommentRepository) GetByPostID(pid int) []model.Comment {
+	var comments []model.Comment
+	// 按时间降序
 	tx := repo.db.Model(&model.Comment{}).Where("post_id = ?", pid).Where("delete_time is null").Order("create_time desc").Find(&comments)
 	if tx.Error != nil {
 		slog.Error("获取帖子的评论失败", "pid", pid, "error", tx.Error)
@@ -75,8 +74,5 @@ func (repo *GormCommentRepository) GetByPostID(pid int) []*model.Comment {
 	}
 
 	// 赋值前端展示时间
-	for _, comment := range comments {
-		comment.ViewTime = comment.CreateTime.Format("2006-01-02 15:04:05")
-	}
 	return comments
 }

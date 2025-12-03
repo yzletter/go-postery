@@ -39,15 +39,13 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	}
 
 	// 调用 service 层创建评论
-	cid, err := hdl.CommentService.Create(comment.PostId, uid, comment.ParentId, comment.Content)
+	commentDTO, err := hdl.CommentService.Create(comment.PostId, uid, comment.ParentId, comment.Content)
 	if err != nil {
 		response.ServerError(ctx, "")
 		return
 	}
 
-	response.Success(ctx, gin.H{
-		"id": cid,
-	})
+	response.Success(ctx, commentDTO)
 }
 
 func (hdl *CommentHandler) Delete(ctx *gin.Context) {
@@ -89,19 +87,7 @@ func (hdl *CommentHandler) List(ctx *gin.Context) {
 
 	comments := hdl.CommentService.List(pid)
 
-	commentsBack := make([]gin.H, 0)
-	for _, comment := range comments {
-		res := gin.H{
-			"id":      comment.Id,
-			"content": comment.Content,
-			"author": gin.H{
-				"name": comment.UserName,
-			},
-			"createdAt": comment.ViewTime,
-		}
-		commentsBack = append(commentsBack, res)
-	}
-	response.Success(ctx, commentsBack)
+	response.Success(ctx, comments)
 }
 
 func (hdl *CommentHandler) Belong(ctx *gin.Context) {

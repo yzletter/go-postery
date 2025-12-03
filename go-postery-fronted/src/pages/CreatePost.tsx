@@ -20,7 +20,7 @@ export default function CreatePost() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ Title: title, content }),
+        body: JSON.stringify({ title, content }),
         credentials: 'include', // 关键：确保Cookie随请求发送
       })
 

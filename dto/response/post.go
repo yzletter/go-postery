@@ -8,7 +8,7 @@ import (
 
 type PostDTO struct {
 	Id        int     `json:"id,omitempty"`
-	Title     string  `json:"Title,omitempty"`
+	Title     string  `json:"title,omitempty"`
 	Content   string  `json:"content,omitempty"`
 	CreatedAt string  `json:"createdAt,omitempty"`
 	Author    UserDTO `json:"author,omitempty"`

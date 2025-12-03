@@ -10,6 +10,4 @@ type Comment struct {
 	Content    string     `gorm:"column:content"`
 	CreateTime *time.Time `gorm:"column:create_time"`
 	DeleteTime *time.Time `gorm:"column:delete_time"`
-	UserName   string     `gorm:"-"`
-	ViewTime   string     `gorm:"-"`
 }

@@ -33,7 +33,6 @@ func (svc *UserService) GetByName(name string) dto.UserDTO {
 	if err != nil {
 		return dto.UserDTO{}
 	}
-
 	return dto.ToUserDTO(user)
 }
 
