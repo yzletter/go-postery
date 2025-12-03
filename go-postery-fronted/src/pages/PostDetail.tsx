@@ -2,58 +2,153 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Edit, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, useMemo } from 'react'
 import { Post, ApiResponse, Comment } from '../types'
 import { normalizePost } from '../utils/post'
+import { normalizeComment } from '../utils/comment'
+import { useAuth } from '../contexts/AuthContext'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-
-const mockComments: Comment[] = [
-  {
-    id: '1',
-    content: '这个论坛界面真的很漂亮！期待更多功能。',
-    author: {
-      id: '2',
-      name: '前端开发者',
-    },
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    content: '感谢分享，学到了很多！',
-    author: {
-      id: '3',
-      name: 'UI设计师',
-    },
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-  },
-]
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [post, setPost] = useState<Post | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthor, setIsAuthor] = useState(false)
   const [commentText, setCommentText] = useState('')
-  const [comments, setComments] = useState<Comment[]>(mockComments)
+  const [comments, setComments] = useState<Comment[]>([])
+  const [isCommentsLoading, setIsCommentsLoading] = useState(true)
+  const [replyTarget, setReplyTarget] = useState<Comment | null>(null)
 
-  const handleSubmitComment = (e: FormEvent<HTMLFormElement>) => {
+  const commentGroups = useMemo(() => {
+    const idSet = new Set(comments.map(c => String(c.id)))
+    const repliesMap = new Map<string, Comment[]>()
+    const parents: Comment[] = []
+
+    comments.forEach((c) => {
+      const parentId = c.parentId ?? 0
+      const parentIdStr = String(parentId)
+      if (!parentId || !idSet.has(parentIdStr)) {
+        parents.push(c)
+        return
+      }
+      const bucket = repliesMap.get(parentIdStr) ?? []
+      bucket.push(c)
+      repliesMap.set(parentIdStr, bucket)
+    })
+
+    return parents.map(parent => ({
+      parent,
+      replies: repliesMap.get(String(parent.id)) ?? [],
+    }))
+  }, [comments])
+
+  const handleSubmitComment = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!commentText.trim()) return
+    if (!commentText.trim() || !id) return
 
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      content: commentText.trim(),
-      author: {
-        id: 'current-user',
-        name: '当前用户',
-      },
-      createdAt: new Date().toISOString(),
+    try {
+      const parentIdToSend = replyTarget ? Number(replyTarget.id) : 0
+
+      const response = await fetch(`${API_BASE_URL}/comment/new`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          post_id: Number(id),
+          parent_id: parentIdToSend,
+          content: commentText.trim(),
+        }),
+      })
+
+      const result: ApiResponse = await response.json()
+      if (!response.ok || result.code !== 0) {
+        throw new Error(result.msg || '发表评论失败')
+      }
+
+      const newComment = normalizeComment(
+        result.data || { parent_id: parentIdToSend, content: commentText.trim() }
+      )
+      setComments(prev => [
+        {
+          ...newComment,
+          parentId: newComment.parentId ?? parentIdToSend,
+        },
+        ...prev,
+      ])
+      setCommentText('')
+      setReplyTarget(null)
+    } catch (error) {
+      console.error('发表评论失败:', error)
+      alert('发表评论失败，请稍后重试')
+    }
+  }
+
+  const handleDeleteComment = async (commentId: string | number) => {
+    const target = comments.find(c => String(c.id) === String(commentId))
+    if (!target) return
+
+    const isCommentOwner =
+      user && target.author?.id !== undefined && String(user.id) === String(target.author.id)
+    const canDelete = isAuthor || isCommentOwner
+
+    if (!canDelete) {
+      alert('只有帖子作者或评论作者可以删除该评论')
+      return
     }
 
-    setComments([newComment, ...comments])
-    setCommentText('')
+    if (!window.confirm('确认删除这条评论吗？')) {
+      return
+    }
+
+    if (!isAuthor && !isCommentOwner) {
+      alert('没有权限删除该评论')
+      return
+    }
+
+    if (!isAuthor) {
+      const belongs = await checkCommentOwnership(commentId)
+      if (!belongs) {
+        alert('只能删除自己的评论')
+        return
+      }
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/comment/delete/${commentId}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+      const result: ApiResponse = await response.json()
+      if (!response.ok || result.code !== 0) {
+        throw new Error(result.msg || '删除评论失败')
+      }
+      setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
+    } catch (error) {
+      console.error('删除评论失败:', error)
+      alert('删除评论失败，请稍后重试')
+    }
+  }
+
+  const checkCommentOwnership = async (commentId: string | number): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/comment/belong?id=${commentId}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+      const result: ApiResponse = await response.json()
+      if (!response.ok || result.code !== 0) {
+        return false
+      }
+      return true
+    } catch (error) {
+      console.error('检查评论所有权失败:', error)
+      return false
+    }
   }
 
   // 创建一个函数来检查帖子是否属于当前用户
@@ -117,6 +212,37 @@ export default function PostDetail() {
     }
 
     fetchPost()
+  }, [id])
+
+  // 加载评论列表
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!id) return
+      setIsCommentsLoading(true)
+      try {
+        const response = await fetch(`${API_BASE_URL}/comment/list/${id}`, {
+          credentials: 'include',
+        })
+        const result: ApiResponse = await response.json()
+        if (!response.ok || result.code !== 0) {
+          throw new Error(result.msg || '获取评论失败')
+        }
+
+        const data = Array.isArray(result.data)
+          ? result.data
+          : Array.isArray(result.data?.comments)
+            ? result.data.comments
+            : []
+        setComments(data.map((c: any) => normalizeComment(c)))
+      } catch (error) {
+        console.error('获取评论失败:', error)
+        setComments([])
+      } finally {
+        setIsCommentsLoading(false)
+      }
+    }
+
+    fetchComments()
   }, [id])
 
   // 删除帖子功能
@@ -260,11 +386,26 @@ export default function PostDetail() {
 
         {/* 评论表单 */}
         <form onSubmit={handleSubmitComment} className="mb-6">
+          {replyTarget && (
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-500">正在回复</span>
+                <span className="font-medium text-gray-900">@{replyTarget.author.name}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTarget(null)}
+                className="text-primary-600 hover:text-primary-700"
+              >
+                取消
+              </button>
+            </div>
+          )}
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="写下你的评论..."
-            rows={4}
+            rows={3}
             className="textarea mb-3"
           />
           <div className="flex justify-end">
@@ -275,48 +416,126 @@ export default function PostDetail() {
         </form>
 
         {/* 评论列表 */}
-        {comments.length === 0 ? (
+        {isCommentsLoading ? (
+          <div className="flex items-center text-gray-500 text-sm space-x-2">
+            <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            <span>评论加载中...</span>
+          </div>
+        ) : comments.length === 0 ? (
           <p className="text-gray-500 text-sm">暂时还没有评论，快来抢沙发吧～</p>
         ) : (
-          <div className="space-y-6">
-            {comments.map(comment => (
-              <div key={comment.id} className="flex space-x-4">
-                <Link
-                  to={`/users/${comment.author.id}`}
-                  state={{ username: comment.author.name }}
-                  className="flex-shrink-0"
-                >
-                  <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author.id}`}
-                    alt={comment.author.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                </Link>
-                <div className="flex-1">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <Link
-                        to={`/users/${comment.author.id}`}
-                        state={{ username: comment.author.name }}
-                        className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
-                      >
-                        {comment.author.name}
-                      </Link>
-                      <span className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(comment.createdAt), {
-                          addSuffix: true,
-                          locale: zhCN
-                        })}
-                      </span>
+          <div className="space-y-8">
+            {commentGroups.map(({ parent, replies }) => (
+              <div key={parent.id} className="space-y-3">
+                <div className="flex space-x-4">
+                  <Link
+                    to={`/users/${parent.author.id}`}
+                    state={{ username: parent.author.name }}
+                    className="flex-shrink-0"
+                  >
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${parent.author.id}`}
+                      alt={parent.author.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  </Link>
+                  <div className="flex-1">
+                    <div className="bg-gray-50 rounded-lg p-4 mb-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <Link
+                          to={`/users/${parent.author.id}`}
+                          state={{ username: parent.author.name }}
+                          className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                        >
+                          {parent.author.name}
+                        </Link>
+                        <span className="text-xs text-gray-500">
+                          {formatDistanceToNow(new Date(parent.createdAt), {
+                            addSuffix: true,
+                            locale: zhCN
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{parent.content}</p>
                     </div>
-                    <p className="text-gray-700">{comment.content}</p>
-                  </div>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <button className="hover:text-primary-600 transition-colors">
-                      回复
-                    </button>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <button
+                        type="button"
+                        onClick={() => setReplyTarget(parent)}
+                        className="hover:text-primary-600 transition-colors"
+                      >
+                        回复
+                      </button>
+                      {(isAuthor ||
+                        (user && String(user.id) === String(parent.author.id))) && (
+                        <button
+                          onClick={() => handleDeleteComment(parent.id)}
+                          className="hover:text-red-600 transition-colors"
+                        >
+                          删除
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {replies.length > 0 && (
+                  <div className="ml-12 border-l border-gray-100 pl-6 space-y-3">
+                    {replies.map((reply) => (
+                      <div key={reply.id} className="flex space-x-3">
+                        <Link
+                          to={`/users/${reply.author.id}`}
+                          state={{ username: reply.author.name }}
+                          className="flex-shrink-0"
+                        >
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.author.id}`}
+                            alt={reply.author.name}
+                            className="w-9 h-9 rounded-full"
+                          />
+                        </Link>
+                        <div className="flex-1">
+                          <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <Link
+                                to={`/users/${reply.author.id}`}
+                                state={{ username: reply.author.name }}
+                                className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-sm"
+                              >
+                                {reply.author.name}
+                              </Link>
+                              <span className="text-[11px] text-gray-500">
+                                {formatDistanceToNow(new Date(reply.createdAt), {
+                                  addSuffix: true,
+                                  locale: zhCN
+                                })}
+                              </span>
+                            </div>
+                            <p className="text-gray-700 text-sm">{reply.content}</p>
+                          </div>
+                          <div className="flex items-center space-x-3 text-xs text-gray-500">
+                            <button
+                              type="button"
+                              onClick={() => setReplyTarget(reply)}
+                              className="hover:text-primary-600 transition-colors"
+                            >
+                              回复
+                            </button>
+                            {(isAuthor ||
+                              (user && String(user.id) === String(reply.author.id))) && (
+                              <button
+                                onClick={() => handleDeleteComment(reply.id)}
+                                className="hover:text-red-600 transition-colors"
+                              >
+                                删除
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -117,6 +117,42 @@
 - `GET /posts/delete/{id}`
 - 成功返回 `code: 0`。
 
+## 评论相关
+
+### 获取评论列表
+- `GET /comment/list/{post_id}`
+- 成功时 `data` 为评论数组（CommentDTO）：
+  ```json
+  [
+    {
+      "id": 1,
+      "post_id": 1,
+      "parent_id": 0,
+      "content": "评论内容",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "author": { "id": 2, "name": "用户" }
+    }
+  ]
+  ```
+
+### 创建评论
+- `POST /comment/new`
+- Body：
+  ```json
+  { "post_id": 1, "content": "评论内容" }
+  ```
+- 成功时 `data` 为新建的 CommentDTO。
+
+### 删除评论
+- `GET /comment/delete/{id}`
+- 成功返回 `code: 0`。
+
+### 判断评论归属
+- `GET /comment/belong?id=<commentId>`
+- `code: 0` 表示属于当前登录用户。
+
+删除策略：帖子作者可删除该帖下任何评论；评论作者可删除自己的评论（通过上述接口判断归属）。
+
 ## 数据模型（前端使用）
 ```ts
 interface Post {

@@ -25,10 +25,12 @@ export interface Post {
 }
 
 export interface Comment {
-  id: string
+  id: number | string
+  postId?: number
+  parentId?: number
   content: string
   author: {
-    id: string
+    id: number | string
     name: string
   }
   createdAt: string
