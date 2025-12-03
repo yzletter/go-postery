@@ -11,6 +11,7 @@ import (
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/viper"
+	"github.com/yzletter/go-postery/service/ratelimit"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
@@ -41,12 +42,13 @@ func main() {
 	CommentRepo := commentRepository.NewGormCommentRepository(infraMySQL.GetDB()) // 注册 CommentRepository
 
 	// Service 层
-	JwtSvc := service.NewJwtService("123456")                        // 注册 JwtSvc
-	MetricSvc := service.NewMetricService()                          // 注册 MetricSvc
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc) // 注册 AuthSvc
-	UserSvc := service.NewUserService(UserRepo)                      // 注册 UserSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo)            // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)   // 注册 CommentSvc
+	JwtSvc := service.NewJwtService("123456")                                             // 注册 JwtSvc
+	MetricSvc := service.NewMetricService()                                               // 注册 MetricSvc
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                      // 注册 AuthSvc
+	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 10) // 注册 RateLimitSvc
+	UserSvc := service.NewUserService(UserRepo)                                           // 注册 UserSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo)                                 // 注册 PostSvc
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)                        // 注册 CommentSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
@@ -57,6 +59,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
 	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthSvc) // AuthOptionalMdl 非强制要求登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
+	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
 
 	// 全局中间件
 	engine.Use(
@@ -77,6 +80,8 @@ func main() {
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
 		promhttp.Handler().ServeHTTP(ctx.Writer, ctx.Request) // 固定写法
 	})
+
+	engine.Use(RateLimitMdl) // 限流中间件
 
 	// 用户模块
 	engine.POST("/register/submit", UserHdl.Register) // 用户注册
