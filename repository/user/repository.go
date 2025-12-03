@@ -53,6 +53,7 @@ func (repo *GormUserRepository) Delete(uid int) (bool, error) {
 	user := model.User{
 		Id: uid,
 	}
+
 	// 删除记录
 	tx := repo.db.Delete(&user)
 	if tx.Error != nil {
@@ -63,21 +64,22 @@ func (repo *GormUserRepository) Delete(uid int) (bool, error) {
 		// 业务层面错误
 		return false, fmt.Errorf("用户注销失败, uid %d 不存在", uid)
 	}
+
 	return true, nil
 }
 
-func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string) (bool, error) {
+func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string) error {
 	tx := repo.db.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
 	if tx.Error != nil {
 		// 系统错误
 		slog.Error("go-postery UpdatePassword : 密码更改失败", "uid", uid, "error", tx.Error)
-		return false, fmt.Errorf("更改用户密码失败, 请稍后再试")
+		return fmt.Errorf("更改用户密码失败, 请稍后再试")
 	} else if tx.RowsAffected == 0 {
 		// 业务错误
-		return false, fmt.Errorf("用户 id 或旧密码错误")
+		return fmt.Errorf("用户 id 或旧密码错误")
 	}
 
-	return true, nil
+	return nil
 }
 
 func (repo *GormUserRepository) GetByID(uid int) *model.User {

@@ -40,27 +40,16 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 
 	user := hdl.UserService.GetByName(loginRequest.Name)
 
-	if user == nil {
-		// 根据 name 未找到 user
-		response.ParamError(ctx, "用户名或密码错误")
-		return
-	}
-	if user.PassWord != loginRequest.PassWord {
-		// 密码不正确
+	if user == nil || user.PassWord != loginRequest.PassWord {
+		// 根据 name 未找到 user 或密码不正确
 		response.ParamError(ctx, "用户名或密码错误")
 		return
 	}
 
-	// 将 user info 放入 jwt
-	userInfo := request.UserInformation{
-		Id:   user.Id,
-		Name: user.Name,
-	}
+	slog.Info("登录成功", "user", user.Id)
 
-	slog.Info("登录成功", "user", userInfo)
-
-	// 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenPairForUser(userInfo)
+	// 将 user info 放入 jwt 签发双 Token
+	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(user.Id, user.Name)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
@@ -81,7 +70,6 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 
 // Logout 用户登出 Handler
 func (hdl *UserHandler) Logout(ctx *gin.Context) {
-	// todo
 	// 设置 Cookie 里的双 Token 都置为 -1
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
@@ -109,12 +97,10 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 		return
 	}
 
-	ok, err = hdl.UserService.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
-
-	// todo Error
-	if ok == false || err != nil {
+	err = hdl.UserService.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
+	if err != nil {
 		// 密码更改失败
-		response.ParamError(ctx, "")
+		response.ServerError(ctx, "")
 		return
 	}
 
@@ -134,22 +120,14 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	}
 
 	uid, err := hdl.UserService.Register(registerRequest.Name, registerRequest.PassWord)
-
 	if err != nil {
 		response.ServerError(ctx, "")
 		return
 	}
+	slog.Info("注册成功", "user", uid)
 
-	// 将 user info 放入 jwt
-	userInfo := request.UserInformation{
-		Id:   uid,
-		Name: registerRequest.Name,
-	}
-
-	slog.Info("注册成功", "user", userInfo)
-
-	// 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenPairForUser(userInfo)
+	// 将 user info 放入 jwt 签发双 Token
+	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(uid, registerRequest.Name)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)

@@ -61,7 +61,11 @@ func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserInforma
 	return nil
 }
 
-func (svc *AuthService) IssueTokenPairForUser(userInfo request.UserInformation) (string, string, error) {
+func (svc *AuthService) IssueTokenForUser(uid int, uname string) (string, string, error) {
+	userInfo := request.UserInformation{
+		Id:   uid,
+		Name: uname,
+	}
 	// 生成 RefreshToken
 	refreshToken := xid.New().String() //	生成一个随机的字符串
 
@@ -72,7 +76,7 @@ func (svc *AuthService) IssueTokenPairForUser(userInfo request.UserInformation) 
 		Expiration:  0,                                                 // 永不过期
 		UserDefined: map[string]any{USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
 	}
-	
+
 	accessToken, err := svc.JwtService.GenToken(payload)
 	if err != nil {
 		return "", "", err

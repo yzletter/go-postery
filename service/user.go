@@ -29,7 +29,7 @@ func (svc *UserService) GetByName(name string) *model.User {
 	return user
 }
 
-func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) (bool, error) {
-	ok, err := svc.UserRepository.UpdatePassword(uid, oldPass, newPass)
-	return ok, err
+func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
+	err := svc.UserRepository.UpdatePassword(uid, oldPass, newPass)
+	return err
 }
