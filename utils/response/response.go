@@ -40,7 +40,7 @@ func SuccessMsg(ctx *gin.Context, msg string, data interface{}) {
 	})
 }
 
-// Fail 业务失败，但不是服务崩了（通常也是 200，前端看 Code）
+// Fail 业务失败，但不是服务崩了（也是 200，前端看 Code）
 func Fail(ctx *gin.Context, code int, msg string) {
 	ctx.JSON(http.StatusOK, Response{
 		Code: code,

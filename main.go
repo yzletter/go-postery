@@ -11,12 +11,13 @@ import (
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/viper"
-	commentRepository "github.com/yzletter/go-postery/repository/comment"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 
 	"github.com/yzletter/go-postery/middleware"
+	
+	commentRepository "github.com/yzletter/go-postery/repository/comment"
 	postRepository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
 
@@ -44,7 +45,7 @@ func main() {
 	MetricSvc := service.NewMetricService()                          // 注册 MetricSvc
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc) // 注册 AuthSvc
 	UserSvc := service.NewUserService(UserRepo)                      // 注册 UserSvc
-	PostSvc := service.NewPostService(PostRepo)                      // 注册 PostSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo)            // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)   // 注册 CommentSvc
 
 	// Handler 层
@@ -58,16 +59,19 @@ func main() {
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 
 	// 全局中间件
-	engine.Use(cors.New(cors.Config{ // 配置跨域
-		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	engine.Use(
+		cors.New( // 跨域中间件
+			cors.Config{
+				AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
+				AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+				ExposeHeaders:    []string{"Content-Length"},
+				AllowCredentials: true,
+				MaxAge:           12 * time.Hour,
+			}),
 
-	engine.Use(MetricMdl) // Prometheus 监控中间件
+		MetricMdl, // Prometheus 监控中间件
+	)
 
 	// 定义路由
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
@@ -92,9 +96,10 @@ func main() {
 	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
 
 	// 评论模块
+	engine.GET("/comment/list/:post_id", CommentHdl.List) // 列出评论
+	// 强制登录
 	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create)       // 创建评论
 	engine.GET("/comment/delete/:id", AuthRequiredMdl, CommentHdl.Delete) // 删除评论
-	engine.GET("/comment/list/:post_id", CommentHdl.List)                 // 列出评论
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

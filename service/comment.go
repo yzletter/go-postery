@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/infra/model"
+	"github.com/yzletter/go-postery/model"
 	repository "github.com/yzletter/go-postery/repository/comment"
 	userRepository "github.com/yzletter/go-postery/repository/user"
 )

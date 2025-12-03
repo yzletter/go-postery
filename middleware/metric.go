@@ -9,7 +9,7 @@ import (
 )
 
 // MetricMiddleware 返回每个接口的调用次数和调用时间
-func MetricMiddleware(metricHandler *service.MetricService) gin.HandlerFunc {
+func MetricMiddleware(metricService *service.MetricService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 记录开始时间
 		start := time.Now()
@@ -21,8 +21,8 @@ func MetricMiddleware(metricHandler *service.MetricService) gin.HandlerFunc {
 		path := mapURL(ctx)
 
 		// 对该路径的请求进行统计
-		metricHandler.CounterAdd(path)      // 计数器 +1
-		metricHandler.TimerSet(path, start) // 计时器记录时间
+		metricService.CounterAdd(path)      // 计数器 +1
+		metricService.TimerSet(path, start) // 计时器记录时间
 
 	}
 }
