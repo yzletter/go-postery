@@ -59,7 +59,7 @@ create table if not exists post
     create_time datetime default current_timestamp comment '帖子创建时间',
     update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
     delete_time datetime default null comment '帖子删除时间',
-    tittle      varchar(100) comment '标题',
+    title      varchar(100) comment '标题',
     content     text comment '正文',
     primary key (id),
     unique key idx_user (user_id)
@@ -919,7 +919,7 @@ import "time"
 type Post struct {
 	Id         int        `gorm:"primaryKey"`
 	UserId     int        `gorm:"column:user_id"`
-	Tittle     string     `gorm:"column:tittle"`
+	Title     string     `gorm:"column:title"`
 	Content    string     `gorm:"column:content"`
 	CreateTime *time.Time `gorm:"column:create_time"`
 	DeleteTime *time.Time `gorm:"column:delete_time"`
@@ -943,12 +943,12 @@ import (
 )
 
 // CreatePost 新建帖子
-func CreatePost(uid int, tittle, content string) (int, error) {
+func CreatePost(uid int, title, content string) (int, error) {
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
 		UserId:     uid,     // 作者id
-		Tittle:     tittle,  // 标题
+		Title:     title,  // 标题
 		Content:    content, // 正文
 		CreateTime: &now,
 		DeleteTime: nil, // 须显示指定为 nil, 写入数据库为 null,
@@ -956,7 +956,7 @@ func CreatePost(uid int, tittle, content string) (int, error) {
 
 	// 新建数据
 	if err := GoPosteryDB.Create(&post).Error; err != nil {
-		slog.Error("帖子发布失败", "tittle", err)
+		slog.Error("帖子发布失败", "title", err)
 		return 0, errors.New("帖子发布失败")
 	}
 
@@ -980,10 +980,10 @@ func DeletePost(pid int) error {
 }
 
 // UpdatePost 修改帖子
-func UpdatePost(pid int, tittle, content string) error {
+func UpdatePost(pid int, title, content string) error {
 	tx := GoPosteryDB.Model(&model.Post{}).Where("id=? and delete_time is null", pid).
 		Updates(map[string]interface{}{
-			"tittle":  tittle,
+			"title":  title,
 			"content": content,
 		})
 	if tx.Error != nil {
