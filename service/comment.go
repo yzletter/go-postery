@@ -2,22 +2,24 @@ package service
 
 import (
 	"errors"
-	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/response"
 	repository "github.com/yzletter/go-postery/repository/comment"
+	postRepository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
 )
 
 type CommentService struct {
 	CommentRepository *repository.GormCommentRepository
 	UserRepository    *userRepository.GormUserRepository
+	PostRepository    *postRepository.GormPostRepository
 }
 
-func NewCommentService(commentRepository *repository.GormCommentRepository, userRepository *userRepository.GormUserRepository) *CommentService {
+func NewCommentService(commentRepository *repository.GormCommentRepository, userRepository *userRepository.GormUserRepository, postRepository *postRepository.GormPostRepository) *CommentService {
 	return &CommentService{
 		CommentRepository: commentRepository,
 		UserRepository:    userRepository,
+		PostRepository:    postRepository,
 	}
 }
 
@@ -28,20 +30,16 @@ func (svc *CommentService) Create(pid int, uid int, parentId int, content string
 }
 
 func (svc *CommentService) Delete(uid int, cid int) error {
-	comment, err := svc.CommentRepository.GetByID(cid)
-	if err != nil {
-		slog.Error("评论不存在", "cid", cid)
-		return errors.New("评论不存在")
+	ok := svc.Belong(cid, uid)
+	if !ok {
+		return errors.New("删除失败")
 	}
 
-	if comment.UserId != uid {
-		return errors.New("没有删除权限")
-	}
-
-	err = svc.CommentRepository.Delete(cid)
+	err := svc.CommentRepository.Delete(cid)
 	if err != nil {
 		return errors.New("删除失败")
 	}
+
 	return nil
 }
 
@@ -66,5 +64,12 @@ func (svc *CommentService) Belong(cid, uid int) bool {
 	if err != nil {
 		return false
 	}
-	return comment.UserId == uid
+
+	ok, post := svc.PostRepository.GetByID(comment.PostId)
+	if !ok {
+		return false
+	}
+	
+	// 帖子属于当前登录用户，或评论属于当前用户
+	return comment.UserId == uid || post.UserId == uid
 }

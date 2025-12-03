@@ -73,6 +73,5 @@ func (repo *GormCommentRepository) GetByPostID(pid int) []model.Comment {
 		return nil
 	}
 
-	// 赋值前端展示时间
 	return comments
 }

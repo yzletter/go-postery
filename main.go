@@ -48,7 +48,7 @@ func main() {
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 500) // 注册 RateLimitSvc
 	UserSvc := service.NewUserService(UserRepo)                                            // 注册 UserSvc
 	PostSvc := service.NewPostService(PostRepo, UserRepo)                                  // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)                         // 注册 CommentSvc
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo)               // 注册 CommentSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
@@ -73,15 +73,14 @@ func main() {
 				MaxAge:           12 * time.Hour,
 			}),
 
-		MetricMdl, // Prometheus 监控中间件
+		MetricMdl,    // Prometheus 监控中间件
+		RateLimitMdl, // 限流中间件
 	)
 
 	// 定义路由
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
 		promhttp.Handler().ServeHTTP(ctx.Writer, ctx.Request) // 固定写法
 	})
-
-	engine.Use(RateLimitMdl) // 限流中间件
 
 	// 用户模块
 	engine.POST("/register/submit", UserHdl.Register) // 用户注册
