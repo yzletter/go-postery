@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, Home, LogOut, LogIn, User, Search, Settings } from 'lucide-react'
+import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
@@ -45,11 +45,11 @@ export default function Navbar() {
           
           <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 ml-auto">
             <Link
-              to="/"
+              to="/agent"
               className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
             >
-              <Home className="h-5 w-5" />
-              <span className="hidden sm:inline">首页</span>
+              <Bot className="h-5 w-5" />
+              <span className="hidden sm:inline">Agent</span>
             </Link>
             {user ? (
               <>
@@ -93,6 +93,22 @@ export default function Navbar() {
                         >
                           <User className="h-4 w-4" />
                           <span>个人主页</span>
+                        </Link>
+                        <Link
+                          to="/follows"
+                          onClick={() => setShowUserMenu(false)}
+                          className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <HeartHandshake className="h-4 w-4" />
+                          <span>关注</span>
+                        </Link>
+                        <Link
+                          to="/messages"
+                          onClick={() => setShowUserMenu(false)}
+                          className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Send className="h-4 w-4" />
+                          <span>私信</span>
                         </Link>
                         <Link
                           to="/settings"

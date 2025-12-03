@@ -1,16 +1,20 @@
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Lock, Key, Save, Eye, EyeOff, Settings as SettingsIcon } from 'lucide-react'
+import { ArrowLeft, Lock, Key, Save, Eye, EyeOff, Settings as SettingsIcon, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Settings() {
   const navigate = useNavigate()
   const { user, changePassword } = useAuth()
+  const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile')
+  const [profileName, setProfileName] = useState(user?.name || '')
+  const [profileEmail, setProfileEmail] = useState(user?.email || '')
+  const [profileSuccess, setProfileSuccess] = useState('')
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -22,23 +26,28 @@ export default function Settings() {
     return null
   }
 
+  const handleProfileSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setProfileSuccess('个人信息已更新（示例数据）')
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError('')
-    setSuccess('')
+    setPasswordError('')
+    setPasswordSuccess('')
 
     if (newPassword.length < 6) {
-      setError('新密码长度至少为 6 位')
+      setPasswordError('新密码长度至少为 6 位')
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('两次输入的新密码不一致')
+      setPasswordError('两次输入的新密码不一致')
       return
     }
 
     if (oldPassword === newPassword) {
-      setError('新密码不能与旧密码相同')
+      setPasswordError('新密码不能与旧密码相同')
       return
     }
 
@@ -50,12 +59,12 @@ export default function Settings() {
         setOldPassword('')
         setNewPassword('')
         setConfirmPassword('')
-        setSuccess('密码修改成功')
+        setPasswordSuccess('密码修改成功')
       } else {
-        setError('修改密码失败，请检查旧密码是否正确')
+        setPasswordError('修改密码失败，请检查旧密码是否正确')
       }
     } catch (err) {
-      setError('发生错误，请重试')
+      setPasswordError('发生错误，请重试')
     } finally {
       setIsLoading(false)
     }
@@ -90,84 +99,149 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">账户信息</h2>
-            <div className="grid sm:grid-cols-2 gap-4 bg-gray-50 border border-gray-100 rounded-xl p-4">
-              <div>
-                <p className="text-xs text-gray-500">用户名</p>
-                <p className="text-gray-900 font-medium mt-1">{user.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">用户ID</p>
-                <p className="text-gray-900 font-medium mt-1">{user.id}</p>
-              </div>
-            </div>
+        <div className="grid md:grid-cols-[220px_1fr] gap-4">
+          <div className="border border-gray-100 rounded-xl p-3 space-y-2 bg-gray-50">
+            <NavButton
+              active={activeTab === 'profile'}
+              onClick={() => {
+                setActiveTab('profile')
+                setPasswordError('')
+                setPasswordSuccess('')
+              }}
+              icon={<UserIcon className="h-4 w-4" />}
+              label="个人信息"
+            />
+            <NavButton
+              active={activeTab === 'password'}
+              onClick={() => {
+                setActiveTab('password')
+                setProfileSuccess('')
+              }}
+              icon={<Lock className="h-4 w-4" />}
+              label="修改密码"
+            />
           </div>
 
-          <div className="border-t border-gray-100 pt-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">修改密码</h2>
-            <p className="text-sm text-gray-500 mb-4">建议定期更换密码，确保账户安全</p>
+          <div className="space-y-6">
+            {activeTab === 'profile' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">个人信息</h2>
+                    <p className="text-sm text-gray-500">更新你的基本资料</p>
+                  </div>
+                  <span className="text-xs text-gray-500">示例数据</span>
+                </div>
 
-            {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
+                {profileSuccess && (
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                    {profileSuccess}
+                  </div>
+                )}
 
-            {success && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <PasswordField
-                id="oldPassword"
-                label="当前密码"
-                value={oldPassword}
-                onChange={setOldPassword}
-                show={showOldPassword}
-                setShow={setShowOldPassword}
-              />
-              <PasswordField
-                id="newPassword"
-                label="新密码"
-                value={newPassword}
-                onChange={setNewPassword}
-                show={showNewPassword}
-                setShow={setShowNewPassword}
-                helper="密码长度至少为 6 位"
-              />
-              <PasswordField
-                id="confirmPassword"
-                label="确认新密码"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-                show={showConfirmPassword}
-                setShow={setShowConfirmPassword}
-              />
-
-              <div className="pt-4 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-primary flex items-center justify-center space-x-2 w-full"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>修改中...</span>
-                    </>
-                  ) : (
-                    <>
+                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                    <input
+                      type="text"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="input"
+                      placeholder="输入用户名"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+                    <input
+                      type="email"
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      className="input"
+                      placeholder="输入邮箱（示例）"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">用户ID</label>
+                    <input value={user.id} disabled className="input bg-gray-50" />
+                  </div>
+                  <div className="pt-2">
+                    <button type="submit" className="btn-primary flex items-center space-x-2">
                       <Save className="h-5 w-5" />
-                      <span>保存新密码</span>
-                    </>
-                  )}
-                </button>
+                      <span>保存信息</span>
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            )}
+
+            {activeTab === 'password' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-1">修改密码</h2>
+                  <p className="text-sm text-gray-500">建议定期更换密码，确保账户安全</p>
+                </div>
+
+                {passwordError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {passwordError}
+                  </div>
+                )}
+
+                {passwordSuccess && (
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                    {passwordSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <PasswordField
+                    id="oldPassword"
+                    label="当前密码"
+                    value={oldPassword}
+                    onChange={setOldPassword}
+                    show={showOldPassword}
+                    setShow={setShowOldPassword}
+                  />
+                  <PasswordField
+                    id="newPassword"
+                    label="新密码"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    show={showNewPassword}
+                    setShow={setShowNewPassword}
+                    helper="密码长度至少为 6 位"
+                  />
+                  <PasswordField
+                    id="confirmPassword"
+                    label="确认新密码"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    show={showConfirmPassword}
+                    setShow={setShowConfirmPassword}
+                  />
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="btn-primary flex items-center justify-center space-x-2 w-full"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>修改中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-5 w-5" />
+                          <span>保存新密码</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -221,5 +295,31 @@ function PasswordField({
       </div>
       {helper && <p className="mt-1 text-xs text-gray-500">{helper}</p>}
     </div>
+  )
+}
+
+function NavButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: ReactNode
+  label: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+        active ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+      }`}
+    >
+      <span className="flex items-center space-x-2">
+        {icon}
+        <span>{label}</span>
+      </span>
+    </button>
   )
 }

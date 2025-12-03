@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Clock, Loader2, Eye, Heart, Flame } from 'lucide-react'
+import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus } from 'lucide-react'
 import { Post, ApiResponse } from '../types'
 import { normalizePost } from '../utils/post'
 import { formatDistanceToNow } from 'date-fns'
@@ -88,6 +88,15 @@ const mockHotPosts = [
   { id: 8, title: 'K8s 部署流水线实战分享', heat: 754 },
   { id: 9, title: '前后端接口约定与错误码规范', heat: 731 },
   { id: 10, title: '设计师和工程师协作的 7 个技巧', heat: 702 },
+]
+
+const mockRecommendUsers = [
+  { id: 101, name: '前端小能手', title: '分享 React / TS 实战', followers: 12.4 },
+  { id: 102, name: 'Go 语言爱好者', title: 'Go / 微服务 / 云原生', followers: 8.6 },
+  { id: 103, name: '设计灵感库', title: 'UI/UX 灵感与案例', followers: 15.2 },
+  { id: 104, name: '后端老王', title: '性能调优与架构实践', followers: 6.8 },
+  { id: 105, name: '产品拆解手册', title: '产品思考与需求分析', followers: 9.1 },
+  { id: 106, name: '测试小白进阶', title: '自动化测试 / 质量保障', followers: 5.4 },
 ]
 
 // API 获取帖子列表
@@ -362,30 +371,77 @@ export default function Home() {
         )}
       </section>
 
-      <aside className="space-y-4 w-full">
-        <div className="card sticky top-24 max-w-[320px]">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Flame className="h-5 w-5 text-primary-600" />
-              <h2 className="text-lg font-semibold text-gray-900">热门榜单</h2>
+      <aside className="w-full">
+        <div className="sticky top-24 space-y-4 max-w-[320px]">
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Flame className="h-5 w-5 text-primary-600" />
+                <h2 className="text-lg font-semibold text-gray-900">热门榜单</h2>
+              </div>
+              <span className="text-xs text-gray-500">示例数据</span>
             </div>
-            <span className="text-xs text-gray-500">示例数据</span>
+            <ol className="space-y-3">
+              {mockHotPosts.map((hot, index) => (
+                <li key={hot.id} className="flex items-start space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
+                      {hot.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">热度 {hot.heat}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
-          <ol className="space-y-3">
-            {mockHotPosts.map((hot, index) => (
-              <li key={hot.id} className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
-                  {index + 1}
+
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <UserPlus className="h-5 w-5 text-primary-600" />
+                <h2 className="text-lg font-semibold text-gray-900">推荐关注</h2>
+              </div>
+              <span className="text-xs text-gray-500">示例数据</span>
+            </div>
+            <div className="space-y-3">
+              {mockRecommendUsers.map((user) => (
+                <div key={user.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link
+                    to={`/users/${user.id}`}
+                    state={{ username: user.name }}
+                    className="flex-shrink-0"
+                  >
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=recommend-${user.id}`}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  </Link>
+                  <div className="flex-1 min-w-0 flex items-center">
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to={`/users/${user.id}`}
+                        state={{ username: user.name }}
+                        className="font-medium text-gray-900 hover:text-primary-600 transition-colors line-clamp-1"
+                      >
+                        {user.name}
+                      </Link>
+                      <p className="text-xs text-gray-500 line-clamp-1">{user.title}</p>
+                    </div>
+                    <span className="text-xs text-primary-600 ml-3 w-12 text-right flex-shrink-0">
+                      {user.followers}k
+                    </span>
+                  </div>
+                  <button className="text-xs text-primary-600 font-medium hover:text-primary-700 flex-shrink-0">
+                    关注
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
-                    {hot.title}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">热度 {hot.heat}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+              ))}
+            </div>
+          </div>
         </div>
       </aside>
     </div>
