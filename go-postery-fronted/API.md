@@ -24,7 +24,10 @@
   ```json
   { "name": "用户名", "password": "32位MD5哈希" }
   ```
-- 成功时 `data.user` 返回当前用户信息并写入认证 Cookie。
+- 成功时 `data` 直接返回当前用户信息并写入认证 Cookie：
+  ```json
+  { "Id": 1, "Name": "用户名" }
+  ```
 
 ### 注册
 - `POST /register/submit`
@@ -32,7 +35,10 @@
   ```json
   { "name": "用户名", "password": "32位MD5哈希" }
   ```
-- 成功时 `data.user` 返回新用户信息并写入认证 Cookie。
+- 成功时 `data` 直接返回新用户信息并写入认证 Cookie：
+  ```json
+  { "Id": 1, "Name": "用户名" }
+  ```
 
 ### 修改密码
 - `POST /modify_pass/submit`

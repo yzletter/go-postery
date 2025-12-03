@@ -39,3 +39,5 @@ time="2025-12-03 14:37:29.278" level=ERROR source=/Users/yzletter/go_project/go-
 time="2025-12-03 14:37:29.966" level=ERROR source=/Users/yzletter/go_project/go-postery/middleware/ratelimit.go:28 msg="对当前 IP 执行限流 ..." IP=127.0.0.1
 time="2025-12-03 14:40:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
 time="2025-12-03 14:40:00.010" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-03 14:54:58.113" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-03 14:54:58.114" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"

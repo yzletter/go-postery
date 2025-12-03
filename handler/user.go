@@ -38,18 +38,17 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	user := hdl.UserService.GetByName(loginRequest.Name)
-
-	if user == nil || user.PassWord != loginRequest.PassWord {
-		// 根据 name 未找到 user 或密码不正确
+	// 进行登录
+	ok, userDTO := hdl.UserService.Login(loginRequest.Name, loginRequest.PassWord)
+	if !ok {
+		// 根据 name 未找到 user或密码不正确
 		response.ParamError(ctx, "用户名或密码错误")
 		return
 	}
-
-	slog.Info("登录成功", "user", user.Id)
+	slog.Info("登录成功", "userDTO", userDTO.Id)
 
 	// 将 user info 放入 jwt 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(user.Id, user.Name)
+	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userDTO.Id, userDTO.Name)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
@@ -61,11 +60,7 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
 	// 默认情况下也返回200
-	response.Success(ctx, gin.H{
-		"user": gin.H{
-			"name": loginRequest.Name,
-		},
-	})
+	response.Success(ctx, userDTO)
 }
 
 // Logout 用户登出 Handler
@@ -73,7 +68,6 @@ func (hdl *UserHandler) Logout(ctx *gin.Context) {
 	// 设置 Cookie 里的双 Token 都置为 -1
 	ctx.SetCookie(service.REFRESH_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, "", -1, "/", "localhost", false, true)
-
 	response.Success(ctx, nil)
 }
 
@@ -119,15 +113,15 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	uid, err := hdl.UserService.Register(registerRequest.Name, registerRequest.PassWord)
+	userDTO, err := hdl.UserService.Register(registerRequest.Name, registerRequest.PassWord)
 	if err != nil {
 		response.ServerError(ctx, "")
 		return
 	}
-	slog.Info("注册成功", "user", uid)
+	slog.Info("注册成功", "user", userDTO.Id)
 
 	// 将 user info 放入 jwt 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(uid, registerRequest.Name)
+	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userDTO.Id, registerRequest.Name)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
@@ -139,10 +133,6 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
 	// 默认情况下也返回200
-	response.Success(ctx, gin.H{
-		"user": gin.H{
-			"name": registerRequest.Name,
-		},
-	})
+	response.Success(ctx, userDTO)
 
 }

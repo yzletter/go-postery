@@ -56,10 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const responseData = result.data || {}
-      const responseUser = responseData.user || {}
+      const responseUser = responseData.user || responseData
       const newUser: User = {
-        id: responseUser.id ?? responseUser.Id ?? Date.now(),
-        name: responseUser.name ?? username,
+        id: responseUser.id ?? responseUser.Id ?? responseData.Id ?? responseData.id ?? Date.now(),
+        name: responseUser.name ?? responseUser.Name ?? responseData.Name ?? username,
         email: responseUser.email,
       }
 
@@ -97,10 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const responseData = result.data || {}
-      const responseUser = responseData.user || {}
+      const responseUser = responseData.user || responseData
       const newUser: User = {
-        id: responseUser.id ?? responseUser.Id ?? Date.now(),
-        name: responseUser.name ?? name,
+        id: responseUser.id ?? responseUser.Id ?? responseData.Id ?? responseData.id ?? Date.now(),
+        name: responseUser.name ?? responseUser.Name ?? responseData.Name ?? name,
         email: responseUser.email,
       }
 

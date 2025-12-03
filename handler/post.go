@@ -40,9 +40,9 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	postsBack := []gin.H{}
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		user := hdl.UserService.GetById(post.UserId)
-		if user != nil {
-			post.UserName = user.Name
+		ok, userDTO := hdl.UserService.GetById(post.UserId)
+		if ok {
+			post.UserName = userDTO.Name
 		} else {
 			slog.Warn("could not get name of user", "uid", post.UserId)
 		}
@@ -90,9 +90,9 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 获取作者用户名
-	user := hdl.UserService.GetById(post.UserId)
-	if user != nil {
-		post.UserName = user.Name
+	ok, userDTO := hdl.UserService.GetById(post.UserId)
+	if ok {
+		post.UserName = userDTO.Name
 	} else {
 		slog.Warn("could not get name of user", "uid", post.UserId)
 	}

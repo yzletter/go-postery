@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/dto/response"
 	repository "github.com/yzletter/go-postery/repository/user"
 )
 
@@ -13,23 +13,56 @@ func NewUserService(userRepository *repository.GormUserRepository) *UserService 
 	return &UserService{UserRepository: userRepository}
 }
 
-func (svc *UserService) Register(name, password string) (int, error) {
+func (svc *UserService) Register(name, password string) (dto.UserResponse, error) {
 	uid, err := svc.UserRepository.Create(name, password)
-	return uid, err
+	back := dto.UserResponse{
+		Id:   uid,
+		Name: name,
+	}
+	return back, err
 }
 
-func (svc *UserService) GetById(uid int) *model.User {
+func (svc *UserService) GetById(uid int) (bool, dto.UserResponse) {
 	user := svc.UserRepository.GetByID(uid)
-	return user
+	if user == nil {
+		return false, dto.UserResponse{}
+	}
+
+	userDTO := dto.UserResponse{
+		Id:   user.Id,
+		Name: user.Name,
+	}
+	return true, userDTO
 }
 
 // GetByName 根据 name 查找用户
-func (svc *UserService) GetByName(name string) *model.User {
+func (svc *UserService) GetByName(name string) dto.UserResponse {
 	user := svc.UserRepository.GetByName(name)
-	return user
+	if user == nil {
+		return dto.UserResponse{}
+	}
+
+	userDTO := dto.UserResponse{
+		Id:   user.Id,
+		Name: user.Name,
+	}
+	return userDTO
 }
 
 func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
 	err := svc.UserRepository.UpdatePassword(uid, oldPass, newPass)
 	return err
+}
+
+func (svc *UserService) Login(name, pass string) (bool, dto.UserResponse) {
+	user := svc.UserRepository.GetByName(name)
+	if user == nil || user.PassWord != pass {
+		return false, dto.UserResponse{}
+	}
+
+	userDTO := dto.UserResponse{
+		Id:   user.Id,
+		Name: user.Name,
+	}
+	return true, userDTO
 }
