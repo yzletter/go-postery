@@ -21,7 +21,7 @@ func NewGormPostRepository(db *gorm.DB) *GormPostRepository {
 }
 
 // Create 新建帖子
-func (repo *GormPostRepository) Create(uid int, title, content string) (int, error) {
+func (repo *GormPostRepository) Create(uid int, title, content string) (model.Post, error) {
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
@@ -35,10 +35,10 @@ func (repo *GormPostRepository) Create(uid int, title, content string) (int, err
 	// 新建数据
 	if err := repo.db.Create(&post).Error; err != nil {
 		slog.Error("帖子发布失败", "title", err)
-		return 0, errors.New("帖子发布失败")
+		return model.Post{}, errors.New("帖子发布失败")
 	}
 
-	return post.Id, nil
+	return post, nil
 }
 
 // Delete 根据帖子 id 删除帖子
@@ -83,25 +83,23 @@ func (repo *GormPostRepository) Update(pid int, title, content string) error {
 }
 
 // GetByID 根据帖子 id 获取帖子信息
-func (repo *GormPostRepository) GetByID(pid int) *model.Post {
-	post := &model.Post{
+func (repo *GormPostRepository) GetByID(pid int) (bool, model.Post) {
+	post := model.Post{
 		Id: pid,
 	}
-	tx := repo.db.Select("*").Where("delete_time is null").First(post) // find 不会报 ErrNotFound
+	tx := repo.db.Select("*").Where("delete_time is null").First(&post) // find 不会报 ErrNotFound
 	if tx.Error != nil {
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) { // 并非未找到, 而是其他错误
 			slog.Error("帖子查找失败", "pid", pid, "error", tx.Error)
 		}
-		return nil
+		return false, model.Post{}
 	}
 
-	// 赋值前端用于显示的时间
-	post.ViewTime = post.CreateTime.Format("2006-01-02 15:04:05")
-	return post
+	return true, post
 }
 
 // GetByPage 翻页查询帖子, 页号从 1 开始, 返回帖子总数和帖子列表
-func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*model.Post) {
+func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []model.Post) {
 	// 获取帖子总数
 	var total int64
 	tx := repo.db.Model(&model.Post{}).Where("delete_time is null").Count(&total)
@@ -111,7 +109,7 @@ func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*model.P
 	}
 
 	// 获取当前页的帖子
-	var posts []*model.Post
+	var posts []model.Post
 	// 已经查询过 pageSize * (pageNo - 1) 条数据, 当前页需要 pageSize 条数据，并按发布时间降序排列
 	tx = repo.db.Model(&model.Post{}).Where("delete_time is null").Order("create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
 	if tx.Error != nil {
@@ -119,16 +117,11 @@ func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []*model.P
 		return 0, nil
 	}
 
-	// 赋值前端展示时间
-	for _, post := range posts {
-		post.ViewTime = post.CreateTime.Format("2006-01-02 15:04:05")
-	}
-
 	return int(total), posts
 }
 
 // GetByUid 根据 uid 获取该用户所发帖子
 func (repo *GormPostRepository) GetByUid(uid int) []*model.Post {
-	// todo
+	// todo 根据 uid 获取该用户所发帖子
 	return nil
 }

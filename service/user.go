@@ -13,22 +13,22 @@ func NewUserService(userRepository *repository.GormUserRepository) *UserService 
 	return &UserService{UserRepository: userRepository}
 }
 
-func (svc *UserService) Register(name, password string) (dto.UserResponse, error) {
+func (svc *UserService) Register(name, password string) (dto.UserDTO, error) {
 	uid, err := svc.UserRepository.Create(name, password)
-	back := dto.UserResponse{
+	back := dto.UserDTO{
 		Id:   uid,
 		Name: name,
 	}
 	return back, err
 }
 
-func (svc *UserService) GetById(uid int) (bool, dto.UserResponse) {
-	user := svc.UserRepository.GetByID(uid)
-	if user == nil {
-		return false, dto.UserResponse{}
+func (svc *UserService) GetById(uid int) (bool, dto.UserDTO) {
+	ok, user := svc.UserRepository.GetByID(uid)
+	if !ok {
+		return false, dto.UserDTO{}
 	}
 
-	userDTO := dto.UserResponse{
+	userDTO := dto.UserDTO{
 		Id:   user.Id,
 		Name: user.Name,
 	}
@@ -36,13 +36,13 @@ func (svc *UserService) GetById(uid int) (bool, dto.UserResponse) {
 }
 
 // GetByName 根据 name 查找用户
-func (svc *UserService) GetByName(name string) dto.UserResponse {
+func (svc *UserService) GetByName(name string) dto.UserDTO {
 	user := svc.UserRepository.GetByName(name)
 	if user == nil {
-		return dto.UserResponse{}
+		return dto.UserDTO{}
 	}
 
-	userDTO := dto.UserResponse{
+	userDTO := dto.UserDTO{
 		Id:   user.Id,
 		Name: user.Name,
 	}
@@ -54,13 +54,13 @@ func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
 	return err
 }
 
-func (svc *UserService) Login(name, pass string) (bool, dto.UserResponse) {
+func (svc *UserService) Login(name, pass string) (bool, dto.UserDTO) {
 	user := svc.UserRepository.GetByName(name)
 	if user == nil || user.PassWord != pass {
-		return false, dto.UserResponse{}
+		return false, dto.UserDTO{}
 	}
 
-	userDTO := dto.UserResponse{
+	userDTO := dto.UserDTO{
 		Id:   user.Id,
 		Name: user.Name,
 	}

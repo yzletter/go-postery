@@ -82,7 +82,7 @@ func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string)
 	return nil
 }
 
-func (repo *GormUserRepository) GetByID(uid int) *model.User {
+func (repo *GormUserRepository) GetByID(uid int) (bool, model.User) {
 	user := model.User{Id: uid}
 	tx := repo.db.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
@@ -90,10 +90,9 @@ func (repo *GormUserRepository) GetByID(uid int) *model.User {
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			slog.Error("go-postery GetById : 查找用户失败", "uid", uid, "error", tx.Error)
 		}
-		return nil
+		return false, model.User{}
 	}
-
-	return &user
+	return true, user
 }
 
 func (repo *GormUserRepository) GetByName(name string) *model.User {

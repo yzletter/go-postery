@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { ApiResponse } from '../types'
+import { normalizePost } from '../utils/post'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -19,7 +20,7 @@ export default function CreatePost() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({ Title: title, content }),
         credentials: 'include', // 关键：确保Cookie随请求发送
       })
 
@@ -29,9 +30,13 @@ export default function CreatePost() {
         throw new Error(result.msg || '创建帖子失败')
       }
 
-      // 后端只返回帖子ID，直接跳转到首页
-      console.log('帖子创建成功，帖子ID:', result.data)
-      navigate('/')
+      const createdPost = normalizePost(result.data || {})
+      if (createdPost.id) {
+        console.log('帖子创建成功，帖子ID:', createdPost.id)
+        navigate(`/post/${createdPost.id}`)
+      } else {
+        navigate('/')
+      }
       
     } catch (error) {
       console.error('Failed to create post:', error)

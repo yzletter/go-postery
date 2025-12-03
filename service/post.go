@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/model"
+	dto "github.com/yzletter/go-postery/dto/response"
 	repository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
 )
@@ -21,9 +21,11 @@ func NewPostService(postRepository *repository.GormPostRepository, userRepositor
 	}
 }
 
-func (svc *PostService) Create(uid int, title, content string) (int, error) {
-	pid, err := svc.PostRepository.Create(uid, title, content)
-	return pid, err
+func (svc *PostService) Create(uid int, title, content string) (dto.PostDTO, error) {
+	post, err := svc.PostRepository.Create(uid, title, content)
+	_, user := svc.UserRepository.GetByID(uid)
+	postDTO := dto.ToPostDTO(post, user)
+	return postDTO, err
 }
 
 func (svc *PostService) Delete(pid, uid int) error {
@@ -50,25 +52,34 @@ func (svc *PostService) Update(pid int, uid int, title, content string) error {
 	return err
 }
 
-func (svc *PostService) GetByPage(pageNo, pageSize int) (int, []*model.Post) {
+func (svc *PostService) GetByPage(pageNo, pageSize int) (int, []dto.PostDTO) {
 	// 获取帖子总数和当前页帖子列表
 	total, posts := svc.PostRepository.GetByPage(pageNo, pageSize)
+
+	var postDTOs []dto.PostDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		user := svc.UserRepository.GetByID(post.UserId)
-		if user != nil {
-			post.UserName = user.Name
-		} else {
+		ok, user := svc.UserRepository.GetByID(post.UserId)
+		if !ok {
 			slog.Warn("could not get name of user", "uid", post.UserId)
 		}
 
-		return total, posts
+		postDTO := dto.ToPostDTO(post, user)
+		postDTOs = append(postDTOs, postDTO)
 	}
-	return 0, nil
+	return total, postDTOs
 }
-func (svc *PostService) GetById(pid int) *model.Post {
-	post := svc.PostRepository.GetByID(pid)
-	return post
+func (svc *PostService) GetById(pid int) (bool, dto.PostDTO) {
+	ok, post := svc.PostRepository.GetByID(pid)
+	if !ok {
+		return false, dto.PostDTO{}
+	}
+
+	// 查找作者信息
+	_, user := svc.UserRepository.GetByID(post.UserId)
+
+	postDTO := dto.ToPostDTO(post, user)
+	return true, postDTO
 }
 
 func (svc *PostService) HasMore(pageNo, pageSize, total int) bool {
@@ -77,8 +88,8 @@ func (svc *PostService) HasMore(pageNo, pageSize, total int) bool {
 
 // Belong 判断登录用户是否是帖子作者
 func (svc *PostService) Belong(pid, uid int) bool {
-	post := svc.GetById(pid)
-	if post == nil || uid != post.UserId {
+	ok, postDTO := svc.GetById(pid)
+	if !ok || uid != postDTO.Author.Id {
 		return false
 	}
 	return true

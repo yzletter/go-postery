@@ -62,8 +62,8 @@
   {
     "posts": [
       {
-        "id": 1,
-        "title": "标题",
+        "Id": 1,
+        "Title": "标题",
         "content": "内容",
         "author": { "id": 1, "name": "作者名" },
         "createdAt": "2024-01-01T00:00:00Z",
@@ -82,8 +82,8 @@
 - 成功时 `data` 为单个帖子对象：
   ```json
   {
-    "id": 1,
-    "title": "标题",
+    "Id": 1,
+    "Title": "标题",
     "content": "内容",
     "author": { "id": 1, "name": "作者名" },
     "createdAt": "2024-01-01T00:00:00Z",
@@ -101,9 +101,9 @@
 - `POST /posts/new`
 - Body：
   ```json
-  { "title": "标题", "content": "正文" }
+  { "Title": "标题", "content": "正文" }
   ```
-- 成功时 `data` 仅返回新建帖子 ID。
+- 成功时 `data` 返回新建的帖子对象（PostDTO）。
 
 ### 更新帖子
 - `POST /posts/update`

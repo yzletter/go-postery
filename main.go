@@ -42,13 +42,13 @@ func main() {
 	CommentRepo := commentRepository.NewGormCommentRepository(infraMySQL.GetDB()) // 注册 CommentRepository
 
 	// Service 层
-	JwtSvc := service.NewJwtService("123456")                                             // 注册 JwtSvc
-	MetricSvc := service.NewMetricService()                                               // 注册 MetricSvc
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                      // 注册 AuthSvc
-	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 10) // 注册 RateLimitSvc
-	UserSvc := service.NewUserService(UserRepo)                                           // 注册 UserSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo)                                 // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)                        // 注册 CommentSvc
+	JwtSvc := service.NewJwtService("123456")                                              // 注册 JwtSvc
+	MetricSvc := service.NewMetricService()                                                // 注册 MetricSvc
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                       // 注册 AuthSvc
+	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 500) // 注册 RateLimitSvc
+	UserSvc := service.NewUserService(UserRepo)                                            // 注册 UserSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo)                                  // 注册 PostSvc
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo)                         // 注册 CommentSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler

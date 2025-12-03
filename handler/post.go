@@ -35,36 +35,14 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, posts := hdl.PostService.GetByPage(pageNo, pageSize)
-
-	postsBack := []gin.H{}
-	for _, post := range posts {
-		// 根据 uid 找到 username 进行赋值
-		ok, userDTO := hdl.UserService.GetById(post.UserId)
-		if ok {
-			post.UserName = userDTO.Name
-		} else {
-			slog.Warn("could not get name of user", "uid", post.UserId)
-		}
-
-		res := gin.H{
-			"id":      post.Id,
-			"title":   post.Title,
-			"content": post.Content,
-			"author": gin.H{
-				"id":   post.UserId,
-				"name": post.UserName,
-			},
-			"createdAt": post.ViewTime,
-		}
-		postsBack = append(postsBack, res)
-	}
+	total, postDTOs := hdl.PostService.GetByPage(pageNo, pageSize)
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := hdl.PostService.HasMore(pageNo, pageSize, total)
 
+	// 返回
 	response.Success(ctx, gin.H{
-		"posts":   postsBack,
+		"posts":   postDTOs,
 		"total":   total,
 		"hasMore": hasMore,
 	})
@@ -82,31 +60,13 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	//post := database2.GetPostByID(pid)
-	post := hdl.PostService.GetById(pid)
-	if post == nil {
+	ok, postDTO := hdl.PostService.GetById(pid)
+	if !ok {
 		response.ServerError(ctx, "")
 		return
 	}
 
-	// 获取作者用户名
-	ok, userDTO := hdl.UserService.GetById(post.UserId)
-	if ok {
-		post.UserName = userDTO.Name
-	} else {
-		slog.Warn("could not get name of user", "uid", post.UserId)
-	}
-
-	response.Success(ctx, gin.H{
-		"id":      post.Id,
-		"title":   post.Title,
-		"content": post.Content,
-		"author": gin.H{
-			"id":   post.UserId,
-			"name": post.UserName,
-		},
-		"createdAt": post.ViewTime,
-	})
+	response.Success(ctx, postDTO)
 }
 
 // Create 创建帖子
@@ -124,16 +84,14 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	pid, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		response.ServerError(ctx, "")
 		return
 	}
 
-	response.Success(ctx, gin.H{
-		"id": pid,
-	})
+	response.Success(ctx, postDTO)
 }
 
 // Delete 删除帖子

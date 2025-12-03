@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useState, useEffect, FormEvent } from 'react'
 import { Post, ApiResponse, Comment } from '../types'
+import { normalizePost } from '../utils/post'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -101,7 +102,7 @@ export default function PostDetail() {
           throw new Error('帖子详情响应数据格式错误')
         }
         
-        setPost(responseData)
+        setPost(normalizePost(responseData))
         
         // 检查帖子所有权
         const ownership = await checkPostOwnership(id)

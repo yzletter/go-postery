@@ -51,8 +51,8 @@ func (svc *CommentService) List(pid int) []*model.Comment {
 	}
 
 	for _, comment := range comments {
-		name := svc.UserRepository.GetByID(comment.UserId).Name
-		comment.UserName = name
+		_, user := svc.UserRepository.GetByID(comment.UserId)
+		comment.UserName = user.Name
 	}
 
 	return comments

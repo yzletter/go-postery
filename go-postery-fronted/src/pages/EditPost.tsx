@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { ApiResponse, Post } from '../types'
+import { normalizePost } from '../utils/post'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -31,7 +32,7 @@ export default function EditPost() {
           throw new Error(result.msg || '获取帖子详情失败')
         }
 
-        const postData: Post = result.data
+        const postData: Post = normalizePost(result.data)
         setTitle(postData.title)
         setContent(postData.content)
       } catch (error) {

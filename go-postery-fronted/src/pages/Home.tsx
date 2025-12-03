@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2, Eye, Heart, Flame } from 'lucide-react'
 import { Post, ApiResponse } from '../types'
+import { normalizePost } from '../utils/post'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
@@ -110,12 +111,15 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostList
       throw new Error('帖子列表响应数据格式错误')
     }
     
-    const postsWithStats: Post[] = responseData.posts.map((p: Post, idx: number) => ({
-      ...p,
-      views: p.views ?? Math.floor(Math.random() * 500) + 50 + idx,
-      likes: p.likes ?? Math.floor(Math.random() * 80) + 5 + idx,
-      comments: p.comments ?? Math.floor(Math.random() * 40) + idx,
-    }))
+    const postsWithStats: Post[] = responseData.posts.map((p: Post, idx: number) => {
+      const normalized = normalizePost(p)
+      return {
+        ...normalized,
+        views: normalized.views ?? Math.floor(Math.random() * 500) + 50 + idx,
+        likes: normalized.likes ?? Math.floor(Math.random() * 80) + 5 + idx,
+        comments: normalized.comments ?? Math.floor(Math.random() * 40) + idx,
+      }
+    })
 
     return {
       posts: postsWithStats,
