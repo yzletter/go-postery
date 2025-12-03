@@ -65,14 +65,16 @@ func (repo *GormCommentRepository) Delete(cid int) error {
 		}
 	}
 }
+
 func (repo *GormCommentRepository) GetByPostID(pid int) []*model.Comment {
 	var comments []*model.Comment
-	tx := repo.db.Model(&model.Comment{}).Where("post_id = ?", pid).Where("delete_time is null").Find(&comments)
+	tx := repo.db.Model(&model.Comment{}).Where("post_id = ?", pid).Where("delete_time is null").Order("create_time desc").Find(&comments)
 	if tx.Error != nil {
 		slog.Error("获取帖子的评论失败", "pid", pid, "error", tx.Error)
 		return nil
 	}
 
+	// 赋值前端展示时间
 	for _, comment := range comments {
 		comment.ViewTime = comment.CreateTime.Format("2006-01-02 15:04:05")
 	}

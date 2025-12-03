@@ -57,3 +57,12 @@ func (svc *CommentService) List(pid int) []*model.Comment {
 
 	return comments
 }
+
+func (svc *CommentService) Belong(cid, uid int) bool {
+	comment := svc.CommentRepository.GetByID(cid)
+	if comment == nil {
+		return false
+	}
+
+	return comment.UserId == uid
+}

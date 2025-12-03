@@ -16,7 +16,7 @@ import (
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 
 	"github.com/yzletter/go-postery/middleware"
-	
+
 	commentRepository "github.com/yzletter/go-postery/repository/comment"
 	postRepository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
@@ -100,6 +100,7 @@ func main() {
 	// 强制登录
 	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create)       // 创建评论
 	engine.GET("/comment/delete/:id", AuthRequiredMdl, CommentHdl.Delete) // 删除评论
+	engine.GET("/comment/belong", AuthRequiredMdl, CommentHdl.Belong)     // 删除评论
 
 	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)

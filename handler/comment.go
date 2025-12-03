@@ -79,8 +79,6 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	return
 }
 
-// todo
-
 func (hdl *CommentHandler) List(ctx *gin.Context) {
 	// 获取参数
 	pid, err := strconv.Atoi(ctx.Param("post_id"))
@@ -107,5 +105,22 @@ func (hdl *CommentHandler) List(ctx *gin.Context) {
 }
 
 func (hdl *CommentHandler) Belong(ctx *gin.Context) {
+	// 直接拿当前登录用户的 uid
+	uid := ctx.Value(service.UID_IN_CTX).(int)
 
+	// 获取要查询评论的 cid
+	cid, err := strconv.Atoi(ctx.Query("id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	// 查询是否属于
+	ok := hdl.CommentService.Belong(cid, uid)
+	if !ok {
+		response.Unauthorized(ctx, "")
+		return
+	}
+
+	response.Success(ctx, nil)
 }
