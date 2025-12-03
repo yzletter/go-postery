@@ -1,7 +1,7 @@
-export interface ApiResponse {
+export interface ApiResponse<T = any> {
   code: number // 0 表示成功，非 0 为业务错误码（如 40001、40003、50001）
   msg?: string // 提示信息
-  data?: any // 响应数据
+  data?: T // 响应数据
 }
 
 export interface User {

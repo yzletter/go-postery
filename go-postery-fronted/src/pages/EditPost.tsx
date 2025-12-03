@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { ApiResponse, Post } from '../types'
+import { Post } from '../types'
 import { normalizePost } from '../utils/post'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import { apiGet, apiPost } from '../utils/api'
 
 export default function EditPost() {
   const { id } = useParams<{ id: string }>()
@@ -22,17 +21,11 @@ export default function EditPost() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
-          credentials: 'include',
-        })
-
-        const result: ApiResponse = await response.json()
-
-        if (!response.ok || result.code !== 0) {
-          throw new Error(result.msg || '获取帖子详情失败')
+        const { data } = await apiGet<Post>(`/posts/${id}`)
+        if (!data) {
+          throw new Error('获取帖子详情失败')
         }
-
-        const postData: Post = normalizePost(result.data)
+        const postData: Post = normalizePost(data)
         setTitle(postData.title)
         setContent(postData.content)
       } catch (error) {
@@ -56,20 +49,7 @@ export default function EditPost() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/posts/update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: Number(id), title, content }),
-        credentials: 'include',
-      })
-
-      const result: ApiResponse = await response.json()
-
-      if (!response.ok || result.code !== 0) {
-        throw new Error(result.msg || '更新帖子失败')
-      }
+      await apiPost('/posts/update', { id: Number(id), title, content })
 
       alert('帖子修改成功')
       navigate(`/post/${id}`)

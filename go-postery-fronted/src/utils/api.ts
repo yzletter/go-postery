@@ -1,39 +1,83 @@
-// API 工具函数
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import type { ApiResponse } from '../types'
 
-// 获取认证 token
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+export const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_URL || API_BASE_URL
+
+export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
+  body?: BodyInit | Record<string, unknown> | null
+  baseUrl?: string
+  skipAuthToken?: boolean
+}
+
 export function getAuthToken(): string | null {
   return localStorage.getItem('token')
 }
 
-// 创建带认证头的 fetch 请求
-export async function authenticatedFetch(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const token = getAuthToken()
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
+function buildHeaders(options: ApiRequestOptions, token: string | null, isJsonBody: boolean) {
+  const headers: HeadersInit = {
+    ...(isJsonBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   }
 
-  return fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: 'include', // 关键：确保Cookie随请求发送
-  })
+  return headers
 }
 
-// 检查响应是否成功，如果不成功则抛出错误
-export async function handleResponse<T>(response: Response): Promise<T> {
-  const data = await response.json().catch(() => null)
-  const msg = (data && (data.msg || data.message)) || `请求失败: ${response.status} ${response.statusText}`
+export async function apiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {}
+): Promise<ApiResponse<T>> {
+  const {
+    baseUrl = API_BASE_URL,
+    skipAuthToken,
+    body,
+    ...rest
+  } = options
 
-  if (!response.ok || !data || (typeof data.code === 'number' && data.code !== 0)) {
-    throw new Error(msg)
+  const token = skipAuthToken ? null : getAuthToken()
+  const isFormData = body instanceof FormData
+  const normalizedBody: BodyInit | undefined =
+    body === undefined || body === null
+      ? undefined
+      : isFormData
+        ? body
+        : typeof body === 'string'
+          ? body
+          : JSON.stringify(body)
+
+  const headers = buildHeaders(options, token, !isFormData && normalizedBody !== undefined)
+
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...rest,
+    headers,
+    credentials: 'include',
+    body: normalizedBody,
+  })
+
+  let payload: ApiResponse<T> | null = null
+  try {
+    payload = await response.json()
+  } catch (error) {
+    payload = null
   }
 
-  return data as T
+  const isSuccess = response.ok && payload && (payload.code === 0 || payload.code === undefined)
+  if (!isSuccess || !payload) {
+    const message = payload?.msg || `请求失败: ${response.status} ${response.statusText}`
+    throw new Error(message)
+  }
+
+  return payload
+}
+
+export function apiGet<T>(path: string, options: ApiRequestOptions = {}) {
+  return apiRequest<T>(path, { ...options, method: 'GET' })
+}
+
+export function apiPost<T>(
+  path: string,
+  body?: BodyInit | Record<string, unknown> | null,
+  options: ApiRequestOptions = {}
+) {
+  return apiRequest<T>(path, { ...options, method: 'POST', body })
 }

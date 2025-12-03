@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus } from 'lucide-react'
-import { Post, ApiResponse } from '../types'
+import { Post } from '../types'
 import { normalizePost } from '../utils/post'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import { apiGet } from '../utils/api'
 
 // 生成模拟数据的函数
 const generateMockPost = (id: number, index: number): Post => {
@@ -102,25 +101,17 @@ const mockRecommendUsers = [
 // API 获取帖子列表
 const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostListResult> => {
   try {
-    // 启用后端调用进行接口测试
-    console.log('帖子列表API调用已启用，进行接口测试')
-    
-    const response = await fetch(`${API_BASE_URL}/posts?pageNo=${page}&pageSize=${pageSize}`, {
-      credentials: 'include', // 关键：确保Cookie随请求发送
-    })
-    
-    const result: ApiResponse = await response.json()
-    
-    if (!response.ok || result.code !== 0) {
-      throw new Error(result.msg || '获取帖子列表失败')
-    }
+    const { data } = await apiGet<{
+      posts: Post[]
+      total?: number
+      hasMore?: boolean
+    }>(`/posts?pageNo=${page}&pageSize=${pageSize}`)
 
-    const responseData = result.data
-    if (!responseData || !responseData.posts) {
+    if (!data || !Array.isArray(data.posts)) {
       throw new Error('帖子列表响应数据格式错误')
     }
-    
-    const postsWithStats: Post[] = responseData.posts.map((p: Post, idx: number) => {
+
+    const postsWithStats: Post[] = data.posts.map((p: Post, idx: number) => {
       const normalized = normalizePost(p)
       return {
         ...normalized,
@@ -132,34 +123,11 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostList
 
     return {
       posts: postsWithStats,
-      total: responseData.total ?? 0,
-      hasMore: Boolean(responseData.hasMore),
+      total: data.total ?? postsWithStats.length,
+      hasMore: Boolean(data.hasMore),
     }
-    
-    /* 模拟数据代码，暂时注释
-    console.log('帖子列表API调用已禁用，使用模拟数据')
-    
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // 返回模拟数据
-    const posts: Post[] = []
-    const startIndex = (page - 1) * pageSize
-    
-    // 限制总数据量为 20 条
-    const remainingPosts = Math.max(0, TOTAL_POSTS_LIMIT - startIndex)
-    const currentPageSize = Math.min(pageSize, remainingPosts)
-    
-    for (let i = 0; i < currentPageSize; i++) {
-      const index = startIndex + i
-      posts.push(generateMockPost(`${page}-${i + 1}`, index))
-    }
-    
-    return posts
-    */
   } catch (error) {
     console.error('Failed to fetch posts:', error)
-    // 接口测试期间，直接抛出错误而不是回退到模拟数据
     throw error
   }
 }
@@ -170,39 +138,39 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
+  const isLoadingRef = useRef(false)
 
   const pageSize = 10
 
   // 加载帖子数据
   const loadPosts = useCallback(async (page: number, reset: boolean = false) => {
-    if (isLoading) return
+    if (isLoadingRef.current) return
     
+    isLoadingRef.current = true
     setIsLoading(true)
+    setError(null)
     try {
-      // 如果不是初始加载（即加载更多），添加1秒延时
       if (!reset) {
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       
       const { posts: newPosts, hasMore: hasMoreFromApi } = await fetchPosts(page, pageSize)
       
-      if (reset) {
-        setPosts(newPosts)
-      } else {
-        setPosts(prev => [...prev, ...newPosts])
-      }
-      
+      setPosts(prev => reset ? newPosts : [...prev, ...newPosts])
       setHasMore(hasMoreFromApi)
       setCurrentPage(page)
     } catch (error) {
       console.error('Failed to load posts:', error)
+      setError(error instanceof Error ? error.message : '加载帖子失败')
     } finally {
       setIsLoading(false)
       setIsInitialLoading(false)
+      isLoadingRef.current = false
     }
-  }, [isLoading])
+  }, [pageSize])
 
   // 初始加载帖子
   useEffect(() => {
@@ -210,8 +178,9 @@ export default function Home() {
     setCurrentPage(1)
     setHasMore(true)
     setPosts([])
+    setError(null)
     loadPosts(1, true)
-  }, [])
+  }, [loadPosts])
 
   // 无限滚动：监听滚动到底部
   useEffect(() => {
@@ -247,94 +216,112 @@ export default function Home() {
           </div>
         )}
 
-            {/* 帖子列表 */}
-            {!isInitialLoading && (
-              <>
-                <div className="space-y-3">
-                  {posts.map(post => (
-                    <article
-                      key={post.id}
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => navigate(`/post/${post.id}`)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          navigate(`/post/${post.id}`)
-                        }
-                      }}
-                      className="card p-4 lg:p-5 hover:shadow-lg transition-all cursor-pointer"
+        {error && !isInitialLoading && (
+          <div className="card border border-red-200 bg-red-50 text-red-700">
+            <div className="flex items-start justify-between space-x-3">
+              <div>
+                <p className="font-semibold">加载失败</p>
+                <p className="text-sm text-red-600 break-words">{error}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => loadPosts(1, true)}
+                className="btn-secondary bg-white text-red-700 hover:bg-red-100"
+              >
+                重试
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 帖子列表 */}
+        {!isInitialLoading && (
+          <>
+            <div className="space-y-3">
+              {posts.map(post => (
+                <article
+                  key={post.id}
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/post/${post.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(`/post/${post.id}`)
+                    }
+                  }}
+                  className="card p-4 lg:p-5 hover:shadow-lg transition-all cursor-pointer"
+                >
+                  <div className="flex items-start space-x-4">
+                    {/* 用户头像 */}
+                    <Link
+                      to={`/users/${post.author.id}`}
+                      state={{ username: post.author.name }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-shrink-0"
                     >
-                      <div className="flex items-start space-x-4">
-                        {/* 用户头像 */}
-                        <Link
-                          to={`/users/${post.author.id}`}
-                          state={{ username: post.author.name }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex-shrink-0"
-                        >
-                          <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
-                            alt={post.author.name}
-                            className="w-11 h-11 rounded-full"
-                          />
-                        </Link>
-                        
-                        <div className="flex-1 min-w-0">
-                          {/* 标题 */}
-                          <div className="flex items-start justify-between mb-1.5">
-                            <h2 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
-                              {post.title}
-                            </h2>
-                          </div>
-
-                          {/* 内容预览 */}
-                          <p className="text-gray-600 mb-2 line-clamp-2 text-sm leading-relaxed">
-                            {post.content}
-                          </p>
-
-                          {/* 元信息 */}
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center space-x-3">
-                              <Link
-                                to={`/users/${post.author.id}`}
-                                state={{ username: post.author.name }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="font-medium text-gray-700 hover:text-primary-600"
-                              >
-                                {post.author.name}
-                              </Link>
-                              <span className="flex items-center space-x-1">
-                                <Clock className="h-4 w-4" />
-                                <span>
-                                  {formatDistanceToNow(new Date(post.createdAt), {
-                                    addSuffix: true,
-                                    locale: zhCN
-                                  })}
-                                </span>
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-3 text-gray-500">
-                              <span className="flex items-center space-x-1">
-                                <Eye className="h-4 w-4" />
-                                <span>{post.views ?? 0}</span>
-                              </span>
-                              <span className="flex items-center space-x-1">
-                                <Heart className="h-4 w-4" />
-                                <span>{post.likes ?? 0}</span>
-                              </span>
-                              <span className="flex items-center space-x-1">
-                                <MessageSquare className="h-4 w-4" />
-                                <span>{post.comments ?? 0}</span>
-                              </span>
-                            </div>
-
-                          </div>
-                        </div>
+                      <img
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
+                        alt={post.author.name}
+                        className="w-11 h-11 rounded-full"
+                      />
+                    </Link>
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* 标题 */}
+                      <div className="flex items-start justify-between mb-1.5">
+                        <h2 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
+                          {post.title}
+                        </h2>
                       </div>
-                    </article>
-                  ))}
-                </div>
+
+                      {/* 内容预览 */}
+                      <p className="text-gray-600 mb-2 line-clamp-2 text-sm leading-relaxed">
+                        {post.content}
+                      </p>
+
+                      {/* 元信息 */}
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center space-x-3">
+                          <Link
+                            to={`/users/${post.author.id}`}
+                            state={{ username: post.author.name }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-medium text-gray-700 hover:text-primary-600"
+                          >
+                            {post.author.name}
+                          </Link>
+                          <span className="flex items-center space-x-1">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              {formatDistanceToNow(new Date(post.createdAt), {
+                                addSuffix: true,
+                                locale: zhCN
+                              })}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-3 text-gray-500">
+                          <span className="flex items-center space-x-1">
+                            <Eye className="h-4 w-4" />
+                            <span>{post.views ?? 0}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Heart className="h-4 w-4" />
+                            <span>{post.likes ?? 0}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>{post.comments ?? 0}</span>
+                          </span>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
 
             {/* 无限滚动触发点 */}
             <div ref={observerTarget} className="h-10" />
@@ -361,7 +348,7 @@ export default function Home() {
             )}
 
             {/* 空状态 */}
-            {posts.length === 0 && !isLoading && (
+            {posts.length === 0 && !isLoading && !error && (
               <div className="card text-center py-12">
                 <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">暂无帖子</p>

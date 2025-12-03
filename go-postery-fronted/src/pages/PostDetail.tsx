@@ -3,12 +3,11 @@ import { ArrowLeft, Clock, Edit, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useState, useEffect, FormEvent, useMemo, useCallback } from 'react'
-import { Post, ApiResponse, Comment } from '../types'
+import { Post, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
 import { useAuth } from '../contexts/AuthContext'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import { apiGet, apiPost } from '../utils/api'
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
@@ -16,9 +15,11 @@ export default function PostDetail() {
   const { user } = useAuth()
   const [post, setPost] = useState<Post | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<Comment[]>([])
+  const [commentsError, setCommentsError] = useState<string | null>(null)
   const [isCommentsLoading, setIsCommentsLoading] = useState(true)
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null)
 
@@ -56,24 +57,19 @@ export default function PostDetail() {
   const fetchComments = useCallback(async () => {
     if (!id) return
     setIsCommentsLoading(true)
+    setCommentsError(null)
     try {
-      const response = await fetch(`${API_BASE_URL}/comment/list/${id}`, {
-        credentials: 'include',
-      })
-      const result: ApiResponse = await response.json()
-      if (!response.ok || result.code !== 0) {
-        throw new Error(result.msg || '获取评论失败')
-      }
-
-      const data = Array.isArray(result.data)
-        ? result.data
-        : Array.isArray(result.data?.comments)
-          ? result.data.comments
+      const { data } = await apiGet<Comment[] | { comments: Comment[] }>(`/comment/list/${id}`)
+      const normalizedList = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any)?.comments)
+          ? (data as any).comments
           : []
-      setComments(data.map((c: any) => normalizeComment(c)))
+      setComments(normalizedList.map((c: any) => normalizeComment(c)))
     } catch (error) {
       console.error('获取评论失败:', error)
       setComments([])
+      setCommentsError(error instanceof Error ? error.message : '获取评论失败')
     } finally {
       setIsCommentsLoading(false)
     }
@@ -84,31 +80,20 @@ export default function PostDetail() {
     if (!commentText.trim() || !id) return
 
     try {
+      setCommentsError(null)
       const hasParent = replyTarget && replyTarget.parentId && replyTarget.parentId !== 0
       const parentIdToSend = replyTarget ? Number(hasParent ? replyTarget.parentId : replyTarget.id) : 0
       const replyIdToSend = replyTarget ? Number(replyTarget.id) : 0
 
-      const response = await fetch(`${API_BASE_URL}/comment/new`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          post_id: Number(id),
-          parent_id: parentIdToSend,
-          reply_id: replyIdToSend,
-          content: commentText.trim(),
-        }),
+      const { data } = await apiPost('/comment/new', {
+        post_id: Number(id),
+        parent_id: parentIdToSend,
+        reply_id: replyIdToSend,
+        content: commentText.trim(),
       })
 
-      const result: ApiResponse = await response.json()
-      if (!response.ok || result.code !== 0) {
-        throw new Error(result.msg || '发表评论失败')
-      }
-
       const newComment = normalizeComment(
-        result.data || { parent_id: parentIdToSend, reply_id: replyIdToSend, content: commentText.trim() }
+        data || { parent_id: parentIdToSend, reply_id: replyIdToSend, content: commentText.trim() }
       )
       setComments(prev => [
         {
@@ -122,6 +107,7 @@ export default function PostDetail() {
       setReplyTarget(null)
     } catch (error) {
       console.error('发表评论失败:', error)
+      setCommentsError(error instanceof Error ? error.message : '发表评论失败')
       alert('发表评论失败，请稍后重试')
     }
   }
@@ -157,14 +143,7 @@ export default function PostDetail() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/comment/delete/${commentId}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-      const result: ApiResponse = await response.json()
-      if (!response.ok || result.code !== 0) {
-        throw new Error(result.msg || '删除评论失败')
-      }
+      await apiGet(`/comment/delete/${commentId}`)
       setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
       await fetchComments()
     } catch (error) {
@@ -173,85 +152,68 @@ export default function PostDetail() {
     }
   }
 
-  const checkCommentOwnership = async (commentId: string | number): Promise<boolean> => {
+  const checkCommentOwnership = useCallback(async (commentId: string | number): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/comment/belong?id=${commentId}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-      const result: ApiResponse = await response.json()
-      if (!response.ok || result.code !== 0) {
-        return false
-      }
+      await apiGet(`/comment/belong?id=${commentId}`)
       return true
     } catch (error) {
       console.error('检查评论所有权失败:', error)
       return false
     }
-  }
+  }, [])
 
-  // 创建一个函数来检查帖子是否属于当前用户
-  const checkPostOwnership = async (postId: string): Promise<boolean> => {
+  const checkPostOwnership = useCallback(async (postId: string): Promise<boolean> => {
     try {
-      // 使用GET请求，参数名为id而不是postId
-      const response = await fetch(`${API_BASE_URL}/posts/belong?id=${postId}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-      
-      const result: ApiResponse = await response.json()
-      
-      if (!response.ok || result.code !== 0) {
-        return false
-      }
-      
+      await apiGet(`/posts/belong?id=${postId}`)
       return true
     } catch (error) {
       console.error('检查帖子所有权失败:', error)
       return false
     }
-  }
+  }, [])
 
   useEffect(() => {
+    let cancelled = false
+
     const fetchPost = async () => {
       if (!id) return
       
       setIsLoading(true)
+      setLoadError(null)
       try {
-        // 启用后端调用进行接口测试
-        console.log('帖子详情API调用已启用，进行接口测试')
-        
-        const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
-          credentials: 'include', // 关键：确保Cookie随请求发送
-        })
-        
-        const result: ApiResponse = await response.json()
-        
-        if (!response.ok || result.code !== 0) {
-          throw new Error(result.msg || '获取帖子详情失败')
-        }
-
-        const responseData = result.data
-        if (!responseData) {
+        const { data } = await apiGet<Post>(`/posts/${id}`)
+        if (!data) {
           throw new Error('帖子详情响应数据格式错误')
         }
         
-        setPost(normalizePost(responseData))
+        if (cancelled) return
+
+        setPost(normalizePost(data))
         
         // 检查帖子所有权
         const ownership = await checkPostOwnership(id)
-        setIsAuthor(ownership)
+        if (!cancelled) {
+          setIsAuthor(ownership)
+        }
       } catch (error) {
         console.error('Failed to fetch post:', error)
-        // 接口测试期间，直接抛出错误而不是回退到模拟数据
-        throw error
+        if (!cancelled) {
+          setLoadError(error instanceof Error ? error.message : '获取帖子详情失败')
+          setPost(null)
+        }
       } finally {
-        setIsLoading(false)
+        if (!cancelled) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchPost()
-  }, [id])
+
+    return () => {
+      cancelled = true
+    }
+  }, [id, checkPostOwnership])
 
   // 加载评论列表
   useEffect(() => {
@@ -266,20 +228,8 @@ export default function PostDetail() {
     }
     
     try {
-      // 发送GET请求到后端API (更新路径为/posts/delete/:id)
-      const response = await fetch(`${API_BASE_URL}/posts/delete/${id}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-      
-      const result = await response.json()
-      
-      if (!response.ok || result.code !== 0) {
-        throw new Error(result.msg || '删除帖子失败')
-      }
-      
-      // 删除成功，显示成功消息并导航回主页
-      alert(result.msg || '帖子删除成功')
+      const { msg } = await apiGet(`/posts/delete/${id}`)
+      alert(msg || '帖子删除成功')
       navigate('/')
     } catch (error) {
       // 处理错误情况
@@ -303,7 +253,7 @@ export default function PostDetail() {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="card text-center py-12">
-          <p className="text-gray-500">帖子不存在或加载失败</p>
+          <p className="text-gray-500">{loadError || '帖子不存在或加载失败'}</p>
         </div>
       </div>
     )
@@ -434,6 +384,8 @@ export default function PostDetail() {
             <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
             <span>评论加载中...</span>
           </div>
+        ) : commentsError ? (
+          <p className="text-sm text-red-600">{commentsError}</p>
         ) : comments.length === 0 ? (
           <p className="text-gray-500 text-sm">暂时还没有评论，快来抢沙发吧～</p>
         ) : (

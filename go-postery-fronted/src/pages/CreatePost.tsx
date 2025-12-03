@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { ApiResponse } from '../types'
 import { normalizePost } from '../utils/post'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import { apiPost } from '../utils/api'
 
 export default function CreatePost() {
   const navigate = useNavigate()
@@ -15,22 +13,8 @@ export default function CreatePost() {
     e.preventDefault()
     
     try {
-      const response = await fetch(`${API_BASE_URL}/posts/new`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, content }),
-        credentials: 'include', // 关键：确保Cookie随请求发送
-      })
-
-      const result: ApiResponse = await response.json()
-      
-      if (!response.ok || result.code !== 0) {
-        throw new Error(result.msg || '创建帖子失败')
-      }
-
-      const createdPost = normalizePost(result.data || {})
+      const { data } = await apiPost('/posts/new', { title, content })
+      const createdPost = normalizePost(data || {})
       if (createdPost.id) {
         console.log('帖子创建成功，帖子ID:', createdPost.id)
         navigate(`/post/${createdPost.id}`)
