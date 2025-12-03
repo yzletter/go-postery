@@ -28,6 +28,7 @@ export interface Comment {
   id: number | string
   postId?: number
   parentId?: number
+  replyId?: number
   content: string
   author: {
     id: number | string

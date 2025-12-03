@@ -12,6 +12,7 @@ export function normalizeComment(raw: any): Comment {
     id: raw?.id ?? raw?.Id ?? '',
     postId: raw?.post_id ?? raw?.postId ?? raw?.PostId,
     parentId: raw?.parent_id ?? raw?.parentId ?? raw?.ParentId,
+    replyId: raw?.reply_id ?? raw?.replyId ?? raw?.ReplyId,
     content: raw?.content ?? '',
     author: {
       id: authorRaw?.id ?? authorRaw?.Id ?? '',

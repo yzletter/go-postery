@@ -8,7 +8,6 @@ grant all on go_postery.* to go_postery_tester;
 -- 切到 go_postery 数据库
 use go_postery;
 
-
 # 建表
 # 创建 user 表
 create table if not exists user
@@ -27,26 +26,24 @@ create table if not exists user
 create table if not exists post
 (
     id          int auto_increment comment '帖子 id, 自增',
-    user_id     int not null comment '发布者 id',
+    user_id     varchar(20) not null comment '发布者 id',
     create_time datetime default current_timestamp comment '帖子创建时间',
     update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
     delete_time datetime default null comment '帖子删除时间',
-    title       varchar(100) comment '标题',
+    tittle      varchar(100) comment '标题',
     content     text comment '正文',
     primary key (id),
-    key idx_user (user_id)
+    unique key idx_user (user_id)
 ) default charset = utf8mb4 comment '帖子信息表';
 
-
-# 创建 comment 表
 create table if not exists comment
 (
     id          int auto_increment comment '评论 id, 自增',
     post_id     int not null comment '所属帖子 id',
     user_id     int not null comment '发布者 id',
     parent_id   int not null comment '父评论 id',
+    reply_id    int not null comment '回复评论 id',
     create_time datetime default current_timestamp comment '帖子创建时间',
-    update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
     delete_time datetime default null comment '帖子删除时间',
     content     text comment '正文',
     primary key (id),

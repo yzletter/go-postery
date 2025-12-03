@@ -39,7 +39,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	}
 
 	// 调用 service 层创建评论
-	commentDTO, err := hdl.CommentService.Create(comment.PostId, uid, comment.ParentId, comment.Content)
+	commentDTO, err := hdl.CommentService.Create(comment.PostId, uid, comment.ParentId, comment.ReplyId, comment.Content)
 	if err != nil {
 		response.ServerError(ctx, "")
 		return

@@ -20,11 +20,12 @@ func NewGormCommentRepository(db *gorm.DB) *GormCommentRepository {
 	}
 }
 
-func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, content string) (model.Comment, error) {
+func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, replyId int, content string) (model.Comment, error) {
 	now := time.Now()
 	comment := model.Comment{
 		PostId:     pid,      // 所属帖子 id
 		ParentId:   parentId, // 父评论 id, 若为 0 则为主评论
+		ReplyId:    replyId,  // 当前评论所评论的Id
 		UserId:     uid,      // 评论的用户 id
 		Content:    content,  // 内容
 		CreateTime: &now,

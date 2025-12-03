@@ -45,12 +45,22 @@ export default function PostDetail() {
     }))
   }, [comments])
 
+  const commentAuthorById = useMemo(() => {
+    const map = new Map<string, { id: string | number; name: string }>()
+    comments.forEach(c => {
+      map.set(String(c.id), { id: c.author.id, name: c.author.name })
+    })
+    return map
+  }, [comments])
+
   const handleSubmitComment = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!commentText.trim() || !id) return
 
     try {
-      const parentIdToSend = replyTarget ? Number(replyTarget.id) : 0
+      const hasParent = replyTarget && replyTarget.parentId && replyTarget.parentId !== 0
+      const parentIdToSend = replyTarget ? Number(hasParent ? replyTarget.parentId : replyTarget.id) : 0
+      const replyIdToSend = replyTarget ? Number(replyTarget.id) : 0
 
       const response = await fetch(`${API_BASE_URL}/comment/new`, {
         method: 'POST',
@@ -61,6 +71,7 @@ export default function PostDetail() {
         body: JSON.stringify({
           post_id: Number(id),
           parent_id: parentIdToSend,
+          reply_id: replyIdToSend,
           content: commentText.trim(),
         }),
       })
@@ -71,12 +82,13 @@ export default function PostDetail() {
       }
 
       const newComment = normalizeComment(
-        result.data || { parent_id: parentIdToSend, content: commentText.trim() }
+        result.data || { parent_id: parentIdToSend, reply_id: replyIdToSend, content: commentText.trim() }
       )
       setComments(prev => [
         {
           ...newComment,
           parentId: newComment.parentId ?? parentIdToSend,
+          replyId: newComment.replyId ?? replyIdToSend,
         },
         ...prev,
       ])
@@ -511,6 +523,19 @@ export default function PostDetail() {
                                 })}
                               </span>
                             </div>
+                            {reply.replyId &&
+                              reply.parentId &&
+                              reply.replyId !== reply.parentId && (
+                                <div className="text-xs text-gray-500 mb-1">
+                                  回复{' '}
+                                  <Link
+                                    to={`/users/${commentAuthorById.get(String(reply.replyId))?.id ?? ''}`}
+                                    className="text-primary-600 hover:text-primary-700"
+                                  >
+                                    @{commentAuthorById.get(String(reply.replyId))?.name || '用户'}
+                                  </Link>
+                                </div>
+                              )}
                             <p className="text-gray-700 text-sm">{reply.content}</p>
                           </div>
                           <div className="flex items-center space-x-3 text-xs text-gray-500">
