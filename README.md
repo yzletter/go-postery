@@ -1176,8 +1176,8 @@ func GetPostDetailHandler(ctx *gin.Context) {
 
 // CreateNewPostHandler 创建帖子
 func CreateNewPostHandler(ctx *gin.Context) {
-	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(UID_IN_CTX).(int)
+	// 直接从 ctx 中拿 uid
+	uid := ctx.Value(UID_IN_CTX).(int)
 
 	// 参数绑定
 	var createRequest model.CreateRequest
@@ -1193,7 +1193,7 @@ func CreateNewPostHandler(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	pid, err := database.CreatePost(loginUid, createRequest.Title, createRequest.Content)
+	pid, err := database.CreatePost(uid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		resp := utils.Resp{
@@ -1217,8 +1217,8 @@ func CreateNewPostHandler(ctx *gin.Context) {
 
 // DeletePostHandler 删除帖子
 func DeletePostHandler(ctx *gin.Context) {
-	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(UID_IN_CTX).(int)
+	// 直接从 ctx 中拿 uid
+	uid := ctx.Value(UID_IN_CTX).(int)
 
 	// 再拿帖子 pid
 	pid, err := strconv.Atoi(ctx.Param("id"))
@@ -1240,7 +1240,7 @@ func DeletePostHandler(ctx *gin.Context) {
 		}
 		ctx.JSON(http.StatusBadRequest, resp)
 		return
-	} else if loginUid != post.UserId {
+	} else if uid != post.UserId {
 		// 无权限删除
 		resp := utils.Resp{
 			Code: 1,
@@ -1271,8 +1271,8 @@ func DeletePostHandler(ctx *gin.Context) {
 
 // UpdatePostHandler 修改帖子
 func UpdatePostHandler(ctx *gin.Context) {
-	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(UID_IN_CTX).(int)
+	// 直接从 ctx 中拿 uid
+	uid := ctx.Value(UID_IN_CTX).(int)
 
 	// 参数绑定
 	var updateRequest model.CreateRequest
@@ -1295,7 +1295,7 @@ func UpdatePostHandler(ctx *gin.Context) {
 		}
 		ctx.JSON(http.StatusBadRequest, resp)
 		return
-	} else if loginUid != post.UserId {
+	} else if uid != post.UserId {
 		// 无权限删除
 		resp := utils.Resp{
 			Code: 1,
@@ -1340,10 +1340,10 @@ func PostBelongHandler(ctx *gin.Context) {
 
 	// 获取登录 uid
 	jwtToken := getJWTFromCookie(ctx)
-	loginUid := getUidFromJWT(jwtToken)
-	slog.Info("Auth", "uid", loginUid)
+	uid := getUidFromJWT(jwtToken)
+	slog.Info("Auth", "uid", uid)
 
-	if loginUid == 0 {
+	if uid == 0 {
 		// 未登录, 后面不用看了
 		resp := utils.Resp{
 			Code: 0,
@@ -1356,7 +1356,7 @@ func PostBelongHandler(ctx *gin.Context) {
 
 	// 判断登录用户是否是作者
 	post := database.GetPostByID(pid)
-	if post == nil || loginUid != post.UserId {
+	if post == nil || uid != post.UserId {
 		resp := utils.Resp{
 			Code: 0,
 			Msg:  "帖子不属于当前用户",

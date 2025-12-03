@@ -90,7 +90,6 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 获取作者用户名
-	//user := database2.GetById(post.UserId)
 	user := hdl.UserService.GetById(post.UserId)
 	if user != nil {
 		post.UserName = user.Name
@@ -125,7 +124,6 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	//pid, err := database2.CreatePost(uid, createRequest.Title, createRequest.Content)
 	pid, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
@@ -140,8 +138,8 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 
 // Delete 删除帖子
 func (hdl *PostHandler) Delete(ctx *gin.Context) {
-	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(service.UID_IN_CTX).(int)
+	// 直接从 ctx 中拿 uid
+	uid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 再拿帖子 pid
 	pid, err := strconv.Atoi(ctx.Param("id"))
@@ -150,22 +148,12 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	// 判断登录用户是否是作者
-	//post := database2.GetPostByID(pid)
-	post := hdl.PostService.GetById(pid)
-	if post == nil {
-		response.ServerError(ctx, "")
-		return
-	} else if loginUid != post.UserId {
-		// 无权限删除
-		response.Unauthorized(ctx, "")
-		return
-	}
-
 	// 进行删除
-	err = hdl.PostService.Delete(pid)
-
+	err = hdl.PostService.Delete(pid, uid)
 	if err != nil {
+		if err.Error() == "没有权限" {
+			response.Unauthorized(ctx, "")
+		}
 		response.ServerError(ctx, "")
 		return
 	}
@@ -175,33 +163,25 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
-	// 直接从 ctx 中拿 loginUid
-	loginUid := ctx.Value(service.UID_IN_CTX).(int)
+	// 直接从 ctx 中拿 uid
+	uid := ctx.Value(service.UID_IN_CTX).(int)
 
 	// 参数绑定
 	var updateRequest request.UpdatePostRequest
 	err := ctx.ShouldBind(&updateRequest)
+
 	if err != nil || updateRequest.Id == 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
 	}
 
-	// 判断登录用户是否是作者
-	//post := database2.GetPostByID(updateRequest.Id)
-	post := hdl.PostService.GetById(updateRequest.Id)
-	if post == nil {
-		response.ServerError(ctx, "")
-		return
-	} else if loginUid != post.UserId {
-		// 无权限删除
-		response.Unauthorized(ctx, "")
-		return
-	}
-
 	// 修改
-	err = hdl.PostService.Update(updateRequest.Id, updateRequest.Title, updateRequest.Content)
+	err = hdl.PostService.Update(updateRequest.Id, uid, updateRequest.Title, updateRequest.Content)
 	if err != nil {
+		if err.Error() == "没有权限" {
+			response.Unauthorized(ctx, "")
+		}
 		response.ServerError(ctx, "")
 		return
 	}
@@ -228,9 +208,8 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	//post := database2.GetPostByID(pid)
-	post := hdl.PostService.GetById(pid)
-	if post == nil || uid != post.UserId {
+	ok = hdl.PostService.Belong(pid, uid)
+	if !ok {
 		response.Unauthorized(ctx, "")
 		return
 	}
