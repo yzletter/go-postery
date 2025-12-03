@@ -14,12 +14,8 @@ func NewUserService(userRepository *repository.GormUserRepository) *UserService 
 }
 
 func (svc *UserService) Register(name, password string) (dto.UserDTO, error) {
-	uid, err := svc.UserRepository.Create(name, password)
-	back := dto.UserDTO{
-		Id:   uid,
-		Name: name,
-	}
-	return back, err
+	user, err := svc.UserRepository.Create(name, password)
+	return dto.ToUserDTO(user), err
 }
 
 func (svc *UserService) GetById(uid int) (bool, dto.UserDTO) {
@@ -28,25 +24,17 @@ func (svc *UserService) GetById(uid int) (bool, dto.UserDTO) {
 		return false, dto.UserDTO{}
 	}
 
-	userDTO := dto.UserDTO{
-		Id:   user.Id,
-		Name: user.Name,
-	}
-	return true, userDTO
+	return true, dto.ToUserDTO(user)
 }
 
 // GetByName 根据 name 查找用户
 func (svc *UserService) GetByName(name string) dto.UserDTO {
-	user := svc.UserRepository.GetByName(name)
-	if user == nil {
+	user, err := svc.UserRepository.GetByName(name)
+	if err != nil {
 		return dto.UserDTO{}
 	}
 
-	userDTO := dto.UserDTO{
-		Id:   user.Id,
-		Name: user.Name,
-	}
-	return userDTO
+	return dto.ToUserDTO(user)
 }
 
 func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
@@ -55,14 +43,9 @@ func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
 }
 
 func (svc *UserService) Login(name, pass string) (bool, dto.UserDTO) {
-	user := svc.UserRepository.GetByName(name)
-	if user == nil || user.PassWord != pass {
+	user, err := svc.UserRepository.GetByName(name)
+	if err != nil || user.PassWord != pass {
 		return false, dto.UserDTO{}
 	}
-
-	userDTO := dto.UserDTO{
-		Id:   user.Id,
-		Name: user.Name,
-	}
-	return true, userDTO
+	return true, dto.ToUserDTO(user)
 }

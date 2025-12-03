@@ -23,7 +23,7 @@ func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
 	}
 }
 
-func (repo *GormUserRepository) Create(name, password string) (int, error) {
+func (repo *GormUserRepository) Create(name, password string) (model.User, error) {
 	// 将模型绑定到结构体
 	user := model.User{
 		Name:     name,
@@ -36,16 +36,16 @@ func (repo *GormUserRepository) Create(name, password string) (int, error) {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) { // 判断是否为 MySQL 错误
 			if mysqlErr.Number == 1062 { // Unique Key 冲突
-				return 0, fmt.Errorf("用户[%s]已存在", name)
+				return model.User{}, fmt.Errorf("用户[%s]已存在", name)
 			}
 		}
 		// 记录日志, 方便后续人工定位问题所在
 		slog.Error("go-postery RegisterUser : 用户注册失败", "name", name, "error", err)
-		return 0, fmt.Errorf("用户注册失败，请稍后重试")
+		return model.User{}, fmt.Errorf("用户注册失败，请稍后重试")
 	}
 
 	// 返回 Id
-	return user.Id, nil
+	return user, nil
 }
 
 func (repo *GormUserRepository) Delete(uid int) (bool, error) {
@@ -95,7 +95,7 @@ func (repo *GormUserRepository) GetByID(uid int) (bool, model.User) {
 	return true, user
 }
 
-func (repo *GormUserRepository) GetByName(name string) *model.User {
+func (repo *GormUserRepository) GetByName(name string) (model.User, error) {
 	user := model.User{}
 	tx := repo.db.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
@@ -103,8 +103,8 @@ func (repo *GormUserRepository) GetByName(name string) *model.User {
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			slog.Error("go-postery GetUserByName : 查找用户失败", "uid", name, "error", tx.Error)
 		}
-		return nil
+		return model.User{}, errors.New("查找用户失败")
 	}
 
-	return &user
+	return user, nil
 }
