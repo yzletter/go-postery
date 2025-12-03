@@ -23,6 +23,7 @@ func AuthRequiredMiddleware(authService *service.AuthService) gin.HandlerFunc {
 			// 把 userInfo 放入上下文, 以便后续中间件直接使用
 			setUserToContext(ctx, userInfo)
 			ctx.Next()
+			return
 		}
 
 		slog.Info("AuthService 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
