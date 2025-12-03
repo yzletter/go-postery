@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Edit, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { useState, useEffect, FormEvent, useMemo } from 'react'
+import { useState, useEffect, FormEvent, useMemo, useCallback } from 'react'
 import { Post, ApiResponse, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
@@ -52,6 +52,32 @@ export default function PostDetail() {
     })
     return map
   }, [comments])
+
+  const fetchComments = useCallback(async () => {
+    if (!id) return
+    setIsCommentsLoading(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/comment/list/${id}`, {
+        credentials: 'include',
+      })
+      const result: ApiResponse = await response.json()
+      if (!response.ok || result.code !== 0) {
+        throw new Error(result.msg || '获取评论失败')
+      }
+
+      const data = Array.isArray(result.data)
+        ? result.data
+        : Array.isArray(result.data?.comments)
+          ? result.data.comments
+          : []
+      setComments(data.map((c: any) => normalizeComment(c)))
+    } catch (error) {
+      console.error('获取评论失败:', error)
+      setComments([])
+    } finally {
+      setIsCommentsLoading(false)
+    }
+  }, [id])
 
   const handleSubmitComment = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -140,6 +166,7 @@ export default function PostDetail() {
         throw new Error(result.msg || '删除评论失败')
       }
       setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
+      await fetchComments()
     } catch (error) {
       console.error('删除评论失败:', error)
       alert('删除评论失败，请稍后重试')
@@ -228,34 +255,8 @@ export default function PostDetail() {
 
   // 加载评论列表
   useEffect(() => {
-    const fetchComments = async () => {
-      if (!id) return
-      setIsCommentsLoading(true)
-      try {
-        const response = await fetch(`${API_BASE_URL}/comment/list/${id}`, {
-          credentials: 'include',
-        })
-        const result: ApiResponse = await response.json()
-        if (!response.ok || result.code !== 0) {
-          throw new Error(result.msg || '获取评论失败')
-        }
-
-        const data = Array.isArray(result.data)
-          ? result.data
-          : Array.isArray(result.data?.comments)
-            ? result.data.comments
-            : []
-        setComments(data.map((c: any) => normalizeComment(c)))
-      } catch (error) {
-        console.error('获取评论失败:', error)
-        setComments([])
-      } finally {
-        setIsCommentsLoading(false)
-      }
-    }
-
     fetchComments()
-  }, [id])
+  }, [fetchComments])
 
   // 删除帖子功能
   const handleDeletePost = async () => {

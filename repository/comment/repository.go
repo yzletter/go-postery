@@ -52,7 +52,7 @@ func (repo *GormCommentRepository) GetByID(cid int) (model.Comment, error) {
 }
 
 func (repo *GormCommentRepository) Delete(cid int) error {
-	tx := repo.db.Model(&model.Comment{}).Where("id = ?", cid).Update("delete_time", time.Now())
+	tx := repo.db.Model(&model.Comment{}).Where("id = ?", cid).Or("parent_id = ?", cid).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		slog.Error("删除失败", "cid", cid)
 		return errors.New("删除失败")
