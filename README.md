@@ -1,34 +1,5 @@
 # go-postery
 
-# 欢迎
-
-## 已完成：
-
-**Gin + Gorm + Mysql + Redis + Viper + Slog  + Promethus + Grafana**
-
-- **功能：**
-  - 用户注册、登录、修改密码、退出登录
-  - 帖子发布、更新、删除
-  - 评论发布、删除、回复
-- **限流：**通过 Redis Lua 实现滑动窗口限流；
-- **运行：**通过 Crontab 执行定时任务，利用信号机制完成优雅关机；
-- **鉴权：**结合 JWT 使用双 Token 机制；
-- **监控：**通过 Promethus + Grafana 统计接口 QPS 和平均耗时；
-
-## 待完成：
-
-- **用户信息完善**
-- **关注**
-- **私信**
-- **AI Agent**
-- **榜单**
-- **搜索引擎**z
-- **其他等等等等**
-
-![image-20251204144412691](/Users/yzletter/Library/Application Support/typora-user-images/image-20251204144412691.png)
-
-如果你刚学习golang，对本项目感兴趣，欢迎加入我一起
-
 ## 简介
 
 用 Go 实现一个简单的信息发布系统
