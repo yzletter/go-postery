@@ -1,0 +1,16 @@
+time="2025-12-04 14:00:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-04 14:00:00.014" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-04 14:10:00.006" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-04 14:10:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-04 14:19:23.721" level=ERROR source=/Users/yzletter/go_project/go-postery/middleware/ratelimit.go:28 msg="对当前 IP 执行限流 ..." IP=127.0.0.1
+time="2025-12-04 14:19:38.709" level=ERROR source=/Users/yzletter/go_project/go-postery/middleware/ratelimit.go:28 msg="对当前 IP 执行限流 ..." IP=127.0.0.1
+time="2025-12-04 14:19:53.709" level=ERROR source=/Users/yzletter/go_project/go-postery/middleware/ratelimit.go:28 msg="对当前 IP 执行限流 ..." IP=127.0.0.1
+time="2025-12-04 14:20:00.004" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-04 14:20:00.004" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-04 14:20:08.711" level=ERROR source=/Users/yzletter/go_project/go-postery/middleware/ratelimit.go:28 msg="对当前 IP 执行限流 ..." IP=127.0.0.1
+time="2025-12-04 14:30:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-04 14:30:00.013" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-04 14:40:00.116" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-04 14:40:00.117" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-04 14:50:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-04 14:50:00.014" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
