@@ -462,13 +462,28 @@ export default function PostDetail() {
                         <div className="flex-1">
                           <div className="bg-gray-50 rounded-lg p-3 mb-2">
                             <div className="flex items-center justify-between mb-1.5">
-                              <Link
-                                to={`/users/${reply.author.id}`}
-                                state={{ username: reply.author.name }}
-                                className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-sm"
-                              >
-                                {reply.author.name}
-                              </Link>
+                              <div className="flex items-center space-x-2">
+                                <Link
+                                  to={`/users/${reply.author.id}`}
+                                  state={{ username: reply.author.name }}
+                                  className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-sm"
+                                >
+                                  {reply.author.name}
+                                </Link>
+                                {reply.replyId &&
+                                  reply.parentId &&
+                                  reply.replyId !== reply.parentId && (
+                                    <div className="flex items-center text-xs text-gray-500 space-x-1">
+                                      <span>回复</span>
+                                      <Link
+                                        to={`/users/${commentAuthorById.get(String(reply.replyId))?.id ?? ''}`}
+                                        className="text-primary-600 hover:text-primary-700"
+                                      >
+                                        @{commentAuthorById.get(String(reply.replyId))?.name || '用户'}
+                                      </Link>
+                                    </div>
+                                  )}
+                              </div>
                               <span className="text-[11px] text-gray-500">
                                 {formatDistanceToNow(new Date(reply.createdAt), {
                                   addSuffix: true,
@@ -476,19 +491,6 @@ export default function PostDetail() {
                                 })}
                               </span>
                             </div>
-                            {reply.replyId &&
-                              reply.parentId &&
-                              reply.replyId !== reply.parentId && (
-                                <div className="text-xs text-gray-500 mb-1">
-                                  回复{' '}
-                                  <Link
-                                    to={`/users/${commentAuthorById.get(String(reply.replyId))?.id ?? ''}`}
-                                    className="text-primary-600 hover:text-primary-700"
-                                  >
-                                    @{commentAuthorById.get(String(reply.replyId))?.name || '用户'}
-                                  </Link>
-                                </div>
-                              )}
                             <p className="text-gray-700 text-sm">{reply.content}</p>
                           </div>
                           <div className="flex items-center space-x-3 text-xs text-gray-500">

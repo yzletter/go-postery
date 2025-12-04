@@ -1,11 +1,42 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus } from 'lucide-react'
+import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Star, Grid, Code2, Server, Bot, Shield, Goal, Braces, Coffee, Pi } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Post } from '../types'
 import { normalizePost } from '../utils/post'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { apiGet } from '../utils/api'
+
+type CategoryItem = { key: string; label: string; icon: LucideIcon }
+
+const categories: CategoryItem[] = [
+  { key: 'follow', label: '关注', icon: Star },
+  { key: 'all', label: '全部', icon: Grid },
+  { key: 'frontend', label: '前端', icon: Code2 },
+  { key: 'backend', label: '后端', icon: Server },
+  { key: 'go', label: 'Go', icon: Goal },
+  { key: 'cpp', label: 'C++', icon: Braces },
+  { key: 'java', label: 'Java', icon: Coffee },
+  { key: 'python', label: 'Python', icon: Pi },
+  { key: 'ai', label: 'AI', icon: Bot },
+  { key: 'ops', label: '运维', icon: Shield },
+]
+
+const categoryTagMap: Record<string, string[]> = {
+  follow: ['关注作者', '订阅', '好友动态'],
+  all: ['综合', '热门', '最新'],
+  frontend: ['React', 'Vue', 'TypeScript', '性能优化', '工程化', '组件库'],
+  backend: ['Go', '微服务', '数据库', 'API 设计', '缓存', '架构'],
+  go: ['Goroutine', 'Gin', '并发', '性能调优', '微服务'],
+  cpp: ['模板', '内存管理', 'STL', '性能优化', '并发'],
+  java: ['Spring', 'JVM', '并发', '微服务', '多线程'],
+  python: ['数据分析', 'Django', 'Flask', '自动化', '爬虫'],
+  ai: ['LLM', 'Prompt', 'RAG', '模型部署', '推理优化', 'Agent'],
+  ops: ['K8s', 'CI/CD', '日志监控', '可观测性', '容灾', '自动化'],
+}
+
+const genericTags = ['实践', '经验分享', '案例', '思路', '指南']
 
 // 生成模拟数据的函数
 const generateMockPost = (id: number, index: number): Post => {
@@ -99,13 +130,18 @@ const mockRecommendUsers = [
 ]
 
 // API 获取帖子列表
+const FETCH_TIMEOUT_MS = 8000
+
 const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostListResult> => {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
   try {
     const { data } = await apiGet<{
       posts: Post[]
       total?: number
       hasMore?: boolean
-    }>(`/posts?pageNo=${page}&pageSize=${pageSize}`)
+    }>(`/posts?pageNo=${page}&pageSize=${pageSize}`, { signal: controller.signal })
 
     if (!data || !Array.isArray(data.posts)) {
       throw new Error('帖子列表响应数据格式错误')
@@ -124,47 +160,104 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostList
     return {
       posts: postsWithStats,
       total: data.total ?? postsWithStats.length,
-      hasMore: Boolean(data.hasMore),
+      hasMore: typeof data.hasMore === 'boolean' ? data.hasMore : postsWithStats.length >= pageSize,
     }
   } catch (error) {
+    if ((error as any)?.name === 'AbortError') {
+      console.error('Fetch posts request timeout')
+      throw new Error('请求超时，请检查后端服务状态')
+    }
     console.error('Failed to fetch posts:', error)
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
 
   const pageSize = 10
 
+  // 确保进入首页时回到顶部
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [])
+
+  const categoryPool = useMemo(() => categories.filter(c => c.key !== 'all'), [])
+
+  const pickTags = useCallback((pool: string[], seed: number): string[] => {
+    const tags: string[] = []
+    const length = pool.length
+    const count = Math.min(3, length)
+    for (let i = 0; i < count; i++) {
+      const idx = (seed + i * 3) % length
+      const tag = pool[idx]
+      if (!tags.includes(tag)) {
+        tags.push(tag)
+      }
+    }
+    if (tags.length < 2) {
+      tags.push(...genericTags.slice(0, 2 - tags.length))
+    }
+    return tags
+  }, [])
+
+  const decoratePosts = useCallback((list: Post[], offset: number = 0): Post[] => {
+    return list.map((post, idx) => {
+      const category = categoryPool[(post.id + idx + offset) % categoryPool.length]
+      const tagPool = categoryTagMap[category.key] ?? genericTags
+      const tags = pickTags(tagPool, post.id + idx + offset)
+      return {
+        ...post,
+        category: category.key,
+        tags,
+      }
+    })
+  }, [categoryPool, pickTags])
+
   // 加载帖子数据
   const loadPosts = useCallback(async (page: number, reset: boolean = false) => {
     if (isLoadingRef.current) return
     
+    if (reset) {
+      setIsInitialLoading(true)
+      setPosts([])
+      setHasMore(true)
+      setCurrentPage(0)
+      setError(null)
+    } else {
+      setError(null)
+    }
+
     isLoadingRef.current = true
     setIsLoading(true)
-    setError(null)
     try {
       if (!reset) {
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       
       const { posts: newPosts, hasMore: hasMoreFromApi } = await fetchPosts(page, pageSize)
-      
-      setPosts(prev => reset ? newPosts : [...prev, ...newPosts])
+      setPosts(prev => {
+        const offset = reset ? 0 : prev.length
+        const decorated = decoratePosts(newPosts, offset)
+        return reset ? decorated : [...prev, ...decorated]
+      })
       setHasMore(hasMoreFromApi)
       setCurrentPage(page)
     } catch (error) {
       console.error('Failed to load posts:', error)
       setError(error instanceof Error ? error.message : '加载帖子失败')
+      setHasMore(false)
     } finally {
       setIsLoading(false)
       setIsInitialLoading(false)
@@ -175,7 +268,7 @@ export default function Home() {
   // 初始加载帖子
   useEffect(() => {
     setIsInitialLoading(true)
-    setCurrentPage(1)
+    setCurrentPage(0)
     setHasMore(true)
     setPosts([])
     setError(null)
@@ -186,7 +279,7 @@ export default function Home() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading && !isInitialLoading) {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isInitialLoading && !error) {
           loadPosts(currentPage + 1, false)
         }
       },
@@ -203,11 +296,63 @@ export default function Home() {
         observer.unobserve(currentTarget)
       }
     }
-  }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts])
+  }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts, error])
 
+  const filteredPosts = useMemo(() => {
+    if (selectedCategory === 'all') return posts
+    return posts.filter(post => post.category === selectedCategory)
+  }, [posts, selectedCategory])
+
+  // 1111
   return (
-    <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(240px,320px)] gap-6 items-start">
-      <section className="space-y-6 lg:-ml-2 xl:-ml-4">
+    <div className="grid lg:grid-cols-[60px_minmax(0,9fr)_300px] gap-3 items-start">
+      <aside className="hidden lg:block w-[140px] lg:sticky lg:top-20 self-start lg:-ml-20">
+        <div className="space-y-3">
+          <div className="card p-3 space-y-3">
+            <div className="space-y-2">
+              {categories.map(cat => {
+                const Icon = cat.icon
+                return (
+                  <button
+                    key={cat.key}
+                    onClick={() => setSelectedCategory(cat.key)}
+                    className={`inline-flex w-full items-center justify-start gap-2 pl-3.5 pr-2.5 py-2 rounded-lg border transition-all hover:-translate-x-0.5 focus:outline-none focus:ring-2 focus:ring-primary-200 ${
+                      selectedCategory === cat.key
+                        ? 'bg-primary-50 border-primary-200 text-primary-700 shadow-sm ring-1 ring-primary-100'
+                        : 'border-gray-200 bg-white hover:border-primary-200 hover:text-primary-700 hover:bg-primary-50/60'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{cat.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section className="flex flex-col gap-6">
+        <div className="flex items-center gap-2 overflow-x-auto lg:hidden pb-2">
+          {categories.map(cat => {
+            const Icon = cat.icon
+            return (
+              <button
+                key={cat.key}
+                onClick={() => setSelectedCategory(cat.key)}
+                className={`inline-flex items-center gap-1 pl-3.5 pr-3 py-1.5 rounded-full text-sm border whitespace-nowrap ${
+                  selectedCategory === cat.key
+                    ? 'bg-primary-50 border-primary-200 text-primary-700'
+                    : 'bg-white border-gray-200 text-gray-700'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{cat.label}</span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* 初始加载状态 */}
         {isInitialLoading && (
           <div className="card text-center py-12">
@@ -238,7 +383,13 @@ export default function Home() {
         {!isInitialLoading && (
           <>
             <div className="space-y-3">
-              {posts.map(post => (
+              {filteredPosts.length === 0 && !isLoading && (
+                <div className="card text-center py-10">
+                  <p className="text-gray-700 font-medium mb-1">该分类下暂时没有帖子</p>
+                  <p className="text-sm text-gray-500">试试切换到其他分类或稍后再来～</p>
+                </div>
+              )}
+              {filteredPosts.map(post => (
                 <article
                   key={post.id}
                   role="link"
@@ -279,6 +430,23 @@ export default function Home() {
                       <p className="text-gray-600 mb-2 line-clamp-2 text-sm leading-relaxed">
                         {post.content}
                       </p>
+
+                      {/* 标签 */}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        {post.category && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs border border-primary-100">
+                            {categories.find(c => c.key === post.category)?.label || '其他'}
+                          </span>
+                        )}
+                        {post.tags?.map(tag => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
 
                       {/* 元信息 */}
                       <div className="flex items-center justify-between text-xs text-gray-500">
@@ -358,7 +526,7 @@ export default function Home() {
         )}
       </section>
 
-      <aside className="w-full">
+      <aside className="w-full lg:ml-6 xl:ml-0">
         <div className="sticky top-24 space-y-4 max-w-[320px]">
           <div className="card">
             <div className="flex items-center justify-between mb-4">
@@ -395,7 +563,7 @@ export default function Home() {
             </div>
             <div className="space-y-3">
               {mockRecommendUsers.map((user) => (
-                <div key={user.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <div key={user.id} className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
                   <Link
                     to={`/users/${user.id}`}
                     state={{ username: user.name }}
@@ -412,7 +580,7 @@ export default function Home() {
                       <Link
                         to={`/users/${user.id}`}
                         state={{ username: user.name }}
-                        className="font-medium text-gray-900 hover:text-primary-600 transition-colors line-clamp-1"
+                        className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors line-clamp-1"
                       >
                         {user.name}
                       </Link>
@@ -428,6 +596,12 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="card text-center text-xs text-gray-500 leading-relaxed">
+            <p className="font-semibold text-gray-700">© 2025 Go Postery</p>
+            <p>内容版权归原作者所有，转载请注明出处。</p>
+            <p className="text-gray-400">如有侵权或合作事宜，请联系管理员处理。</p>
           </div>
         </div>
       </aside>

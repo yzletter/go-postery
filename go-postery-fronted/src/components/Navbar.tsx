@@ -12,12 +12,12 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-7">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-5">
         <div className="flex items-center h-16 gap-4">
           <Link
             to="/"
             reloadDocument
-            className="flex items-center space-x-2 group flex-shrink-0 -ml-1 sm:-ml-2"
+            className="flex items-center space-x-2 group flex-shrink-0 -ml-3 sm:-ml-20"
           >
             <MessageSquare className="h-8 w-8 text-primary-600 group-hover:text-primary-700 transition-colors" />
             <span className="text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
@@ -26,13 +26,13 @@ export default function Navbar() {
           </Link>
 
           <form
-            className="flex-1 max-w-xl hidden sm:block sm:ml-8 md:ml-14"
+            className="flex-1 max-w-xl hidden sm:block sm:ml-20 md:ml-20"
             onSubmit={(e) => {
               e.preventDefault()
             }}
           >
             <div className="relative">
-              <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="h-5 w-5 text-gray-800 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchTerm}
@@ -46,10 +46,10 @@ export default function Navbar() {
           <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 ml-auto">
             <Link
               to="/agent"
-              className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
+              className="flex items-center space-x-1 text-gray-900 hover:text-primary-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
             >
               <Bot className="h-5 w-5" />
-              <span className="hidden sm:inline">Agent</span>
+              <span className="hidden sm:inline">Go Agentery</span>
             </Link>
             {user ? (
               <>
