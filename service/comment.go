@@ -4,18 +4,18 @@ import (
 	"errors"
 
 	dto "github.com/yzletter/go-postery/dto/response"
-	repository "github.com/yzletter/go-postery/repository/comment"
+	commentRepository "github.com/yzletter/go-postery/repository/comment"
 	postRepository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
 )
 
 type CommentService struct {
-	CommentRepository *repository.GormCommentRepository
+	CommentRepository *commentRepository.GormCommentRepository
 	UserRepository    *userRepository.GormUserRepository
 	PostRepository    *postRepository.GormPostRepository
 }
 
-func NewCommentService(commentRepository *repository.GormCommentRepository, userRepository *userRepository.GormUserRepository, postRepository *postRepository.GormPostRepository) *CommentService {
+func NewCommentService(commentRepository *commentRepository.GormCommentRepository, userRepository *userRepository.GormUserRepository, postRepository *postRepository.GormPostRepository) *CommentService {
 	return &CommentService{
 		CommentRepository: commentRepository,
 		UserRepository:    userRepository,
@@ -44,8 +44,8 @@ func (svc *CommentService) Delete(uid int, cid int) error {
 }
 
 func (svc *CommentService) List(pid int) []dto.CommentDTO {
-	comments := svc.CommentRepository.GetByPostID(pid)
-	if comments == nil {
+	comments, err := svc.CommentRepository.GetByPostID(pid)
+	if err != nil {
 		return nil
 	}
 
