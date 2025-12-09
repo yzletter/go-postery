@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send } from 'lucide-react'
+import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send, Sparkles } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
@@ -29,6 +29,8 @@ export default function Navbar() {
             className="flex-1 max-w-xl hidden sm:block sm:ml-20 md:ml-20"
             onSubmit={(e) => {
               e.preventDefault()
+              const query = searchTerm.trim()
+              navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
             }}
           >
             <div className="relative">
@@ -46,10 +48,15 @@ export default function Navbar() {
           <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 ml-auto">
             <Link
               to="/agent"
-              className="flex items-center space-x-1 text-gray-900 hover:text-primary-600 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
+              className="relative overflow-hidden group flex items-center space-x-2 px-3.5 py-2 rounded-full border border-primary-100 bg-gradient-to-r from-primary-50 via-white to-white text-primary-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
-              <Bot className="h-5 w-5" />
-              <span className="hidden sm:inline">Go Agentery</span>
+              <span className="absolute inset-0 bg-primary-100/40 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" aria-hidden />
+              <Bot className="h-5 w-5 relative z-10" />
+              <span className="hidden sm:inline font-semibold relative z-10">AI 助手</span>
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-white/70 border border-primary-100 text-primary-700 relative z-10">
+                <Sparkles className="h-3 w-3" />
+                新
+              </span>
             </Link>
             {user ? (
               <>

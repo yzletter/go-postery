@@ -4,18 +4,20 @@ export interface ApiResponse<T = any> {
   data?: T // 响应数据
 }
 
+export type Id = string
+
 export interface User {
-  id?: number | string
+  id?: Id
   name: string
   email?: string
 }
 
 export interface Post {
-  id: number
+  id: Id
   title: string
   content: string
   author: {
-    id: number
+    id: Id
     name: string
   }
   createdAt: string
@@ -27,13 +29,13 @@ export interface Post {
 }
 
 export interface Comment {
-  id: number | string
-  postId?: number
-  parentId?: number
-  replyId?: number
+  id: Id
+  postId?: Id
+  parentId?: Id
+  replyId?: Id
   content: string
   author: {
-    id: number | string
+    id: Id
     name: string
   }
   createdAt: string

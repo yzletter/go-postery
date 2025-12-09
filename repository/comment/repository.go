@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -23,6 +24,7 @@ func NewGormCommentRepository(db *gorm.DB) *GormCommentRepository {
 func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, replyId int, content string) (model.Comment, error) {
 	now := time.Now()
 	comment := model.Comment{
+		Id:         snowflake.NextID(),
 		PostId:     pid,      // 所属帖子 id
 		ParentId:   parentId, // 父评论 id, 若为 0 则为主评论
 		ReplyId:    replyId,  // 当前评论所评论的Id

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -25,6 +26,7 @@ func (repo *GormPostRepository) Create(uid int, title, content string) (model.Po
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
+		Id:         snowflake.NextID(),
 		UserId:     uid,     // 作者id
 		Title:      title,   // 标题
 		Content:    content, // 正文

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Star, Grid, Code2, Server, Bot, Shield, Goal, Braces, Coffee, Pi } from 'lucide-react'
+import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Star, Grid, Code2, Server, Bot, Shield, Goal, Braces, Coffee, Pi, Gift, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Post } from '../types'
 import { normalizePost } from '../utils/post'
+import { buildIdSeed } from '../utils/id'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { apiGet } from '../utils/api'
@@ -81,11 +82,11 @@ const generateMockPost = (id: number, index: number): Post => {
   ]
 
   return {
-    id,
+    id: String(id),
     title: titles[index % titles.length],
     content: contents[index % contents.length],
     author: {
-      id: author.id,
+      id: String(author.id),
       name: author.name
     },
     createdAt: new Date(Date.now() - (index * 60 * 60 * 1000)).toISOString(),
@@ -213,13 +214,15 @@ export default function Home() {
   }, [])
 
   const decoratePosts = useCallback((list: Post[], offset: number = 0): Post[] => {
+    const hasCategories = categoryPool.length > 0
     return list.map((post, idx) => {
-      const category = categoryPool[(post.id + idx + offset) % categoryPool.length]
-      const tagPool = categoryTagMap[category.key] ?? genericTags
-      const tags = pickTags(tagPool, post.id + idx + offset)
+      const seed = buildIdSeed(post.id, idx + offset)
+      const category = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
+      const tagPool = category ? categoryTagMap[category.key] ?? genericTags : genericTags
+      const tags = pickTags(tagPool, seed + idx + offset)
       return {
         ...post,
-        category: category.key,
+        category: category?.key,
         tags,
       }
     })
@@ -528,13 +531,35 @@ export default function Home() {
 
       <aside className="w-full lg:ml-6 xl:ml-0">
         <div className="sticky top-24 space-y-4 max-w-[320px]">
+          <div className="card bg-gradient-to-br from-primary-50 via-white to-white border-primary-100/60 relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-28 h-28 bg-primary-100/60 rounded-full blur-2xl" />
+            <div className="absolute -left-8 bottom-0 w-24 h-24 bg-white/60 border border-primary-50 rounded-full blur-2xl" />
+            <div className="relative space-y-4">
+              <div className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-primary-700" />
+                <h2 className="text-lg font-semibold text-gray-900">今日抽奖</h2>
+                <span className="text-xs text-primary-700 bg-primary-100 px-2 py-0.5 rounded-full border border-primary-200">模拟</span>
+              </div>
+              <p className="text-sm text-gray-600">每日签到即可抽奖，会员、积分、限定徽章等你拿～</p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/lottery')}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  立即抽奖
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Flame className="h-5 w-5 text-primary-600" />
-                <h2 className="text-lg font-semibold text-gray-900">热门榜单</h2>
+                <h2 className="text-lg font-semibold text-gray-900">热门文章</h2>
               </div>
-              <span className="text-xs text-gray-500">示例数据</span>
             </div>
             <ol className="space-y-3">
               {mockHotPosts.map((hot, index) => (
@@ -559,7 +584,6 @@ export default function Home() {
                 <UserPlus className="h-5 w-5 text-primary-600" />
                 <h2 className="text-lg font-semibold text-gray-900">推荐关注</h2>
               </div>
-              <span className="text-xs text-gray-500">示例数据</span>
             </div>
             <div className="space-y-3">
               {mockRecommendUsers.map((user) => (

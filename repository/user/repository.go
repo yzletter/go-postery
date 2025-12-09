@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -26,6 +27,7 @@ func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
 func (repo *GormUserRepository) Create(name, password string) (model.User, error) {
 	// 将模型绑定到结构体
 	user := model.User{
+		Id:       snowflake.NextID(),
 		Name:     name,
 		PassWord: password,
 	}

@@ -4,7 +4,7 @@ import "github.com/yzletter/go-postery/model"
 
 // UserDTO 后端返回
 type UserDTO struct {
-	Id   int    `json:"id,omitempty"`
+	Id   int    `json:"id,omitempty,string"`
 	Name string `json:"name,omitempty"`
 }
 

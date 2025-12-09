@@ -12,7 +12,7 @@ use go_postery;
 # 创建 user 表
 create table if not exists user
 (
-    id          int auto_increment comment '用户 id, 自增',
+    id          bigint auto_increment comment '用户 id, 自增',
     name        varchar(20) not null comment '用户名',
     password    char(32)    not null comment '用户密码的 md5 加密结果',
     create_time datetime default current_timestamp comment '用户注册时间, 默认为创建记录的时间',
@@ -25,8 +25,8 @@ create table if not exists user
 # 创建 post 表
 create table if not exists post
 (
-    id          int auto_increment comment '帖子 id, 自增',
-    user_id     varchar(20) not null comment '发布者 id',
+    id          bigint auto_increment comment '帖子 id, 自增',
+    user_id     bigint not null comment '发布者 id',
     create_time datetime default current_timestamp comment '帖子创建时间',
     update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
     delete_time datetime default null comment '帖子删除时间',
@@ -38,11 +38,11 @@ create table if not exists post
 
 create table if not exists comment
 (
-    id          int auto_increment comment '评论 id, 自增',
-    post_id     int not null comment '所属帖子 id',
-    user_id     int not null comment '发布者 id',
-    parent_id   int not null comment '父评论 id',
-    reply_id    int not null comment '回复评论 id',
+    id          bigint auto_increment comment '评论 id, 自增',
+    post_id     bigint not null comment '所属帖子 id',
+    user_id     bigint not null comment '发布者 id',
+    parent_id   bigint not null comment '父评论 id',
+    reply_id    bigint not null comment '回复评论 id',
     create_time datetime default current_timestamp comment '帖子创建时间',
     delete_time datetime default null comment '帖子删除时间',
     content     text comment '正文',

@@ -11,6 +11,8 @@ import Settings from './pages/Settings'
 import Agent from './pages/Agent'
 import Follows from './pages/Follows'
 import Messages from './pages/Messages'
+import Search from './pages/Search'
+import Lottery from './pages/Lottery'
 import { useAuth } from './contexts/AuthContext'
 
 // 保护需要登录的路由
@@ -32,10 +34,12 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/search" element={<Search />} />
       <Route path="/post/:id" element={<PostDetail />} />
       <Route path="/edit/:id" element={<EditPost />} />
       <Route path="/login" element={<Login />} />
       <Route path="/agent" element={<Agent />} />
+      <Route path="/lottery" element={<Lottery />} />
       <Route
         path="/follows"
         element={

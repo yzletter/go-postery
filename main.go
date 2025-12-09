@@ -10,6 +10,7 @@ import (
 	"github.com/yzletter/go-postery/infra/crontab"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
+	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
@@ -32,7 +33,7 @@ func main() {
 	slog.InitSlog("./log/go_postery.log")                // 初始化 slog
 	crontab.InitCrontab()                                // 初始化 定时任务
 	smooth.InitSmoothExit()                              // 初始化 优雅退出
-
+	snowflake.Init(0)                                    // 初始化 雪花算法
 	// 初始化 gin
 	engine := gin.Default()
 

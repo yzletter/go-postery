@@ -72,7 +72,7 @@ export default function Messages() {
         </Link>
         <div className="text-sm text-gray-500 flex items-center space-x-2">
           <MessageCircle className="h-4 w-4 text-primary-600" />
-          <span>私信</span>
+          <span>本服务由 Go-Chatery 提供</span>
         </div>
       </div>
 

@@ -49,7 +49,7 @@ export default function EditPost() {
     }
 
     try {
-      await apiPost('/posts/update', { id: Number(id), title, content })
+      await apiPost('/posts/update', { id, title, content })
 
       alert('帖子修改成功')
       navigate(`/post/${id}`)

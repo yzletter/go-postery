@@ -7,10 +7,10 @@ import (
 )
 
 type CommentDTO struct {
-	Id        int     `json:"id"`
-	PostId    int     `json:"post_id"`
-	ParentId  int     `json:"parent_id"`
-	ReplyId   int     `json:"reply_id"`
+	Id        int     `json:"id,string"`
+	PostId    int     `json:"post_id,string"`
+	ParentId  int     `json:"parent_id,string"`
+	ReplyId   int     `json:"reply_id,string"`
 	Content   string  `json:"content"`
 	CreatedAt string  `json:"createdAt"`
 	Author    UserDTO `json:"author"`

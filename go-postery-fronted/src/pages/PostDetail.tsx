@@ -6,6 +6,7 @@ import { useState, useEffect, FormEvent, useMemo, useCallback } from 'react'
 import { Post, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
+import { normalizeId } from '../utils/id'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiPost } from '../utils/api'
 
@@ -24,14 +25,14 @@ export default function PostDetail() {
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null)
 
   const commentGroups = useMemo(() => {
-    const idSet = new Set(comments.map(c => String(c.id)))
+    const idSet = new Set(comments.map(c => normalizeId(c.id)))
     const repliesMap = new Map<string, Comment[]>()
     const parents: Comment[] = []
 
     comments.forEach((c) => {
-      const parentId = c.parentId ?? 0
-      const parentIdStr = String(parentId)
-      if (!parentId || !idSet.has(parentIdStr)) {
+      const parentIdStr = c.parentId ? normalizeId(c.parentId) : '0'
+      const isParent = parentIdStr === '0' || !idSet.has(parentIdStr)
+      if (isParent) {
         parents.push(c)
         return
       }
@@ -42,14 +43,14 @@ export default function PostDetail() {
 
     return parents.map(parent => ({
       parent,
-      replies: repliesMap.get(String(parent.id)) ?? [],
+      replies: repliesMap.get(normalizeId(parent.id)) ?? [],
     }))
   }, [comments])
 
   const commentAuthorById = useMemo(() => {
-    const map = new Map<string, { id: string | number; name: string }>()
+    const map = new Map<string, { id: string; name: string }>()
     comments.forEach(c => {
-      map.set(String(c.id), { id: c.author.id, name: c.author.name })
+      map.set(normalizeId(c.id), { id: normalizeId(c.author.id), name: c.author.name })
     })
     return map
   }, [comments])
@@ -81,12 +82,17 @@ export default function PostDetail() {
 
     try {
       setCommentsError(null)
-      const hasParent = replyTarget && replyTarget.parentId && replyTarget.parentId !== 0
-      const parentIdToSend = replyTarget ? Number(hasParent ? replyTarget.parentId : replyTarget.id) : 0
-      const replyIdToSend = replyTarget ? Number(replyTarget.id) : 0
+      const replyTargetId = replyTarget ? normalizeId(replyTarget.id) : '0'
+      const normalizedParentId = replyTarget?.parentId ? normalizeId(replyTarget.parentId) : ''
+      const parentIdToSend =
+        replyTarget && normalizedParentId && normalizedParentId !== '0'
+          ? normalizedParentId
+          : replyTargetId || '0'
+      const replyIdToSend = replyTarget ? replyTargetId || '0' : '0'
+      const postIdToSend = normalizeId(id)
 
       const { data } = await apiPost('/comment/new', {
-        post_id: Number(id),
+        post_id: postIdToSend,
         parent_id: parentIdToSend,
         reply_id: replyIdToSend,
         content: commentText.trim(),
@@ -113,11 +119,12 @@ export default function PostDetail() {
   }
 
   const handleDeleteComment = async (commentId: string | number) => {
-    const target = comments.find(c => String(c.id) === String(commentId))
+    const commentIdStr = normalizeId(commentId)
+    const target = comments.find(c => normalizeId(c.id) === commentIdStr)
     if (!target) return
 
     const isCommentOwner =
-      user && target.author?.id !== undefined && String(user.id) === String(target.author.id)
+      user && target.author?.id !== undefined && normalizeId(user.id) === normalizeId(target.author.id)
     const canDelete = isAuthor || isCommentOwner
 
     if (!canDelete) {
@@ -135,7 +142,7 @@ export default function PostDetail() {
     }
 
     if (!isAuthor) {
-      const belongs = await checkCommentOwnership(commentId)
+      const belongs = await checkCommentOwnership(commentIdStr)
       if (!belongs) {
         alert('只能删除自己的评论')
         return
@@ -143,8 +150,8 @@ export default function PostDetail() {
     }
 
     try {
-      await apiGet(`/comment/delete/${commentId}`)
-      setComments(prev => prev.filter(c => String(c.id) !== String(commentId)))
+      await apiGet(`/comment/delete/${commentIdStr}`)
+      setComments(prev => prev.filter(c => normalizeId(c.id) !== commentIdStr))
       await fetchComments()
     } catch (error) {
       console.error('删除评论失败:', error)
@@ -154,7 +161,8 @@ export default function PostDetail() {
 
   const checkCommentOwnership = useCallback(async (commentId: string | number): Promise<boolean> => {
     try {
-      await apiGet(`/comment/belong?id=${commentId}`)
+      const commentIdStr = normalizeId(commentId)
+      await apiGet(`/comment/belong?id=${commentIdStr}`)
       return true
     } catch (error) {
       console.error('检查评论所有权失败:', error)
@@ -164,7 +172,8 @@ export default function PostDetail() {
 
   const checkPostOwnership = useCallback(async (postId: string): Promise<boolean> => {
     try {
-      await apiGet(`/posts/belong?id=${postId}`)
+      const postIdStr = normalizeId(postId)
+      await apiGet(`/posts/belong?id=${postIdStr}`)
       return true
     } catch (error) {
       console.error('检查帖子所有权失败:', error)
@@ -260,7 +269,7 @@ export default function PostDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 lg:-ml-1">
       {/* 返回按钮 */}
       <Link
         to="/"
@@ -432,7 +441,7 @@ export default function PostDetail() {
                         回复
                       </button>
                       {(isAuthor ||
-                        (user && String(user.id) === String(parent.author.id))) && (
+                        (user && normalizeId(user.id) === normalizeId(parent.author.id))) && (
                         <button
                           onClick={() => handleDeleteComment(parent.id)}
                           className="hover:text-red-600 transition-colors"
@@ -476,10 +485,10 @@ export default function PostDetail() {
                                     <div className="flex items-center text-xs text-gray-500 space-x-1">
                                       <span>回复</span>
                                       <Link
-                                        to={`/users/${commentAuthorById.get(String(reply.replyId))?.id ?? ''}`}
+                                        to={`/users/${commentAuthorById.get(normalizeId(reply.replyId))?.id ?? ''}`}
                                         className="text-primary-600 hover:text-primary-700"
                                       >
-                                        @{commentAuthorById.get(String(reply.replyId))?.name || '用户'}
+                                        @{commentAuthorById.get(normalizeId(reply.replyId))?.name || '用户'}
                                       </Link>
                                     </div>
                                   )}
@@ -497,16 +506,16 @@ export default function PostDetail() {
                             <button
                               type="button"
                               onClick={() => setReplyTarget(reply)}
-                              className="hover:text-primary-600 transition-colors"
+                            className="hover:text-primary-600 transition-colors"
+                          >
+                            回复
+                          </button>
+                          {(isAuthor ||
+                            (user && normalizeId(user.id) === normalizeId(reply.author.id))) && (
+                            <button
+                              onClick={() => handleDeleteComment(reply.id)}
+                              className="hover:text-red-600 transition-colors"
                             >
-                              回复
-                            </button>
-                            {(isAuthor ||
-                              (user && String(user.id) === String(reply.author.id))) && (
-                              <button
-                                onClick={() => handleDeleteComment(reply.id)}
-                                className="hover:text-red-600 transition-colors"
-                              >
                                 删除
                               </button>
                             )}

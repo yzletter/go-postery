@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User } from '../types'
 import { md5Hash } from '../utils/crypto'
 import { apiGet, apiPost, AUTH_API_BASE_URL } from '../utils/api'
+import { normalizeId } from '../utils/id'
 
 interface AuthContextType {
   user: User | null
@@ -16,8 +17,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const normalizeUserFromResponse = (raw: any, fallbackName: string): User => {
   const responseUser = raw?.user ?? raw ?? {}
+  const resolvedId = normalizeId(responseUser.id ?? responseUser.Id ?? raw?.Id ?? raw?.id)
   return {
-    id: responseUser.id ?? responseUser.Id ?? raw?.Id ?? raw?.id ?? Date.now(),
+    id: resolvedId || Date.now().toString(),
     name: responseUser.name ?? responseUser.Name ?? raw?.Name ?? fallbackName,
     email: responseUser.email ?? responseUser.Email,
   }
@@ -32,7 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedUser = localStorage.getItem('user')
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser))
+        const parsed = JSON.parse(savedUser)
+        const normalized = parsed?.id ? { ...parsed, id: normalizeId(parsed.id) } : parsed
+        setUser(normalized)
       } catch (error) {
         console.error('Failed to parse saved user:', error)
         localStorage.removeItem('user')
