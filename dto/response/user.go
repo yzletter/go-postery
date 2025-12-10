@@ -38,18 +38,24 @@ func ToUserBriefDTO(user model.User) UserBriefDTO {
 
 // ToUserDetailDTO model.User 转 UserDetailDTO
 func ToUserDetailDTO(user model.User) UserDetailDTO {
-	return UserDetailDTO{
+	userDetailDTO := UserDetailDTO{
 		Id:          user.Id,
 		Name:        user.Name,
 		Email:       user.Email,
 		Avatar:      user.Avatar,
 		Bio:         user.Bio,
 		Gender:      user.Gender,
-		BirthDay:    user.BirthDay.Format(time.RFC3339),
+		BirthDay:    "",
 		Location:    user.Location,
 		Country:     user.Country,
 		LastLoginIP: user.LastLoginIP,
 	}
+
+	if user.BirthDay != nil {
+		userDetailDTO.BirthDay = user.BirthDay.Format(time.RFC3339)
+	}
+
+	return userDetailDTO
 }
 
 //

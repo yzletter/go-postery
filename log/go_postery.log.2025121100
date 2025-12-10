@@ -1,0 +1,5 @@
+time="2025-12-11 00:03:31.578" level=INFO source=/Users/yzletter/go_project/go-postery/handler/user.go:50 msg=登录成功 userBriefDTO=1998783378609930240
+time="2025-12-11 00:07:50.041" level=INFO source=/Users/yzletter/go_project/go-postery/infra/smooth/smooth.go:21 msg="signal interrupt has come, start exiting ..."
+time="2025-12-11 00:07:50.042" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:115 msg="关闭 MySQL 成功 ..."
+time="2025-12-11 00:07:50.042" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:72 msg="close globalRedisClient succeed"
+time="2025-12-11 00:07:50.042" level=INFO source=/Users/yzletter/go_project/go-postery/infra/smooth/smooth.go:27 msg="all task has finished"

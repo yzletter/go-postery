@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"log/slog"
+	"strconv"
 
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
@@ -143,4 +144,20 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 
 	// 默认情况下也返回200
 	response.Success(ctx, userBriefDTO)
+}
+
+func (hdl *UserHandler) Profile(ctx *gin.Context) {
+	uid, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	ok, userDetailDTO := hdl.UserService.GetDetailById(uid)
+	if !ok {
+		response.ServerError(ctx, "")
+		return
+	}
+
+	response.Success(ctx, userDetailDTO)
 }

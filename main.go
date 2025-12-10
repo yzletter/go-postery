@@ -87,6 +87,7 @@ func main() {
 	engine.POST("/register/submit", UserHdl.Register) // 用户注册
 	engine.POST("/login/submit", UserHdl.Login)       // 用户登录
 	engine.GET("/logout", UserHdl.Logout)             // 用户退出
+	engine.GET("/profile/:id", UserHdl.Profile)       // 用户资料
 	// 强制登录
 	engine.POST("/modify_pass/submit", AuthRequiredMdl, UserHdl.ModifyPass) // 修改密码
 
