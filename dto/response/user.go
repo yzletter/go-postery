@@ -1,26 +1,63 @@
 package dto
 
-import "github.com/yzletter/go-postery/model"
+import (
+	"time"
 
-// UserDTO 后端返回
-type UserDTO struct {
-	Id   int    `json:"id,omitempty,string"`
-	Name string `json:"name,omitempty"`
+	"github.com/yzletter/go-postery/model"
+)
+
+// UserBriefDTO 后端返回简要 User 信息
+type UserBriefDTO struct {
+	Id     int    `json:"id,string"` // ID 雪花算法
+	Name   string `json:"name"`      // 用户名
+	Avatar string `json:"avatar"`    // 头像 URL
 }
 
-// ToUserDTO model.User 转 UserDTO
-func ToUserDTO(user model.User) UserDTO {
-	return UserDTO{
-		Id:   user.Id,
-		Name: user.Name,
+// UserDetailDTO 后端返回详细 User 信息
+type UserDetailDTO struct {
+	Id          int    `json:"id,string"`     // ID 雪花算法
+	Name        string `json:"name"`          // 用户名
+	Email       string `json:"email"`         // 邮箱
+	Avatar      string `json:"avatar"`        // 头像 URL
+	Bio         string `json:"bio"`           // 个性签名
+	Gender      int    `json:"gender"`        // 性别: 0 表示空, 1 表示男, 2 表示女, 3 表示其它
+	BirthDay    string `json:"birthday"`      // 生日
+	Location    string `json:"location"`      // 地区
+	Country     string `json:"country"`       // 国家
+	LastLoginIP string `json:"last_login_ip"` // 最近一次登录 IP
+}
+
+// ToUserBriefDTO model.User 转 UserDTO
+func ToUserBriefDTO(user model.User) UserBriefDTO {
+	return UserBriefDTO{
+		Id:     user.Id,
+		Name:   user.Name,
+		Avatar: "", // todo
 	}
 }
 
-// ToUserDTOs []model.User 转 []UserDTO
-func ToUserDTOs(users []model.User) []UserDTO {
-	res := make([]UserDTO, len(users))
-	for _, user := range users {
-		res = append(res, ToUserDTO(user))
+// ToUserDetailDTO model.User 转 UserDetailDTO
+func ToUserDetailDTO(user model.User) UserDetailDTO {
+	return UserDetailDTO{
+		Id:          user.Id,
+		Name:        user.Name,
+		Email:       user.Email,
+		Avatar:      user.Avatar,
+		Bio:         user.Bio,
+		Gender:      user.Gender,
+		BirthDay:    user.BirthDay.Format(time.RFC3339),
+		Location:    user.Location,
+		Country:     user.Country,
+		LastLoginIP: user.LastLoginIP,
 	}
-	return res
 }
+
+//
+//// ToUserDTOs []model.User 转 []UserDTO
+//func ToUserDTOs(users []model.User) []UserDTO {
+//	res := make([]UserDTO, len(users))
+//	for _, user := range users {
+//		res = append(res, ToUserDTO(user))
+//	}
+//	return res
+//}

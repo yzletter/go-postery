@@ -107,7 +107,7 @@ func main() {
 	engine.GET("/comment/delete/:id", AuthRequiredMdl, CommentHdl.Delete) // 删除评论
 	engine.GET("/comment/belong", AuthRequiredMdl, CommentHdl.Belong)     // 删除评论
 
-	if err := engine.Run("localhost:8080"); err != nil {
+	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)
 	}
 }

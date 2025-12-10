@@ -1,8 +1,0 @@
-time="2025-12-08 17:01:08.867" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
-time="2025-12-08 17:01:08.871" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
-time="2025-12-08 17:10:00.004" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
-time="2025-12-08 17:10:00.005" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
-time="2025-12-08 17:20:00.006" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
-time="2025-12-08 17:20:00.007" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
-time="2025-12-08 17:30:00.041" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
-time="2025-12-08 17:30:00.042" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"

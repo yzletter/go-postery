@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 
 	"github.com/yzletter/go-postery/dto/request"
@@ -39,16 +40,16 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	ok, userDTO := hdl.UserService.Login(loginRequest.Name, loginRequest.PassWord)
+	ok, userBriefDTO := hdl.UserService.Login(loginRequest.Name, loginRequest.PassWord)
 	if !ok {
 		// 根据 name 未找到 user或密码不正确
 		response.ParamError(ctx, "用户名或密码错误")
 		return
 	}
-	slog.Info("登录成功", "userDTO", userDTO.Id)
+	slog.Info("登录成功", "userBriefDTO", userBriefDTO.Id)
 
 	// 将 user info 放入 jwt 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userDTO.Id, userDTO.Name)
+	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userBriefDTO.Id, userBriefDTO.Name)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
@@ -60,7 +61,7 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
 	// 默认情况下也返回200
-	response.Success(ctx, userDTO)
+	response.Success(ctx, userBriefDTO)
 }
 
 // Logout 用户登出 Handler
@@ -104,28 +105,36 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 
 // Register 用户注册 Handler
 func (hdl *UserHandler) Register(ctx *gin.Context) {
-	var registerRequest request.CreateUserRequest
-	err := ctx.ShouldBind(&registerRequest)
+	var createUserRequest request.CreateUserRequest
+	err := ctx.ShouldBind(&createUserRequest)
 	if err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
-		response.Success(ctx, nil)
+		slog.Error("Param Bind Failed", "error", utils.BindErrMsg(err))
+		response.ParamError(ctx, "")
 		return
 	}
 
-	userDTO, err := hdl.UserService.Register(registerRequest.Name, registerRequest.PassWord)
+	userBriefDTO, err := hdl.UserService.Register(createUserRequest.Name, createUserRequest.PassWord, ctx.ClientIP())
 	if err != nil {
+		if errors.Is(err, service.ErrNameDuplicated) { // 唯一键冲突
+			response.ParamError(ctx, "用户名重复")
+			return
+		}
+
+		// 其他错误均对外暴露为系统繁忙，请稍后重试
 		response.ServerError(ctx, "")
 		return
 	}
-	slog.Info("注册成功", "user", userDTO.Id)
+
+	slog.Info("Register User Success", "user", userBriefDTO)
 
 	// 将 user info 放入 jwt 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userDTO.Id, registerRequest.Name)
+	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userBriefDTO.Id, createUserRequest.Name)
 	if err != nil {
-		// Token 签发失败
-		slog.Error("Token 签发失败", "error", err)
+		// 双 Token 签发失败
+		slog.Error("Dual Token Issue Failed", "error", err)
 		response.ServerError(ctx, "")
+		return
 	}
 
 	// 将双 Token 放进 Cookie
@@ -133,6 +142,5 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
 
 	// 默认情况下也返回200
-	response.Success(ctx, userDTO)
-
+	response.Success(ctx, userBriefDTO)
 }

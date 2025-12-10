@@ -1,8 +1,15 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/yzletter/go-postery/dto/response"
 	repository "github.com/yzletter/go-postery/repository/user"
+)
+
+var (
+	ErrServerInternal = errors.New("注册失败, 请稍后重试")
+	ErrNameDuplicated = errors.New("用户名重复")
 )
 
 type UserService struct {
@@ -13,27 +20,38 @@ func NewUserService(userRepository *repository.GormUserRepository) *UserService 
 	return &UserService{UserRepository: userRepository}
 }
 
-func (svc *UserService) Register(name, password string) (dto.UserDTO, error) {
-	user, err := svc.UserRepository.Create(name, password)
-	return dto.ToUserDTO(user), err
-}
-
-func (svc *UserService) GetById(uid int) (bool, dto.UserDTO) {
-	ok, user := svc.UserRepository.GetByID(uid)
-	if !ok {
-		return false, dto.UserDTO{}
+func (svc *UserService) Register(name, password, ip string) (dto.UserBriefDTO, error) {
+	var userDTO dto.UserBriefDTO
+	user, err := svc.UserRepository.Create(name, password, ip)
+	if err == nil {
+		userDTO = dto.ToUserBriefDTO(user)
+		return userDTO, nil
 	}
 
-	return true, dto.ToUserDTO(user)
+	if errors.Is(err, repository.ErrUniqueKeyConflict) { // 唯一键冲突
+		return userDTO, ErrNameDuplicated
+	} else if errors.Is(err, repository.ErrMySQLInternal) { // 数据库内部错误
+		return userDTO, ErrServerInternal
+	}
+	return userDTO, ErrServerInternal
+}
+
+func (svc *UserService) GetById(uid int) (bool, dto.UserBriefDTO) {
+	ok, user := svc.UserRepository.GetByID(uid)
+	if !ok {
+		return false, dto.UserBriefDTO{}
+	}
+
+	return true, dto.ToUserBriefDTO(user)
 }
 
 // GetByName 根据 name 查找用户
-func (svc *UserService) GetByName(name string) dto.UserDTO {
+func (svc *UserService) GetByName(name string) dto.UserBriefDTO {
 	user, err := svc.UserRepository.GetByName(name)
 	if err != nil {
-		return dto.UserDTO{}
+		return dto.UserBriefDTO{}
 	}
-	return dto.ToUserDTO(user)
+	return dto.ToUserBriefDTO(user)
 }
 
 func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
@@ -41,10 +59,10 @@ func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
 	return err
 }
 
-func (svc *UserService) Login(name, pass string) (bool, dto.UserDTO) {
+func (svc *UserService) Login(name, pass string) (bool, dto.UserBriefDTO) {
 	user, err := svc.UserRepository.GetByName(name)
 	if err != nil || user.PassWord != pass {
-		return false, dto.UserDTO{}
+		return false, dto.UserBriefDTO{}
 	}
-	return true, dto.ToUserDTO(user)
+	return true, dto.ToUserBriefDTO(user)
 }

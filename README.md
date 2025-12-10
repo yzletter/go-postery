@@ -560,15 +560,15 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 ```go
 // RegisterHandlerFunc 用户注册 Handler
 func RegisterHandlerFunc(ctx *gin.Context) {
-	var registerRequest model.RegisterRequest
-	err := ctx.ShouldBind(&registerRequest)
+	var createUserRequest model.RegisterRequest
+	err := ctx.ShouldBind(&createUserRequest)
 	if err != nil {
 		// 参数绑定失败
 		ctx.String(http.StatusBadRequest, "用户名或密码错误")
 		return
 	}
 
-	_, err = database.RegisterUser(registerRequest.Name, registerRequest.PassWord)
+	_, err = database.RegisterUser(createUserRequest.Name, createUserRequest.PassWord)
 	if err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return

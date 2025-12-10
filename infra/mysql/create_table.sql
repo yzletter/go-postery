@@ -12,15 +12,24 @@ use go_postery;
 # 创建 user 表
 create table if not exists user
 (
-    id          bigint auto_increment comment '用户 id, 自增',
-    name        varchar(20) not null comment '用户名',
-    password    char(32)    not null comment '用户密码的 md5 加密结果',
-    create_time datetime default current_timestamp comment '用户注册时间, 默认为创建记录的时间',
-    update_time datetime default current_timestamp on update current_timestamp comment '用户最后修改时间',
+    id            bigint not null comment '用户 ID',
+    name          varchar(20) not null comment '用户名',
+    password      char(32)    not null comment '用户密码的 MD5 加密结果',
+    email         varchar(128) comment '用户邮箱',
+    avatar        varchar(255) comment '用户头像 URL',
+    bio           varchar(255) comment '用户个性签名',
+    gender        tinyint comment '用户性别',
+    birthday      date comment '用户生日',
+    location      varchar(64) comment '用户地区',
+    country       varchar(64) comment '用户国家',
+    status        tinyint comment '用户状态',
+    last_login_ip varchar(64) comment '最近一次登录 IP',
+    create_time   datetime default current_timestamp comment '用户注册时间, 默认为创建数据库记录的时间',
+    update_time   datetime default current_timestamp on update current_timestamp comment '数据库记录最后修改时间',
     primary key (id),
-    unique key idx_name (name)
-) default charset = utf8mb4 comment '用户信息表';
-
+    unique key idx_name (name),
+    unique key idx_email (email)
+) default charset = utf8mb4 comment '用户信息主表';
 
 # 创建 post 表
 create table if not exists post
@@ -30,7 +39,7 @@ create table if not exists post
     create_time datetime default current_timestamp comment '帖子创建时间',
     update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
     delete_time datetime default null comment '帖子删除时间',
-    title      varchar(100) comment '标题',
+    title       varchar(100) comment '标题',
     content     text comment '正文',
     primary key (id),
     unique key idx_user (user_id)

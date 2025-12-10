@@ -13,6 +13,11 @@ import (
 
 // todo 代码优化
 
+var (
+	ErrUniqueKeyConflict = errors.New("唯一键冲突")
+	ErrMySQLInternal     = errors.New("数据库内部错误")
+)
+
 // GormUserRepository 用 Gorm 实现 UserRepository
 type GormUserRepository struct {
 	db *gorm.DB
@@ -24,29 +29,34 @@ func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
 	}
 }
 
-func (repo *GormUserRepository) Create(name, password string) (model.User, error) {
+// Create 创建一条 User 记录
+func (repo *GormUserRepository) Create(name, password, ip string) (model.User, error) {
 	// 将模型绑定到结构体
 	user := model.User{
-		Id:       snowflake.NextID(),
-		Name:     name,
-		PassWord: password,
+		Id:          snowflake.NextID(), // 用户 ID 雪花算法
+		Name:        name,
+		PassWord:    password,
+		Status:      1,  // 用户状态为正常
+		LastLoginIP: ip, // 用户登录 IP
 	}
 
-	// 到 MySQL 中创建新记录
-	err := repo.db.Create(&user).Error // 需要传指针
+	// 到 MySQL 中创建新记录, 需要传指针
+	err := repo.db.Create(&user).Error
 	if err != nil {
+		// 判断是否为 MySQL 错误
 		var mysqlErr *mysql.MySQLError
-		if errors.As(err, &mysqlErr) { // 判断是否为 MySQL 错误
-			if mysqlErr.Number == 1062 { // Unique Key 冲突
-				return model.User{}, fmt.Errorf("用户[%s]已存在", name)
+		if errors.As(err, &mysqlErr) {
+			if mysqlErr.Number == 1062 {
+				// Unique Key 冲突
+				return model.User{}, ErrUniqueKeyConflict
 			}
 		}
-		// 记录日志, 方便后续人工定位问题所在
-		slog.Error("go-postery RegisterUser : 用户注册失败", "name", name, "error", err)
-		return model.User{}, fmt.Errorf("用户注册失败，请稍后重试")
+		// 非主键冲突, 数据库出错
+		slog.Error("MySQL Create Record Failed", "user", user, "error", err) // 记录日志, 方便后续人工定位问题所在
+		return model.User{}, ErrMySQLInternal
 	}
 
-	// 返回 Id
+	// 返回 User
 	return user, nil
 }
 

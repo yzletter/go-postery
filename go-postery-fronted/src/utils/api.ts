@@ -1,6 +1,6 @@
 import type { ApiResponse } from '../types'
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8765'
 export const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_URL || API_BASE_URL
 
 export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
