@@ -12,7 +12,7 @@ use go_postery;
 # 创建 user 表
 create table if not exists user
 (
-    id            bigint not null comment '用户 ID',
+    id            bigint      not null comment '用户 ID',
     name          varchar(20) not null comment '用户名',
     password      char(32)    not null comment '用户密码的 MD5 加密结果',
     email         varchar(128) comment '用户邮箱',

@@ -38,6 +38,7 @@ func (repo *GormUserRepository) Create(name, password, ip string) (model.User, e
 		PassWord:    password,
 		Status:      1,  // 用户状态为正常
 		LastLoginIP: ip, // 用户登录 IP
+		BirthDay:    nil,
 	}
 
 	// 到 MySQL 中创建新记录, 需要传指针
@@ -100,7 +101,7 @@ func (repo *GormUserRepository) GetByID(uid int) (bool, model.User) {
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			slog.Error("go-postery GetById : 查找用户失败", "uid", uid, "error", tx.Error)
+			slog.Error("go-postery GetBriefById : 查找用户失败", "uid", uid, "error", tx.Error)
 		}
 		return false, model.User{}
 	}

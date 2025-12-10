@@ -36,7 +36,7 @@ func (svc *UserService) Register(name, password, ip string) (dto.UserBriefDTO, e
 	return userDTO, ErrServerInternal
 }
 
-func (svc *UserService) GetById(uid int) (bool, dto.UserBriefDTO) {
+func (svc *UserService) GetBriefById(uid int) (bool, dto.UserBriefDTO) {
 	ok, user := svc.UserRepository.GetByID(uid)
 	if !ok {
 		return false, dto.UserBriefDTO{}
@@ -45,8 +45,18 @@ func (svc *UserService) GetById(uid int) (bool, dto.UserBriefDTO) {
 	return true, dto.ToUserBriefDTO(user)
 }
 
-// GetByName 根据 name 查找用户
-func (svc *UserService) GetByName(name string) dto.UserBriefDTO {
+// GetDetailById 根据 Id 查找用户的详细信息
+func (svc *UserService) GetDetailById(uid int) (bool, dto.UserDetailDTO) {
+	ok, user := svc.UserRepository.GetByID(uid)
+	if !ok {
+		return false, dto.UserDetailDTO{}
+	}
+
+	return true, dto.ToUserDetailDTO(user)
+}
+
+// GetBriefByName 根据 name 查找用户的简要信息
+func (svc *UserService) GetBriefByName(name string) dto.UserBriefDTO {
 	user, err := svc.UserRepository.GetByName(name)
 	if err != nil {
 		return dto.UserBriefDTO{}
