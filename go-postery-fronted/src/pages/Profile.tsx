@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -12,6 +12,9 @@ import {
   Send,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { apiGet } from '../utils/api'
+import { normalizeUserDetail } from '../utils/user'
+import type { UserDetail } from '../types'
 
 const mockRecentPosts = [
   { id: 1, title: '如何快速搭建一套前后端同构的论坛？', time: '2 小时前', views: 320 },
@@ -25,42 +28,49 @@ export default function Profile() {
   const { userId } = useParams<{ userId?: string }>()
   const { user } = useAuth()
   const locationState = (location.state as { username?: string } | null) || {}
-  
-  if (!userId && !user) {
-    navigate('/login')
-    return null
-  }
+  const [profileInfo, setProfileInfo] = useState<UserDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const resolvedUserId = userId ?? (user?.id != null ? String(user.id) : '')
-  const normalizedUserId = resolvedUserId || (user?.id != null ? String(user.id) : '')
   const isCurrentUser = userId
     ? Boolean(user && resolvedUserId && String(user.id) === resolvedUserId)
     : Boolean(user)
   const displayName =
+    profileInfo?.name ||
     locationState.username ||
     (isCurrentUser ? user?.name : undefined) ||
     user?.name ||
     (resolvedUserId ? `用户 ${resolvedUserId}` : '个人主页')
+  const displayUserId = profileInfo?.id || resolvedUserId
   const subtitle = isCurrentUser
     ? '分享你的想法，构建更好的社区'
     : `正在查看 ${displayName} 的主页`
-  const profileInfo = {
-    userId: normalizedUserId,
-    gender: 1,
-    signature: '热爱分享与探索新技术',
-    country: '中国',
-    location: '上海',
-    birthDay: '1995-05-20',
-    createdAt: '2024-01-05T00:00:00Z',
+  const avatarUrl = profileInfo?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`
+  const formatDate = (value?: string | Date) => {
+    if (!value) return '未设置'
+    const date = value instanceof Date ? value : new Date(value)
+    return Number.isNaN(date.getTime()) ? '未设置' : date.toLocaleDateString('zh-CN')
   }
-  const formatDate = (value: string | Date) => new Date(value).toLocaleDateString('zh-CN')
-  const genderLabel = profileInfo.gender === 1 ? '男' : profileInfo.gender === 2 ? '女' : '保密'
+  const genderLabel = (() => {
+    switch (profileInfo?.gender) {
+      case 1:
+        return '男'
+      case 2:
+        return '女'
+      case 3:
+        return '其他'
+      default:
+        return '保密'
+    }
+  })()
   const summaryStats = [
     { key: 'posts', label: '帖子', value: '12', icon: <PenSquare className="h-4 w-4 text-primary-600" /> },
     { key: 'followers', label: '关注者', value: '89', icon: <Users className="h-4 w-4 text-primary-600" /> },
     { key: 'likes', label: '获赞', value: '326', icon: <Heart className="h-4 w-4 text-primary-600" /> },
     { key: 'share', label: '分享', value: '34', icon: <Share2 className="h-4 w-4 text-primary-600" /> },
   ]
+  const detailStatus = isLoading ? '资料加载中...' : error ? '加载失败' : '最新资料'
   const actionButtons = (
     <div className="flex items-center space-x-3">
       <Link to="/create" className="btn-primary flex items-center space-x-2 shadow-sm hover:-translate-y-0.5 transition-transform">
@@ -73,6 +83,49 @@ export default function Profile() {
       </Link>
     </div>
   )
+
+  useEffect(() => {
+    if (!resolvedUserId) {
+      setIsLoading(false)
+      setError(null)
+      setProfileInfo(null)
+      return
+    }
+
+    let isMounted = true
+
+    const fetchProfile = async () => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const { data } = await apiGet<UserDetail>(`/profile/${resolvedUserId}`)
+        if (!isMounted) return
+        setProfileInfo(data ? normalizeUserDetail(data) : null)
+      } catch (err) {
+        if (!isMounted) return
+        console.error('Failed to fetch profile:', err)
+        const message = err instanceof Error ? err.message : '获取个人资料失败'
+        setError(message)
+        setProfileInfo(null)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void fetchProfile()
+
+    return () => {
+      isMounted = false
+    }
+  }, [resolvedUserId])
+
+  if (!userId && !user) {
+    navigate('/login')
+    return null
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-5">
@@ -90,7 +143,7 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center space-x-4">
               <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
+                src={avatarUrl}
                 alt={displayName}
                 className="w-20 h-20 rounded-full border-4 border-white shadow-sm ring-2 ring-primary-100"
               />
@@ -98,16 +151,16 @@ export default function Profile() {
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{displayName}</h1>
                 <p className="text-gray-600 text-sm">{subtitle}</p>
                 <div className="flex items-center gap-2 flex-wrap text-xs text-gray-600 mt-2">
-                  {resolvedUserId && (
+                  {displayUserId && (
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/80 border border-gray-200">
-                      ID: {resolvedUserId}
+                      ID: {displayUserId}
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/80 border border-gray-200">
-                    {profileInfo.location || '未设置'}
+                    {profileInfo?.location || '未设置'}
                   </span>
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/80 border border-gray-200">
-                    {profileInfo.country || '未设置'}
+                    {profileInfo?.country || '未设置'}
                   </span>
                 </div>
               </div>
@@ -125,7 +178,7 @@ export default function Profile() {
                 </Link>
                 <Link
                   to="/messages"
-                  state={{ username: displayName, userId: resolvedUserId }}
+                  state={{ username: displayName, userId: displayUserId }}
                   className="btn-primary flex items-center space-x-2 shadow-sm hover:-translate-y-0.5 transition-transform"
                 >
                   <Send className="h-4 w-4" />
@@ -162,20 +215,26 @@ export default function Profile() {
                 <span className="w-2 h-2 rounded-full bg-primary-500" />
                 <h2 className="text-lg font-semibold text-gray-900">详细资料</h2>
               </div>
-              <span className="text-xs text-gray-500">示例数据</span>
+              <span className="text-xs text-gray-500">{detailStatus}</span>
             </div>
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <InfoItem label="性别" value={genderLabel} />
-              <InfoItem label="生日" value={formatDate(profileInfo.birthDay)} />
-              <InfoItem label="国家" value={profileInfo.country || '—'} />
-              <InfoItem label="所在地" value={profileInfo.location || '—'} />
-              <InfoItem label="加入时间" value={formatDate(profileInfo.createdAt)} />
+              <InfoItem label="生日" value={formatDate(profileInfo?.birthday)} />
+              <InfoItem label="邮箱" value={profileInfo?.email || '—'} />
+              <InfoItem label="国家" value={profileInfo?.country || '—'} />
+              <InfoItem label="所在地" value={profileInfo?.location || '—'} />
+              <InfoItem label="最近登录 IP" value={profileInfo?.lastLoginIP || '—'} />
             </div>
             <div className="mt-4">
               <div className="border border-primary-50 bg-primary-50/60 rounded-lg p-4">
                 <p className="text-xs text-primary-700 font-semibold">个人简介</p>
                 <p className="text-sm font-medium text-gray-900 mt-1 break-words">
-                  {profileInfo.signature || '这个人很神秘，还没有简介'}
+                  {profileInfo?.bio || '这个人很神秘，还没有简介'}
                 </p>
               </div>
             </div>

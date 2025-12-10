@@ -53,6 +53,26 @@
 - `GET /logout`
 - 仅依赖 Cookie，清理服务器端会话。
 
+## 用户资料
+
+### 获取个人资料
+- `GET /profile/{id}`
+- 成功时 `data` 示例（ID 以字符串返回，避免精度丢失）：
+  ```json
+  {
+    "id": "1",
+    "name": "用户名",
+    "email": "user@example.com",
+    "avatar": "https://example.com/avatar.png",
+    "bio": "个人简介",
+    "gender": 1,
+    "birthday": "1995-05-20",
+    "location": "上海",
+    "country": "中国",
+    "last_login_ip": "127.0.0.1"
+  }
+  ```
+
 ## 帖子相关
 
 ### 获取帖子列表
