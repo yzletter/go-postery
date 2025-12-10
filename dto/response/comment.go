@@ -7,13 +7,13 @@ import (
 )
 
 type CommentDTO struct {
-	Id        int     `json:"id,string"`
-	PostId    int     `json:"post_id,string"`
-	ParentId  int     `json:"parent_id,string"`
-	ReplyId   int     `json:"reply_id,string"`
-	Content   string  `json:"content"`
-	CreatedAt string  `json:"createdAt"`
-	Author    UserDTO `json:"author"`
+	Id        int          `json:"id,string"`
+	PostId    int          `json:"post_id,string"`
+	ParentId  int          `json:"parent_id,string"`
+	ReplyId   int          `json:"reply_id,string"`
+	Content   string       `json:"content"`
+	CreatedAt string       `json:"createdAt"`
+	Author    UserBriefDTO `json:"author"`
 }
 
 func ToCommentDTO(comment model.Comment, user model.User) CommentDTO {
@@ -24,6 +24,6 @@ func ToCommentDTO(comment model.Comment, user model.User) CommentDTO {
 		ReplyId:   comment.ReplyId,
 		Content:   comment.Content,
 		CreatedAt: comment.CreateTime.Format(time.RFC3339),
-		Author:    ToUserDTO(user),
+		Author:    ToUserBriefDTO(user),
 	}
 }

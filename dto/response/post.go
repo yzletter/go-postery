@@ -7,11 +7,11 @@ import (
 )
 
 type PostDTO struct {
-	Id        int     `json:"id,omitempty,string"`
-	Title     string  `json:"title,omitempty"`
-	Content   string  `json:"content,omitempty"`
-	CreatedAt string  `json:"createdAt,omitempty"`
-	Author    UserDTO `json:"author,omitempty"`
+	Id        int          `json:"id,omitempty,string"`
+	Title     string       `json:"title,omitempty"`
+	Content   string       `json:"content,omitempty"`
+	CreatedAt string       `json:"createdAt,omitempty"`
+	Author    UserBriefDTO `json:"author,omitempty"`
 }
 
 func ToPostDTO(post model.Post, user model.User) PostDTO {
@@ -20,6 +20,6 @@ func ToPostDTO(post model.Post, user model.User) PostDTO {
 		Title:     post.Title,
 		Content:   post.Content,
 		CreatedAt: post.CreateTime.Format(time.RFC3339),
-		Author:    ToUserDTO(user),
+		Author:    ToUserBriefDTO(user),
 	}
 }
