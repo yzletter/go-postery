@@ -40,6 +40,7 @@ func (svc *PostService) Delete(pid, uid int) error {
 	err := svc.PostRepository.Delete(pid)
 	return err
 }
+
 func (svc *PostService) Update(pid int, uid int, title, content string) error {
 	// 判断登录用户是否是作者
 	ok := svc.Belong(pid, uid)
@@ -69,6 +70,7 @@ func (svc *PostService) GetByPage(pageNo, pageSize int) (int, []dto.PostDTO) {
 	}
 	return total, postDTOs
 }
+
 func (svc *PostService) GetById(pid int) (bool, dto.PostDTO) {
 	ok, post := svc.PostRepository.GetByID(pid)
 	if !ok {
@@ -93,4 +95,23 @@ func (svc *PostService) Belong(pid, uid int) bool {
 		return false
 	}
 	return true
+}
+
+func (svc *PostService) GetByUid(uid int) []dto.PostDTO {
+	posts := svc.PostRepository.GetByUid(uid)
+	if posts == nil {
+		return nil
+	}
+
+	postDTOs := make([]dto.PostDTO, 0, len(posts))
+	for _, post := range posts {
+		// 查找作者信息
+		_, user := svc.UserRepository.GetByID(post.UserId)
+
+		// 转成 DTO 返回给 Handler
+		postDTO := dto.ToPostDTO(post, user)
+		postDTOs = append(postDTOs, postDTO)
+	}
+
+	return postDTOs
 }

@@ -71,12 +71,17 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 
 // Create 创建帖子
 func (hdl *PostHandler) Create(ctx *gin.Context) {
-	// 直接从 ctx 中拿当前登录用户 uid
-	uid := ctx.Value(service.UID_IN_CTX).(int)
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
 	// 参数绑定
 	var createRequest request.CreatePostRequest
-	err := ctx.ShouldBind(&createRequest)
+	err = ctx.ShouldBind(&createRequest)
 	if err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
@@ -84,7 +89,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.PostService.Create(int(uid), createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		response.ServerError(ctx, "")
@@ -175,4 +180,17 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	// 属于
 	response.Success(ctx, "")
 	return
+}
+
+// ListByUid 获取目标用户发布的帖子
+func (hdl *PostHandler) ListByUid(ctx *gin.Context) {
+	// 从路由中获取 uid
+	uid, err := strconv.Atoi(ctx.Param("uid"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	postDTOs := hdl.PostService.GetByUid(uid)
+	response.Success(ctx, postDTOs)
 }

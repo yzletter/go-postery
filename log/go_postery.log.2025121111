@@ -1,0 +1,52 @@
+time="2025-12-11 11:00:00.005" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-11 11:00:00.008" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-11 11:01:21.788" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9999
+time="2025-12-11 11:01:21.789" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:01:21.789" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:01:21.789" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=15
+time="2025-12-11 11:01:21.790" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9
+time="2025-12-11 11:01:21.790" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=11
+time="2025-12-11 11:01:21.790" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:01:21.790" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=2
+time="2025-12-11 11:01:21.790" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=14
+time="2025-12-11 11:01:21.791" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:01:25.610" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9999
+time="2025-12-11 11:01:25.611" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:01:25.611" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:01:25.612" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=15
+time="2025-12-11 11:01:25.612" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9
+time="2025-12-11 11:01:25.613" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=11
+time="2025-12-11 11:01:25.614" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:01:25.615" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=2
+time="2025-12-11 11:01:25.615" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=14
+time="2025-12-11 11:01:25.616" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:01:29.091" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9999
+time="2025-12-11 11:01:29.092" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:01:29.092" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:01:29.092" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=15
+time="2025-12-11 11:01:29.093" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9
+time="2025-12-11 11:01:29.093" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=11
+time="2025-12-11 11:01:29.094" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:01:29.094" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=2
+time="2025-12-11 11:01:29.094" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=14
+time="2025-12-11 11:01:29.094" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:09:26.726" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9999
+time="2025-12-11 11:09:26.727" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:09:26.727" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=1
+time="2025-12-11 11:09:26.727" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=15
+time="2025-12-11 11:09:26.728" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=9
+time="2025-12-11 11:09:26.728" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=11
+time="2025-12-11 11:09:26.728" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:09:26.728" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=2
+time="2025-12-11 11:09:26.729" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=14
+time="2025-12-11 11:09:26.729" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:64 msg="could not get name of user" uid=6
+time="2025-12-11 11:10:00.018" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-11 11:10:00.019" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-11 11:21:07.566" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-11 11:21:07.568" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-11 11:30:00.005" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-11 11:30:00.006" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-11 11:40:00.009" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-11 11:40:00.012" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"
+time="2025-12-11 11:50:00.011" level=INFO source=/Users/yzletter/go_project/go-postery/infra/mysql/mysql.go:101 msg="Ping MySQL 成功 ..."
+time="2025-12-11 11:50:00.013" level=INFO source=/Users/yzletter/go_project/go-postery/infra/redis/redis.go:60 msg="ping globalRedisClient succeed"

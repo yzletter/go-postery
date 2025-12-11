@@ -123,7 +123,13 @@ func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []model.Po
 }
 
 // GetByUid 根据 uid 获取该用户所发帖子
-func (repo *GormPostRepository) GetByUid(uid int) []*model.Post {
-	// todo 根据 uid 获取该用户所发帖子
-	return nil
+func (repo *GormPostRepository) GetByUid(uid int) []model.Post {
+	var posts []model.Post
+	// 查找五条由 uid 所发的帖子
+	tx := repo.db.Model(&model.Post{}).Where("user_id = ? and delete_time is null", uid).Order("create_time desc").Limit(5).Find(&posts)
+
+	if tx.Error != nil {
+		return nil
+	}
+	return posts
 }

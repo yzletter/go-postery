@@ -1,9 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Heart,
-  MessageSquare,
   PenSquare,
   Settings,
   Share2,
@@ -206,124 +205,69 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-6">
-        <div className="space-y-6">
-          {/* 详细信息 */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary-500" />
-                <h2 className="text-lg font-semibold text-gray-900">详细资料</h2>
-              </div>
-              <span className="text-xs text-gray-500">{detailStatus}</span>
-            </div>
-            {error && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <InfoItem label="性别" value={genderLabel} />
-              <InfoItem label="生日" value={formatDate(profileInfo?.birthday)} />
-              <InfoItem label="邮箱" value={profileInfo?.email || '—'} />
-              <InfoItem label="国家" value={profileInfo?.country || '—'} />
-              <InfoItem label="所在地" value={profileInfo?.location || '—'} />
-              <InfoItem label="最近登录 IP" value={profileInfo?.lastLoginIP || '—'} />
-            </div>
-            <div className="mt-4">
-              <div className="border border-primary-50 bg-primary-50/60 rounded-lg p-4">
-                <p className="text-xs text-primary-700 font-semibold">个人简介</p>
-                <p className="text-sm font-medium text-gray-900 mt-1 break-words">
-                  {profileInfo?.bio || '这个人很神秘，还没有简介'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 最近动态 */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">最近动态</h2>
-              <Link to="/create" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                去创作
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {mockRecentPosts.map((post) => (
-                <Link
-                  to={`/post/${post.id}`}
-                  key={post.id}
-                  className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded-lg transition-all hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
-                      {post.id}
-                    </div>
-                    <div>
-                      <p className="text-gray-900 font-medium line-clamp-1">{post.title}</p>
-                      <p className="text-xs text-gray-500">更新于 {post.time}</p>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">浏览 {post.views}</div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* 统计卡片 */}
-          <div className="card space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">创作概览</h2>
-              <span className="text-xs text-gray-500">本周</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-3">
-              <StatItem icon={<PenSquare className="h-5 w-5 text-primary-600" />} label="帖子" value="12" />
-              <StatItem icon={<MessageSquare className="h-5 w-5 text-primary-600" />} label="回复" value="48" />
-              <StatItem icon={<Heart className="h-5 w-5 text-primary-600" />} label="获赞" value="326" />
-              <StatItem icon={<Share2 className="h-5 w-5 text-primary-600" />} label="分享" value="34" />
-            </div>
-          </div>
-
-          <div className="card space-y-3 text-sm text-gray-700">
+      <div className="space-y-6">
+        {/* 详细信息 */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <HeartHandshake className="h-4 w-4 text-primary-600" />
-              <p className="font-semibold text-gray-900">互动空间</p>
+              <span className="w-2 h-2 rounded-full bg-primary-500" />
+              <h2 className="text-lg font-semibold text-gray-900">详细资料</h2>
             </div>
-            <p className="text-gray-600">
-              维护好个人资料、主动发布或私信交流，可以让更多同好看到你的分享。
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Link to="/create" className="btn-primary text-sm px-3 py-1.5">去发帖</Link>
-              <Link to="/messages" className="btn-secondary text-sm px-3 py-1.5">打开私信</Link>
-              <Link to="/settings" className="btn-secondary text-sm px-3 py-1.5">完善资料</Link>
+            <span className="text-xs text-gray-500">{detailStatus}</span>
+          </div>
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <InfoItem label="性别" value={genderLabel} />
+            <InfoItem label="生日" value={formatDate(profileInfo?.birthday)} />
+            <InfoItem label="邮箱" value={profileInfo?.email || '—'} />
+            <InfoItem label="国家" value={profileInfo?.country || '—'} />
+            <InfoItem label="所在地" value={profileInfo?.location || '—'} />
+            <InfoItem label="最近登录 IP" value={profileInfo?.lastLoginIP || '—'} />
+          </div>
+          <div className="mt-4">
+            <div className="border border-primary-50 bg-primary-50/60 rounded-lg p-4">
+              <p className="text-xs text-primary-700 font-semibold">个人简介</p>
+              <p className="text-sm font-medium text-gray-900 mt-1 break-words">
+                {profileInfo?.bio || '这个人很神秘，还没有简介'}
+              </p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
 
-function StatItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode
-  label: string
-  value: string
-}) {
-  return (
-    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm hover:-translate-y-0.5 transition-transform">
-      <div className="flex items-center space-x-2 mb-2">
-        <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center">
-          {icon}
+        {/* 最近动态 */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">最近动态</h2>
+            <Link to="/create" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              去创作
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {mockRecentPosts.map((post) => (
+              <Link
+                to={`/post/${post.id}`}
+                key={post.id}
+                className="flex items-center justify-between py-3 hover:bg-gray-50 px-2 rounded-lg transition-all hover:-translate-y-0.5"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
+                    {post.id}
+                  </div>
+                  <div>
+                    <p className="text-gray-900 font-medium line-clamp-1">{post.title}</p>
+                    <p className="text-xs text-gray-500">更新于 {post.time}</p>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">浏览 {post.views}</div>
+              </Link>
+            ))}
+          </div>
         </div>
-        <span className="text-xs text-gray-500">{label}</span>
       </div>
-      <div className="text-xl font-bold text-gray-900">{value}</div>
     </div>
   )
 }
