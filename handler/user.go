@@ -87,14 +87,14 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, ok := ctx.Value(service.UID_IN_CTX).(int)
-	if !ok {
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
 		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
 
-	err = hdl.UserService.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
+	err = hdl.UserService.UpdatePassword(int(uid), modifyPassRequest.OldPass, modifyPassRequest.NewPass)
 	if err != nil {
 		// 密码更改失败
 		response.ServerError(ctx, "")

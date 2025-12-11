@@ -7,6 +7,7 @@ import (
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
+	"github.com/yzletter/go-postery/utils/response"
 )
 
 // AuthRequiredMiddleware 强制登录
@@ -34,6 +35,7 @@ func AuthRequiredMiddleware(authService *service.AuthService) gin.HandlerFunc {
 		if result.Err() != nil {
 			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
 			slog.Info("AuthService 认证 RefreshToken 失败, 需重新登录 ...")
+			response.Unauthorized(ctx, "")
 			ctx.Abort() // 当前中间件执行完, 后续中间件不执行
 			return
 		}
@@ -44,6 +46,7 @@ func AuthRequiredMiddleware(authService *service.AuthService) gin.HandlerFunc {
 		if userInfo == nil {
 			// 虽然拿到了, 但是有问题 (很小概率)
 			slog.Error("AuthService 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
+			response.Unauthorized(ctx, "")
 			ctx.Abort() // 当前中间件执行完, 后续中间件不执行
 			return
 		}
