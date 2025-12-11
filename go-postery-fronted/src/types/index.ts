@@ -25,6 +25,16 @@ export interface UserDetail {
   lastLoginIP?: string
 }
 
+export interface ModifyUserProfileRequest {
+  email?: string
+  avatar?: string
+  bio?: string
+  gender?: number
+  birthday?: string
+  location?: string
+  country?: string
+}
+
 export interface Post {
   id: Id
   title: string

@@ -110,7 +110,7 @@ func AuthOptionalMiddleware(authService *service.AuthService) gin.HandlerFunc {
 }
 
 // 将用户信息放入上下文
-func setUserToContext(ctx *gin.Context, userInfo *request.UserInformation) {
+func setUserToContext(ctx *gin.Context, userInfo *request.UserJWTInfo) {
 	ctx.Set(service.UID_IN_CTX, userInfo.Id)
 	ctx.Set(service.UNAME_IN_CTX, userInfo.Name)
 	slog.Info("用户信息放入上下文成功 ...", "UserInfo", userInfo)

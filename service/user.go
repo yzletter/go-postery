@@ -70,9 +70,9 @@ func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
 	return err
 }
 
-func (svc *UserService) UpdateProfile(uid int, req request.ModifyUserProfileRequest) error {
+func (svc *UserService) UpdateProfile(uid int, req request.ModifyProfileRequest) error {
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
-	modelReq := request.ModifyUserProfileRequestToModel(req)
+	modelReq := request.ModifyProfileRequestToModel(req)
 
 	if err := svc.UserRepository.UpdateProfile(uid, modelReq); err == nil {
 		return nil

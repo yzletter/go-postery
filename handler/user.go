@@ -31,7 +31,7 @@ func NewUserHandler(authService *service.AuthService, jwtService *service.JwtSer
 
 // Login 用户登录 Handler
 func (hdl *UserHandler) Login(ctx *gin.Context) {
-	var loginRequest = request.LoginUserRequest{}
+	var loginRequest = request.LoginRequest{}
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
@@ -76,7 +76,7 @@ func (hdl *UserHandler) Logout(ctx *gin.Context) {
 
 // ModifyPass 修改密码 Handler
 func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
-	var modifyPassRequest request.ModifyUserPassRequest
+	var modifyPassRequest request.ModifyPassRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
@@ -164,7 +164,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 }
 
 func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
-	var modifyUserProfileRequest request.ModifyUserProfileRequest
+	var modifyUserProfileRequest request.ModifyProfileRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyUserProfileRequest)
 	if err != nil {

@@ -35,7 +35,7 @@ func NewAuthService(redisClient redis.Cmdable, jwtService *JwtService) *AuthServ
 }
 
 // GetUserInfoFromJWT 从 JWT Token 中获取 uid
-func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserInformation {
+func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserJWTInfo {
 	// 校验 JWT Token
 	payload, err := svc.JwtService.VerifyToken(jwtToken)
 	if err != nil { // JWT Token 校验失败
@@ -50,7 +50,7 @@ func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserInforma
 		if k == USERINFO_IN_JWT_PAYLOAD {
 			// todo 待优化
 			bs, _ := json.Marshal(v)
-			var userInfo request.UserInformation
+			var userInfo request.UserJWTInfo
 			_ = json.Unmarshal(bs, &userInfo)
 			slog.Info("AuthService 获得 UserInfo 成功 ... ", "userInfo", userInfo)
 			return &userInfo
@@ -63,7 +63,7 @@ func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserInforma
 }
 
 func (svc *AuthService) IssueTokenForUser(uid int, uname string) (string, string, error) {
-	userInfo := request.UserInformation{
+	userInfo := request.UserJWTInfo{
 		Id:   strconv.Itoa(uid),
 		Name: uname,
 	}
