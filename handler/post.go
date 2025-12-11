@@ -36,6 +36,7 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 
 	// 获取帖子总数和当前页帖子列表
 	total, postDTOs := hdl.PostService.GetByPage(pageNo, pageSize)
+	slog.Info("", "postDTOs", postDTOs)
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := hdl.PostService.HasMore(pageNo, pageSize, total)
@@ -46,6 +47,7 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 		"total":   total,
 		"hasMore": hasMore,
 	})
+
 	return
 }
 

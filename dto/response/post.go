@@ -7,19 +7,19 @@ import (
 )
 
 type PostDetailDTO struct {
-	Id        int          `json:"id,omitempty,string"`
-	Title     string       `json:"title,omitempty"`
-	Content   string       `json:"content,omitempty"`
-	CreatedAt string       `json:"createdAt,omitempty"`
-	Author    UserBriefDTO `json:"author,omitempty"`
-	ViewCount int          `json:"view_count,omitempty"`
+	Id        int          `json:"id,string"`
+	ViewCount int          `json:"view_count"`
+	Title     string       `json:"title"`
+	Content   string       `json:"content"`
+	CreatedAt string       `json:"createdAt"`
+	Author    UserBriefDTO `json:"author"`
 }
 
 type PostBriefDTO struct {
-	Id        int          `json:"id,omitempty,string"`
-	Title     string       `json:"title,omitempty"`
-	CreatedAt string       `json:"createdAt,omitempty"`
-	Author    UserBriefDTO `json:"author,omitempty"`
+	Id        int          `json:"id,string"`
+	Title     string       `json:"title"`
+	CreatedAt string       `json:"createdAt"`
+	Author    UserBriefDTO `json:"author"`
 }
 
 func ToPostDetailDTO(post model.Post, user model.User) PostDetailDTO {

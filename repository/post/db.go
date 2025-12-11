@@ -133,3 +133,11 @@ func (repo *PostDBRepository) GetByUid(uid int) []model.Post {
 	}
 	return posts
 }
+
+func (repo *PostDBRepository) IncrViewCnt(pid int) {
+	var post model.Post
+	tx := repo.db.Model(&post).Where("id = ?", pid).UpdateColumn("view_count", gorm.Expr("view_count + ?", 1))
+	if tx.Error != nil {
+		slog.Error("MySQL Increase View Count False", "error", tx.Error)
+	}
+}

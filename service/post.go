@@ -15,7 +15,7 @@ type PostService struct {
 	UserDBRepo    *userRepository.UserDBRepository
 }
 
-func NewPostService(postDBRepo *postRepository.PostDBRepository, userRepository *userRepository.UserDBRepository, postCacheRepo *postRepository.PostCacheRepository) *PostService {
+func NewPostService(postDBRepo *postRepository.PostDBRepository, postCacheRepo *postRepository.PostCacheRepository, userRepository *userRepository.UserDBRepository) *PostService {
 	return &PostService{
 		PostDBRepo:    postDBRepo,
 		PostCacheRepo: postCacheRepo,
@@ -58,7 +58,6 @@ func (svc *PostService) Update(pid int, uid int, title, content string) error {
 func (svc *PostService) GetByPage(pageNo, pageSize int) (int, []dto.PostDetailDTO) {
 	// 获取帖子总数和当前页帖子列表
 	total, posts := svc.PostDBRepo.GetByPage(pageNo, pageSize)
-
 	var postDTOs []dto.PostDetailDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
@@ -83,7 +82,16 @@ func (svc *PostService) GetDetailById(pid int) (bool, dto.PostDetailDTO) {
 	_, user := svc.UserDBRepo.GetByID(post.UserId)
 
 	// 记录 ViewCount + 1
+	svc.PostDBRepo.IncrViewCnt(post.Id)                  // 数据库中 + 1
+	ok, err := svc.PostCacheRepo.IncrViewCnt(post.Id, 1) // 缓存中 + 1
+	if !ok {                                             // 缓存中没有 KEY
+		svc.PostCacheRepo.SetKey(post.Id, "comment_cnt", post.ViewCount)
+	}
+	if err != nil {
+		slog.Error("Redis Increase View Count Failed", "error", err)
+	}
 
+	post.ViewCount += 1
 	postDTO := dto.ToPostDetailDTO(post, user)
 	return true, postDTO
 }
