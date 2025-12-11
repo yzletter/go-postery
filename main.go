@@ -89,7 +89,8 @@ func main() {
 	engine.GET("/logout", UserHdl.Logout)             // 用户退出
 	engine.GET("/profile/:id", UserHdl.Profile)       // 用户资料
 	// 强制登录
-	engine.POST("/modify_pass/submit", AuthRequiredMdl, UserHdl.ModifyPass) // 修改密码
+	engine.POST("/modify_pass/submit", AuthRequiredMdl, UserHdl.ModifyPass)       // 修改密码
+	engine.POST("/modify_profile/submit", AuthRequiredMdl, UserHdl.ModifyProfile) // 修改个人资料
 
 	// 帖子模块
 	engine.GET("/posts", PostHdl.List)        // 获取帖子列表

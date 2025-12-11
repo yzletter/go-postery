@@ -528,9 +528,9 @@ func LogoutHandlerFunc(ctx *gin.Context) {
 ```go
 // ModifyPassHandlerFunc 修改密码 Handler
 func ModifyPassHandlerFunc(ctx *gin.Context) {
-	var modifyPassRequest model.ModifyPasswordRequest
+	var modifyUserProfileRequest model.ModifyPasswordRequest
 	// 将请求参数绑定到结构体
-	err := ctx.ShouldBind(&modifyPassRequest)
+	err := ctx.ShouldBind(&modifyUserProfileRequest)
 	if err != nil {
 		// 参数绑定失败
 		ctx.String(http.StatusBadRequest, "密码输入错误")
@@ -543,7 +543,7 @@ func ModifyPassHandlerFunc(ctx *gin.Context) {
 		return
 	}
 
-	err = database.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
+	err = database.UpdatePassword(uid, modifyUserProfileRequest.OldPass, modifyUserProfileRequest.NewPass)
 	if err != nil {
 		// 密码更改失败
 		ctx.String(http.StatusBadRequest, err.Error())

@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 
+	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/dto/response"
 	repository "github.com/yzletter/go-postery/repository/user"
 )
@@ -67,6 +68,19 @@ func (svc *UserService) GetBriefByName(name string) dto.UserBriefDTO {
 func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
 	err := svc.UserRepository.UpdatePassword(uid, oldPass, newPass)
 	return err
+}
+
+func (svc *UserService) UpdateProfile(uid int, req request.ModifyUserProfileRequest) error {
+	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
+	modelReq := request.ModifyUserProfileRequestToModel(req)
+
+	if err := svc.UserRepository.UpdateProfile(uid, modelReq); err == nil {
+		return nil
+	} else if errors.Is(err, repository.ErrUidInvalid) {
+		// 如果是用户 ID 错误, 直接返回该错误
+		return err
+	}
+	return ErrServerInternal
 }
 
 func (svc *UserService) Login(name, pass string) (bool, dto.UserBriefDTO) {

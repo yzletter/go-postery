@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -63,9 +64,10 @@ func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserInforma
 
 func (svc *AuthService) IssueTokenForUser(uid int, uname string) (string, string, error) {
 	userInfo := request.UserInformation{
-		Id:   uid,
+		Id:   strconv.Itoa(uid),
 		Name: uname,
 	}
+
 	// 生成 RefreshToken
 	refreshToken := xid.New().String() //	生成一个随机的字符串
 

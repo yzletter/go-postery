@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -133,6 +134,7 @@ func (svc *JwtService) VerifyToken(token string) (*JwtPayload, error) {
 		return nil, ErrJwtInvalidTime
 	}
 
+	slog.Info("verify payload", payload)
 	return &payload, nil
 }
 

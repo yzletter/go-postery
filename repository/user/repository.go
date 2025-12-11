@@ -16,6 +16,7 @@ import (
 var (
 	ErrUniqueKeyConflict = errors.New("唯一键冲突")
 	ErrMySQLInternal     = errors.New("数据库内部错误")
+	ErrUidInvalid        = errors.New("用户 ID 错误")
 )
 
 // GormUserRepository 用 Gorm 实现 UserRepository
@@ -90,6 +91,45 @@ func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string)
 	} else if tx.RowsAffected == 0 {
 		// 业务错误
 		return fmt.Errorf("用户 id 或旧密码错误")
+	}
+
+	return nil
+}
+
+func (repo *GormUserRepository) UpdateProfile(uid int, request model.User) error {
+	var user model.User
+	tx := repo.db.Model(&model.User{}).Where("id=?", uid).First(&user)
+	if tx.RowsAffected == 0 {
+		// 业务错误
+		return ErrUidInvalid
+	}
+
+	if request.BirthDay != nil {
+		tx = tx.Update("birthday", request.BirthDay)
+	}
+	if request.Location != "" {
+		tx = tx.Update("location", request.Location)
+	}
+	if request.Bio != "" {
+		tx = tx.Update("bio", request.Bio)
+	}
+	if request.Country != "" {
+		tx = tx.Update("country", request.Country)
+	}
+	if request.Avatar != "" {
+		tx = tx.Update("avatar", request.Avatar)
+	}
+	if request.Email != "" {
+		tx = tx.Update("email", request.Email)
+	}
+	if request.Gender != 0 {
+		tx = tx.Update("gender", request.Gender)
+	}
+
+	if tx.Error != nil {
+		// 系统错误
+		slog.Error("MySQL Update Profile Failed", "uid", uid, "error", tx.Error)
+		return ErrMySQLInternal
 	}
 
 	return nil

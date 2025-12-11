@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/yzletter/go-postery/dto/request"
+	repository "github.com/yzletter/go-postery/repository/user"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -160,4 +161,39 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 	}
 
 	response.Success(ctx, userDetailDTO)
+}
+
+func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
+	var modifyUserProfileRequest request.ModifyUserProfileRequest
+	// 将请求参数绑定到结构体
+	err := ctx.ShouldBind(&modifyUserProfileRequest)
+	if err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		response.ParamError(ctx, "")
+		return
+	}
+
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
+
+	err = hdl.UserService.UpdateProfile(int(uid), modifyUserProfileRequest)
+	if err != nil {
+		slog.Error("Error", err)
+		if errors.Is(err, repository.ErrUidInvalid) {
+			response.ParamError(ctx, "")
+			return
+		}
+
+		response.ServerError(ctx, "")
+		return
+	}
+
+	// 默认情况下也返回200
+	response.Success(ctx, nil)
 }
