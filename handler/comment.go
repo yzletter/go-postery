@@ -27,8 +27,13 @@ func NewCommentHandler(commentService *service.CommentService, userService *serv
 
 // Create 新建评论
 func (hdl *CommentHandler) Create(ctx *gin.Context) {
-	// 直接拿当前登录用户 uid
-	uid := ctx.Value(service.UID_IN_CTX).(int)
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
 	// 获取参数并校验
 	var comment request.CreateCommentRequest
@@ -39,7 +44,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	}
 
 	// 调用 service 层创建评论
-	commentDTO, err := hdl.CommentService.Create(comment.PostId, uid, comment.ParentId, comment.ReplyId, comment.Content)
+	commentDTO, err := hdl.CommentService.Create(comment.PostId, int(uid), comment.ParentId, comment.ReplyId, comment.Content)
 	if err != nil {
 		response.ServerError(ctx, "")
 		return
@@ -49,8 +54,13 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 }
 
 func (hdl *CommentHandler) Delete(ctx *gin.Context) {
-	// 从 ctx 中拿 uid
-	uid := ctx.Value(service.UID_IN_CTX).(int)
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
 	// 从路由中获取参数 cid
 	cid, err := strconv.Atoi(ctx.Param("id"))
@@ -60,7 +70,7 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 调用 Service 层
-	err = hdl.CommentService.Delete(uid, cid)
+	err = hdl.CommentService.Delete(int(uid), cid)
 	if err != nil {
 		if err.Error() == "评论不存在" {
 			response.ServerError(ctx, "")
@@ -91,8 +101,13 @@ func (hdl *CommentHandler) List(ctx *gin.Context) {
 }
 
 func (hdl *CommentHandler) Belong(ctx *gin.Context) {
-	// 直接拿当前登录用户的 uid
-	uid := ctx.Value(service.UID_IN_CTX).(int)
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
 	// 获取要查询评论的 cid
 	cid, err := strconv.Atoi(ctx.Query("id"))
@@ -102,7 +117,7 @@ func (hdl *CommentHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 查询是否属于
-	ok := hdl.CommentService.Belong(cid, uid)
+	ok := hdl.CommentService.Belong(cid, int(uid))
 	if !ok {
 		response.Unauthorized(ctx, "")
 		return

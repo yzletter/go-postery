@@ -101,8 +101,13 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 
 // Delete 删除帖子
 func (hdl *PostHandler) Delete(ctx *gin.Context) {
-	// 直接从 ctx 中拿 uid
-	uid := ctx.Value(service.UID_IN_CTX).(int)
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
 	// 再拿帖子 pid
 	pid, err := strconv.Atoi(ctx.Param("id"))
@@ -112,7 +117,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 进行删除
-	err = hdl.PostService.Delete(pid, uid)
+	err = hdl.PostService.Delete(pid, int(uid))
 	if err != nil {
 		if err.Error() == "没有权限" {
 			response.Unauthorized(ctx, "")
@@ -126,12 +131,17 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
-	// 直接从 ctx 中拿 uid
-	uid := ctx.Value(service.UID_IN_CTX).(int)
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
 	// 参数绑定
 	var updateRequest request.UpdatePostRequest
-	err := ctx.ShouldBind(&updateRequest)
+	err = ctx.ShouldBind(&updateRequest)
 
 	if err != nil || updateRequest.Id == 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -140,7 +150,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = hdl.PostService.Update(updateRequest.Id, uid, updateRequest.Title, updateRequest.Content)
+	err = hdl.PostService.Update(updateRequest.Id, int(uid), updateRequest.Title, updateRequest.Content)
 	if err != nil {
 		if err.Error() == "没有权限" {
 			response.Unauthorized(ctx, "")
@@ -162,16 +172,16 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 		return
 	}
 
-	// 前面中间件放了 uid 在 ctx, 直接拿 uid
-	uid, ok := ctx.Value(service.UID_IN_CTX).(int)
-	if !ok {
-		// 未登录
-		response.Unauthorized(ctx, "")
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	if err != nil {
+		// 没有登录
+		response.Unauthorized(ctx, "请先登录")
 		return
 	}
 
 	// 判断登录用户是否是作者
-	ok = hdl.PostService.Belong(pid, uid)
+	ok := hdl.PostService.Belong(pid, int(uid))
 	if !ok {
 		response.Unauthorized(ctx, "")
 		return
