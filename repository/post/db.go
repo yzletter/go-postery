@@ -11,18 +11,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type GormPostRepository struct {
+type PostDBRepository struct {
 	db *gorm.DB
 }
 
-func NewGormPostRepository(db *gorm.DB) *GormPostRepository {
-	return &GormPostRepository{
+func NewPostDBRepository(db *gorm.DB) *PostDBRepository {
+	return &PostDBRepository{
 		db: db,
 	}
 }
 
 // Create 新建帖子
-func (repo *GormPostRepository) Create(uid int, title, content string) (model.Post, error) {
+func (repo *PostDBRepository) Create(uid int, title, content string) (model.Post, error) {
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
@@ -44,7 +44,7 @@ func (repo *GormPostRepository) Create(uid int, title, content string) (model.Po
 }
 
 // Delete 根据帖子 id 删除帖子
-func (repo *GormPostRepository) Delete(pid int) error {
+func (repo *PostDBRepository) Delete(pid int) error {
 	tx := repo.db.Model(&model.Post{}).Where("id=? and delete_time is null", pid).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		// 删除失败
@@ -60,7 +60,7 @@ func (repo *GormPostRepository) Delete(pid int) error {
 }
 
 // Update 修改帖子
-func (repo *GormPostRepository) Update(pid int, title, content string) error {
+func (repo *PostDBRepository) Update(pid int, title, content string) error {
 	tx := repo.db.Model(&model.Post{}).Where("id=? and delete_time is null", pid)
 
 	var count int64
@@ -85,7 +85,7 @@ func (repo *GormPostRepository) Update(pid int, title, content string) error {
 }
 
 // GetByID 根据帖子 id 获取帖子信息
-func (repo *GormPostRepository) GetByID(pid int) (bool, model.Post) {
+func (repo *PostDBRepository) GetByID(pid int) (bool, model.Post) {
 	post := model.Post{
 		Id: pid,
 	}
@@ -101,7 +101,7 @@ func (repo *GormPostRepository) GetByID(pid int) (bool, model.Post) {
 }
 
 // GetByPage 翻页查询帖子, 页号从 1 开始, 返回帖子总数和帖子列表
-func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []model.Post) {
+func (repo *PostDBRepository) GetByPage(pageNo, pageSize int) (int, []model.Post) {
 	// 获取帖子总数
 	var total int64
 	tx := repo.db.Model(&model.Post{}).Where("delete_time is null").Count(&total)
@@ -123,7 +123,7 @@ func (repo *GormPostRepository) GetByPage(pageNo, pageSize int) (int, []model.Po
 }
 
 // GetByUid 根据 uid 获取该用户所发帖子
-func (repo *GormPostRepository) GetByUid(uid int) []model.Post {
+func (repo *PostDBRepository) GetByUid(uid int) []model.Post {
 	var posts []model.Post
 	// 查找五条由 uid 所发的帖子
 	tx := repo.db.Model(&model.Post{}).Where("user_id = ? and delete_time is null", uid).Order("create_time desc").Limit(5).Find(&posts)

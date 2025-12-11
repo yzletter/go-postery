@@ -60,7 +60,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	ok, postDTO := hdl.PostService.GetById(pid)
+	ok, postDTO := hdl.PostService.GetDetailById(pid)
 	if !ok {
 		response.ServerError(ctx, "")
 		return

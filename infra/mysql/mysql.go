@@ -28,13 +28,13 @@ type PoolConfig struct {
 // Init 初始化数据库
 func Init(confDir, confFileName, confFileType, logDir string) {
 	// 读取 MySQL 相关配置
-	viper := viper.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
-	host := viper.GetString("mysql.host")
-	port := viper.GetInt("mysql.port")
-	user := viper.GetString("mysql.user")
-	password := viper.GetString("mysql.password")
-	dbName := viper.GetString("mysql.dbName")
-	logFileName := viper.GetString("mysql.logFileName")
+	vip := viper.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
+	host := vip.GetString("mysql.host")
+	port := vip.GetInt("mysql.port")
+	user := vip.GetString("mysql.user")
+	password := vip.GetString("mysql.password")
+	dbName := vip.GetString("mysql.dbName")
+	logFileName := vip.GetString("mysql.logFileName")
 
 	// 拼接出 MySQL DataSourceName
 	dataSourceName := getDataSourceName(user, password, host, port, dbName)

@@ -9,4 +9,5 @@ type Post struct {
 	Content    string     `gorm:"column:content"`
 	CreateTime *time.Time `gorm:"column:create_time"`
 	DeleteTime *time.Time `gorm:"column:delete_time"`
+	ViewCount  int        `gorm:"column:view_count"`
 }

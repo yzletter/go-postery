@@ -11,17 +11,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type GormCommentRepository struct {
+type CommentDBRepository struct {
 	db *gorm.DB
 }
 
-func NewGormCommentRepository(db *gorm.DB) *GormCommentRepository {
-	return &GormCommentRepository{
+func NewCommentDBRepository(db *gorm.DB) *CommentDBRepository {
+	return &CommentDBRepository{
 		db: db,
 	}
 }
 
-func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, replyId int, content string) (model.Comment, error) {
+func (repo *CommentDBRepository) Create(pid int, uid int, parentId int, replyId int, content string) (model.Comment, error) {
 	now := time.Now()
 	comment := model.Comment{
 		Id:         snowflake.NextID(),
@@ -40,7 +40,7 @@ func (repo *GormCommentRepository) Create(pid int, uid int, parentId int, replyI
 	return comment, nil
 }
 
-func (repo *GormCommentRepository) GetByID(cid int) (model.Comment, error) {
+func (repo *CommentDBRepository) GetByID(cid int) (model.Comment, error) {
 	comment := model.Comment{Id: cid}
 	// Find 不报 ErrRecordNotFound
 	tx := repo.db.Select("*").Where("delete_time is null").First(&comment)
@@ -55,7 +55,7 @@ func (repo *GormCommentRepository) GetByID(cid int) (model.Comment, error) {
 	return comment, nil
 }
 
-func (repo *GormCommentRepository) Delete(cid int) error {
+func (repo *CommentDBRepository) Delete(cid int) error {
 	tx := repo.db.Model(&model.Comment{}).Where("id = ?", cid).Or("parent_id = ?", cid).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		slog.Error("删除失败", "cid", cid)
@@ -69,7 +69,7 @@ func (repo *GormCommentRepository) Delete(cid int) error {
 	}
 }
 
-func (repo *GormCommentRepository) GetByPostID(pid int) ([]model.Comment, error) {
+func (repo *CommentDBRepository) GetByPostID(pid int) ([]model.Comment, error) {
 	var comments []model.Comment
 	// 按时间降序
 	tx := repo.db.Model(&model.Comment{}).Where("post_id = ?", pid).Where("delete_time is null").Order("create_time desc").Find(&comments)

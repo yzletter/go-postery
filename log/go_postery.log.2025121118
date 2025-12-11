@@ -1,0 +1,12 @@
+time="2025-12-11 18:30:21.394" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=9999
+time="2025-12-11 18:30:21.397" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=1
+time="2025-12-11 18:30:21.397" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=1
+time="2025-12-11 18:30:21.397" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=15
+time="2025-12-11 18:30:21.397" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=9
+time="2025-12-11 18:30:21.398" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=11
+time="2025-12-11 18:30:21.453" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=9999
+time="2025-12-11 18:30:21.453" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=1
+time="2025-12-11 18:30:21.453" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=1
+time="2025-12-11 18:30:21.453" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=15
+time="2025-12-11 18:30:21.454" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=9
+time="2025-12-11 18:30:21.454" level=WARN source=/Users/yzletter/go_project/go-postery/service/post.go:65 msg="could not get name of user" uid=11

@@ -38,18 +38,21 @@ func main() {
 	engine := gin.Default()
 
 	// Repository 层
-	UserRepo := userRepository.NewGormUserRepository(infraMySQL.GetDB())          // 注册 UserRepository
-	PostRepo := postRepository.NewGormPostRepository(infraMySQL.GetDB())          // 注册 PostRepository
-	CommentRepo := commentRepository.NewGormCommentRepository(infraMySQL.GetDB()) // 注册 CommentRepository
+	UserDBRepo := userRepository.NewUserDBRepository(infraMySQL.GetDB())                   // 注册 UserDBRepo
+	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo
+	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())          // 注册 CommentDBRepo
+	UserCacheRepo := userRepository.NewUserCacheRepository(infraRedis.GetRedis())          // 注册 UserCacheRepo
+	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())          // 注册 PostCacheRepo
+	CommentCacheRepo := commentRepository.NewCommentCacheRepository(infraRedis.GetRedis()) // 注册 CommentCacheRepo
 
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                                              // 注册 JwtSvc
 	MetricSvc := service.NewMetricService()                                                // 注册 MetricSvc
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                       // 注册 AuthSvc
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 500) // 注册 RateLimitSvc
-	UserSvc := service.NewUserService(UserRepo)                                            // 注册 UserSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo)                                  // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo)               // 注册 CommentSvc
+	UserSvc := service.NewUserService(UserDBRepo)                                          // 注册 UserSvc
+	PostSvc := service.NewPostService(PostDBRepo, UserDBRepo)                              // 注册 PostSvc
+	CommentSvc := service.NewCommentService(CommentDBRepo, UserDBRepo, PostDBRepo)         // 注册 CommentSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler

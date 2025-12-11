@@ -19,19 +19,19 @@ var (
 	ErrUidInvalid        = errors.New("用户 ID 错误")
 )
 
-// GormUserRepository 用 Gorm 实现 UserRepository
-type GormUserRepository struct {
+// UserDBRepository 用 Gorm 实现 UserDBRepo
+type UserDBRepository struct {
 	db *gorm.DB
 }
 
-func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
-	return &GormUserRepository{
+func NewUserDBRepository(db *gorm.DB) *UserDBRepository {
+	return &UserDBRepository{
 		db: db,
 	}
 }
 
 // Create 创建一条 User 记录
-func (repo *GormUserRepository) Create(name, password, ip string) (model.User, error) {
+func (repo *UserDBRepository) Create(name, password, ip string) (model.User, error) {
 	// 将模型绑定到结构体
 	user := model.User{
 		Id:          snowflake.NextID(), // 用户 ID 雪花算法
@@ -62,7 +62,7 @@ func (repo *GormUserRepository) Create(name, password, ip string) (model.User, e
 	return user, nil
 }
 
-func (repo *GormUserRepository) Delete(uid int) (bool, error) {
+func (repo *UserDBRepository) Delete(uid int) (bool, error) {
 	// 将模型绑定到结构体
 	user := model.User{
 		Id: uid,
@@ -82,7 +82,7 @@ func (repo *GormUserRepository) Delete(uid int) (bool, error) {
 	return true, nil
 }
 
-func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string) error {
+func (repo *UserDBRepository) UpdatePassword(uid int, oldPass, newPass string) error {
 	tx := repo.db.Model(&model.User{}).Where("id=? and password=?", uid, oldPass).Update("password", newPass)
 	if tx.Error != nil {
 		// 系统错误
@@ -96,7 +96,7 @@ func (repo *GormUserRepository) UpdatePassword(uid int, oldPass, newPass string)
 	return nil
 }
 
-func (repo *GormUserRepository) UpdateProfile(uid int, request model.User) error {
+func (repo *UserDBRepository) UpdateProfile(uid int, request model.User) error {
 	var user model.User
 	tx := repo.db.Model(&model.User{}).Where("id=?", uid).First(&user)
 	if tx.RowsAffected == 0 {
@@ -135,7 +135,7 @@ func (repo *GormUserRepository) UpdateProfile(uid int, request model.User) error
 	return nil
 }
 
-func (repo *GormUserRepository) GetByID(uid int) (bool, model.User) {
+func (repo *UserDBRepository) GetByID(uid int) (bool, model.User) {
 	user := model.User{Id: uid}
 	tx := repo.db.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
@@ -148,7 +148,7 @@ func (repo *GormUserRepository) GetByID(uid int) (bool, model.User) {
 	return true, user
 }
 
-func (repo *GormUserRepository) GetByName(name string) (model.User, error) {
+func (repo *UserDBRepository) GetByName(name string) (model.User, error) {
 	user := model.User{}
 	tx := repo.db.Select("*").Where("name=?", name).First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {

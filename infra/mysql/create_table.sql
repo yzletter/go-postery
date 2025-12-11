@@ -34,16 +34,27 @@ create table if not exists user
 # 创建 post 表
 create table if not exists post
 (
-    id          bigint auto_increment comment '帖子 id, 自增',
-    user_id     bigint not null comment '发布者 id',
-    create_time datetime default current_timestamp comment '帖子创建时间',
-    update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
-    delete_time datetime default null comment '帖子删除时间',
-    title       varchar(100) comment '标题',
-    content     text comment '正文',
+    id            bigint       not null comment '帖子 ID',
+    user_id       bigint       not null comment '发布者 ID',
+    title         varchar(255) not null comment '标题',
+    view_count    int unsigned not null default 0 comment '浏览量',
+
+
+    tags          JSON                  default null comment '标签',
+    status        tinyint               default 1 comment '状态',
+    comment_count int unsigned not null default 0 comment '评论数',
+    like_count    int unsigned not null default 0 comment '点赞数',
+
+    create_time   datetime              default current_timestamp comment '帖子创建时间',
+    update_time   datetime              default current_timestamp on update current_timestamp comment '帖子最后修改时间',
+    delete_time   datetime              default null comment '帖子删除时间',
+    content       text comment '正文',
     primary key (id),
     unique key idx_user (user_id)
 ) default charset = utf8mb4 comment '帖子信息表';
+
+alter table post
+    add column view_count int unsigned not null default 0 comment '浏览量';
 
 create table if not exists comment
 (

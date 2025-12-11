@@ -10,22 +10,24 @@ import (
 )
 
 type CommentService struct {
-	CommentRepository *commentRepository.GormCommentRepository
-	UserRepository    *userRepository.GormUserRepository
-	PostRepository    *postRepository.GormPostRepository
+	CommentDBRepo    *commentRepository.CommentDBRepository
+	CommentCacheRepo *commentRepository.CommentCacheRepository
+	UserDBRepo       *userRepository.UserDBRepository
+	PostDBRepo       *postRepository.PostDBRepository
 }
 
-func NewCommentService(commentRepository *commentRepository.GormCommentRepository, userRepository *userRepository.GormUserRepository, postRepository *postRepository.GormPostRepository) *CommentService {
+func NewCommentService(commentRepository *commentRepository.CommentDBRepository, commentCacheRepo *commentRepository.CommentCacheRepository, userRepository *userRepository.UserDBRepository, postRepository *postRepository.PostDBRepository) *CommentService {
 	return &CommentService{
-		CommentRepository: commentRepository,
-		UserRepository:    userRepository,
-		PostRepository:    postRepository,
+		CommentDBRepo:    commentRepository,
+		CommentCacheRepo: commentCacheRepo,
+		UserDBRepo:       userRepository,
+		PostDBRepo:       postRepository,
 	}
 }
 
 func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, content string) (dto.CommentDTO, error) {
-	comment, err := svc.CommentRepository.Create(pid, uid, parentId, replyId, content)
-	_, user := svc.UserRepository.GetByID(uid)
+	comment, err := svc.CommentDBRepo.Create(pid, uid, parentId, replyId, content)
+	_, user := svc.UserDBRepo.GetByID(uid)
 	return dto.ToCommentDTO(comment, user), err
 }
 
@@ -35,7 +37,7 @@ func (svc *CommentService) Delete(uid int, cid int) error {
 		return errors.New("删除失败")
 	}
 
-	err := svc.CommentRepository.Delete(cid)
+	err := svc.CommentDBRepo.Delete(cid)
 	if err != nil {
 		return errors.New("删除失败")
 	}
@@ -44,14 +46,14 @@ func (svc *CommentService) Delete(uid int, cid int) error {
 }
 
 func (svc *CommentService) List(pid int) []dto.CommentDTO {
-	comments, err := svc.CommentRepository.GetByPostID(pid)
+	comments, err := svc.CommentDBRepo.GetByPostID(pid)
 	if err != nil {
 		return nil
 	}
 
 	var commentDTOs []dto.CommentDTO
 	for _, comment := range comments {
-		_, user := svc.UserRepository.GetByID(comment.UserId)
+		_, user := svc.UserDBRepo.GetByID(comment.UserId)
 		commentDTO := dto.ToCommentDTO(comment, user)
 		commentDTOs = append(commentDTOs, commentDTO)
 	}
@@ -60,12 +62,12 @@ func (svc *CommentService) List(pid int) []dto.CommentDTO {
 }
 
 func (svc *CommentService) Belong(cid, uid int) bool {
-	comment, err := svc.CommentRepository.GetByID(cid)
+	comment, err := svc.CommentDBRepo.GetByID(cid)
 	if err != nil {
 		return false
 	}
 
-	ok, post := svc.PostRepository.GetByID(comment.PostId)
+	ok, post := svc.PostDBRepo.GetByID(comment.PostId)
 	if !ok {
 		return false
 	}

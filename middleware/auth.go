@@ -22,7 +22,7 @@ func AuthRequiredMiddleware(authService *service.AuthService) gin.HandlerFunc {
 			slog.Info("AuthService 认证 AccessToken 成功 ...", "UserInfo", userInfo)
 
 			// 把 userInfo 放入上下文, 以便后续中间件直接使用
-			setUserToContext(ctx, userInfo)
+			setUserInfoInCTX(ctx, userInfo)
 			ctx.Next()
 			return
 		}
@@ -56,7 +56,7 @@ func AuthRequiredMiddleware(authService *service.AuthService) gin.HandlerFunc {
 		slog.Info("AuthService 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
 
 		// 把 userInfo 放入上下文, 以便后续中间件直接使用
-		setUserToContext(ctx, userInfo)
+		setUserInfoInCTX(ctx, userInfo)
 		ctx.Next()
 	}
 }
@@ -73,7 +73,7 @@ func AuthOptionalMiddleware(authService *service.AuthService) gin.HandlerFunc {
 			slog.Info("AuthService 认证 AccessToken 成功 ...", "UserInfo", userInfo)
 
 			// 把 userInfo 放入上下文, 以便后续中间件直接使用
-			setUserToContext(ctx, userInfo)
+			setUserInfoInCTX(ctx, userInfo)
 			ctx.Next()
 		}
 
@@ -104,13 +104,13 @@ func AuthOptionalMiddleware(authService *service.AuthService) gin.HandlerFunc {
 		slog.Info("AuthService 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
 
 		// 把 userInfo 放入上下文, 以便后续中间件直接使用
-		setUserToContext(ctx, userInfo)
+		setUserInfoInCTX(ctx, userInfo)
 		ctx.Next()
 	}
 }
 
 // 将用户信息放入上下文
-func setUserToContext(ctx *gin.Context, userInfo *request.UserJWTInfo) {
+func setUserInfoInCTX(ctx *gin.Context, userInfo *request.UserJWTInfo) {
 	ctx.Set(service.UID_IN_CTX, userInfo.Id)
 	ctx.Set(service.UNAME_IN_CTX, userInfo.Name)
 	slog.Info("用户信息放入上下文成功 ...", "UserInfo", userInfo)
