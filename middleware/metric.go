@@ -27,7 +27,12 @@ func MetricMiddleware(metricService *service.MetricService) gin.HandlerFunc {
 	}
 }
 
-var mpRestful = map[string]string{"id": "id"}
+var mpRestful = map[string]string{
+	"id":      "id",
+	"uid":     "uid",
+	"pid":     "pid",
+	"post_id": "post_id",
+}
 
 func mapURL(ctx *gin.Context) string {
 	url := ctx.Request.URL.Path
