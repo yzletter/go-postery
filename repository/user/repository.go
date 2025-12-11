@@ -103,7 +103,7 @@ func (repo *GormUserRepository) UpdateProfile(uid int, request model.User) error
 		// 业务错误
 		return ErrUidInvalid
 	}
-
+	slog.Info("user", "user", user)
 	if request.BirthDay != nil {
 		tx = tx.Update("birthday", request.BirthDay)
 	}

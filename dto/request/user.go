@@ -50,8 +50,9 @@ func ModifyProfileRequestToModel(request ModifyProfileRequest) model.User {
 		Location: request.Location,
 		Country:  request.Country,
 	}
+
 	if request.BirthDay != "" {
-		t, err := time.Parse(time.RFC3339, request.BirthDay)
+		t, err := time.Parse("2006-01-02", request.BirthDay)
 		if err != nil {
 			return user
 		}
