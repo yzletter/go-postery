@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto/request"
+	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -201,4 +203,60 @@ func (hdl *PostHandler) ListByUid(ctx *gin.Context) {
 
 	postDTOs := hdl.PostService.GetByUid(uid)
 	response.Success(ctx, postDTOs)
+}
+
+func (hdl *PostHandler) Like(ctx *gin.Context) {
+	// 从路由中获取帖子 id
+	pid, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	// 从 CTX 中获取 uid
+	uid, err := utils.GetUidFromCTX(ctx)
+	if err != nil {
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
+
+	err = hdl.PostService.Like(pid, uid)
+	if err != nil {
+		if errors.Is(err, userLikeRepository.ErrRecordHasExist) {
+			response.Fail(ctx, response.CodeBadRequest, "重复点赞")
+			return
+		}
+		response.ServerError(ctx, "")
+		return
+	}
+
+	response.Success(ctx, "")
+}
+
+func (hdl *PostHandler) Dislike(ctx *gin.Context) {
+	// 从路由中获取帖子 id
+	pid, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	// 从 CTX 中获取 uid
+	uid, err := utils.GetUidFromCTX(ctx)
+	if err != nil {
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
+
+	err = hdl.PostService.Dislike(pid, uid)
+	if err != nil {
+		if errors.Is(err, userLikeRepository.ErrRecordNotExist) {
+			response.Fail(ctx, response.CodeBadRequest, "重复取消")
+			return
+		}
+		response.ServerError(ctx, "")
+		return
+	}
+
+	response.Success(ctx, "")
 }

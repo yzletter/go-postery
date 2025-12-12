@@ -12,6 +12,7 @@ import (
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
+	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
@@ -41,6 +42,7 @@ func main() {
 	UserDBRepo := userRepository.NewUserDBRepository(infraMySQL.GetDB())                   // 注册 UserDBRepo
 	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo
 	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())          // 注册 CommentDBRepo
+	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB())       // 注册 UserLikeDBRepo
 	UserCacheRepo := userRepository.NewUserCacheRepository(infraRedis.GetRedis())          // 注册 UserCacheRepo
 	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())          // 注册 PostCacheRepo
 	CommentCacheRepo := commentRepository.NewCommentCacheRepository(infraRedis.GetRedis()) // 注册 CommentCacheRepo
@@ -51,7 +53,7 @@ func main() {
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                                 // 注册 AuthSvc
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 500)           // 注册 RateLimitSvc
 	UserSvc := service.NewUserService(UserDBRepo, UserCacheRepo)                                     // 注册 UserSvc
-	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo)                         // 注册 PostSvc
+	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo)         // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo) // 注册 CommentSvc
 
 	// Handler 层
@@ -99,9 +101,11 @@ func main() {
 	engine.GET("/posts/:pid", PostHdl.Detail)        // 获取帖子详情
 	engine.GET("/posts_uid/:uid", PostHdl.ListByUid) // 获取目标用户发布的帖子
 	// 强制登录
-	engine.POST("/posts/new", AuthRequiredMdl, PostHdl.Create)       // 创建帖子
-	engine.GET("/posts/delete/:id", AuthRequiredMdl, PostHdl.Delete) // 删除帖子
-	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.Update)    // 修改帖子
+	engine.POST("/posts/new", AuthRequiredMdl, PostHdl.Create)         // 创建帖子
+	engine.GET("/posts/delete/:id", AuthRequiredMdl, PostHdl.Delete)   // 删除帖子
+	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.Update)      // 修改帖子
+	engine.GET("/posts/like/:id", AuthRequiredMdl, PostHdl.Like)       // 点赞
+	engine.GET("/posts/dislike/:id", AuthRequiredMdl, PostHdl.Dislike) // 取消点赞
 	// 非强制要求登录
 	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
 

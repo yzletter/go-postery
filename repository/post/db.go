@@ -134,10 +134,18 @@ func (repo *PostDBRepository) GetByUid(uid int) []model.Post {
 	return posts
 }
 
-func (repo *PostDBRepository) IncrViewCnt(pid int) {
+func (repo *PostDBRepository) ChangeViewCnt(pid int, delta int) {
 	var post model.Post
-	tx := repo.db.Model(&post).Where("id = ?", pid).UpdateColumn("view_count", gorm.Expr("view_count + ?", 1))
+	tx := repo.db.Model(&post).Where("id = ?", pid).UpdateColumn("view_count", gorm.Expr("view_count + ?", delta))
 	if tx.Error != nil {
 		slog.Error("MySQL Increase View Count False", "error", tx.Error)
+	}
+}
+
+func (repo *PostDBRepository) ChangeLikeCnt(pid int, delta int) {
+	var post model.Post
+	tx := repo.db.Model(&post).Where("id = ?", pid).UpdateColumn("like_count", gorm.Expr("like_count + ?", delta))
+	if tx.Error != nil {
+		slog.Error("MySQL Increase Like Count False", "error", tx.Error)
 	}
 }

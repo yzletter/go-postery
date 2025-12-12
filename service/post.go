@@ -5,21 +5,32 @@ import (
 	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/response"
+	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	postRepository "github.com/yzletter/go-postery/repository/post"
 	userRepository "github.com/yzletter/go-postery/repository/user"
 )
 
+var (
+	ErrPostNotFound = errors.New("帖子不存在")
+)
+
 type PostService struct {
-	PostDBRepo    *postRepository.PostDBRepository
-	PostCacheRepo *postRepository.PostCacheRepository
-	UserDBRepo    *userRepository.UserDBRepository
+	PostDBRepo     *postRepository.PostDBRepository
+	PostCacheRepo  *postRepository.PostCacheRepository
+	UserDBRepo     *userRepository.UserDBRepository
+	UserLikeDBRepo *userLikeRepository.UserLikeDBRepository
 }
 
-func NewPostService(postDBRepo *postRepository.PostDBRepository, postCacheRepo *postRepository.PostCacheRepository, userRepository *userRepository.UserDBRepository) *PostService {
+func NewPostService(postDBRepo *postRepository.PostDBRepository,
+	postCacheRepo *postRepository.PostCacheRepository,
+	userRepository *userRepository.UserDBRepository,
+	userLikeDBRepo *userLikeRepository.UserLikeDBRepository,
+) *PostService {
 	return &PostService{
-		PostDBRepo:    postDBRepo,
-		PostCacheRepo: postCacheRepo,
-		UserDBRepo:    userRepository,
+		PostDBRepo:     postDBRepo,
+		PostCacheRepo:  postCacheRepo,
+		UserDBRepo:     userRepository,
+		UserLikeDBRepo: userLikeDBRepo,
 	}
 }
 
@@ -82,9 +93,9 @@ func (svc *PostService) GetDetailById(pid int) (bool, dto.PostDetailDTO) {
 	_, user := svc.UserDBRepo.GetByID(post.UserId)
 
 	// 记录 ViewCount + 1
-	svc.PostDBRepo.IncrViewCnt(post.Id)                  // 数据库中 + 1
-	ok, err := svc.PostCacheRepo.IncrViewCnt(post.Id, 1) // 缓存中 + 1
-	if !ok {                                             // 缓存中没有 KEY
+	svc.PostDBRepo.ChangeViewCnt(post.Id, 1)               // 数据库中 + 1
+	ok, err := svc.PostCacheRepo.ChangeViewCnt(post.Id, 1) // 缓存中 + 1
+	if !ok {                                               // 缓存中没有 KEY
 		svc.PostCacheRepo.SetKey(post.Id, "comment_cnt", post.ViewCount+1)
 	}
 	if err != nil {
@@ -139,4 +150,60 @@ func (svc *PostService) GetByUid(uid int) []dto.PostDetailDTO {
 	}
 
 	return postDTOs
+}
+
+func (svc *PostService) Like(pid, uid int) error {
+	// 查找帖子
+	ok, post := svc.PostDBRepo.GetByID(pid)
+	if !ok {
+		// 帖子不存在
+		return ErrPostNotFound
+	}
+
+	// 创建点赞记录
+	err := svc.UserLikeDBRepo.Create(uid, pid)
+	if err != nil {
+		if errors.Is(err, userLikeRepository.ErrRecordHasExist) {
+			// 重复点赞
+			return userLikeRepository.ErrRecordHasExist
+		}
+		// 系统内部错误
+		return userRepository.ErrMySQLInternal
+	}
+
+	svc.PostDBRepo.ChangeLikeCnt(pid, 1)
+	ok, err = svc.PostCacheRepo.ChangeLikeCnt(pid, 1)
+	if !ok {
+		svc.PostCacheRepo.SetKey(pid, "like_cnt", post.LikeCount+1)
+	}
+
+	return nil
+}
+
+func (svc *PostService) Dislike(pid, uid int) error {
+	// 查找帖子
+	ok, post := svc.PostDBRepo.GetByID(pid)
+	if !ok {
+		// 帖子不存在
+		return ErrPostNotFound
+	}
+
+	// 删除点赞记录
+	err := svc.UserLikeDBRepo.Delete(uid, pid)
+	if err != nil {
+		if errors.Is(err, userLikeRepository.ErrRecordNotExist) {
+			// 重复删除
+			return userLikeRepository.ErrRecordNotExist
+		}
+		// 系统内部错误
+		return userRepository.ErrMySQLInternal
+	}
+
+	svc.PostDBRepo.ChangeLikeCnt(pid, -1)              // 数据库 + 1
+	ok, err = svc.PostCacheRepo.ChangeLikeCnt(pid, -1) // 缓存 + 1
+	if !ok {
+		svc.PostCacheRepo.SetKey(pid, "like_cnt", post.LikeCount-1)
+	}
+
+	return nil
 }

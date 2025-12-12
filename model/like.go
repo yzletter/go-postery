@@ -2,13 +2,15 @@ package model
 
 import "time"
 
-type Post struct {
+type UserLike struct {
 	Id         int        `gorm:"primaryKey"`
 	UserId     int        `gorm:"column:user_id"`
-	Title      string     `gorm:"column:title"`
-	Content    string     `gorm:"column:content"`
+	PostId     int        `gorm:"column:post_id"`
 	CreateTime *time.Time `gorm:"column:create_time"`
+	UpdateTime *time.Time `gorm:"column:update_time"`
 	DeleteTime *time.Time `gorm:"column:delete_time"`
-	ViewCount  int        `gorm:"column:view_count"`
-	LikeCount  int        `gorm:"column:like_count"`
+}
+
+func (u UserLike) TableName() string {
+	return "user_like"
 }
