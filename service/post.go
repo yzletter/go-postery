@@ -14,6 +14,14 @@ var (
 	ErrPostNotFound = errors.New("帖子不存在")
 )
 
+var Fields = []string{"view_count", "comment_count", "like_count"}
+
+const (
+	VIEW_CNT    = "view_count"
+	COMMENT_CNT = "comment_count"
+	LIKE_CNT    = "like_count"
+)
+
 type PostService struct {
 	PostDBRepo     *postRepository.PostDBRepository
 	PostCacheRepo  *postRepository.PostCacheRepository
@@ -93,11 +101,11 @@ func (svc *PostService) GetDetailById(pid int) (bool, dto.PostDetailDTO) {
 	_, user := svc.UserDBRepo.GetByID(post.UserId)
 
 	// 记录 ViewCount + 1
-	svc.PostDBRepo.ChangeViewCnt(post.Id, 1)               // 数据库中 + 1
-	ok, err := svc.PostCacheRepo.ChangeViewCnt(post.Id, 1) // 缓存中 + 1
-	if !ok {                                               // 缓存中没有 KEY
+	svc.PostDBRepo.ChangeViewCnt(post.Id, 1)                                // 数据库中 + 1
+	ok, err := svc.PostCacheRepo.ChangeInteractiveCnt(VIEW_CNT, post.Id, 1) // 缓存中 + 1
+	if !ok {                                                                // 缓存中没有 KEY
 		vals := []int{post.ViewCount + 1, post.CommentCount, post.LikeCount}
-		svc.PostCacheRepo.SetKey(pid, fields, vals)
+		svc.PostCacheRepo.SetKey(pid, Fields, vals)
 	}
 	if err != nil {
 		slog.Error("Redis Increase View Count Failed", "error", err)
@@ -173,10 +181,10 @@ func (svc *PostService) Like(pid, uid int) error {
 	}
 
 	svc.PostDBRepo.ChangeLikeCnt(pid, 1)
-	ok, err = svc.PostCacheRepo.ChangeLikeCnt(pid, 1)
+	ok, err = svc.PostCacheRepo.ChangeInteractiveCnt(LIKE_CNT, pid, 1)
 	if !ok {
 		vals := []int{post.ViewCount, post.CommentCount, post.LikeCount + 1}
-		svc.PostCacheRepo.SetKey(pid, fields, vals)
+		svc.PostCacheRepo.SetKey(pid, Fields, vals)
 	}
 
 	return nil
@@ -201,11 +209,11 @@ func (svc *PostService) Dislike(pid, uid int) error {
 		return userRepository.ErrMySQLInternal
 	}
 
-	svc.PostDBRepo.ChangeLikeCnt(pid, -1)              // 数据库 + 1
-	ok, err = svc.PostCacheRepo.ChangeLikeCnt(pid, -1) // 缓存 + 1
+	svc.PostDBRepo.ChangeLikeCnt(pid, -1)                               // 数据库 + 1
+	ok, err = svc.PostCacheRepo.ChangeInteractiveCnt(LIKE_CNT, pid, -1) // 缓存 + 1
 	if !ok {
 		vals := []int{post.ViewCount, post.CommentCount, post.LikeCount - 1}
-		svc.PostCacheRepo.SetKey(pid, fields, vals)
+		svc.PostCacheRepo.SetKey(pid, Fields, vals)
 	}
 
 	return nil
