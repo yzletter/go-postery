@@ -1,6 +1,8 @@
 package service
 
-import repository "github.com/yzletter/go-postery/repository/tag"
+import (
+	repository "github.com/yzletter/go-postery/repository/tag"
+)
 
 type TagService struct {
 	TagCacheRepo *repository.TagCacheRepository
