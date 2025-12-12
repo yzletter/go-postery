@@ -26,7 +26,7 @@ func NewPostCacheRepository(redisClient redis.Cmdable) *PostCacheRepository {
 
 func (repo *PostCacheRepository) ChangeViewCnt(pid int, delta int) (bool, error) {
 	redisKey := fmt.Sprintf("%s:%d", POST_IN_REDIS, pid)
-	field := "comment_cnt"
+	field := "view_cnt"
 
 	return repo.redisClient.Eval(addCntScript, []string{redisKey}, field, delta).Bool()
 }
@@ -34,6 +34,13 @@ func (repo *PostCacheRepository) ChangeViewCnt(pid int, delta int) (bool, error)
 func (repo *PostCacheRepository) ChangeLikeCnt(pid int, delta int) (bool, error) {
 	redisKey := fmt.Sprintf("%s:%d", POST_IN_REDIS, pid)
 	field := "like_cnt"
+
+	return repo.redisClient.Eval(addCntScript, []string{redisKey}, field, delta).Bool()
+}
+
+func (repo *PostCacheRepository) ChangeCommentCnt(pid int, delta int) (bool, error) {
+	redisKey := fmt.Sprintf("%s:%d", POST_IN_REDIS, pid)
+	field := "comment_cnt"
 
 	return repo.redisClient.Eval(addCntScript, []string{redisKey}, field, delta).Bool()
 }

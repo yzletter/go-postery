@@ -149,3 +149,11 @@ func (repo *PostDBRepository) ChangeLikeCnt(pid int, delta int) {
 		slog.Error("MySQL Increase Like Count False", "error", tx.Error)
 	}
 }
+
+func (repo *PostDBRepository) ChangeCommentCnt(pid int, delta int) {
+	var post model.Post
+	tx := repo.db.Model(&post).Where("id = ?", pid).UpdateColumn("comment_count", gorm.Expr("comment_count + ?", delta))
+	if tx.Error != nil {
+		slog.Error("MySQL Increase Comment Count False", "error", tx.Error)
+	}
+}

@@ -55,18 +55,18 @@ func (repo *CommentDBRepository) GetByID(cid int) (model.Comment, error) {
 	return comment, nil
 }
 
-func (repo *CommentDBRepository) Delete(cid int) error {
-	tx := repo.db.Model(&model.Comment{}).Where("id = ?", cid).Or("parent_id = ?", cid).Update("delete_time", time.Now())
+func (repo *CommentDBRepository) Delete(cid int) (int, error) {
+	var comment model.Comment
+	tx := repo.db.Model(&comment).Where("id = ?", cid).Or("parent_id = ?", cid).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		slog.Error("删除失败", "cid", cid)
-		return errno.ErrDeleteFailed
-	} else {
-		if tx.RowsAffected == 0 {
-			return errno.ErrRecordNotFound
-		} else {
-			return nil
-		}
+		return 0, errno.ErrDeleteFailed
 	}
+
+	if tx.RowsAffected == 0 {
+		return 0, errno.ErrRecordNotFound
+	}
+	return int(tx.RowsAffected), nil
 }
 
 func (repo *CommentDBRepository) GetByPostID(pid int) ([]model.Comment, error) {

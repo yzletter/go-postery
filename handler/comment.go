@@ -45,6 +45,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	// 调用 service 层创建评论
 	commentDTO, err := hdl.CommentService.Create(comment.PostId, int(uid), comment.ParentId, comment.ReplyId, comment.Content)
 	if err != nil {
+		slog.Error("Create Comment Failed", "error", err)
 		response.ServerError(ctx, "")
 		return
 	}
@@ -60,15 +61,21 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	// 从路由中获取参数 cid
-	cid, err := strconv.Atoi(ctx.Param("id"))
+	// 从路由中获取参数 cid 和 pid
+	cid, err := strconv.Atoi(ctx.Param("cid"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	pid, err := strconv.Atoi(ctx.Param("pid"))
 	if err != nil {
 		response.ParamError(ctx, "")
 		return
 	}
 
 	// 调用 Service 层
-	err = hdl.CommentService.Delete(int(uid), cid)
+	err = hdl.CommentService.Delete(uid, pid, cid)
 	if err != nil {
 		if err.Error() == "评论不存在" {
 			response.ServerError(ctx, "")

@@ -39,11 +39,11 @@ create table if not exists post
     title         varchar(255) not null comment '标题',
     view_count    int unsigned not null default 0 comment '浏览量',
     like_count    int unsigned not null default 0 comment '点赞数',
+    comment_count int unsigned not null default 0 comment '评论数',
 
 
     tags          JSON                  default null comment '标签',
     status        tinyint               default 1 comment '状态',
-    comment_count int unsigned not null default 0 comment '评论数',
 
     create_time   datetime              default current_timestamp comment '帖子创建时间',
     update_time   datetime              default current_timestamp on update current_timestamp comment '帖子最后修改时间',
@@ -55,7 +55,7 @@ create table if not exists post
 
 use go_postery;
 alter table post
-    add column like_count int unsigned not null default 0 comment '浏览量';
+    add column comment_count int unsigned not null default 0 comment '评论数';
 
 create table if not exists user_like
 (

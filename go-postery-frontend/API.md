@@ -164,7 +164,7 @@
 - 成功时 `data` 为新建的 CommentDTO。
 
 ### 删除评论
-- `GET /comment/delete/{id}`
+- `GET /comment/delete/{post_id}/{comment_id}`
 - 成功返回 `code: 0`。
 
 ### 判断评论归属

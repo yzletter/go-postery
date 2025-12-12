@@ -124,7 +124,13 @@ export default function PostDetail() {
   }
 
   const handleDeleteComment = async (commentId: string | number) => {
+    if (!id) {
+      alert('帖子ID缺失，无法删除评论')
+      return
+    }
+
     const commentIdStr = normalizeId(commentId)
+    const postIdStr = normalizeId(id)
     const target = comments.find(c => normalizeId(c.id) === commentIdStr)
     if (!target) return
 
@@ -155,7 +161,7 @@ export default function PostDetail() {
     }
 
     try {
-      await apiGet(`/comment/delete/${commentIdStr}`)
+      await apiGet(`/comment/delete/${postIdStr}/${commentIdStr}`)
       setComments(prev => prev.filter(c => normalizeId(c.id) !== commentIdStr))
       await fetchComments()
     } catch (error) {

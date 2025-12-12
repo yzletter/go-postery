@@ -7,12 +7,14 @@ import (
 )
 
 type PostDetailDTO struct {
-	Id        int          `json:"id,string"`
-	ViewCount int          `json:"view_count"`
-	Title     string       `json:"title"`
-	Content   string       `json:"content"`
-	CreatedAt string       `json:"createdAt"`
-	Author    UserBriefDTO `json:"author"`
+	Id           int          `json:"id,string"`
+	ViewCount    int          `json:"view_count"`
+	LikeCount    int          `json:"like_count"`
+	CommentCount int          `json:"comment_count"`
+	Title        string       `json:"title"`
+	Content      string       `json:"content"`
+	CreatedAt    string       `json:"createdAt"`
+	Author       UserBriefDTO `json:"author"`
 }
 
 type PostBriefDTO struct {
@@ -24,12 +26,14 @@ type PostBriefDTO struct {
 
 func ToPostDetailDTO(post model.Post, user model.User) PostDetailDTO {
 	return PostDetailDTO{
-		Id:        post.Id,
-		Title:     post.Title,
-		Content:   post.Content,
-		CreatedAt: post.CreateTime.Format(time.RFC3339),
-		Author:    ToUserBriefDTO(user),
-		ViewCount: post.ViewCount,
+		Id:           post.Id,
+		Title:        post.Title,
+		Content:      post.Content,
+		CreatedAt:    post.CreateTime.Format(time.RFC3339),
+		Author:       ToUserBriefDTO(user),
+		ViewCount:    post.ViewCount,
+		CommentCount: post.CommentCount,
+		LikeCount:    post.LikeCount,
 	}
 }
 

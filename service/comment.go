@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/response"
 	commentRepository "github.com/yzletter/go-postery/repository/comment"
@@ -14,32 +15,55 @@ type CommentService struct {
 	CommentCacheRepo *commentRepository.CommentCacheRepository
 	UserDBRepo       *userRepository.UserDBRepository
 	PostDBRepo       *postRepository.PostDBRepository
+	PostCacheRepo    *postRepository.PostCacheRepository
 }
 
-func NewCommentService(commentRepository *commentRepository.CommentDBRepository, commentCacheRepo *commentRepository.CommentCacheRepository, userRepository *userRepository.UserDBRepository, postRepository *postRepository.PostDBRepository) *CommentService {
+func NewCommentService(commentDBRepo *commentRepository.CommentDBRepository, commentCacheRepo *commentRepository.CommentCacheRepository,
+	userDBRepo *userRepository.UserDBRepository,
+	postDBRepo *postRepository.PostDBRepository, postCacheRepo *postRepository.PostCacheRepository) *CommentService {
 	return &CommentService{
-		CommentDBRepo:    commentRepository,
+		CommentDBRepo:    commentDBRepo,
 		CommentCacheRepo: commentCacheRepo,
-		UserDBRepo:       userRepository,
-		PostDBRepo:       postRepository,
+		UserDBRepo:       userDBRepo,
+		PostDBRepo:       postDBRepo,
+		PostCacheRepo:    postCacheRepo,
 	}
 }
 
 func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, content string) (dto.CommentDTO, error) {
 	comment, err := svc.CommentDBRepo.Create(pid, uid, parentId, replyId, content)
 	_, user := svc.UserDBRepo.GetByID(uid)
+
+	svc.PostDBRepo.ChangeCommentCnt(pid, 1)
+	ok, err := svc.PostCacheRepo.ChangeCommentCnt(pid, 1)
+	if !ok {
+		ok, post := svc.PostDBRepo.GetByID(pid)
+		if ok {
+			svc.PostCacheRepo.SetKey(pid, "comment_cnt", post.CommentCount)
+		}
+	}
+
 	return dto.ToCommentDTO(comment, user), err
 }
 
-func (svc *CommentService) Delete(uid int, cid int) error {
+func (svc *CommentService) Delete(uid, pid, cid int) error {
 	ok := svc.Belong(cid, uid)
 	if !ok {
+		return errors.New("没有删除权限")
+	}
+
+	ok, post := svc.PostDBRepo.GetByID(pid)
+
+	cnt, err := svc.CommentDBRepo.Delete(cid) // 返回被删除的个数
+	if err != nil {
 		return errors.New("删除失败")
 	}
 
-	err := svc.CommentDBRepo.Delete(cid)
-	if err != nil {
-		return errors.New("删除失败")
+	svc.PostDBRepo.ChangeCommentCnt(pid, -cnt)
+	ok, err = svc.PostCacheRepo.ChangeCommentCnt(pid, -cnt)
+	if !ok {
+		svc.PostCacheRepo.SetKey(pid, "comment_cnt", post.CommentCount-cnt)
+		slog.Info("cmt_cnt", "cmt_cnt", post.CommentCount-cnt)
 	}
 
 	return nil
