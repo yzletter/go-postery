@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	POST_IN_REDIS = "post:"
+	POST_IN_REDIS = "post_interactive_prefix"
 )
 
 //go:embed add_cnt_script.lua
