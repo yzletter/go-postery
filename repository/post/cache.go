@@ -3,12 +3,14 @@ package repository
 import (
 	_ "embed"
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis"
 )
 
 const (
-	POST_IN_REDIS = "post_interactive_prefix"
+	POST_IN_REDIS    = "post_interactive_prefix"
+	POST_EXPIRE_TIME = time.Minute * 15
 )
 
 //go:embed add_cnt_script.lua
@@ -45,7 +47,16 @@ func (repo *PostCacheRepository) ChangeCommentCnt(pid int, delta int) (bool, err
 	return repo.redisClient.Eval(addCntScript, []string{redisKey}, field, delta).Bool()
 }
 
-func (repo *PostCacheRepository) SetKey(pid int, filed string, val int) {
+func (repo *PostCacheRepository) SetKey(pid int, fields []string, vals []int) {
+	// 拼接 Key
 	redisKey := fmt.Sprintf("%s:%d", POST_IN_REDIS, pid)
-	repo.redisClient.HSet(redisKey, filed, val)
+	// 设置 Key
+	repo.redisClient.HMSet(redisKey,
+		map[string]interface{}{
+			fields[0]: vals[0],
+			fields[1]: vals[1],
+			fields[2]: vals[2],
+		})
+	// 设置过期时间
+	repo.redisClient.Expire(redisKey, POST_EXPIRE_TIME)
 }

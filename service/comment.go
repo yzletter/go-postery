@@ -9,6 +9,8 @@ import (
 	userRepository "github.com/yzletter/go-postery/repository/user"
 )
 
+var fields = []string{"view_count", "comment_count", "like_count"}
+
 type CommentService struct {
 	CommentDBRepo    *commentRepository.CommentDBRepository
 	CommentCacheRepo *commentRepository.CommentCacheRepository
@@ -38,7 +40,8 @@ func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, c
 	if !ok {
 		ok, post := svc.PostDBRepo.GetByID(pid)
 		if ok {
-			svc.PostCacheRepo.SetKey(pid, "comment_cnt", post.CommentCount)
+			vals := []int{post.ViewCount, post.CommentCount, post.LikeCount}
+			svc.PostCacheRepo.SetKey(pid, fields, vals)
 		}
 	}
 
@@ -61,7 +64,8 @@ func (svc *CommentService) Delete(uid, pid, cid int) error {
 	svc.PostDBRepo.ChangeCommentCnt(pid, -cnt)
 	ok, err = svc.PostCacheRepo.ChangeCommentCnt(pid, -cnt)
 	if !ok {
-		svc.PostCacheRepo.SetKey(pid, "comment_cnt", post.CommentCount-cnt)
+		vals := []int{post.ViewCount, post.CommentCount - cnt, post.LikeCount}
+		svc.PostCacheRepo.SetKey(pid, fields, vals)
 	}
 
 	return nil

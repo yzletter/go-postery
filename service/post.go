@@ -96,7 +96,8 @@ func (svc *PostService) GetDetailById(pid int) (bool, dto.PostDetailDTO) {
 	svc.PostDBRepo.ChangeViewCnt(post.Id, 1)               // 数据库中 + 1
 	ok, err := svc.PostCacheRepo.ChangeViewCnt(post.Id, 1) // 缓存中 + 1
 	if !ok {                                               // 缓存中没有 KEY
-		svc.PostCacheRepo.SetKey(post.Id, "view_cnt", post.ViewCount+1)
+		vals := []int{post.ViewCount + 1, post.CommentCount, post.LikeCount}
+		svc.PostCacheRepo.SetKey(pid, fields, vals)
 	}
 	if err != nil {
 		slog.Error("Redis Increase View Count Failed", "error", err)
@@ -174,7 +175,8 @@ func (svc *PostService) Like(pid, uid int) error {
 	svc.PostDBRepo.ChangeLikeCnt(pid, 1)
 	ok, err = svc.PostCacheRepo.ChangeLikeCnt(pid, 1)
 	if !ok {
-		svc.PostCacheRepo.SetKey(pid, "like_cnt", post.LikeCount+1)
+		vals := []int{post.ViewCount, post.CommentCount, post.LikeCount + 1}
+		svc.PostCacheRepo.SetKey(pid, fields, vals)
 	}
 
 	return nil
@@ -202,7 +204,8 @@ func (svc *PostService) Dislike(pid, uid int) error {
 	svc.PostDBRepo.ChangeLikeCnt(pid, -1)              // 数据库 + 1
 	ok, err = svc.PostCacheRepo.ChangeLikeCnt(pid, -1) // 缓存 + 1
 	if !ok {
-		svc.PostCacheRepo.SetKey(pid, "like_cnt", post.LikeCount-1)
+		vals := []int{post.ViewCount, post.CommentCount, post.LikeCount - 1}
+		svc.PostCacheRepo.SetKey(pid, fields, vals)
 	}
 
 	return nil
