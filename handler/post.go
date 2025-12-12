@@ -72,7 +72,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 		response.ServerError(ctx, "")
 		return
 	}
-
+	postDTO.Tags = hdl.TagSvc.FindTagsByPostID(postDTO.Id)
 	response.Success(ctx, postDTO)
 }
 
