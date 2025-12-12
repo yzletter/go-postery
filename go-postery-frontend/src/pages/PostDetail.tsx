@@ -289,8 +289,13 @@ export default function PostDetail() {
     try {
       const { data } = await apiPost('/posts/like', { id: normalizedId, post_id: normalizedId })
       const serverLikes =
-        (data as any)?.likes ?? (data as any)?.Likes ?? (data as any)?.likeCount ?? (data as any)?.LikeCount
-      const finalCount = typeof serverLikes === 'number' ? serverLikes : nextCount
+        (data as any)?.likes ??
+        (data as any)?.Likes ??
+        (data as any)?.likeCount ??
+        (data as any)?.like_count ??
+        (data as any)?.LikeCount
+      const parsedServerLikes = typeof serverLikes === 'number' ? serverLikes : Number(serverLikes)
+      const finalCount = Number.isFinite(parsedServerLikes) ? parsedServerLikes : nextCount
 
       setLikeCount(finalCount)
       setPost(prev => (prev ? { ...prev, likes: finalCount } : prev))

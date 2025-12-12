@@ -139,7 +139,7 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostList
 
   try {
     const { data } = await apiGet<{
-      posts: Post[]
+      posts: any[]
       total?: number
       hasMore?: boolean
     }>(`/posts?pageNo=${page}&pageSize=${pageSize}`, { signal: controller.signal })
@@ -148,13 +148,13 @@ const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostList
       throw new Error('帖子列表响应数据格式错误')
     }
 
-    const postsWithStats: Post[] = data.posts.map((p: Post, idx: number) => {
+    const postsWithStats: Post[] = data.posts.map((p: any) => {
       const normalized = normalizePost(p)
       return {
         ...normalized,
-        views: normalized.views ?? Math.floor(Math.random() * 500) + 50 + idx,
-        likes: normalized.likes ?? Math.floor(Math.random() * 80) + 5 + idx,
-        comments: normalized.comments ?? Math.floor(Math.random() * 40) + idx,
+        views: normalized.views ?? 0,
+        likes: normalized.likes ?? 0,
+        comments: normalized.comments ?? 0,
       }
     })
 
