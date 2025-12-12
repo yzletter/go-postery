@@ -13,6 +13,7 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	userLikeRepository "github.com/yzletter/go-postery/repository/like"
+	tagRepository "github.com/yzletter/go-postery/repository/tag"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
@@ -43,6 +44,8 @@ func main() {
 	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo
 	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())          // 注册 CommentDBRepo
 	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB())       // 注册 UserLikeDBRepo
+	TagDBRepo := tagRepository.NewTagDBRepository(infraMySQL.GetDB())                      // 注册 TagDBRepo
+	TagCacheRepo := tagRepository.NewTagCacheRepository(infraRedis.GetRedis())             // 注册 TagCacheRepo
 	UserCacheRepo := userRepository.NewUserCacheRepository(infraRedis.GetRedis())          // 注册 UserCacheRepo
 	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())          // 注册 PostCacheRepo
 	CommentCacheRepo := commentRepository.NewCommentCacheRepository(infraRedis.GetRedis()) // 注册 CommentCacheRepo
@@ -55,18 +58,20 @@ func main() {
 	UserSvc := service.NewUserService(UserDBRepo, UserCacheRepo)                                                    // 注册 UserSvc
 	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo)                        // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
+	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc)                   // 注册 PostHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
+	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHdl
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
 	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthSvc) // AuthOptionalMdl 非强制要求登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -115,6 +120,9 @@ func main() {
 	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create)             // 创建评论
 	engine.GET("/comment/delete/:pid/:cid", AuthRequiredMdl, CommentHdl.Delete) // 删除评论
 	engine.GET("/comment/belong", AuthRequiredMdl, CommentHdl.Belong)           // 删除评论
+
+	// 标签模块
+	//engine.POST("/tag/new", AuthRequiredMdl, TagHdl.Create) // 创建标签
 
 	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)

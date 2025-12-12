@@ -15,6 +15,7 @@ type PostDetailDTO struct {
 	Content      string       `json:"content"`
 	CreatedAt    string       `json:"createdAt"`
 	Author       UserBriefDTO `json:"author"`
+	Tags         []string     `json:"tags"`
 }
 
 type PostBriefDTO struct {
@@ -34,6 +35,7 @@ func ToPostDetailDTO(post model.Post, user model.User) PostDetailDTO {
 		ViewCount:    post.ViewCount,
 		CommentCount: post.CommentCount,
 		LikeCount:    post.LikeCount,
+		Tags:         nil,
 	}
 }
 

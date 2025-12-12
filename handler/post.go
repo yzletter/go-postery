@@ -16,12 +16,14 @@ import (
 type PostHandler struct {
 	PostService *service.PostService
 	UserService *service.UserService
+	TagSvc      *service.TagService
 }
 
-func NewPostHandler(postService *service.PostService, userService *service.UserService) *PostHandler {
+func NewPostHandler(postService *service.PostService, userService *service.UserService, tagSvc *service.TagService) *PostHandler {
 	return &PostHandler{
 		PostService: postService,
 		UserService: userService,
+		TagSvc:      tagSvc,
 	}
 }
 
@@ -38,7 +40,9 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 
 	// 获取帖子总数和当前页帖子列表
 	total, postDTOs := hdl.PostService.GetByPage(pageNo, pageSize)
-	slog.Info("", "postDTOs", postDTOs)
+	for k := range postDTOs {
+		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(postDTOs[k].Id)
+	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := hdl.PostService.HasMore(pageNo, pageSize, total)
@@ -49,7 +53,6 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 		"total":   total,
 		"hasMore": hasMore,
 	})
-
 	return
 }
 
@@ -76,7 +79,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 // Create 创建帖子
 func (hdl *PostHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx)
+	uid, err := service.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -92,12 +95,15 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.PostService.Create(int(uid), createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		response.ServerError(ctx, "")
 		return
 	}
+
+	// 建立标签
+	hdl.TagSvc.Bind(postDTO.Id, createRequest.Tags)
 
 	response.Success(ctx, postDTO)
 }
@@ -105,7 +111,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 // Delete 删除帖子
 func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx)
+	uid, err := service.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -134,7 +140,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx)
+	uid, err := service.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -174,7 +180,7 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx)
+	uid, err := service.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -214,7 +220,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 	}
 
 	// 从 CTX 中获取 uid
-	uid, err := utils.GetUidFromCTX(ctx)
+	uid, err := service.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -242,7 +248,7 @@ func (hdl *PostHandler) Dislike(ctx *gin.Context) {
 	}
 
 	// 从 CTX 中获取 uid
-	uid, err := utils.GetUidFromCTX(ctx)
+	uid, err := service.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return

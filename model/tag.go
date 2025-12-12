@@ -15,3 +15,7 @@ type PostTag struct {
 	PostId int `gorm:"column:post_id"`
 	TagId  int `gorm:"column:tag_id"`
 }
+
+func (pt PostTag) TableName() string {
+	return "post_tag"
+}

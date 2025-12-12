@@ -1,11 +1,10 @@
-package utils
+package service
 
 import (
 	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/service"
 )
 
 var (
@@ -13,7 +12,7 @@ var (
 )
 
 func GetUidFromCTX(ctx *gin.Context) (int, error) {
-	idStr, ok := ctx.Value(service.UID_IN_CTX).(string)
+	idStr, ok := ctx.Value(UID_IN_CTX).(string)
 	if !ok {
 		return 0, ErrNotLogin
 	}

@@ -36,8 +36,7 @@ func Slugify(name string) string {
 		}
 	}
 
-	slug := strings.Trim(sb.String(), "-")
-	slug = nonWord.ReplaceAllString(slug, "")
+	slug := nonWord.ReplaceAllString(sb.String(), "")
 
 	h := sha1.Sum([]byte(slug))
 	hash := hex.EncodeToString(h[:])[:6]
