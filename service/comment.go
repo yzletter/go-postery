@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/response"
 	commentRepository "github.com/yzletter/go-postery/repository/comment"
@@ -63,7 +62,6 @@ func (svc *CommentService) Delete(uid, pid, cid int) error {
 	ok, err = svc.PostCacheRepo.ChangeCommentCnt(pid, -cnt)
 	if !ok {
 		svc.PostCacheRepo.SetKey(pid, "comment_cnt", post.CommentCount-cnt)
-		slog.Info("cmt_cnt", "cmt_cnt", post.CommentCount-cnt)
 	}
 
 	return nil
