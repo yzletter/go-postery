@@ -429,9 +429,9 @@ export default function PostDetail() {
             {post.tags.map(tag => (
               <span
                 key={tag}
-                className="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-sm border border-primary-100"
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-primary-100 bg-primary-50/70 text-primary-700 text-sm font-medium shadow-sm"
               >
-                #{tag}
+                {tag}
               </span>
             ))}
           </div>

@@ -24,21 +24,6 @@ const categories: CategoryItem[] = [
   { key: 'ops', label: '运维', icon: Shield },
 ]
 
-const categoryTagMap: Record<string, string[]> = {
-  follow: ['关注作者', '订阅', '好友动态'],
-  all: ['综合', '热门', '最新'],
-  frontend: ['React', 'Vue', 'TypeScript', '性能优化', '工程化', '组件库'],
-  backend: ['Go', '微服务', '数据库', 'API 设计', '缓存', '架构'],
-  go: ['Goroutine', 'Gin', '并发', '性能调优', '微服务'],
-  cpp: ['模板', '内存管理', 'STL', '性能优化', '并发'],
-  java: ['Spring', 'JVM', '并发', '微服务', '多线程'],
-  python: ['数据分析', 'Django', 'Flask', '自动化', '爬虫'],
-  ai: ['LLM', 'Prompt', 'RAG', '模型部署', '推理优化', 'Agent'],
-  ops: ['K8s', 'CI/CD', '日志监控', '可观测性', '容灾', '自动化'],
-}
-
-const genericTags = ['实践', '经验分享', '案例', '思路', '指南']
-
 // 生成模拟数据的函数
 const generateMockPost = (id: number, index: number): Post => {
   const authors = [
@@ -196,41 +181,22 @@ export default function Home() {
 
   const categoryPool = useMemo(() => categories.filter(c => c.key !== 'all'), [])
 
-  const pickTags = useCallback((pool: string[], seed: number): string[] => {
-    const tags: string[] = []
-    const length = pool.length
-    const count = Math.min(3, length)
-    for (let i = 0; i < count; i++) {
-      const idx = (seed + i * 3) % length
-      const tag = pool[idx]
-      if (!tags.includes(tag)) {
-        tags.push(tag)
-      }
-    }
-    if (tags.length < 2) {
-      tags.push(...genericTags.slice(0, 2 - tags.length))
-    }
-    return tags
-  }, [])
-
   const decoratePosts = useCallback((list: Post[], offset: number = 0): Post[] => {
     const hasCategories = categoryPool.length > 0
     return list.map((post, idx) => {
       const seed = buildIdSeed(post.id, idx + offset)
       const fallbackCategory = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
       const category = post.category ?? fallbackCategory?.key
-      const tagPool = category ? categoryTagMap[category] ?? genericTags : genericTags
-      const existingTags = (post.tags ?? [])
+      const tags = (post.tags ?? [])
         .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
         .filter(Boolean)
-      const tags = existingTags.length > 0 ? existingTags : pickTags(tagPool, seed + idx + offset)
       return {
         ...post,
         category,
-        tags,
+        tags: tags.length > 0 ? tags : undefined,
       }
     })
-  }, [categoryPool, pickTags])
+  }, [categoryPool])
 
   // 加载帖子数据
   const loadPosts = useCallback(async (page: number, reset: boolean = false) => {
@@ -440,17 +406,12 @@ export default function Home() {
 
                       {/* 标签 */}
                       <div className="flex flex-wrap items-center gap-2 mb-3">
-                        {post.category && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs border border-primary-100">
-                            {categories.find(c => c.key === post.category)?.label || '其他'}
-                          </span>
-                        )}
                         {post.tags?.map(tag => (
                           <span
                             key={tag}
-                            className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-primary-100 bg-primary-50/70 text-primary-700 text-xs font-medium shadow-sm"
                           >
-                            #{tag}
+                            {tag}
                           </span>
                         ))}
                       </div>
