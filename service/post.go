@@ -85,7 +85,7 @@ func (svc *PostService) GetDetailById(pid int) (bool, dto.PostDetailDTO) {
 	svc.PostDBRepo.IncrViewCnt(post.Id)                  // 数据库中 + 1
 	ok, err := svc.PostCacheRepo.IncrViewCnt(post.Id, 1) // 缓存中 + 1
 	if !ok {                                             // 缓存中没有 KEY
-		svc.PostCacheRepo.SetKey(post.Id, "comment_cnt", post.ViewCount)
+		svc.PostCacheRepo.SetKey(post.Id, "comment_cnt", post.ViewCount+1)
 	}
 	if err != nil {
 		slog.Error("Redis Increase View Count Failed", "error", err)

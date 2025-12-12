@@ -28,9 +28,8 @@ func NewCommentHandler(commentService *service.CommentService, userService *serv
 // Create 新建评论
 func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
@@ -55,9 +54,8 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 
 func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
@@ -102,9 +100,8 @@ func (hdl *CommentHandler) List(ctx *gin.Context) {
 
 func (hdl *CommentHandler) Belong(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}

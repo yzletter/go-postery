@@ -74,9 +74,8 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 // Create 创建帖子
 func (hdl *PostHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
@@ -104,9 +103,8 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 // Delete 删除帖子
 func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
@@ -134,9 +132,8 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
@@ -175,9 +172,8 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := strconv.ParseInt(ctx.Value(service.UID_IN_CTX).(string), 10, 64)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
-		// 没有登录
 		response.Unauthorized(ctx, "请先登录")
 		return
 	}
