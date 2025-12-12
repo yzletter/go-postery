@@ -424,6 +424,19 @@ export default function PostDetail() {
           </div>
         </div>
 
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6 px-1">
+            {post.tags.map(tag => (
+              <span
+                key={tag}
+                className="inline-flex items-center px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-sm border border-primary-100"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* 正文内容 */}
         <div className="prose prose-gray max-w-none mb-6 px-4">
           <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-lg">

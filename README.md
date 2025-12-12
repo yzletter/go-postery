@@ -22,7 +22,7 @@ Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
 
 ## 待开发
 
-- **榜单：** 采用 Reddit 算法，通过 Redis Zset (或 try 本地手写堆) 实现；
+- **热门榜单：** 采用 Reddit 算法，通过 Redis Zset (或 try 本地手写堆) 实现；
 - **点赞：** 当前版本通过 Kafka 进行改造
 - **搜索：** 集成 Go-Searchery 手写分布式搜索引擎；
 - **文章标签**
@@ -31,5 +31,7 @@ Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
 - **抽奖：** 高并发秒杀，利用 RocketMQ；
 - **AI Agent：** 接 OpenAI 开发一个 Agent
 - **微服务部署与上线**
+- **管理员后台**
+- **重构 Repository 层：** 拆分为 DAO 和 Cache 层
 
 ## 设计文档

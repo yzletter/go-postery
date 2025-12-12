@@ -217,12 +217,16 @@ export default function Home() {
     const hasCategories = categoryPool.length > 0
     return list.map((post, idx) => {
       const seed = buildIdSeed(post.id, idx + offset)
-      const category = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
-      const tagPool = category ? categoryTagMap[category.key] ?? genericTags : genericTags
-      const tags = pickTags(tagPool, seed + idx + offset)
+      const fallbackCategory = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
+      const category = post.category ?? fallbackCategory?.key
+      const tagPool = category ? categoryTagMap[category] ?? genericTags : genericTags
+      const existingTags = (post.tags ?? [])
+        .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter(Boolean)
+      const tags = existingTags.length > 0 ? existingTags : pickTags(tagPool, seed + idx + offset)
       return {
         ...post,
-        category: category?.key,
+        category,
         tags,
       }
     })
