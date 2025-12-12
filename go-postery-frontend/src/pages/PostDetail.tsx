@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Clock, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, Clock, Edit, Trash2, Heart } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useState, useEffect, FormEvent, useMemo, useCallback } from 'react'
@@ -10,6 +10,8 @@ import { normalizeId } from '../utils/id'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiPost } from '../utils/api'
 
+const LIKED_POSTS_KEY = 'go-postery-liked-posts'
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
   const navigate = useNavigate()
@@ -18,6 +20,9 @@ export default function PostDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
+  const [hasLiked, setHasLiked] = useState(false)
+  const [isLiking, setIsLiking] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<Comment[]>([])
   const [commentsError, setCommentsError] = useState<string | null>(null)
@@ -181,6 +186,29 @@ export default function PostDetail() {
     }
   }, [])
 
+  const readLikedPosts = useCallback((): Record<string, boolean> => {
+    try {
+      const raw = localStorage.getItem(LIKED_POSTS_KEY)
+      const parsed = raw ? JSON.parse(raw) : {}
+      if (parsed && typeof parsed === 'object') {
+        return parsed as Record<string, boolean>
+      }
+    } catch (error) {
+      console.warn('读取点赞记录失败:', error)
+    }
+    return {}
+  }, [])
+
+  const rememberLikedPost = useCallback((postId: string) => {
+    try {
+      const likedMap = readLikedPosts()
+      likedMap[postId] = true
+      localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedMap))
+    } catch (error) {
+      console.warn('保存点赞记录失败:', error)
+    }
+  }, [readLikedPosts])
+
   useEffect(() => {
     let cancelled = false
 
@@ -228,6 +256,49 @@ export default function PostDetail() {
   useEffect(() => {
     fetchComments()
   }, [fetchComments])
+
+  useEffect(() => {
+    if (!post?.id) {
+      setLikeCount(0)
+      setHasLiked(false)
+      return
+    }
+    const normalizedId = normalizeId(post.id)
+    setLikeCount(post.likes ?? 0)
+    setHasLiked(Boolean(readLikedPosts()[normalizedId]))
+  }, [post, readLikedPosts])
+
+  const handleLikePost = async () => {
+    if (!post?.id || hasLiked || isLiking) {
+      return
+    }
+
+    const normalizedId = normalizeId(post.id)
+    const nextCount = likeCount + 1
+
+    setIsLiking(true)
+    setLikeCount(nextCount)
+    setPost(prev => (prev ? { ...prev, likes: nextCount } : prev))
+
+    try {
+      const { data } = await apiPost('/posts/like', { id: normalizedId, post_id: normalizedId })
+      const serverLikes =
+        (data as any)?.likes ?? (data as any)?.Likes ?? (data as any)?.likeCount ?? (data as any)?.LikeCount
+      const finalCount = typeof serverLikes === 'number' ? serverLikes : nextCount
+
+      setLikeCount(finalCount)
+      setPost(prev => (prev ? { ...prev, likes: finalCount } : prev))
+      setHasLiked(true)
+      rememberLikedPost(normalizedId)
+    } catch (error) {
+      console.error('点赞失败:', error)
+      setLikeCount(prev => Math.max(0, prev - 1))
+      setPost(prev => (prev ? { ...prev, likes: Math.max(0, (prev.likes ?? 1) - 1) } : prev))
+      alert('点赞失败，请稍后重试')
+    } finally {
+      setIsLiking(false)
+    }
+  }
 
   // 删除帖子功能
   const handleDeletePost = async () => {
@@ -347,6 +418,35 @@ export default function PostDetail() {
           <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-lg">
             {post.content}
           </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-6 mt-8 space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-4">
+            <button
+              type="button"
+              onClick={handleLikePost}
+              disabled={hasLiked || isLiking}
+              className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                hasLiked
+                  ? 'bg-primary-50 border-primary-200 text-primary-700 cursor-default'
+                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-70 disabled:cursor-not-allowed'
+              }`}
+            >
+              <Heart
+                className="h-4 w-4 mr-2"
+                fill={hasLiked ? 'currentColor' : 'none'}
+              />
+              <span>{hasLiked ? '已点赞' : '点赞'}</span>
+              <span className="ml-2 text-gray-500">{likeCount}</span>
+            </button>
+            <span className="text-sm text-gray-500">
+              {likeCount > 0 ? `${likeCount} 人觉得这篇内容不错` : '成为第一个点赞的人'}
+              {isLiking && !hasLiked && ' · 提交中...'}
+            </span>
+          </div>
+          {post.views !== undefined && (
+            <span className="text-sm text-gray-500">阅读 {post.views}</span>
+          )}
         </div>
       </article>
 
