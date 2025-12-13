@@ -103,3 +103,19 @@ create table if not exists post_tag
     key idx_tag (tag_id),
     key idx_post (post_id)
 ) default charset = utf8mb4 comment '帖子——标签绑定信息表';
+
+create table if not exists follow
+(
+    id          bigint not null primary key comment '记录 id',
+    follower_id bigint not null comment '关注者 id',
+    followee_id bigint not null comment '被关注者 id',
+    create_time datetime default current_timestamp comment '创建时间',
+    delete_time datetime default null comment '删除时间',
+    update_time datetime default current_timestamp on update current_timestamp comment '更新时间',
+    
+    unique key uq_follow (follower_id, followee_id),
+    key idx_follower (follower_id, delete_time),
+    key idx_followee (followee_id, delete_time),
+
+    check (follower_id <> followee_id)  # 避免自己关注自己
+) default charset = utf8mb4 comment '关注信息表';

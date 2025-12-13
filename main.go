@@ -12,20 +12,19 @@ import (
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
+	commentRepository "github.com/yzletter/go-postery/repository/comment"
+	followRepository "github.com/yzletter/go-postery/repository/follow"
 	userLikeRepository "github.com/yzletter/go-postery/repository/like"
+	postRepository "github.com/yzletter/go-postery/repository/post"
 	tagRepository "github.com/yzletter/go-postery/repository/tag"
+	userRepository "github.com/yzletter/go-postery/repository/user"
+
+	"github.com/yzletter/go-postery/middleware"
+	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
-
-	"github.com/yzletter/go-postery/middleware"
-
-	commentRepository "github.com/yzletter/go-postery/repository/comment"
-	postRepository "github.com/yzletter/go-postery/repository/post"
-	userRepository "github.com/yzletter/go-postery/repository/user"
-
-	"github.com/yzletter/go-postery/service"
 )
 
 func main() {
@@ -45,6 +44,8 @@ func main() {
 	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())          // 注册 CommentDBRepo
 	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB())       // 注册 UserLikeDBRepo
 	TagDBRepo := tagRepository.NewTagDBRepository(infraMySQL.GetDB())                      // 注册 TagDBRepo
+	FollowDBRepo := followRepository.NewFollowDBRepository(infraMySQL.GetDB())             // 注册 FollowDBRepo
+	FollowCacheRepo := followRepository.NewFollowCacheRepository(infraRedis.GetRedis())    // 注册 FollowCacheRepo
 	TagCacheRepo := tagRepository.NewTagCacheRepository(infraRedis.GetRedis())             // 注册 TagCacheRepo
 	UserCacheRepo := userRepository.NewUserCacheRepository(infraRedis.GetRedis())          // 注册 UserCacheRepo
 	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())          // 注册 PostCacheRepo
@@ -59,12 +60,14 @@ func main() {
 	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
 	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
+	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo) // 注册 FollowSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHdl
+	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
@@ -125,6 +128,13 @@ func main() {
 
 	// 标签模块
 	//engine.POST("/tag/new", AuthRequiredMdl, TagHdl.Create) // 创建标签
+
+	// 关注模块
+	engine.GET("/follow/:uid", AuthRequiredMdl, FollowHdl.Follow)       // 关注
+	engine.GET("/disfollow/:uid", AuthRequiredMdl, FollowHdl.DisFollow) // 取消关注
+	engine.GET("/iffollow/:uid", AuthRequiredMdl, FollowHdl.IfFollow)   // 判断关注关系 0 表示 互不关注 1 表示关注了对方 2 表示对方关注了自己 3 表示互相关注
+	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers)  // 返回关注列表
+	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees)  // 返回粉丝列表
 
 	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)
