@@ -3,18 +3,26 @@
 ## 简介
 
 用 Go 实现一个现代化论坛
+![首页.png](img/%E9%A6%96%E9%A1%B5.png)
+![帖子详情.png](img/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)
+![评论区.png](img/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)
+![发布帖子.png](img/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png)
+![关注页面.png](img/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)
+![修改个人资料.png](img/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png)
+![个人主页.png](img/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)
 
-![homepage](/img/homepage.png)
 
 ## 项目进度
 
 Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
 
 - **功能：**通过**雪花算法**生成分布式ID；
-  - **用户模块：** 注册、登录、主页、修改密码、修改个人资料；
-  - **帖子模块：** 发布、删除、编辑、点赞、取消点赞；
+  - **用户模块：** 注册、登录、个人主页、修改密码、修改个人资料；
+  - **帖子模块：** 发布、删除、编辑帖子；
+  - **点赞模块：** 点赞、取消点赞；
   - **评论模块：** 回复帖子、回复评论；
   - **标签模块：** 带标签发表、修改标签、按标签导航；
+  - **关注模块：** 关注、取消关注、获取关注列表、获取粉丝列表；
 - **配置：** 使用 **Viper** 进行配置读取，使用 **Slog** 日志库；
 - **限流：** 通过 **Redis + Lua** 实现**滑动窗口限流**；
 - **运行：** 通过 **Crontab** 执行**定时任务**，利用信号机制完成**优雅关机**；
@@ -26,12 +34,12 @@ Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
 - **热门榜单：** 采用 Reddit 算法，通过 Redis Zset (或 try 本地手写堆) 实现；
 - **点赞：** 当前版本通过 Kafka 进行改造
 - **搜索：** 集成 Go-Searchery 手写分布式搜索引擎；
-- **关注模块**
 - **私信：** 集成 Go-Chatery 即时通讯系统，利用 RabbitMQ；
 - **抽奖：** 高并发秒杀，利用 RocketMQ；
 - **AI Agent：** 接 OpenAI 开发一个 Agent
 - **微服务部署与上线**
 - **管理员后台**
 - **重构 Repository 层：** 拆分为 DAO 和 Cache 层
+- **拉黑功能**
 
 ## 设计文档
