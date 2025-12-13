@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/infra/snowflake"
@@ -19,12 +20,13 @@ func NewFollowDBRepository(db *gorm.DB) *FollowDBRepository {
 }
 
 func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
+	now := time.Now()
 	var follow = &model.Follow{
 		Id:         snowflake.NextID(),
 		FollowerId: ferId,
 		FolloweeId: feeId,
-		CreateTime: nil,
-		UpdateTime: nil,
+		CreateTime: &now,
+		UpdateTime: &now,
 		DeleteTime: nil,
 	}
 	tx := repo.db.Create(&follow)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/infra/snowflake"
@@ -32,6 +33,7 @@ func NewUserDBRepository(db *gorm.DB) *UserDBRepository {
 
 // Create 创建一条 User 记录
 func (repo *UserDBRepository) Create(name, password, ip string) (model.User, error) {
+	now := time.Now()
 	// 将模型绑定到结构体
 	user := model.User{
 		Id:          snowflake.NextID(), // 用户 ID 雪花算法
@@ -40,6 +42,8 @@ func (repo *UserDBRepository) Create(name, password, ip string) (model.User, err
 		Status:      1,  // 用户状态为正常
 		LastLoginIP: ip, // 用户登录 IP
 		BirthDay:    nil,
+		CreateTime:  &now,
+		UpdateTime:  &now,
 	}
 
 	// 到 MySQL 中创建新记录, 需要传指针

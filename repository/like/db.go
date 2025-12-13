@@ -25,9 +25,13 @@ func NewUserLikeDBRepository(db *gorm.DB) *UserLikeDBRepository {
 }
 
 func (repo *UserLikeDBRepository) Create(uid, pid int) error {
+	now := time.Now()
 	userLike := model.UserLike{
-		UserId: uid,
-		PostId: pid,
+		UserId:     uid,
+		PostId:     pid,
+		CreateTime: &now,
+		UpdateTime: &now,
+		DeleteTime: nil,
 	}
 	tx := repo.db.Create(&userLike)
 
