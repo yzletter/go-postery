@@ -3,7 +3,7 @@
 本文档根据前端现有调用整理，便于联调与排查。
 
 ## 基础信息
-- `API_BASE_URL`：帖子业务接口前缀，默认 `http://localhost:8080`（可通过 `VITE_API_BASE_URL` 配置）。
+- `API_BASE_URL`：帖子业务接口前缀，默认 `http://localhost:8765`（可通过 `VITE_API_BASE_URL` 配置）。
 - `AUTH_API_BASE_URL`：认证接口前缀，默认同上（可通过 `VITE_AUTH_API_URL` 覆盖）。
 - 所有请求在需要时携带 `credentials: include`，依赖服务端设置的 Cookie；如有 `token`（本地存储），会放在 `Authorization: Bearer <token>`。
 - 请求/响应默认使用 `application/json`。
@@ -176,19 +176,21 @@
 ## 数据模型（前端使用）
 ```ts
 interface Post {
-  id: number
+  id: string
   title: string
   content: string
-  author: { id: number; name: string }
+  author: { id: string; name: string }
   createdAt: string
   views?: number
   likes?: number
   comments?: number
+  tags?: string[]
+  category?: string
 }
 
-interface ApiResponse {
-  code: number
+interface ApiResponse<T = unknown> {
+  code?: number
   msg?: string
-  data?: any
+  data?: T
 }
 ```

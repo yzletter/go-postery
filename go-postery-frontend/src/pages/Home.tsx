@@ -1,182 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Star, Grid, Code2, Server, Bot, Goal, Braces, Coffee, Pi, Gift, Sparkles } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { Post } from '../types'
-import { normalizePost } from '../utils/post'
+import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Gift, Sparkles } from 'lucide-react'
+import type { Post } from '../types'
 import { buildIdSeed } from '../utils/id'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { apiGet } from '../utils/api'
-
-type CategoryItem = { key: string; label: string; icon: LucideIcon; tag?: string }
-
-const categories: CategoryItem[] = [
-  { key: 'follow', label: '关注', icon: Star },
-  { key: 'all', label: '全部', icon: Grid },
-  { key: 'frontend', label: '前端', tag: '前端', icon: Code2 },
-  { key: 'backend', label: '后端', tag: '后端', icon: Server },
-  { key: 'go', label: 'Go', tag: 'Go', icon: Goal },
-  { key: 'cpp', label: 'C++', tag: 'C++', icon: Braces },
-  { key: 'java', label: 'Java', tag: 'Java', icon: Coffee },
-  { key: 'python', label: 'Python', tag: 'Python', icon: Pi },
-  { key: 'ai', label: 'AI', tag: 'AI', icon: Bot },
-]
-
-const getRequestTag = (categoryKey: string): string => {
-  const match = categories.find(cat => cat.key === categoryKey)
-  return match?.tag ?? match?.label ?? categoryKey
-}
-
-// 生成模拟数据的函数
-const generateMockPost = (id: number, index: number): Post => {
-  const authors = [
-    { id: 1, name: '管理员' },
-    { id: 2, name: '前端开发者' },
-    { id: 3, name: 'UI设计师' },
-    { id: 4, name: '后端工程师' },
-    { id: 5, name: '产品经理' },
-    { id: 6, name: '测试工程师' },
-  ]
-  const author = authors[index % authors.length]
-
-  const titles = [
-    '欢迎来到 Go Postery 论坛！',
-    'React 18 新特性深度解析',
-    '如何设计一个优雅的用户界面？',
-    'Go 语言性能优化技巧分享',
-    'Vue 3 Composition API 实战指南',
-    'Python 数据分析入门教程',
-    'TypeScript 高级类型系统详解',
-    'Node.js 微服务架构实践',
-    '前端工程化最佳实践',
-    '数据库设计原则与优化',
-    'Docker 容器化部署指南',
-    'GraphQL 与 REST API 对比',
-  ]
-
-  const contents = [
-    '这是一个现代化的论坛平台，欢迎大家分享想法和讨论话题。',
-    'React 18 带来了很多令人兴奋的新特性，包括并发渲染、自动批处理等。让我们一起来探讨这些新功能的使用场景和最佳实践。',
-    'UI设计不仅仅是美观，更重要的是用户体验。今天我们来讨论一些设计原则和最佳实践。',
-    '分享一些在 Go 语言开发中遇到的性能问题和优化方案，希望对大家有帮助。',
-    'Vue 3 的 Composition API 提供了更灵活的组合式开发方式，让我们深入了解其使用场景。',
-    'Python 在数据分析领域有着广泛的应用，本文将介绍常用的数据分析库和技巧。',
-    'TypeScript 的类型系统非常强大，掌握高级类型可以让代码更加健壮和可维护。',
-    '微服务架构是现代应用开发的重要模式，Node.js 提供了很好的支持。',
-    '前端工程化是提高开发效率的关键，包括构建工具、代码规范、自动化测试等。',
-    '良好的数据库设计是应用性能的基础，本文将介绍设计原则和优化技巧。',
-    'Docker 让应用的部署变得简单，本文将介绍如何使用 Docker 进行容器化部署。',
-    'GraphQL 和 REST 各有优势，本文将对比两者的特点和使用场景。',
-  ]
-
-  return {
-    id: String(id),
-    title: titles[index % titles.length],
-    content: contents[index % contents.length],
-    author: {
-      id: String(author.id),
-      name: author.name
-    },
-    createdAt: new Date(Date.now() - (index * 60 * 60 * 1000)).toISOString(),
-    views: Math.floor(Math.random() * 1000) + 100,
-    likes: Math.floor(Math.random() * 200) + 10,
-    comments: Math.floor(Math.random() * 100) + 5,
-  }
-}
-
-// 总数据量限制
-const TOTAL_POSTS_LIMIT = 20
-// 保留模拟数据方法的引用，便于需要时启用本地数据
-void generateMockPost
-void TOTAL_POSTS_LIMIT
-
-interface PostListResult {
-  posts: Post[]
-  total: number
-  hasMore: boolean
-}
-
-const mockHotPosts = [
-  { id: 1, title: 'React 18 并发特性最佳实践', heat: 985 },
-  { id: 2, title: 'Go 微服务网关设计要点', heat: 912 },
-  { id: 3, title: 'Tailwind 设计系统落地经验', heat: 876 },
-  { id: 4, title: '前端性能优化 25 条检查清单', heat: 844 },
-  { id: 5, title: '数据库索引失效的常见原因', heat: 828 },
-  { id: 6, title: 'Vue3 + Vite 项目工程化模板', heat: 801 },
-  { id: 7, title: 'Rust 学习路径与上手案例', heat: 776 },
-  { id: 8, title: 'K8s 部署流水线实战分享', heat: 754 },
-  { id: 9, title: '前后端接口约定与错误码规范', heat: 731 },
-  { id: 10, title: '设计师和工程师协作的 7 个技巧', heat: 702 },
-]
-
-const mockRecommendUsers = [
-  { id: 101, name: '前端小能手', title: '分享 React / TS 实战', followers: 12.4 },
-  { id: 102, name: 'Go 语言爱好者', title: 'Go / 微服务 / 云原生', followers: 8.6 },
-  { id: 103, name: '设计灵感库', title: 'UI/UX 灵感与案例', followers: 15.2 },
-  { id: 104, name: '后端老王', title: '性能调优与架构实践', followers: 6.8 },
-  { id: 105, name: '产品拆解手册', title: '产品思考与需求分析', followers: 9.1 },
-  { id: 106, name: '测试小白进阶', title: '自动化测试 / 质量保障', followers: 5.4 },
-]
-
-// API 获取帖子列表
-const FETCH_TIMEOUT_MS = 8000
-const DEFAULT_PAGE_SIZE = 10
-const CATEGORY_PAGE_SIZE = 10
-
-const fetchPosts = async (page: number, pageSize: number = DEFAULT_PAGE_SIZE, categoryKey?: string): Promise<PostListResult> => {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
-
-  try {
-    const useAllEndpoint = !categoryKey || categoryKey === 'all' || categoryKey === 'follow'
-    const tag = categoryKey ? getRequestTag(categoryKey) : ''
-    const path = useAllEndpoint
-      ? `/posts?pageNo=${page}&pageSize=${pageSize}`
-      : `/posts_tag?pageNo=${page}&pageSize=${pageSize}&tag=${encodeURIComponent(tag)}`
-
-    const { data } = await apiGet<{
-      posts: any[]
-      total?: number
-      hasMore?: boolean
-    }>(path, { signal: controller.signal })
-
-    const rawPosts = Array.isArray(data?.posts)
-      ? data.posts
-      : data?.posts == null
-        ? []
-        : null
-
-    if (!data || rawPosts === null) {
-      throw new Error('帖子列表响应数据格式错误')
-    }
-
-    const postsWithStats: Post[] = rawPosts.map((p: any) => {
-      const normalized = normalizePost(p)
-      return {
-        ...normalized,
-        views: normalized.views ?? 0,
-        likes: normalized.likes ?? 0,
-        comments: normalized.comments ?? 0,
-      }
-    })
-
-    return {
-      posts: postsWithStats,
-      total: data.total ?? postsWithStats.length,
-      hasMore: typeof data.hasMore === 'boolean' ? data.hasMore : postsWithStats.length >= pageSize,
-    }
-  } catch (error) {
-    if ((error as any)?.name === 'AbortError') {
-      console.error('Fetch posts request timeout')
-      throw new Error('请求超时，请检查后端服务状态')
-    }
-    console.error('Failed to fetch posts:', error)
-    throw error
-  } finally {
-    clearTimeout(timeoutId)
-  }
-}
+import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories, mockHotPosts, mockRecommendUsers } from './home/constants'
+import { fetchPosts } from './home/fetchPosts'
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -294,7 +124,7 @@ export default function Home() {
         observer.unobserve(currentTarget)
       }
     }
-  }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts, error])
+  }, [hasMore, isLoading, isInitialLoading, currentPage, loadPosts, error, selectedCategory])
 
   const filteredPosts = useMemo(() => {
     if (selectedCategory === 'all') return posts

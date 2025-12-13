@@ -1,11 +1,6 @@
-import { Post } from '../types'
+import type { Post } from '../types'
 import { normalizeId } from './id'
-
-const normalizeCount = (value: unknown): number | undefined => {
-  if (value === null || value === undefined) return undefined
-  const num = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(num) ? num : undefined
-}
+import { toOptionalNumber } from './number'
 
 const parseTags = (raw: unknown): string[] | undefined => {
   if (!raw) return undefined
@@ -45,9 +40,11 @@ export function normalizePost(raw: any): Post {
       name: authorRaw?.name ?? authorRaw?.Name ?? '匿名用户',
     },
     createdAt: raw?.createdAt ?? raw?.CreatedAt ?? new Date().toISOString(),
-    views: normalizeCount(raw?.views ?? raw?.Views ?? raw?.view_count ?? raw?.ViewCount ?? raw?.viewCount),
-    likes: normalizeCount(raw?.likes ?? raw?.Likes ?? raw?.like_count ?? raw?.LikeCount ?? raw?.likeCount),
-    comments: normalizeCount(raw?.comments ?? raw?.Comments ?? raw?.comment_count ?? raw?.CommentCount ?? raw?.commentCount),
+    views: toOptionalNumber(raw?.views ?? raw?.Views ?? raw?.view_count ?? raw?.ViewCount ?? raw?.viewCount),
+    likes: toOptionalNumber(raw?.likes ?? raw?.Likes ?? raw?.like_count ?? raw?.LikeCount ?? raw?.likeCount),
+    comments: toOptionalNumber(
+      raw?.comments ?? raw?.Comments ?? raw?.comment_count ?? raw?.CommentCount ?? raw?.commentCount
+    ),
     tags,
     category:
       typeof raw?.category === 'string'

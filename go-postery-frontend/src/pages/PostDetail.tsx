@@ -3,12 +3,13 @@ import { ArrowLeft, Clock, Edit, Trash2, Heart } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useState, useEffect, FormEvent, useMemo, useCallback } from 'react'
-import { Post, Comment } from '../types'
+import type { Post, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
 import { normalizeId } from '../utils/id'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiPost } from '../utils/api'
+import { buildCommentAuthorMap, groupComments } from './postDetail/commentModel'
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
@@ -28,36 +29,8 @@ export default function PostDetail() {
   const [isCommentsLoading, setIsCommentsLoading] = useState(true)
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null)
 
-  const commentGroups = useMemo(() => {
-    const idSet = new Set(comments.map(c => normalizeId(c.id)))
-    const repliesMap = new Map<string, Comment[]>()
-    const parents: Comment[] = []
-
-    comments.forEach((c) => {
-      const parentIdStr = c.parentId ? normalizeId(c.parentId) : '0'
-      const isParent = parentIdStr === '0' || !idSet.has(parentIdStr)
-      if (isParent) {
-        parents.push(c)
-        return
-      }
-      const bucket = repliesMap.get(parentIdStr) ?? []
-      bucket.push(c)
-      repliesMap.set(parentIdStr, bucket)
-    })
-
-    return parents.map(parent => ({
-      parent,
-      replies: repliesMap.get(normalizeId(parent.id)) ?? [],
-    }))
-  }, [comments])
-
-  const commentAuthorById = useMemo(() => {
-    const map = new Map<string, { id: string; name: string }>()
-    comments.forEach(c => {
-      map.set(normalizeId(c.id), { id: normalizeId(c.author.id), name: c.author.name })
-    })
-    return map
-  }, [comments])
+  const commentGroups = useMemo(() => groupComments(comments), [comments])
+  const commentAuthorById = useMemo(() => buildCommentAuthorMap(comments), [comments])
 
   const fetchComments = useCallback(async () => {
     if (!id) return
@@ -244,7 +217,6 @@ export default function PostDetail() {
       setLikeCount(0)
       return
     }
-    const normalizedId = normalizeId(post.id)
     setLikeCount(post.likes ?? 0)
   }, [post])
 
@@ -635,16 +607,16 @@ export default function PostDetail() {
                             <button
                               type="button"
                               onClick={() => setReplyTarget(reply)}
-                            className="hover:text-primary-600 transition-colors"
-                          >
-                            回复
-                          </button>
-                          {(isAuthor ||
-                            (user && normalizeId(user.id) === normalizeId(reply.author.id))) && (
-                            <button
-                              onClick={() => handleDeleteComment(reply.id)}
-                              className="hover:text-red-600 transition-colors"
+                              className="hover:text-primary-600 transition-colors"
                             >
+                              回复
+                            </button>
+                            {(isAuthor ||
+                              (user && normalizeId(user.id) === normalizeId(reply.author.id))) && (
+                              <button
+                                onClick={() => handleDeleteComment(reply.id)}
+                                className="hover:text-red-600 transition-colors"
+                              >
                                 删除
                               </button>
                             )}

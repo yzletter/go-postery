@@ -3,71 +3,36 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { normalizePost } from '../utils/post'
 import { apiPost } from '../utils/api'
+import { useTagsInput } from '../hooks/useTagsInput'
 
 export default function CreatePost() {
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
-  const [tagError, setTagError] = useState<string | null>(null)
-  const [isComposing, setIsComposing] = useState(false)
-
-  const handleAddTag = () => {
-    const value = tagInput.trim()
-
-    if (!value) {
-      setTagError('标签内容不能为空')
-      return
-    }
-
-    if (value.length > 6) {
-      setTagError('每个标签不超过 6 个字')
-      return
-    }
-
-    if (tags.length >= 4) {
-      setTagError('最多添加 4 个标签')
-      return
-    }
-
-    if (tags.includes(value)) {
-      setTagError('请不要重复添加标签')
-      return
-    }
-
-    setTags(prev => [...prev, value])
-    setTagInput('')
-    setTagError(null)
-  }
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(prev => prev.filter(t => t !== tag))
-    setTagError(null)
-  }
-
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isComposing && !(e.nativeEvent as any)?.isComposing) {
-      e.preventDefault()
-      handleAddTag()
-    }
-  }
+  const {
+    tags,
+    tagInput,
+    tagError,
+    addTag,
+    removeTag,
+    handleTagInputChange,
+    handleCompositionStart,
+    handleCompositionEnd,
+    handleTagKeyDown,
+    validateForSubmit,
+  } = useTagsInput()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const normalizedTags = tags.map(tag => tag.trim()).filter(Boolean)
-    if (normalizedTags.length > 4) {
-      alert('最多添加 4 个标签')
-      return
-    }
-    if (normalizedTags.some(tag => tag.length > 6)) {
-      alert('每个标签不超过 6 个字')
+    const validation = validateForSubmit()
+    if (!validation.ok) {
+      alert(validation.error)
       return
     }
     
     try {
-      const { data } = await apiPost('/posts/new', { title, content, tags: normalizedTags })
+      const { data } = await apiPost('/posts/new', { title, content, tags: validation.tags })
       const createdPost = normalizePost(data || {})
       if (createdPost.id) {
         console.log('帖子创建成功，帖子ID:', createdPost.id)
@@ -125,13 +90,10 @@ export default function CreatePost() {
                 type="text"
                 value={tagInput}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setTagInput(e.target.value)
-                  if (tagError) {
-                    setTagError(null)
-                  }
+                  handleTagInputChange(e.target.value)
                 }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
+                onCompositionStart={handleCompositionStart}
+                onCompositionEnd={handleCompositionEnd}
                 onKeyDown={handleTagKeyDown}
                 placeholder="输入标签，按回车或点击添加"
                 maxLength={6}
@@ -139,7 +101,7 @@ export default function CreatePost() {
               />
               <button
                 type="button"
-                onClick={handleAddTag}
+                onClick={addTag}
                 className="btn-secondary whitespace-nowrap"
                 disabled={tags.length >= 4}
               >
@@ -155,7 +117,7 @@ export default function CreatePost() {
                   #{tag}
                   <button
                     type="button"
-                    onClick={() => handleRemoveTag(tag)}
+                    onClick={() => removeTag(tag)}
                     className="ml-2 text-primary-500 hover:text-primary-700"
                     aria-label={`移除标签 ${tag}`}
                   >

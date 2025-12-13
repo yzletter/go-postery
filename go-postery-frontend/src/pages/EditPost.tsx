@@ -1,20 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { Post } from '../types'
+import type { Post } from '../types'
 import { normalizePost } from '../utils/post'
 import { apiGet, apiPost } from '../utils/api'
+import { useTagsInput } from '../hooks/useTagsInput'
 
 export default function EditPost() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
-  const [tagError, setTagError] = useState<string | null>(null)
-  const [isComposing, setIsComposing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+
+  const {
+    tags,
+    setTags,
+    tagInput,
+    tagError,
+    addTag,
+    removeTag,
+    handleTagInputChange,
+    handleCompositionStart,
+    handleCompositionEnd,
+    handleTagKeyDown,
+    validateForSubmit,
+  } = useTagsInput()
 
   // 获取帖子详情
   useEffect(() => {
@@ -43,47 +54,7 @@ export default function EditPost() {
     }
 
     fetchPost()
-  }, [id, navigate])
-
-  const handleAddTag = () => {
-    const value = tagInput.trim()
-
-    if (!value) {
-      setTagError('标签内容不能为空')
-      return
-    }
-
-    if (value.length > 6) {
-      setTagError('每个标签不超过 6 个字')
-      return
-    }
-
-    if (tags.length >= 4) {
-      setTagError('最多添加 4 个标签')
-      return
-    }
-
-    if (tags.includes(value)) {
-      setTagError('请不要重复添加标签')
-      return
-    }
-
-    setTags(prev => [...prev, value])
-    setTagInput('')
-    setTagError(null)
-  }
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(prev => prev.filter(t => t !== tag))
-    setTagError(null)
-  }
-
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isComposing && !(e.nativeEvent as any)?.isComposing) {
-      e.preventDefault()
-      handleAddTag()
-    }
-  }
+  }, [id, navigate, setTags])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -93,18 +64,14 @@ export default function EditPost() {
       return
     }
 
-    const normalizedTags = tags.map(tag => tag.trim()).filter(Boolean)
-    if (normalizedTags.length > 4) {
-      alert('最多添加 4 个标签')
-      return
-    }
-    if (normalizedTags.some(tag => tag.length > 6)) {
-      alert('每个标签不超过 6 个字')
+    const validation = validateForSubmit()
+    if (!validation.ok) {
+      alert(validation.error)
       return
     }
 
     try {
-      await apiPost('/posts/update', { id, title, content, tags: normalizedTags })
+      await apiPost('/posts/update', { id, title, content, tags: validation.tags })
 
       alert('帖子修改成功')
       navigate(`/post/${id}`)
@@ -168,13 +135,10 @@ export default function EditPost() {
                 type="text"
                 value={tagInput}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setTagInput(e.target.value)
-                  if (tagError) {
-                    setTagError(null)
-                  }
+                  handleTagInputChange(e.target.value)
                 }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
+                onCompositionStart={handleCompositionStart}
+                onCompositionEnd={handleCompositionEnd}
                 onKeyDown={handleTagKeyDown}
                 placeholder="输入标签，按回车或点击添加"
                 maxLength={6}
@@ -182,7 +146,7 @@ export default function EditPost() {
               />
               <button
                 type="button"
-                onClick={handleAddTag}
+                onClick={addTag}
                 className="btn-secondary whitespace-nowrap"
                 disabled={tags.length >= 4}
               >
@@ -198,7 +162,7 @@ export default function EditPost() {
                   {tag}
                   <button
                     type="button"
-                    onClick={() => handleRemoveTag(tag)}
+                    onClick={() => removeTag(tag)}
                     className="ml-1 text-primary-500 hover:text-primary-700"
                     aria-label={`移除标签 ${tag}`}
                   >

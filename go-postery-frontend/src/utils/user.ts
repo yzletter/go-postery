@@ -1,4 +1,4 @@
-import { UserDetail } from '../types'
+import type { UserDetail } from '../types'
 import { normalizeId } from './id'
 
 // Normalize user detail response to front-end friendly shape.

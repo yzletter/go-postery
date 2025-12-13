@@ -130,11 +130,11 @@ func main() {
 	//engine.POST("/tag/new", AuthRequiredMdl, TagHdl.Create) // 创建标签
 
 	// 关注模块
-	engine.GET("/follow/:uid", AuthRequiredMdl, FollowHdl.Follow)       // 关注
-	engine.GET("/disfollow/:uid", AuthRequiredMdl, FollowHdl.DisFollow) // 取消关注
-	engine.GET("/iffollow/:uid", AuthRequiredMdl, FollowHdl.IfFollow)   // 判断关注关系 0 表示 互不关注 1 表示关注了对方 2 表示对方关注了自己 3 表示互相关注
-	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers)  // 返回关注列表
-	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees)  // 返回粉丝列表
+	engine.GET("/follow/:id", AuthRequiredMdl, FollowHdl.Follow)       // 关注
+	engine.GET("/disfollow/:id", AuthRequiredMdl, FollowHdl.DisFollow) // 取消关注
+	engine.GET("/iffollow/:id", AuthRequiredMdl, FollowHdl.IfFollow)   // 判断关注关系 0 表示 互不关注 1 表示关注了对方 2 表示对方关注了自己 3 表示互相关注
+	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers) // 返回关注列表
+	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees) // 返回粉丝列表
 
 	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)

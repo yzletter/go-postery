@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { User } from '../types'
+import type { User } from '../types'
 import { md5Hash } from '../utils/crypto'
 import { apiGet, apiPost, AUTH_API_BASE_URL } from '../utils/api'
 import { normalizeId } from '../utils/id'
