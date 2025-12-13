@@ -10,8 +10,6 @@ import { normalizeId } from '../utils/id'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiPost } from '../utils/api'
 
-const LIKED_POSTS_KEY = 'go-postery-liked-posts'
-
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
   const navigate = useNavigate()
@@ -23,6 +21,7 @@ export default function PostDetail() {
   const [likeCount, setLikeCount] = useState(0)
   const [hasLiked, setHasLiked] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
+  const [isCheckingLike, setIsCheckingLike] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<Comment[]>([])
   const [commentsError, setCommentsError] = useState<string | null>(null)
@@ -192,41 +191,6 @@ export default function PostDetail() {
     }
   }, [])
 
-  const readLikedPosts = useCallback((): Record<string, boolean> => {
-    try {
-      const raw = localStorage.getItem(LIKED_POSTS_KEY)
-      const parsed = raw ? JSON.parse(raw) : {}
-      if (parsed && typeof parsed === 'object') {
-        return parsed as Record<string, boolean>
-      }
-    } catch (error) {
-      console.warn('读取点赞记录失败:', error)
-    }
-    return {}
-  }, [])
-
-  const rememberLikedPost = useCallback((postId: string) => {
-    try {
-      const likedMap = readLikedPosts()
-      likedMap[postId] = true
-      localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedMap))
-    } catch (error) {
-      console.warn('保存点赞记录失败:', error)
-    }
-  }, [readLikedPosts])
-
-  const forgetLikedPost = useCallback((postId: string) => {
-    try {
-      const likedMap = readLikedPosts()
-      if (likedMap[postId]) {
-        delete likedMap[postId]
-        localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedMap))
-      }
-    } catch (error) {
-      console.warn('移除点赞记录失败:', error)
-    }
-  }, [readLikedPosts])
-
   useEffect(() => {
     let cancelled = false
 
@@ -278,16 +242,40 @@ export default function PostDetail() {
   useEffect(() => {
     if (!post?.id) {
       setLikeCount(0)
-      setHasLiked(false)
       return
     }
     const normalizedId = normalizeId(post.id)
     setLikeCount(post.likes ?? 0)
-    setHasLiked(Boolean(readLikedPosts()[normalizedId]))
-  }, [post, readLikedPosts])
+  }, [post])
+
+  const fetchLikeStatus = useCallback(async () => {
+    if (!post?.id) {
+      setHasLiked(false)
+      return
+    }
+
+    const normalizedId = normalizeId(post.id)
+    setIsCheckingLike(true)
+    try {
+      const { data } = await apiGet(`/posts/iflike/${normalizedId}`)
+      const liked = typeof data === 'boolean'
+        ? data
+        : Boolean((data as any)?.liked ?? (data as any)?.isLiked ?? (data as any)?.data)
+      setHasLiked(liked)
+    } catch (error) {
+      console.error('检查点赞状态失败:', error)
+      setHasLiked(false)
+    } finally {
+      setIsCheckingLike(false)
+    }
+  }, [post])
+
+  useEffect(() => {
+    void fetchLikeStatus()
+  }, [fetchLikeStatus])
 
   const handleLikePost = async () => {
-    if (!post?.id || isLiking) {
+    if (!post?.id || isLiking || isCheckingLike) {
       return
     }
 
@@ -315,13 +303,8 @@ export default function PostDetail() {
       const finalCount = Number.isFinite(parsedServerLikes) ? parsedServerLikes : optimisticCount
 
       setLikeCount(finalCount)
-      setPost(prev => (prev ? { ...prev, likes: finalCount } : prev))
+    setPost(prev => (prev ? { ...prev, likes: finalCount } : prev))
 
-      if (willLike) {
-        rememberLikedPost(normalizedId)
-      } else {
-        forgetLikedPost(normalizedId)
-      }
     } catch (error) {
       console.error('点赞操作失败:', error)
       setHasLiked(prevState.liked)
@@ -471,7 +454,7 @@ export default function PostDetail() {
             <button
               type="button"
               onClick={handleLikePost}
-              disabled={isLiking}
+              disabled={isLiking || isCheckingLike}
               className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                 hasLiked
                   ? 'bg-primary-50 border-primary-200 text-primary-700 hover:border-primary-300 hover:bg-primary-100'

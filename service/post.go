@@ -292,3 +292,11 @@ func (svc *PostService) Dislike(pid, uid int) error {
 
 	return nil
 }
+
+func (svc *PostService) IfLike(pid, uid int) (bool, error) {
+	ok, err := svc.UserLikeDBRepo.Get(uid, pid)
+	if err != nil {
+		return ok, userRepository.ErrMySQLInternal
+	}
+	return ok, nil
+}

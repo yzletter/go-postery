@@ -112,6 +112,7 @@ func main() {
 	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.Update)      // 修改帖子
 	engine.GET("/posts/like/:id", AuthRequiredMdl, PostHdl.Like)       // 点赞
 	engine.GET("/posts/dislike/:id", AuthRequiredMdl, PostHdl.Dislike) // 取消点赞
+	engine.GET("/posts/iflike/:id", AuthRequiredMdl, PostHdl.IfLike)   // 取消点赞
 	// 非强制要求登录
 	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
 

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -65,4 +66,18 @@ func (repo *UserLikeDBRepository) Delete(uid, pid int) error {
 	}
 
 	return nil
+}
+
+func (repo *UserLikeDBRepository) Get(uid, pid int) (bool, error) {
+	var userLike model.UserLike
+	tx := repo.db.Where("user_id = ? and post_id = ? and delete_time is null", uid, pid).First(&userLike)
+	if tx.Error != nil {
+		// 若错误不是记录未找到, 记录系统错误
+		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			slog.Error("MySQL Find Post_Tag Failed")
+			return false, repository.ErrMySQLInternal
+		}
+		return false, nil
+	}
+	return true, nil
 }

@@ -296,3 +296,23 @@ func (hdl *PostHandler) Dislike(ctx *gin.Context) {
 
 	response.Success(ctx, "")
 }
+
+func (hdl *PostHandler) IfLike(ctx *gin.Context) {
+	// 从路由中获取帖子 id
+	pid, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response.ParamError(ctx, "")
+		return
+	}
+
+	// 从 CTX 中获取 uid
+	uid, err := service.GetUidFromCTX(ctx)
+	if err != nil {
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
+
+	ok, err := hdl.PostService.IfLike(pid, uid)
+
+	response.Success(ctx, ok)
+}
