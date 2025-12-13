@@ -10,6 +10,10 @@ export default function EditPost() {
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
+  const [tagError, setTagError] = useState<string | null>(null)
+  const [isComposing, setIsComposing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   // 获取帖子详情
@@ -28,6 +32,7 @@ export default function EditPost() {
         const postData: Post = normalizePost(data)
         setTitle(postData.title)
         setContent(postData.content)
+        setTags(postData.tags ?? [])
       } catch (error) {
         console.error('获取帖子详情失败:', error)
         alert('获取帖子详情失败: ' + (error instanceof Error ? error.message : '未知错误'))
@@ -40,6 +45,46 @@ export default function EditPost() {
     fetchPost()
   }, [id, navigate])
 
+  const handleAddTag = () => {
+    const value = tagInput.trim()
+
+    if (!value) {
+      setTagError('标签内容不能为空')
+      return
+    }
+
+    if (value.length > 6) {
+      setTagError('每个标签不超过 6 个字')
+      return
+    }
+
+    if (tags.length >= 4) {
+      setTagError('最多添加 4 个标签')
+      return
+    }
+
+    if (tags.includes(value)) {
+      setTagError('请不要重复添加标签')
+      return
+    }
+
+    setTags(prev => [...prev, value])
+    setTagInput('')
+    setTagError(null)
+  }
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(prev => prev.filter(t => t !== tag))
+    setTagError(null)
+  }
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isComposing && !(e.nativeEvent as any)?.isComposing) {
+      e.preventDefault()
+      handleAddTag()
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
@@ -48,8 +93,18 @@ export default function EditPost() {
       return
     }
 
+    const normalizedTags = tags.map(tag => tag.trim()).filter(Boolean)
+    if (normalizedTags.length > 4) {
+      alert('最多添加 4 个标签')
+      return
+    }
+    if (normalizedTags.some(tag => tag.length > 6)) {
+      alert('每个标签不超过 6 个字')
+      return
+    }
+
     try {
-      await apiPost('/posts/update', { id, title, content })
+      await apiPost('/posts/update', { id, title, content, tags: normalizedTags })
 
       alert('帖子修改成功')
       navigate(`/post/${id}`)
@@ -99,6 +154,66 @@ export default function EditPost() {
             required
             className="input"
           />
+        </div>
+
+        {/* 标签 */}
+        <div>
+          <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
+            标签
+          </label>
+          <div className="flex flex-col space-y-3">
+            <div className="flex space-x-3">
+              <input
+                id="tags"
+                type="text"
+                value={tagInput}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setTagInput(e.target.value)
+                  if (tagError) {
+                    setTagError(null)
+                  }
+                }}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
+                onKeyDown={handleTagKeyDown}
+                placeholder="输入标签，按回车或点击添加"
+                maxLength={6}
+                className="input"
+              />
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="btn-secondary whitespace-nowrap"
+                disabled={tags.length >= 4}
+              >
+                添加标签
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {tags.map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-primary-100 bg-primary-50/70 text-primary-700 text-sm font-medium shadow-sm"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="ml-1 text-primary-500 hover:text-primary-700"
+                    aria-label={`移除标签 ${tag}`}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+              {tags.length === 0 && (
+                <span className="text-sm text-gray-500">最多 4 个标签，每个不超过 6 个字</span>
+              )}
+            </div>
+            {tagError && (
+              <p className="text-sm text-red-500">{tagError}</p>
+            )}
+          </div>
         </div>
 
         {/* 内容 */}

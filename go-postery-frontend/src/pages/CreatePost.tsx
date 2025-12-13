@@ -11,6 +11,7 @@ export default function CreatePost() {
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [tagError, setTagError] = useState<string | null>(null)
+  const [isComposing, setIsComposing] = useState(false)
 
   const handleAddTag = () => {
     const value = tagInput.trim()
@@ -46,7 +47,7 @@ export default function CreatePost() {
   }
 
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !isComposing && !(e.nativeEvent as any)?.isComposing) {
       e.preventDefault()
       handleAddTag()
     }
@@ -129,6 +130,8 @@ export default function CreatePost() {
                     setTagError(null)
                   }
                 }}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 onKeyDown={handleTagKeyDown}
                 placeholder="输入标签，按回车或点击添加"
                 maxLength={6}
