@@ -103,7 +103,7 @@ func main() {
 
 	// 帖子模块
 	engine.GET("/posts", PostHdl.List)               // 获取帖子列表
-	engine.GET("/posts_tag/", PostHdl.ListByTag)     // 根据标签获取帖子列表
+	engine.GET("/posts_tag", PostHdl.ListByTag)      // 根据标签获取帖子列表
 	engine.GET("/posts/:pid", PostHdl.Detail)        // 获取帖子详情
 	engine.GET("/posts_uid/:uid", PostHdl.ListByUid) // 获取目标用户发布的帖子
 	// 强制登录

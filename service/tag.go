@@ -21,8 +21,9 @@ func NewTagService(tagDBRepo *tagRepository.TagDBRepository, tagCacheRepo *tagRe
 
 func (svc *TagService) Create(name string) (int, error) {
 	// 获得唯一标识符
+	tagName := name
 	slug := utils.Slugify(name)
-	tid, err := svc.TagDBRepo.Create(name, slug)
+	tid, err := svc.TagDBRepo.Create(tagName, slug)
 	if err != nil {
 		return 0, err
 	}
