@@ -122,6 +122,33 @@ func (repo *PostDBRepository) GetByPage(pageNo, pageSize int) (int, []model.Post
 	return int(total), posts
 }
 
+// GetByPageAndTag 根据
+func (repo *PostDBRepository) GetByPageAndTag(tid, pageNo, pageSize int) (int, []model.Post) {
+	// 获取帖子总数
+	var total int64
+
+	tx := repo.db.Table("post p").
+		Joins("join post_tag pt on pt.post_id = p.id").Where("pt.tag_id = ?", tid).Count(&total)
+	if tx.Error != nil {
+		slog.Error("获取帖子总数失败", "error", tx.Error)
+		return 0, nil
+	}
+
+	// 获取当前页的帖子
+	var posts []model.Post
+	// 已经查询过 pageSize * (pageNo - 1) 条数据, 当前页需要 pageSize 条数据，并按发布时间降序排列
+	repo.db.Model(&model.Post{}).Table("post p").
+		Joins("join post_tag pt on pt.post_id = p.id").Where("pt.tag_id = ? and p.delete_time is null", tid).
+		Order("p.create_time desc").Limit(pageSize).Offset(pageSize * (pageNo - 1)).Find(&posts)
+
+	if tx.Error != nil {
+		slog.Error("获取当前页帖子失败", "pageNo", pageNo, "pageSize", pageSize, "error", tx.Error)
+		return 0, nil
+	}
+
+	return int(total), posts
+}
+
 // GetByUid 根据 uid 获取该用户所发帖子
 func (repo *PostDBRepository) GetByUid(uid int) []model.Post {
 	var posts []model.Post

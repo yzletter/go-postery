@@ -56,6 +56,36 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	return
 }
 
+// ListByTag 根据标签获取帖子列表
+func (hdl *PostHandler) ListByTag(ctx *gin.Context) {
+	// 从 /posts?pageNo=1&pageSize=2&tag= 路由中拿出 pageNo 和 pageSize
+	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
+	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
+	name := ctx.Query("tag")
+	if err1 != nil || err2 != nil {
+		// 获取帖子列表请求的参数不合法
+		response.ParamError(ctx, "")
+		return
+	}
+
+	// 获取帖子总数和当前页帖子列表
+	total, postDTOs := hdl.PostService.GetByPageAndTag(name, pageNo, pageSize)
+	for k := range postDTOs {
+		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(postDTOs[k].Id)
+	}
+
+	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
+	hasMore := hdl.PostService.HasMore(pageNo, pageSize, total)
+
+	// 返回
+	response.Success(ctx, gin.H{
+		"posts":   postDTOs,
+		"total":   total,
+		"hasMore": hasMore,
+	})
+	return
+}
+
 // Detail 获取帖子详情
 func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	// 从路由中获取 pid 参数
@@ -157,7 +187,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = hdl.PostService.Update(updateRequest.Id, int(uid), updateRequest.Title, updateRequest.Content)
+	err = hdl.PostService.Update(updateRequest.Id, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
 	if err != nil {
 		if err.Error() == "没有权限" {
 			response.Unauthorized(ctx, "")

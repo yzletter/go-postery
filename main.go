@@ -56,7 +56,7 @@ func main() {
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                                                // 注册 AuthSvc
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 500)                          // 注册 RateLimitSvc
 	UserSvc := service.NewUserService(UserDBRepo, UserCacheRepo)                                                    // 注册 UserSvc
-	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo)                        // 注册 PostSvc
+	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
 	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
 
@@ -71,7 +71,7 @@ func main() {
 	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthSvc) // AuthOptionalMdl 非强制要求登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -103,6 +103,7 @@ func main() {
 
 	// 帖子模块
 	engine.GET("/posts", PostHdl.List)               // 获取帖子列表
+	engine.GET("/posts_tag/", PostHdl.ListByTag)     // 根据标签获取帖子列表
 	engine.GET("/posts/:pid", PostHdl.Detail)        // 获取帖子详情
 	engine.GET("/posts_uid/:uid", PostHdl.ListByUid) // 获取目标用户发布的帖子
 	// 强制登录

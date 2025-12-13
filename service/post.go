@@ -7,7 +7,9 @@ import (
 	dto "github.com/yzletter/go-postery/dto/response"
 	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	postRepository "github.com/yzletter/go-postery/repository/post"
+	tagRepository "github.com/yzletter/go-postery/repository/tag"
 	userRepository "github.com/yzletter/go-postery/repository/user"
+	"github.com/yzletter/go-postery/utils"
 )
 
 var (
@@ -27,18 +29,22 @@ type PostService struct {
 	PostCacheRepo  *postRepository.PostCacheRepository
 	UserDBRepo     *userRepository.UserDBRepository
 	UserLikeDBRepo *userLikeRepository.UserLikeDBRepository
+	TagDBRepo      *tagRepository.TagDBRepository
 }
 
 func NewPostService(postDBRepo *postRepository.PostDBRepository,
 	postCacheRepo *postRepository.PostCacheRepository,
 	userRepository *userRepository.UserDBRepository,
 	userLikeDBRepo *userLikeRepository.UserLikeDBRepository,
+	tagDBRepo *tagRepository.TagDBRepository,
+
 ) *PostService {
 	return &PostService{
 		PostDBRepo:     postDBRepo,
 		PostCacheRepo:  postCacheRepo,
 		UserDBRepo:     userRepository,
 		UserLikeDBRepo: userLikeDBRepo,
+		TagDBRepo:      tagDBRepo,
 	}
 }
 
@@ -62,7 +68,7 @@ func (svc *PostService) Delete(pid, uid int) error {
 	return err
 }
 
-func (svc *PostService) Update(pid int, uid int, title, content string) error {
+func (svc *PostService) Update(pid int, uid int, title, content string, tags []string) error {
 	// 判断登录用户是否是作者
 	ok := svc.Belong(pid, uid)
 	if !ok {
@@ -70,13 +76,81 @@ func (svc *PostService) Update(pid int, uid int, title, content string) error {
 		return errors.New("没有权限")
 	}
 
-	err := svc.PostDBRepo.Update(pid, title, content)
+	tagsBefore, err := svc.TagDBRepo.FindTagsByPostID(pid)
+	if err != nil {
+		slog.Error("Get Tags_Before Failed", "error", err)
+	}
+
+	tagsNow := tags
+
+	// 将切片转为集合
+	hashBefore := make(map[string]struct{})
+	for _, tag := range tagsBefore {
+		hashBefore[tag] = struct{}{}
+	}
+	hashNow := make(map[string]struct{})
+	for _, tag := range tagsNow {
+		hashNow[tag] = struct{}{}
+	}
+
+	for _, tag := range tagsBefore {
+		if _, ok := hashNow[tag]; !ok { // 原来有现在没有 ——> 删除
+			tid, err := svc.TagDBRepo.Exist(tag) // 查 tid
+			if err != nil {
+				// 这里应该是必须有 tid 的才对
+				slog.Error("Can Not Find Tid", "error", err)
+			}
+			err = svc.TagDBRepo.DeleteBind(pid, tid)
+			if err != nil {
+				slog.Error("Delete Bind Failed", "error", err)
+			}
+		}
+	}
+
+	for _, tag := range tagsNow {
+		if _, ok := hashBefore[tag]; !ok { // 现在有原来没有 ——> 绑定
+			tid, err := svc.TagDBRepo.Exist(tag) // 查 tid
+			if err != nil {
+				tid, err = svc.TagDBRepo.Create(tag, utils.Slugify(tag)) // 没有 tid 就新建
+			}
+
+			err = svc.TagDBRepo.Bind(pid, tid)
+			if err != nil {
+
+			}
+		}
+	}
+
+	err = svc.PostDBRepo.Update(pid, title, content) // 更新标题和正文
 	return err
 }
 
 func (svc *PostService) GetByPage(pageNo, pageSize int) (int, []dto.PostDetailDTO) {
 	// 获取帖子总数和当前页帖子列表
 	total, posts := svc.PostDBRepo.GetByPage(pageNo, pageSize)
+	var postDTOs []dto.PostDetailDTO
+	for _, post := range posts {
+		// 根据 uid 找到 username 进行赋值
+		ok, user := svc.UserDBRepo.GetByID(post.UserId)
+		if !ok {
+			slog.Warn("could not get name of user", "uid", post.UserId)
+		}
+
+		postDTO := dto.ToPostDetailDTO(post, user)
+		postDTOs = append(postDTOs, postDTO)
+	}
+	return total, postDTOs
+}
+
+func (svc *PostService) GetByPageAndTag(name string, pageNo, pageSize int) (int, []dto.PostDetailDTO) {
+	tid, err := svc.TagDBRepo.Exist(name)
+	if err != nil {
+		return 0, []dto.PostDetailDTO{}
+	}
+
+	// 获取帖子总数和当前页帖子列表
+	total, posts := svc.PostDBRepo.GetByPageAndTag(tid, pageNo, pageSize)
+
 	var postDTOs []dto.PostDetailDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值

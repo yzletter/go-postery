@@ -76,10 +76,24 @@ func (repo *TagDBRepository) Bind(pid, tid int) error {
 	return nil
 }
 
+func (repo *TagDBRepository) DeleteBind(pid, tid int) error {
+	tx := repo.db.Where("post_id = ? AND tag_id = ?", pid, tid).Delete(&model.PostTag{})
+	if tx.RowsAffected == 0 {
+		slog.Error("MySQL Delete Post_Tag Failed", "error", tx.Error) // 记录日志, 方便后续人工定位问题所在
+		return errors.New("删除失败")
+	}
+
+	return nil
+}
+
 // FindTagsByPostID 根据 PostID 查找 Tags
 func (repo *TagDBRepository) FindTagsByPostID(pid int) ([]string, error) {
 	var names []string
-	tx := repo.db.Table("post_tag pt").Joins("JOIN tag t ON t.id = pt.tag_id").Where("pt.post_id = ?", pid).Pluck("t.name", &names)
+	tx := repo.db.Table("post_tag pt").
+		Joins("JOIN tag t ON t.id = pt.tag_id").
+		Where("pt.post_id = ?", pid).
+		Pluck("t.name", &names)
+
 	if tx.Error != nil {
 		// 数据库内部错误
 		slog.Error("MySQL Find Tag Failed", "error", tx.Error)
