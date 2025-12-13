@@ -94,3 +94,14 @@ func (svc *UserService) Login(name, pass string) (bool, dto.UserBriefDTO) {
 	}
 	return true, dto.ToUserBriefDTO(user)
 }
+
+func (svc *UserService) CheckAdmin(uid int) (bool, error) {
+	status, err := svc.UserDBRepo.GetStatus(uid)
+	if err != nil {
+		return false, err
+	}
+	if status == 5 {
+		return true, nil
+	}
+	return false, nil
+}

@@ -165,3 +165,12 @@ func (repo *UserDBRepository) GetByName(name string) (model.User, error) {
 
 	return user, nil
 }
+
+func (repo *UserDBRepository) GetStatus(uid int) (int, error) {
+	var status int
+	tx := repo.db.Model(&model.User{}).Where("id = ?", uid).Pluck("status", &status)
+	if tx.Error != nil {
+		return 1, nil
+	}
+	return status, nil
+}

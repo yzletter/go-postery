@@ -22,15 +22,18 @@ const (
 
 // AuthService 鉴权中间件的 Service
 type AuthService struct {
-	JwtService  *JwtService   // 依赖 JWT 相关服务
+	JwtService  *JwtService // 依赖 JWT 相关服务
+	UserService *UserService
 	RedisClient redis.Cmdable // 依赖 Redis 数据库
 }
 
 // NewAuthService 构造函数
-func NewAuthService(redisClient redis.Cmdable, jwtService *JwtService) *AuthService {
+
+func NewAuthService(redisClient redis.Cmdable, jwtService *JwtService, userService *UserService) *AuthService {
 	return &AuthService{
 		JwtService:  jwtService,
 		RedisClient: redisClient,
+		UserService: userService,
 	}
 }
 
@@ -88,4 +91,12 @@ func (svc *AuthService) IssueTokenForUser(uid int, uname string) (string, string
 	svc.RedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
 
 	return refreshToken, accessToken, nil
+}
+
+func (svc *AuthService) CheckAdmin(uid int) (bool, error) {
+	ok, err := svc.UserService.CheckAdmin(uid)
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
 }

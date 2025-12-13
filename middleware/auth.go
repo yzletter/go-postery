@@ -109,6 +109,28 @@ func AuthOptionalMiddleware(authService *service.AuthService) gin.HandlerFunc {
 	}
 }
 
+func AuthAdminMiddleware(authService *service.AuthService) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+		uid, err := service.GetUidFromCTX(ctx)
+		if err != nil {
+			response.Unauthorized(ctx, "请先登录")
+			return
+		}
+
+		ok, err := authService.CheckAdmin(uid)
+		if err != nil {
+			response.ServerError(ctx, "")
+			return
+		} else if !ok {
+			response.Unauthorized(ctx, "抱歉，没有管理权限")
+			return
+		}
+
+		ctx.Next()
+	}
+}
+
 // 将用户信息放入上下文
 func setUserInfoInCTX(ctx *gin.Context, userInfo *request.UserJWTInfo) {
 	ctx.Set(service.UID_IN_CTX, userInfo.Id)

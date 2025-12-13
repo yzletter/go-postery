@@ -54,9 +54,9 @@ func main() {
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                                                                       // 注册 JwtSvc
 	MetricSvc := service.NewMetricService()                                                                         // 注册 MetricSvc
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                                                // 注册 AuthSvc
-	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                         // 注册 RateLimitSvc
 	UserSvc := service.NewUserService(UserDBRepo, UserCacheRepo)                                                    // 注册 UserSvc
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserSvc)                                       // 注册 AuthSvc
+	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                         // 注册 RateLimitSvc
 	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
 	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
@@ -72,6 +72,7 @@ func main() {
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
 	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthSvc) // AuthOptionalMdl 非强制要求登录
+	AuthAdminMdl := middleware.AuthAdminMiddleware(AuthSvc)       // AuthAdminMdl 要求管理员身份
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
 	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
@@ -135,6 +136,9 @@ func main() {
 	engine.GET("/iffollow/:id", AuthRequiredMdl, FollowHdl.IfFollow)   // 判断关注关系 0 表示 互不关注 1 表示关注了对方 2 表示对方关注了自己 3 表示互相关注
 	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers) // 返回粉丝列表
 	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees) // 返回关注列表
+
+	// 管理员模块
+	engine.GET("/admin", AuthRequiredMdl, AuthAdminMdl) // 返回关注列表
 
 	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)
