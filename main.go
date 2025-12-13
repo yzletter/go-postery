@@ -60,7 +60,7 @@ func main() {
 	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
 	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
-	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo) // 注册 FollowSvc
+	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo, UserDBRepo) // 注册 FollowSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
@@ -133,8 +133,8 @@ func main() {
 	engine.GET("/follow/:id", AuthRequiredMdl, FollowHdl.Follow)       // 关注
 	engine.GET("/disfollow/:id", AuthRequiredMdl, FollowHdl.DisFollow) // 取消关注
 	engine.GET("/iffollow/:id", AuthRequiredMdl, FollowHdl.IfFollow)   // 判断关注关系 0 表示 互不关注 1 表示关注了对方 2 表示对方关注了自己 3 表示互相关注
-	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers) // 返回关注列表
-	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees) // 返回粉丝列表
+	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers) // 返回粉丝列表
+	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees) // 返回关注列表
 
 	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)

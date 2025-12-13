@@ -98,10 +98,38 @@ func (hdl *FollowHandler) IfFollow(ctx *gin.Context) {
 	response.Success(ctx, res)
 }
 
+// ListFollowers 返回关注我的人
 func (hdl *FollowHandler) ListFollowers(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := service.GetUidFromCTX(ctx)
+	if err != nil {
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
+	followerDTOs, err := hdl.FollowSvc.GetFollowers(uid)
+	if err != nil {
+		response.ServerError(ctx, "")
+		return
+	}
+
+	response.Success(ctx, followerDTOs)
 }
 
+// ListFollowees 返回被我关注的人
 func (hdl *FollowHandler) ListFollowees(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := service.GetUidFromCTX(ctx)
+	if err != nil {
+		response.Unauthorized(ctx, "请先登录")
+		return
+	}
 
+	followerDTOs, err := hdl.FollowSvc.GetFollowees(uid)
+	if err != nil {
+		response.ServerError(ctx, "")
+		return
+	}
+
+	response.Success(ctx, followerDTOs)
 }

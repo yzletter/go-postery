@@ -96,3 +96,25 @@ func (repo *FollowDBRepository) IfFollow(ferId, feeId int) (int, error) {
 		return 0, nil
 	}
 }
+
+// GetFollowers 返回关注当前用户的所有 id 并按时间排序
+func (repo *FollowDBRepository) GetFollowers(uid int) ([]int, error) {
+	var ids []int
+	tx := repo.db.Model(&model.Follow{}).Where("followee_id = ? AND delete_time is null", uid).Order("create_time desc").Pluck("follower_id", &ids)
+	// Find 不会返回 RecordNotFound
+	if tx.Error != nil {
+		return nil, repository.ErrMySQLInternal
+	}
+	return ids, nil
+}
+
+// GetFollowees 返回当前用户关注的所有 id 并按时间排序
+func (repo *FollowDBRepository) GetFollowees(uid int) ([]int, error) {
+	var ids []int
+	tx := repo.db.Model(&model.Follow{}).Where("follower_id = ? AND delete_time is null", uid).Order("create_time desc").Pluck("followee_id", &ids)
+	// Find 不会返回 RecordNotFound
+	if tx.Error != nil {
+		return nil, repository.ErrMySQLInternal
+	}
+	return ids, nil
+}
