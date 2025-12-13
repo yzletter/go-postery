@@ -215,6 +215,18 @@ export default function PostDetail() {
     }
   }, [readLikedPosts])
 
+  const forgetLikedPost = useCallback((postId: string) => {
+    try {
+      const likedMap = readLikedPosts()
+      if (likedMap[postId]) {
+        delete likedMap[postId]
+        localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify(likedMap))
+      }
+    } catch (error) {
+      console.warn('移除点赞记录失败:', error)
+    }
+  }, [readLikedPosts])
+
   useEffect(() => {
     let cancelled = false
 
@@ -275,19 +287,24 @@ export default function PostDetail() {
   }, [post, readLikedPosts])
 
   const handleLikePost = async () => {
-    if (!post?.id || hasLiked || isLiking) {
+    if (!post?.id || isLiking) {
       return
     }
 
     const normalizedId = normalizeId(post.id)
-    const nextCount = likeCount + 1
+    const willLike = !hasLiked
+    const diff = willLike ? 1 : -1
+    const optimisticCount = Math.max(0, likeCount + diff)
+    const prevState = { liked: hasLiked, count: likeCount }
 
     setIsLiking(true)
-    setLikeCount(nextCount)
-    setPost(prev => (prev ? { ...prev, likes: nextCount } : prev))
+    setHasLiked(willLike)
+    setLikeCount(optimisticCount)
+    setPost(prev => (prev ? { ...prev, likes: optimisticCount } : prev))
 
     try {
-      const { data } = await apiPost('/posts/like', { id: normalizedId, post_id: normalizedId })
+      const endpoint = willLike ? `/posts/like/${normalizedId}` : `/posts/dislike/${normalizedId}`
+      const { data } = await apiGet(endpoint)
       const serverLikes =
         (data as any)?.likes ??
         (data as any)?.Likes ??
@@ -295,17 +312,22 @@ export default function PostDetail() {
         (data as any)?.like_count ??
         (data as any)?.LikeCount
       const parsedServerLikes = typeof serverLikes === 'number' ? serverLikes : Number(serverLikes)
-      const finalCount = Number.isFinite(parsedServerLikes) ? parsedServerLikes : nextCount
+      const finalCount = Number.isFinite(parsedServerLikes) ? parsedServerLikes : optimisticCount
 
       setLikeCount(finalCount)
       setPost(prev => (prev ? { ...prev, likes: finalCount } : prev))
-      setHasLiked(true)
-      rememberLikedPost(normalizedId)
+
+      if (willLike) {
+        rememberLikedPost(normalizedId)
+      } else {
+        forgetLikedPost(normalizedId)
+      }
     } catch (error) {
-      console.error('点赞失败:', error)
-      setLikeCount(prev => Math.max(0, prev - 1))
-      setPost(prev => (prev ? { ...prev, likes: Math.max(0, (prev.likes ?? 1) - 1) } : prev))
-      alert('点赞失败，请稍后重试')
+      console.error('点赞操作失败:', error)
+      setHasLiked(prevState.liked)
+      setLikeCount(prevState.count)
+      setPost(prev => (prev ? { ...prev, likes: prevState.count } : prev))
+      alert(willLike ? '点赞失败，请稍后重试' : '取消点赞失败，请稍后重试')
     } finally {
       setIsLiking(false)
     }
@@ -449,18 +471,18 @@ export default function PostDetail() {
             <button
               type="button"
               onClick={handleLikePost}
-              disabled={hasLiked || isLiking}
+              disabled={isLiking}
               className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                 hasLiked
-                  ? 'bg-primary-50 border-primary-200 text-primary-700 cursor-default'
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-70 disabled:cursor-not-allowed'
-              }`}
+                  ? 'bg-primary-50 border-primary-200 text-primary-700 hover:border-primary-300 hover:bg-primary-100'
+                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700'
+              } disabled:opacity-70 disabled:cursor-not-allowed`}
             >
               <Heart
                 className="h-4 w-4 mr-2"
                 fill={hasLiked ? 'currentColor' : 'none'}
               />
-              <span>{hasLiked ? '已点赞' : '点赞'}</span>
+              <span>{hasLiked ? '取消点赞' : '点赞'}</span>
               <span className="ml-2 text-gray-500">{likeCount}</span>
             </button>
             <span className="text-sm text-gray-500">
