@@ -6,10 +6,12 @@ import (
 
 	followRepository "github.com/yzletter/go-postery/repository/follow"
 	userRepository "github.com/yzletter/go-postery/repository/user"
+	"gorm.io/gorm"
 )
 
 var (
-	ErrDuplicatedFollow = errors.New("重复关注")
+	ErrDuplicatedFollow    = errors.New("重复关注")
+	ErrDuplicatedDisFollow = errors.New("重复取消关注")
 )
 
 type FollowService struct {
@@ -37,11 +39,34 @@ func (svc *FollowService) Follow(ferId, feeId int) error {
 			slog.Error("检查过还出错", "error", err)
 			return ErrDuplicatedFollow
 		}
-		return errors.New("关注失败")
+		return errors.New("关注失败, 请稍后重试")
 	}
 
 	return nil
 }
+
+func (svc *FollowService) DisFollow(ferId, feeId int) error {
+	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
+	if err != nil {
+		return userRepository.ErrMySQLInternal // 数据库内部错误
+	}
+
+	if res == 2 || res == 0 { // 只有对方关注了我，或者互不关注
+		return ErrDuplicatedDisFollow
+	}
+
+	err = svc.FollowDBRepo.DisFollow(ferId, feeId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			slog.Error("检查过还出错", "error", err)
+			return ErrDuplicatedDisFollow
+		}
+		return errors.New("取消关注失败")
+	}
+
+	return nil
+}
+
 func (svc *FollowService) IfFollow(ferId, feeId int) (int, error) {
 	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
 	if err != nil {

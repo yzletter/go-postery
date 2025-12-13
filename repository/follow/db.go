@@ -2,11 +2,13 @@ package repository
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
+	repository2 "github.com/yzletter/go-postery/repository/like"
 	repository "github.com/yzletter/go-postery/repository/user"
 	"gorm.io/gorm"
 )
@@ -20,8 +22,18 @@ func NewFollowDBRepository(db *gorm.DB) *FollowDBRepository {
 }
 
 func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
+	// 先查是否有软删除的记录
+	tx := repo.db.Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND delete_time is not null", ferId, feeId).Update("delete_time", nil)
+	if tx.Error != nil {
+		return repository.ErrMySQLInternal
+	}
+	if tx.RowsAffected > 0 {
+		return nil
+	}
+
+	// 没有软删除的记录进行创建记录
 	now := time.Now()
-	var follow = &model.Follow{
+	var follow = model.Follow{
 		Id:         snowflake.NextID(),
 		FollowerId: ferId,
 		FolloweeId: feeId,
@@ -29,7 +41,7 @@ func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
 		UpdateTime: &now,
 		DeleteTime: nil,
 	}
-	tx := repo.db.Create(&follow)
+	tx = repo.db.Create(&follow)
 	if tx.Error != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
@@ -37,6 +49,18 @@ func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
 		}
 		return repository.ErrMySQLInternal
 	}
+	return nil
+}
+
+func (repo *FollowDBRepository) DisFollow(ferId, feeId int) error {
+	tx := repo.db.Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND delete_time is null", ferId, feeId).Update("delete_time", time.Now())
+	if tx.Error != nil {
+		slog.Error("MySQL Delete Follow Failed", "error", tx.Error)
+		return repository.ErrMySQLInternal
+	} else if tx.RowsAffected == 0 {
+		return repository2.ErrRecordNotExist
+	}
+
 	return nil
 }
 
@@ -62,7 +86,7 @@ func (repo *FollowDBRepository) IfFollow(ferId, feeId int) (int, error) {
 	// 互相关注
 	case condition1 && condition2:
 		return 3, nil
-		// 单方面关注
+	// 单方面关注
 	case condition1:
 		return 1, nil
 	case condition2:
