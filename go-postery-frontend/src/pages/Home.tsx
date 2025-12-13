@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Star, Grid, Code2, Server, Bot, Shield, Goal, Braces, Coffee, Pi, Gift, Sparkles } from 'lucide-react'
+import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Star, Grid, Code2, Server, Bot, Goal, Braces, Coffee, Pi, Gift, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Post } from '../types'
 import { normalizePost } from '../utils/post'
@@ -9,20 +9,24 @@ import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { apiGet } from '../utils/api'
 
-type CategoryItem = { key: string; label: string; icon: LucideIcon }
+type CategoryItem = { key: string; label: string; icon: LucideIcon; tag?: string }
 
 const categories: CategoryItem[] = [
   { key: 'follow', label: '关注', icon: Star },
   { key: 'all', label: '全部', icon: Grid },
-  { key: 'frontend', label: '前端', icon: Code2 },
-  { key: 'backend', label: '后端', icon: Server },
-  { key: 'go', label: 'Go', icon: Goal },
-  { key: 'cpp', label: 'C++', icon: Braces },
-  { key: 'java', label: 'Java', icon: Coffee },
-  { key: 'python', label: 'Python', icon: Pi },
-  { key: 'ai', label: 'AI', icon: Bot },
-  { key: 'ops', label: '运维', icon: Shield },
+  { key: 'frontend', label: '前端', tag: '前端', icon: Code2 },
+  { key: 'backend', label: '后端', tag: '后端', icon: Server },
+  { key: 'go', label: 'Go', tag: 'Go', icon: Goal },
+  { key: 'cpp', label: 'C++', tag: 'C++', icon: Braces },
+  { key: 'java', label: 'Java', tag: 'Java', icon: Coffee },
+  { key: 'python', label: 'Python', tag: 'Python', icon: Pi },
+  { key: 'ai', label: 'AI', tag: 'AI', icon: Bot },
 ]
+
+const getRequestTag = (categoryKey: string): string => {
+  const match = categories.find(cat => cat.key === categoryKey)
+  return match?.tag ?? match?.label ?? categoryKey
+}
 
 // 生成模拟数据的函数
 const generateMockPost = (id: number, index: number): Post => {
@@ -117,23 +121,37 @@ const mockRecommendUsers = [
 
 // API 获取帖子列表
 const FETCH_TIMEOUT_MS = 8000
+const DEFAULT_PAGE_SIZE = 10
+const CATEGORY_PAGE_SIZE = 10
 
-const fetchPosts = async (page: number, pageSize: number = 10): Promise<PostListResult> => {
+const fetchPosts = async (page: number, pageSize: number = DEFAULT_PAGE_SIZE, categoryKey?: string): Promise<PostListResult> => {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
   try {
+    const useAllEndpoint = !categoryKey || categoryKey === 'all' || categoryKey === 'follow'
+    const tag = categoryKey ? getRequestTag(categoryKey) : ''
+    const path = useAllEndpoint
+      ? `/posts?pageNo=${page}&pageSize=${pageSize}`
+      : `/posts_tag?pageNo=${page}&pageSize=${pageSize}&tag=${encodeURIComponent(tag)}`
+
     const { data } = await apiGet<{
       posts: any[]
       total?: number
       hasMore?: boolean
-    }>(`/posts?pageNo=${page}&pageSize=${pageSize}`, { signal: controller.signal })
+    }>(path, { signal: controller.signal })
 
-    if (!data || !Array.isArray(data.posts)) {
+    const rawPosts = Array.isArray(data?.posts)
+      ? data.posts
+      : data?.posts == null
+        ? []
+        : null
+
+    if (!data || rawPosts === null) {
       throw new Error('帖子列表响应数据格式错误')
     }
 
-    const postsWithStats: Post[] = data.posts.map((p: any) => {
+    const postsWithStats: Post[] = rawPosts.map((p: any) => {
       const normalized = normalizePost(p)
       return {
         ...normalized,
@@ -172,8 +190,6 @@ export default function Home() {
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
 
-  const pageSize = 10
-
   // 确保进入首页时回到顶部
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
@@ -181,12 +197,13 @@ export default function Home() {
 
   const categoryPool = useMemo(() => categories.filter(c => c.key !== 'all'), [])
 
-  const decoratePosts = useCallback((list: Post[], offset: number = 0): Post[] => {
+  const decoratePosts = useCallback((list: Post[], options: { offset?: number; fallbackCategory?: string } = {}): Post[] => {
+    const { offset = 0, fallbackCategory } = options
     const hasCategories = categoryPool.length > 0
     return list.map((post, idx) => {
       const seed = buildIdSeed(post.id, idx + offset)
-      const fallbackCategory = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
-      const category = post.category ?? fallbackCategory?.key
+      const randomCategory = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
+      const category = post.category ?? fallbackCategory ?? randomCategory?.key
       const tags = (post.tags ?? [])
         .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
         .filter(Boolean)
@@ -198,10 +215,20 @@ export default function Home() {
     })
   }, [categoryPool])
 
+  const getPageSizeForCategory = useCallback((categoryKey: string) => {
+    if (!categoryKey || categoryKey === 'all' || categoryKey === 'follow') {
+      return DEFAULT_PAGE_SIZE
+    }
+    return CATEGORY_PAGE_SIZE
+  }, [])
+
   // 加载帖子数据
-  const loadPosts = useCallback(async (page: number, reset: boolean = false) => {
+  const loadPosts = useCallback(async (page: number, reset: boolean = false, categoryKey?: string) => {
     if (isLoadingRef.current) return
     
+    const targetCategory = categoryKey ?? selectedCategory
+    const pageSize = getPageSizeForCategory(targetCategory)
+
     if (reset) {
       setIsInitialLoading(true)
       setPosts([])
@@ -219,10 +246,13 @@ export default function Home() {
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       
-      const { posts: newPosts, hasMore: hasMoreFromApi } = await fetchPosts(page, pageSize)
+      const { posts: newPosts, hasMore: hasMoreFromApi } = await fetchPosts(page, pageSize, targetCategory)
       setPosts(prev => {
         const offset = reset ? 0 : prev.length
-        const decorated = decoratePosts(newPosts, offset)
+        const decorated = decoratePosts(newPosts, {
+          offset,
+          fallbackCategory: targetCategory !== 'all' ? targetCategory : undefined
+        })
         return reset ? decorated : [...prev, ...decorated]
       })
       setHasMore(hasMoreFromApi)
@@ -236,24 +266,19 @@ export default function Home() {
       setIsInitialLoading(false)
       isLoadingRef.current = false
     }
-  }, [pageSize])
+  }, [decoratePosts, getPageSizeForCategory, selectedCategory])
 
   // 初始加载帖子
   useEffect(() => {
-    setIsInitialLoading(true)
-    setCurrentPage(0)
-    setHasMore(true)
-    setPosts([])
-    setError(null)
-    loadPosts(1, true)
-  }, [loadPosts])
+    loadPosts(1, true, selectedCategory)
+  }, [loadPosts, selectedCategory])
 
   // 无限滚动：监听滚动到底部
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading && !isInitialLoading && !error) {
-          loadPosts(currentPage + 1, false)
+          loadPosts(currentPage + 1, false, selectedCategory)
         }
       },
       { threshold: 0.1 }
