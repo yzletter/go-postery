@@ -17,6 +17,8 @@ import { apiGet } from '../utils/api'
 import { normalizeUserDetail } from '../utils/user'
 import { normalizePost } from '../utils/post'
 import type { Post, UserDetail } from '../types'
+import type { FollowRelation } from '../types'
+import { followUser, getFollowRelation, isFollowing, unfollowUser } from '../utils/follow'
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -30,6 +32,8 @@ export default function Profile() {
   const [recentPosts, setRecentPosts] = useState<Post[]>([])
   const [isRecentLoading, setIsRecentLoading] = useState(true)
   const [recentError, setRecentError] = useState<string | null>(null)
+  const [followRelation, setFollowRelation] = useState<FollowRelation | null>(null)
+  const [isFollowLoading, setIsFollowLoading] = useState(false)
 
   const resolvedUserId = userId ?? (user?.id != null ? String(user.id) : '')
   const isCurrentUser = userId
@@ -88,6 +92,63 @@ export default function Profile() {
       </Link>
     </div>
   )
+
+  useEffect(() => {
+    if (!user || isCurrentUser || !resolvedUserId) {
+      setFollowRelation(null)
+      return
+    }
+
+    let cancelled = false
+    setIsFollowLoading(true)
+
+    getFollowRelation(resolvedUserId)
+      .then((relation) => {
+        if (!cancelled) {
+          setFollowRelation(relation)
+        }
+      })
+      .catch((error) => {
+        console.warn('Failed to fetch follow relation:', error)
+        if (!cancelled) {
+          setFollowRelation(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsFollowLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isCurrentUser, resolvedUserId, user])
+
+  const handleToggleFollow = async () => {
+    if (!user || isCurrentUser || !resolvedUserId || isFollowLoading) return
+
+    const prev = followRelation
+    const relation = followRelation ?? 0
+
+    setIsFollowLoading(true)
+    try {
+      if (isFollowing(relation)) {
+        await unfollowUser(resolvedUserId)
+      } else {
+        await followUser(resolvedUserId)
+      }
+
+      const next = await getFollowRelation(resolvedUserId)
+      setFollowRelation(next)
+    } catch (error) {
+      console.error('更新关注关系失败:', error)
+      setFollowRelation(prev)
+      alert(error instanceof Error ? error.message : '更新关注关系失败')
+    } finally {
+      setIsFollowLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!resolvedUserId) {
@@ -231,13 +292,33 @@ export default function Profile() {
               actionButtons
             ) : (
               <div className="flex items-center space-x-3">
-                <Link
-                  to="/follows"
-                  className="btn-secondary flex items-center space-x-2 shadow-sm hover:-translate-y-0.5 transition-transform"
-                >
-                  <HeartHandshake className="h-4 w-4" />
-                  <span>关注</span>
-                </Link>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleToggleFollow()}
+                    disabled={isFollowLoading}
+                    className="btn-secondary flex items-center space-x-2 shadow-sm hover:-translate-y-0.5 transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <HeartHandshake className="h-4 w-4" />
+                    <span>
+                      {isFollowLoading
+                        ? '处理中...'
+                        : isFollowing(followRelation ?? 0)
+                          ? '取消关注'
+                          : followRelation === 2
+                            ? '回关'
+                            : '关注'}
+                    </span>
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="btn-secondary flex items-center space-x-2 shadow-sm hover:-translate-y-0.5 transition-transform"
+                  >
+                    <HeartHandshake className="h-4 w-4" />
+                    <span>登录后关注</span>
+                  </Link>
+                )}
                 <Link
                   to="/messages"
                   state={{ username: displayName, userId: displayUserId }}

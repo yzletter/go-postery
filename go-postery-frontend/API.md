@@ -173,6 +173,50 @@
 
 删除策略：帖子作者可删除该帖下任何评论；评论作者可删除自己的评论（通过上述接口判断归属）。
 
+## 关注相关
+
+### 关注用户
+- `GET /follow/{id}`
+- 需要登录（`AuthRequiredMdl`）。
+- 成功返回 `code: 0`。
+
+### 取消关注
+- `GET /disfollow/{id}`
+- 需要登录（`AuthRequiredMdl`）。
+- 成功返回 `code: 0`。
+
+### 判断关注关系
+- `GET /iffollow/{id}`
+- 需要登录（`AuthRequiredMdl`）。
+- 成功时 `data` 为数字：
+  - `0`：互不关注
+  - `1`：我关注了对方
+  - `2`：对方关注了我
+  - `3`：互相关注
+- 示例：
+  ```json
+  { "code": 0, "msg": "success", "data": 1 }
+  ```
+
+### 粉丝列表
+- `GET /followers`
+- 需要登录（`AuthRequiredMdl`）。
+- 成功时 `data` 为数组：
+  ```json
+  {
+    "code": 0,
+    "msg": "success",
+    "data": [
+      { "id": "1999760900969463808", "name": "sylar", "avatar": "" }
+    ]
+  }
+  ```
+
+### 关注列表
+- `GET /followees`
+- 需要登录（`AuthRequiredMdl`）。
+- 成功时 `data` 为数组，结构同上。
+
 ## 数据模型（前端使用）
 ```ts
 interface Post {

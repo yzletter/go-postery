@@ -65,3 +65,11 @@ export interface Comment {
   likes?: number
   replies?: Comment[]
 }
+
+export interface FollowUser {
+  id: Id
+  name: string
+  avatar?: string
+}
+
+export type FollowRelation = 0 | 1 | 2 | 3
