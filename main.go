@@ -54,7 +54,7 @@ func main() {
 	JwtSvc := service.NewJwtService("123456")                                                                       // 注册 JwtSvc
 	MetricSvc := service.NewMetricService()                                                                         // 注册 MetricSvc
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc)                                                // 注册 AuthSvc
-	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 500)                          // 注册 RateLimitSvc
+	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                         // 注册 RateLimitSvc
 	UserSvc := service.NewUserService(UserDBRepo, UserCacheRepo)                                                    // 注册 UserSvc
 	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
