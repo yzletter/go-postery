@@ -10,16 +10,13 @@ import {
   HeartHandshake,
   Send,
 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet } from '../utils/api'
 import { normalizeUserDetail } from '../utils/user'
-import type { UserDetail } from '../types'
-
-const mockRecentPosts = [
-  { id: 1, title: '如何快速搭建一套前后端同构的论坛？', time: '2 小时前', views: 320 },
-  { id: 2, title: 'Go 服务的日志与链路追踪最佳实践', time: '1 天前', views: 210 },
-  { id: 3, title: 'Tailwind 设计系统落地经验分享', time: '3 天前', views: 180 },
-]
+import { normalizePost } from '../utils/post'
+import type { Post, UserDetail } from '../types'
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -30,6 +27,9 @@ export default function Profile() {
   const [profileInfo, setProfileInfo] = useState<UserDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [recentPosts, setRecentPosts] = useState<Post[]>([])
+  const [isRecentLoading, setIsRecentLoading] = useState(true)
+  const [recentError, setRecentError] = useState<string | null>(null)
 
   const resolvedUserId = userId ?? (user?.id != null ? String(user.id) : '')
   const isCurrentUser = userId
@@ -63,6 +63,12 @@ export default function Profile() {
         return '保密'
     }
   })()
+  const formatRelativeTime = (value?: string) => {
+    if (!value) return '刚刚'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return '刚刚'
+    return formatDistanceToNow(date, { addSuffix: true, locale: zhCN })
+  }
   const summaryStats = [
     { key: 'posts', label: '帖子', value: '12', icon: <PenSquare className="h-4 w-4 text-primary-600" /> },
     { key: 'followers', label: '关注者', value: '89', icon: <Users className="h-4 w-4 text-primary-600" /> },
@@ -118,6 +124,63 @@ export default function Profile() {
 
     return () => {
       isMounted = false
+    }
+  }, [resolvedUserId])
+
+  useEffect(() => {
+    if (!resolvedUserId) {
+      setRecentPosts([])
+      setIsRecentLoading(false)
+      setRecentError(null)
+      return
+    }
+
+    let isMounted = true
+    const controller = new AbortController()
+
+    const fetchRecentPosts = async () => {
+      setIsRecentLoading(true)
+      setRecentError(null)
+
+      try {
+        const { data } = await apiGet<any>(`/posts_uid/${resolvedUserId}`, { signal: controller.signal })
+        if (!isMounted) return
+
+        const rawList = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.posts)
+            ? (data as any).posts
+            : []
+
+        const normalized = rawList.map((item: any) => {
+          const post = normalizePost(item)
+          return {
+            ...post,
+            views: post.views ?? 0,
+            likes: post.likes ?? 0,
+            comments: post.comments ?? 0,
+          }
+        })
+
+        setRecentPosts(normalized)
+      } catch (err) {
+        if (!isMounted) return
+        console.error('Failed to fetch recent posts:', err)
+        const message = err instanceof Error ? err.message : '获取最近动态失败'
+        setRecentError(message)
+        setRecentPosts([])
+      } finally {
+        if (isMounted) {
+          setIsRecentLoading(false)
+        }
+      }
+    }
+
+    void fetchRecentPosts()
+
+    return () => {
+      isMounted = false
+      controller.abort()
     }
   }, [resolvedUserId])
 
@@ -247,7 +310,16 @@ export default function Profile() {
             </Link>
           </div>
           <div className="divide-y divide-gray-100">
-            {mockRecentPosts.map((post) => (
+            {isRecentLoading && (
+              <div className="py-4 text-sm text-gray-500 px-2">加载最近动态...</div>
+            )}
+            {recentError && !isRecentLoading && (
+              <div className="py-3 text-sm text-red-600 px-2">{recentError}</div>
+            )}
+            {!isRecentLoading && !recentError && recentPosts.length === 0 && (
+              <div className="py-4 text-sm text-gray-500 px-2">暂无最近动态</div>
+            )}
+            {recentPosts.map((post, index) => (
               <Link
                 to={`/post/${post.id}`}
                 key={post.id}
@@ -255,14 +327,16 @@ export default function Profile() {
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
-                    {post.id}
+                    {index + 1}
                   </div>
                   <div>
                     <p className="text-gray-900 font-medium line-clamp-1">{post.title}</p>
-                    <p className="text-xs text-gray-500">更新于 {post.time}</p>
+                    <p className="text-xs text-gray-500">
+                      更新于 {formatRelativeTime(post.createdAt)}
+                    </p>
                   </div>
                 </div>
-                <div className="text-sm text-gray-500">浏览 {post.views}</div>
+                <div className="text-sm text-gray-500">浏览 {post.views ?? 0}</div>
               </Link>
             ))}
           </div>
