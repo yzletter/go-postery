@@ -10,7 +10,6 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [username, setName] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -163,7 +162,7 @@ export default function Login() {
                     id="username"
                     type="text"
                     value={username}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setUsername(e.target.value)}
                     placeholder="输入用户名"
                     required
                     className="input pl-10"
