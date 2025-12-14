@@ -7,13 +7,16 @@ import (
 // 定义 DAO 层所有接口
 
 type UserDAO interface {
-	Create(name, password string) (model.User, error)
-	Delete(id int) error
-	UpdatePassword(id int, oldPass, newPass string) error
-	UpdateProfile(id int, request model.User) error
-	GetByID(id int) (model.User, error)
-	GetByName(name string) (model.User, error)
-	Status(id int) (int, error)
+	Create(user *model.User) (*model.User, error)
+	Delete(id int64) error
+
+	GetPasswordHash(id int64) (string, error)
+	GetStatus(id int64) (uint8, error)
+	GetByID(id int64) (*model.User, error)
+	GetByUsername(username string) (*model.User, error)
+
+	UpdatePasswordHash(id int64, newHash string) error
+	UpdateProfile(id int64, updates map[string]any) error
 }
 
 type PostDAO interface {

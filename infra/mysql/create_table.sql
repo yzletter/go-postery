@@ -2,17 +2,18 @@
 -- 创建数据库 go_postery
 create database go_postery;
 -- 创建用户 go_postery_tester 密码为 123456
-create user 'go_postery_tester' identified by '123456';
+create
+u 'go_postery_tester' identified by '123456';
 -- 将数据库 go_postery 的全部权限授予用户 go_postery_tester
 grant all on go_postery.* to go_postery_tester;
 -- 切到 go_postery 数据库
 use go_postery;
 
 # 建表
-# 创建 user 表
+# 创建 u 表
 CREATE TABLE IF NOT EXISTS users
 (
-    id            BIGINT UNSIGNED                         NOT NULL COMMENT '用户 ID (雪花算法)',
+    id            BIGINT SIGNED                           NOT NULL COMMENT '用户 ID (雪花算法)',
     username      VARCHAR(32) COLLATE utf8mb4_unicode_ci  NOT NULL COMMENT '用户名',
     email         VARCHAR(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
     password_hash VARCHAR(255)                            NOT NULL COMMENT '密码哈希',
@@ -97,7 +98,7 @@ create table if not exists comment
 create table if not exists tag
 (
     id          bigint primary key comment '标签 id',
-    username        varchar(32) not null comment '标签名',
+    username    varchar(32) not null comment '标签名',
     slug        varchar(32) not null comment '标签唯一标识',
     create_time datetime default current_timestamp comment '创建时间',
     delete_time datetime default null comment '删除时间',

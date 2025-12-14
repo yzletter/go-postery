@@ -9,5 +9,4 @@ var (
 	ErrRecordNotFound    = errors.New("记录不存在")
 	ErrUniqueKeyConflict = errors.New("唯一键冲突")
 	ErrParamsInvalid     = errors.New("参数有误")
-	ErrUidInvalid        = errors.New("用户 ID 错误")
 )

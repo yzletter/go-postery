@@ -52,7 +52,7 @@ func (dao *GormUserDAO) Create(user *model.User) (*model.User, error) {
 }
 
 // Delete 软删除 User
-func (dao *GormUserDAO) Delete(id uint64) error {
+func (dao *GormUserDAO) Delete(id int64) error {
 	// 1. 操作数据库
 	now := time.Now()
 	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now)
@@ -70,7 +70,7 @@ func (dao *GormUserDAO) Delete(id uint64) error {
 }
 
 // GetPasswordHash 返回 User 的 PasswordHash
-func (dao *GormUserDAO) GetPasswordHash(id uint64) (string, error) {
+func (dao *GormUserDAO) GetPasswordHash(id int64) (string, error) {
 	// 1. 操作数据库
 	var res string
 	result := dao.db.Model(&model.User{}).Select("password_hash").Where("id = ? AND deleted_at IS NULL", id).Take(&res)
@@ -89,7 +89,7 @@ func (dao *GormUserDAO) GetPasswordHash(id uint64) (string, error) {
 }
 
 // GetStatus 返回 User 的 Status
-func (dao *GormUserDAO) GetStatus(id uint64) (uint8, error) {
+func (dao *GormUserDAO) GetStatus(id int64) (uint8, error) {
 	// 1. 操作数据库
 	var status uint8
 	result := dao.db.Model(&model.User{}).Select("status").Where("id = ? AND deleted_at IS NULL", id).Take(&status)
@@ -108,7 +108,7 @@ func (dao *GormUserDAO) GetStatus(id uint64) (uint8, error) {
 }
 
 // GetByID 根据 User 的 ID 查找不带密码的 User
-func (dao *GormUserDAO) GetByID(id uint64) (*model.User, error) {
+func (dao *GormUserDAO) GetByID(id int64) (*model.User, error) {
 	// 1. 构造结构体对象
 	user := &model.User{}
 
@@ -128,25 +128,8 @@ func (dao *GormUserDAO) GetByID(id uint64) (*model.User, error) {
 	return user, nil
 }
 
-// UpdatePasswordHash 更新 User 的 PasswordHash
-func (dao *GormUserDAO) UpdatePasswordHash(id uint64, newHash string) error {
-	// 1. 操作数据库
-	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("password_hash", newHash)
-	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(UpdateFailed, "id", id, "error", result.Error)
-		return ErrInternal
-	} else if result.RowsAffected == 0 {
-		// 业务层面错误
-		return ErrRecordNotFound
-	}
-
-	// 2. 返回结果
-	return nil
-}
-
-// GetByName 根据 User 的 Username 查找带密码的 User
-func (dao *GormUserDAO) GetByName(username string) (*model.User, error) {
+// GetByUsername 根据 User 的 Username 查找带密码的 User
+func (dao *GormUserDAO) GetByUsername(username string) (*model.User, error) {
 	// 1. 构造结构体对象
 	user := &model.User{}
 
@@ -166,7 +149,25 @@ func (dao *GormUserDAO) GetByName(username string) (*model.User, error) {
 	return user, nil
 }
 
-func (dao *GormUserDAO) UpdateProfile(id uint64, updates map[string]any) error {
+// UpdatePasswordHash 更新 User 的 PasswordHash
+func (dao *GormUserDAO) UpdatePasswordHash(id int64, newHash string) error {
+	// 1. 操作数据库
+	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("password_hash", newHash)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(UpdateFailed, "id", id, "error", result.Error)
+		return ErrInternal
+	} else if result.RowsAffected == 0 {
+		// 业务层面错误
+		return ErrRecordNotFound
+	}
+
+	// 2. 返回结果
+	return nil
+}
+
+// UpdateProfile 更新 User 的多个字段
+func (dao *GormUserDAO) UpdateProfile(id int64, updates map[string]any) error {
 	// 1. 操作数据库
 	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Updates(updates)
 	if result.Error != nil {
