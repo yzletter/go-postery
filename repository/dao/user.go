@@ -89,9 +89,9 @@ func (dao *GormUserDAO) GetPasswordHash(id int64) (string, error) {
 }
 
 // GetStatus 返回 User 的 Status
-func (dao *GormUserDAO) GetStatus(id int64) (uint8, error) {
+func (dao *GormUserDAO) GetStatus(id int64) (int, error) {
 	// 1. 操作数据库
-	var status uint8
+	var status int
 	result := dao.db.Model(&model.User{}).Select("status").Where("id = ? AND deleted_at IS NULL", id).Take(&status)
 	if result.Error != nil {
 		// 业务层面错误

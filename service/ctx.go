@@ -11,7 +11,7 @@ var (
 	ErrNotLogin = errors.New("请先登录")
 )
 
-func GetUidFromCTX(ctx *gin.Context) (int, error) {
+func GetUidFromCTX(ctx *gin.Context) (int64, error) {
 	idStr, ok := ctx.Value(UID_IN_CTX).(string)
 	if !ok {
 		return 0, ErrNotLogin
@@ -23,5 +23,5 @@ func GetUidFromCTX(ctx *gin.Context) (int, error) {
 		return 0, ErrNotLogin
 	}
 
-	return int(uid), nil
+	return uid, nil
 }

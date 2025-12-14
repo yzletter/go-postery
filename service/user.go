@@ -5,7 +5,10 @@ import (
 
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/dto/response"
-	repository "github.com/yzletter/go-postery/repository/user"
+	"github.com/yzletter/go-postery/infra/snowflake"
+	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/repository/dao"
 )
 
 var (
@@ -14,89 +17,103 @@ var (
 )
 
 type UserService struct {
-	UserDBRepo    *repository.UserDBRepository
-	UserCacheRepo *repository.UserCacheRepository
+	UserRepository repository.UserRepository
 }
 
-func NewUserService(userDBRepository *repository.UserDBRepository, userCacheRepository *repository.UserCacheRepository) *UserService {
+func NewUserService(userRepository repository.UserRepository) *UserService {
 	return &UserService{
-		UserDBRepo:    userDBRepository,
-		UserCacheRepo: userCacheRepository,
+		UserRepository: userRepository,
 	}
 }
 
-func (svc *UserService) Register(name, password, ip string) (dto.UserBriefDTO, error) {
+func (svc *UserService) Register(username, password string) (dto.UserBriefDTO, error) {
 	var userDTO dto.UserBriefDTO
-	user, err := svc.UserDBRepo.Create(name, password, ip)
+
+	u := &model.User{
+		ID:           snowflake.NextID(),
+		Username:     username,
+		Email:        "",
+		PasswordHash: password,
+	}
+	user, err := svc.UserRepository.Create(u)
 	if err == nil {
-		userDTO = dto.ToUserBriefDTO(user)
+		userDTO = dto.ToUserBriefDTO(*user)
 		return userDTO, nil
 	}
 
 	if errors.Is(err, repository.ErrUniqueKeyConflict) { // 唯一键冲突
 		return userDTO, ErrNameDuplicated
-	} else if errors.Is(err, repository.ErrMySQLInternal) { // 数据库内部错误
+	} else if errors.Is(err, dao.ErrInternal) { // 数据库内部错误
 		return userDTO, ErrServerInternal
 	}
 	return userDTO, ErrServerInternal
 }
 
-func (svc *UserService) GetBriefById(uid int) (bool, dto.UserBriefDTO) {
-	ok, user := svc.UserDBRepo.GetByID(uid)
-	if !ok {
+func (svc *UserService) GetBriefById(id int64) (bool, dto.UserBriefDTO) {
+	user, err := svc.UserRepository.GetByID(id)
+	if err != nil {
 		return false, dto.UserBriefDTO{}
 	}
 
-	return true, dto.ToUserBriefDTO(user)
+	return true, dto.ToUserBriefDTO(*user)
 }
 
 // GetDetailById 根据 ID 查找用户的详细信息
-func (svc *UserService) GetDetailById(uid int) (bool, dto.UserDetailDTO) {
-	ok, user := svc.UserDBRepo.GetByID(uid)
-	if !ok {
+func (svc *UserService) GetDetailById(id int64) (bool, dto.UserDetailDTO) {
+	user, err := svc.UserRepository.GetByID(id)
+	if err != nil {
 		return false, dto.UserDetailDTO{}
 	}
 
-	return true, dto.ToUserDetailDTO(user)
+	return true, dto.ToUserDetailDTO(*user)
 }
 
-// GetBriefByName 根据 name 查找用户的简要信息
-func (svc *UserService) GetBriefByName(name string) dto.UserBriefDTO {
-	user, err := svc.UserDBRepo.GetByName(name)
+// GetBriefByName 根据 username 查找用户的简要信息
+func (svc *UserService) GetBriefByName(username string) dto.UserBriefDTO {
+	user, err := svc.UserRepository.GetByUsername(username)
 	if err != nil {
 		return dto.UserBriefDTO{}
 	}
-	return dto.ToUserBriefDTO(user)
+	return dto.ToUserBriefDTO(*user)
 }
 
-func (svc *UserService) UpdatePassword(uid int, oldPass, newPass string) error {
-	err := svc.UserDBRepo.UpdatePassword(uid, oldPass, newPass)
+func (svc *UserService) UpdatePassword(id int64, oldPass, newPass string) error {
+	err := svc.UserRepository.UpdatePasswordHash(id, newPass)
 	return err
 }
 
-func (svc *UserService) UpdateProfile(uid int, req request.ModifyProfileRequest) error {
+func (svc *UserService) UpdateProfile(id int64, req request.ModifyProfileRequest) error {
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
 	modelReq := request.ModifyProfileRequestToModel(req)
 
-	if err := svc.UserDBRepo.UpdateProfile(uid, modelReq); err == nil {
+	updates := map[string]any{
+		"email":    modelReq.Email,
+		"avatar":   modelReq.Avatar,
+		"bio":      modelReq.Bio,
+		"gender":   modelReq.Gender,
+		"birthday": modelReq.BirthDay,
+		"location": modelReq.Location,
+		"country":  modelReq.Country,
+	}
+	if err := svc.UserRepository.UpdateProfile(id, updates); err == nil {
 		return nil
-	} else if errors.Is(err, repository.ErrUidInvalid) {
+	} else if errors.Is(err, dao.ErrRecordNotFound) {
 		// 如果是用户 ID 错误, 直接返回该错误
 		return err
 	}
 	return ErrServerInternal
 }
 
-func (svc *UserService) Login(name, pass string) (bool, dto.UserBriefDTO) {
-	user, err := svc.UserDBRepo.GetByName(name)
+func (svc *UserService) Login(username, pass string) (bool, dto.UserBriefDTO) {
+	user, err := svc.UserRepository.GetByUsername(username)
 	if err != nil || user.PasswordHash != pass {
 		return false, dto.UserBriefDTO{}
 	}
-	return true, dto.ToUserBriefDTO(user)
+	return true, dto.ToUserBriefDTO(*user)
 }
 
-func (svc *UserService) CheckAdmin(uid int) (bool, error) {
-	status, err := svc.UserDBRepo.Status(uid)
+func (svc *UserService) CheckAdmin(id int64) (bool, error) {
+	status, err := svc.UserRepository.GetStatus(id)
 	if err != nil {
 		return false, err
 	}

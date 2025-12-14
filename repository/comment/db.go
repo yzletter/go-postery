@@ -24,7 +24,7 @@ func NewCommentDBRepository(db *gorm.DB) *CommentDBRepository {
 func (repo *CommentDBRepository) Create(pid int, uid int, parentId int, replyId int, content string) (model.Comment, error) {
 	now := time.Now()
 	comment := model.Comment{
-		Id:         snowflake.NextID(),
+		Id:         int(snowflake.NextID()),
 		PostId:     pid,      // 所属帖子 id
 		ParentId:   parentId, // 父评论 id, 若为 0 则为主评论
 		ReplyId:    replyId,  // 当前评论所评论的Id

@@ -26,7 +26,7 @@ func (repo *PostDBRepository) Create(uid int, title, content string) (model.Post
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
-		Id:         snowflake.NextID(),
+		Id:         int(snowflake.NextID()),
 		UserId:     uid,     // 作者id
 		Title:      title,   // 标题
 		Content:    content, // 正文

@@ -33,7 +33,7 @@ func (hdl *FollowHandler) Follow(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.FollowSvc.Follow(uid, id)
+	err = hdl.FollowSvc.Follow(int(uid), id)
 	if err != nil {
 		if errors.Is(err, service.ErrDuplicatedFollow) {
 			response.Fail(ctx, response.CodeBadRequest, "重复关注")
@@ -61,7 +61,7 @@ func (hdl *FollowHandler) DisFollow(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.FollowSvc.DisFollow(uid, id)
+	err = hdl.FollowSvc.DisFollow(int(uid), id)
 	if err != nil {
 		if errors.Is(err, service.ErrDuplicatedDisFollow) {
 			response.Fail(ctx, response.CodeBadRequest, "重复取消关注")
@@ -89,7 +89,7 @@ func (hdl *FollowHandler) IfFollow(ctx *gin.Context) {
 		return
 	}
 
-	res, err := hdl.FollowSvc.IfFollow(uid, id)
+	res, err := hdl.FollowSvc.IfFollow(int(uid), id)
 	if err != nil {
 		response.ServerError(ctx, "")
 		return
@@ -107,7 +107,7 @@ func (hdl *FollowHandler) ListFollowers(ctx *gin.Context) {
 		return
 	}
 
-	followerDTOs, err := hdl.FollowSvc.GetFollowers(uid)
+	followerDTOs, err := hdl.FollowSvc.GetFollowers(int(uid))
 	if err != nil {
 		response.ServerError(ctx, "")
 		return
@@ -125,7 +125,7 @@ func (hdl *FollowHandler) ListFollowees(ctx *gin.Context) {
 		return
 	}
 
-	followerDTOs, err := hdl.FollowSvc.GetFollowees(uid)
+	followerDTOs, err := hdl.FollowSvc.GetFollowees(int(uid))
 	if err != nil {
 		response.ServerError(ctx, "")
 		return

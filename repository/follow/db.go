@@ -34,7 +34,7 @@ func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
 	// 没有软删除的记录进行创建记录
 	now := time.Now()
 	var follow = model.Follow{
-		Id:         snowflake.NextID(),
+		Id:         int(snowflake.NextID()),
 		FollowerId: ferId,
 		FolloweeId: feeId,
 		CreateTime: &now,

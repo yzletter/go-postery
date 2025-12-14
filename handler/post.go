@@ -125,7 +125,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.PostService.Create(uid, createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.PostService.Create(int(uid), createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		response.ServerError(ctx, "")
@@ -187,7 +187,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = hdl.PostService.Update(updateRequest.Id, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
+	err = hdl.PostService.Update(updateRequest.Id, int(uid), updateRequest.Title, updateRequest.Content, updateRequest.Tags)
 	if err != nil {
 		if err.Error() == "没有权限" {
 			response.Unauthorized(ctx, "")
@@ -256,7 +256,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.PostService.Like(pid, uid)
+	err = hdl.PostService.Like(pid, int(uid))
 	if err != nil {
 		if errors.Is(err, userLikeRepository.ErrRecordHasExist) {
 			response.Fail(ctx, response.CodeBadRequest, "重复点赞")
@@ -284,7 +284,7 @@ func (hdl *PostHandler) Dislike(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.PostService.Dislike(pid, uid)
+	err = hdl.PostService.Dislike(pid, int(uid))
 	if err != nil {
 		if errors.Is(err, userLikeRepository.ErrRecordNotExist) {
 			response.Fail(ctx, response.CodeBadRequest, "重复取消")
@@ -312,7 +312,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 		return
 	}
 
-	ok, err := hdl.PostService.IfLike(pid, uid)
+	ok, err := hdl.PostService.IfLike(pid, int(uid))
 
 	response.Success(ctx, ok)
 }

@@ -210,7 +210,7 @@ func (svc *PostService) HasMore(pageNo, pageSize, total int) bool {
 // Belong 判断登录用户是否是帖子作者
 func (svc *PostService) Belong(pid, uid int) bool {
 	ok, postDTO := svc.GetBriefById(pid)
-	if !ok || uid != postDTO.Author.Id {
+	if !ok || uid != int(postDTO.Author.Id) {
 		return false
 	}
 	return true

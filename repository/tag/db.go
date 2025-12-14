@@ -21,7 +21,7 @@ func NewTagDBRepository(db *gorm.DB) *TagDBRepository {
 
 func (repo *TagDBRepository) Create(name string, slug string) (int, error) {
 	tag := model.Tag{
-		Id:         snowflake.NextID(),
+		Id:         int(snowflake.NextID()),
 		Name:       name,
 		Slug:       slug,
 		DeleteTime: nil,
@@ -59,7 +59,7 @@ func (repo *TagDBRepository) Exist(name string) (int, error) {
 
 func (repo *TagDBRepository) Bind(pid, tid int) error {
 	postTag := model.PostTag{
-		Id:     snowflake.NextID(),
+		Id:     int(snowflake.NextID()),
 		PostId: pid,
 		TagId:  tid,
 	}

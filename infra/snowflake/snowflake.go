@@ -25,9 +25,9 @@ func Init(nodeID int) {
 }
 
 // NextID 生成下一个 ID
-func NextID() uint64 {
+func NextID() int64 {
 	if node == nil {
 		slog.Error("未初始化雪花算法")
 	}
-	return uint64(node.Generate())
+	return int64(node.Generate())
 }

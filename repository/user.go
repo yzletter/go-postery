@@ -47,7 +47,7 @@ func (repo *userRepository) GetPasswordHash(id int64) (string, error) {
 	return passwordHash, nil
 }
 
-func (repo *userRepository) GetStatus(id int64) (uint8, error) {
+func (repo *userRepository) GetStatus(id int64) (int, error) {
 	// todo 查 Cache
 
 	status, err := repo.dao.GetStatus(id)

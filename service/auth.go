@@ -65,9 +65,9 @@ func (svc *AuthService) GetUserInfoFromJWT(jwtToken string) *request.UserJWTInfo
 	return nil
 }
 
-func (svc *AuthService) IssueTokenForUser(uid int, uname string) (string, string, error) {
+func (svc *AuthService) IssueTokenForUser(uid int64, uname string) (string, string, error) {
 	userInfo := request.UserJWTInfo{
-		Id:   strconv.Itoa(uid),
+		Id:   strconv.Itoa(int(uid)),
 		Name: uname,
 	}
 
@@ -93,7 +93,7 @@ func (svc *AuthService) IssueTokenForUser(uid int, uname string) (string, string
 	return refreshToken, accessToken, nil
 }
 
-func (svc *AuthService) CheckAdmin(uid int) (bool, error) {
+func (svc *AuthService) CheckAdmin(uid int64) (bool, error) {
 	ok, err := svc.UserService.CheckAdmin(uid)
 	if err != nil {
 		return false, err

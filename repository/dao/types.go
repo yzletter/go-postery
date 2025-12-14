@@ -11,7 +11,7 @@ type UserDAO interface {
 	Delete(id int64) error
 
 	GetPasswordHash(id int64) (string, error)
-	GetStatus(id int64) (uint8, error)
+	GetStatus(id int64) (int, error)
 	GetByID(id int64) (*model.User, error)
 	GetByUsername(username string) (*model.User, error)
 

@@ -8,14 +8,14 @@ import (
 
 // UserBriefDTO 后端返回简要 User 信息
 type UserBriefDTO struct {
-	Id     int    `json:"id,string"` // ID 雪花算法
+	Id     int64  `json:"id,string"` // ID 雪花算法
 	Name   string `json:"name"`      // 用户名
 	Avatar string `json:"avatar"`    // 头像 URL
 }
 
 // UserDetailDTO 后端返回详细 User 信息
 type UserDetailDTO struct {
-	Id          int    `json:"id,string"`     // ID 雪花算法
+	Id          int64  `json:"id,string"`     // ID 雪花算法
 	Name        string `json:"name"`          // 用户名
 	Email       string `json:"email"`         // 邮箱
 	Avatar      string `json:"avatar"`        // 头像 URL
@@ -57,13 +57,3 @@ func ToUserDetailDTO(user model.User) UserDetailDTO {
 
 	return userDetailDTO
 }
-
-//
-//// ToUserDTOs []model.User 转 []UserDTO
-//func ToUserDTOs(users []model.User) []UserDTO {
-//	res := make([]UserDTO, len(users))
-//	for _, user := range users {
-//		res = append(res, ToUserDTO(user))
-//	}
-//	return res
-//}

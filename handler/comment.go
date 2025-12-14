@@ -75,7 +75,7 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 调用 Service 层
-	err = hdl.CommentService.Delete(uid, pid, cid)
+	err = hdl.CommentService.Delete(int(uid), pid, cid)
 	if err != nil {
 		if err.Error() == "评论不存在" {
 			response.ServerError(ctx, "")

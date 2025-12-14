@@ -13,18 +13,18 @@ use go_postery;
 # 创建 u 表
 CREATE TABLE IF NOT EXISTS users
 (
-    id            BIGINT SIGNED                           NOT NULL COMMENT '用户 ID (雪花算法)',
+    id            BIGINT                                  NOT NULL COMMENT '用户 ID (雪花算法)',
     username      VARCHAR(32) COLLATE utf8mb4_unicode_ci  NOT NULL COMMENT '用户名',
     email         VARCHAR(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
     password_hash VARCHAR(255)                            NOT NULL COMMENT '密码哈希',
 
     avatar        VARCHAR(255)                                     DEFAULT NULL COMMENT '头像 URL',
     bio           VARCHAR(255)                                     DEFAULT NULL COMMENT '个性签名',
-    gender        TINYINT UNSIGNED                        NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
+    gender        TINYINT                                 NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
     birthday      DATE                                             DEFAULT NULL COMMENT '生日',
     location      VARCHAR(64)                                      DEFAULT NULL COMMENT '地区',
     country       VARCHAR(64)                                      DEFAULT NULL COMMENT '国家',
-    status        TINYINT UNSIGNED                        NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
+    status        TINYINT                                 NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
     last_login_ip VARCHAR(45)                                      DEFAULT NULL COMMENT '最后登录 IP',
     last_login_at DATETIME                                         DEFAULT NULL COMMENT '最后登录时间',
     created_at    DATETIME                                NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS users
     CHECK (status IN (1, 2, 3))
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT '用户表';
+
 
 # 创建 post 表
 create table if not exists post

@@ -12,7 +12,10 @@ import (
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
+	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/repository/cache"
 	commentRepository "github.com/yzletter/go-postery/repository/comment"
+	"github.com/yzletter/go-postery/repository/dao"
 	followRepository "github.com/yzletter/go-postery/repository/follow"
 	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	postRepository "github.com/yzletter/go-postery/repository/post"
@@ -38,6 +41,18 @@ func main() {
 	// 初始化 gin
 	engine := gin.Default()
 
+	// DAO 层
+	UserDAO := dao.NewUserDAO(infraMySQL.GetDB())
+
+	// Cache 层
+	UserCache := cache.NewUserCache(infraRedis.GetRedis())
+
+	// Repository 层
+	UserRepository := repository.NewUserRepository(UserDAO, UserCache)
+
+	// Service 层
+	UserService := service.NewUserService(UserRepository)
+
 	// Repository 层
 	UserDBRepo := userRepository.NewUserDBRepository(infraMySQL.GetDB())                   // 注册 UserDBRepo
 	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo
@@ -47,15 +62,13 @@ func main() {
 	FollowDBRepo := followRepository.NewFollowDBRepository(infraMySQL.GetDB())             // 注册 FollowDBRepo
 	FollowCacheRepo := followRepository.NewFollowCacheRepository(infraRedis.GetRedis())    // 注册 FollowCacheRepo
 	TagCacheRepo := tagRepository.NewTagCacheRepository(infraRedis.GetRedis())             // 注册 TagCacheRepo
-	UserCacheRepo := userRepository.NewUserCacheRepository(infraRedis.GetRedis())          // 注册 UserCacheRepo
 	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())          // 注册 PostCacheRepo
 	CommentCacheRepo := commentRepository.NewCommentCacheRepository(infraRedis.GetRedis()) // 注册 CommentCacheRepo
 
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                                                                       // 注册 JwtSvc
 	MetricSvc := service.NewMetricService()                                                                         // 注册 MetricSvc
-	UserSvc := service.NewUserService(UserDBRepo, UserCacheRepo)                                                    // 注册 UserSvc
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserSvc)                                       // 注册 AuthSvc
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserService)                                   // 注册 AuthSvc
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                         // 注册 RateLimitSvc
 	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
@@ -63,11 +76,11 @@ func main() {
 	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo, UserDBRepo) // 注册 FollowSvc
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
-	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
+	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserService)           // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserService, TagSvc)           // 注册 PostHandler
+	CommentHdl := handler.NewCommentHandler(CommentSvc, UserService, PostSvc) // 注册 CommentHandler
 	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHdl
-	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
+	FollowHdl := handler.NewFollowHandler(FollowSvc, UserService)
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
@@ -75,7 +88,7 @@ func main() {
 	AuthAdminMdl := middleware.AuthAdminMiddleware(AuthSvc)       // AuthAdminMdl 要求管理员身份
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
