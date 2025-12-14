@@ -22,22 +22,22 @@
 - `POST /login/submit`
 - Body：
   ```json
-  { "name": "用户名", "password": "32位MD5哈希" }
+  { "username": "用户名", "password": "32位MD5哈希" }
   ```
 - 成功时 `data` 直接返回当前用户信息并写入认证 Cookie：
   ```json
-  { "Id": 1, "Name": "用户名" }
+  { "ID": 1, "Name": "用户名" }
   ```
 
 ### 注册
 - `POST /register/submit`
 - Body：
   ```json
-  { "name": "用户名", "password": "32位MD5哈希" }
+  { "username": "用户名", "password": "32位MD5哈希" }
   ```
 - 成功时 `data` 直接返回新用户信息并写入认证 Cookie：
   ```json
-  { "Id": 1, "Name": "用户名" }
+  { "ID": 1, "Name": "用户名" }
   ```
 
 ### 修改密码
@@ -61,7 +61,7 @@
   ```json
   {
     "id": "1",
-    "name": "用户名",
+    "username": "用户名",
     "email": "user@example.com",
     "avatar": "https://example.com/avatar.png",
     "bio": "个人简介",
@@ -85,7 +85,7 @@
         "id": 1,
         "title": "标题",
         "content": "内容",
-        "author": { "id": 1, "name": "作者名" },
+        "author": { "id": 1, "username": "作者名" },
         "createdAt": "2024-01-01T00:00:00Z",
         "views": 120,
         "likes": 12,
@@ -105,7 +105,7 @@
     "id": 1,
     "title": "标题",
     "content": "内容",
-    "author": { "id": 1, "name": "作者名" },
+    "author": { "id": 1, "username": "作者名" },
     "createdAt": "2024-01-01T00:00:00Z",
     "views": 120,
     "likes": 12,
@@ -150,7 +150,7 @@
       "parent_id": 0,
       "content": "评论内容",
       "createdAt": "2024-01-01T00:00:00Z",
-      "author": { "id": 2, "name": "用户" }
+      "author": { "id": 2, "username": "用户" }
     }
   ]
   ```
@@ -207,7 +207,7 @@
     "code": 0,
     "msg": "success",
     "data": [
-      { "id": "1999760900969463808", "name": "sylar", "avatar": "" }
+      { "id": "1999760900969463808", "username": "sylar", "avatar": "" }
     ]
   }
   ```
@@ -223,7 +223,7 @@ interface Post {
   id: string
   title: string
   content: string
-  author: { id: string; name: string }
+  author: { id: string; username: string }
   createdAt: string
   views?: number
   likes?: number

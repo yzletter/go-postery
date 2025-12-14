@@ -30,8 +30,8 @@ type UserDetailDTO struct {
 // ToUserBriefDTO model.User 转 UserDTO
 func ToUserBriefDTO(user model.User) UserBriefDTO {
 	return UserBriefDTO{
-		Id:     user.Id,
-		Name:   user.Name,
+		Id:     user.ID,
+		Name:   user.Username,
 		Avatar: "", // todo
 	}
 }
@@ -39,8 +39,8 @@ func ToUserBriefDTO(user model.User) UserBriefDTO {
 // ToUserDetailDTO model.User 转 UserDetailDTO
 func ToUserDetailDTO(user model.User) UserDetailDTO {
 	userDetailDTO := UserDetailDTO{
-		Id:          user.Id,
-		Name:        user.Name,
+		Id:          user.ID,
+		Name:        user.Username,
 		Email:       user.Email,
 		Avatar:      user.Avatar,
 		Bio:         user.Bio,

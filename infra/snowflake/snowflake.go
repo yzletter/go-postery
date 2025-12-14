@@ -3,8 +3,9 @@ package snowflake
 import (
 	"sync"
 
-	"github.com/bwmarrin/snowflake"
 	"log/slog"
+
+	"github.com/bwmarrin/snowflake"
 )
 
 var (
@@ -24,9 +25,9 @@ func Init(nodeID int) {
 }
 
 // NextID 生成下一个 ID
-func NextID() int {
+func NextID() uint64 {
 	if node == nil {
 		slog.Error("未初始化雪花算法")
 	}
-	return int(node.Generate())
+	return uint64(node.Generate())
 }

@@ -50,7 +50,7 @@ func (svc *UserService) GetBriefById(uid int) (bool, dto.UserBriefDTO) {
 	return true, dto.ToUserBriefDTO(user)
 }
 
-// GetDetailById 根据 Id 查找用户的详细信息
+// GetDetailById 根据 ID 查找用户的详细信息
 func (svc *UserService) GetDetailById(uid int) (bool, dto.UserDetailDTO) {
 	ok, user := svc.UserDBRepo.GetByID(uid)
 	if !ok {
@@ -89,14 +89,14 @@ func (svc *UserService) UpdateProfile(uid int, req request.ModifyProfileRequest)
 
 func (svc *UserService) Login(name, pass string) (bool, dto.UserBriefDTO) {
 	user, err := svc.UserDBRepo.GetByName(name)
-	if err != nil || user.PassWord != pass {
+	if err != nil || user.PasswordHash != pass {
 		return false, dto.UserBriefDTO{}
 	}
 	return true, dto.ToUserBriefDTO(user)
 }
 
 func (svc *UserService) CheckAdmin(uid int) (bool, error) {
-	status, err := svc.UserDBRepo.GetStatus(uid)
+	status, err := svc.UserDBRepo.Status(uid)
 	if err != nil {
 		return false, err
 	}

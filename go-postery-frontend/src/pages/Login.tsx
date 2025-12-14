@@ -10,7 +10,7 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [username, setName] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -34,7 +34,7 @@ export default function Login() {
         const hashedPassword = md5Hash(password)
         success = await login(username, hashedPassword)
       } else {
-        if (!name.trim()) {
+        if (!username.trim()) {
           setError('请输入用户名')
           setIsLoading(false)
           return
@@ -51,7 +51,7 @@ export default function Login() {
         }
         // 对密码进行MD5哈希，生成32位哈希值
         const hashedPassword = md5Hash(password)
-        success = await register(name, hashedPassword)
+        success = await register(username, hashedPassword)
       }
 
       if (success) {
@@ -152,7 +152,7 @@ export default function Login() {
             {/* 注册时显示用户名输入框 */}
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                   用户名
                 </label>
                 <div className="relative">
@@ -160,9 +160,9 @@ export default function Login() {
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="name"
+                    id="username"
                     type="text"
-                    value={name}
+                    value={username}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="输入用户名"
                     required

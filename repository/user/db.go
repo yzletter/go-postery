@@ -36,14 +36,14 @@ func (repo *UserDBRepository) Create(name, password, ip string) (model.User, err
 	now := time.Now()
 	// 将模型绑定到结构体
 	user := model.User{
-		Id:          snowflake.NextID(), // 用户 ID 雪花算法
-		Name:        name,
-		PassWord:    password,
-		Status:      1,  // 用户状态为正常
-		LastLoginIP: ip, // 用户登录 IP
-		BirthDay:    nil,
-		CreateTime:  &now,
-		UpdateTime:  &now,
+		ID:           snowflake.NextID(), // 用户 ID 雪花算法
+		Username:     name,
+		PasswordHash: password,
+		Status:       1,  // 用户状态为正常
+		LastLoginIP:  ip, // 用户登录 IP
+		BirthDay:     nil,
+		CreateTime:   &now,
+		UpdateTime:   &now,
 	}
 
 	// 到 MySQL 中创建新记录, 需要传指针
@@ -69,7 +69,7 @@ func (repo *UserDBRepository) Create(name, password, ip string) (model.User, err
 func (repo *UserDBRepository) Delete(uid int) (bool, error) {
 	// 将模型绑定到结构体
 	user := model.User{
-		Id: uid,
+		ID: uid,
 	}
 
 	// 删除记录
@@ -140,7 +140,7 @@ func (repo *UserDBRepository) UpdateProfile(uid int, request model.User) error {
 }
 
 func (repo *UserDBRepository) GetByID(uid int) (bool, model.User) {
-	user := model.User{Id: uid}
+	user := model.User{ID: uid}
 	tx := repo.db.Select("*").First(&user) // 隐含的where条件是id, 注意：Find不会返回ErrRecordNotFound
 	if tx.Error != nil {
 		// 若错误不是记录未找到, 记录系统错误
@@ -166,7 +166,7 @@ func (repo *UserDBRepository) GetByName(name string) (model.User, error) {
 	return user, nil
 }
 
-func (repo *UserDBRepository) GetStatus(uid int) (int, error) {
+func (repo *UserDBRepository) Status(uid int) (int, error) {
 	var status int
 	tx := repo.db.Model(&model.User{}).Where("id = ?", uid).Pluck("status", &status)
 	if tx.Error != nil {

@@ -40,6 +40,11 @@ type ModifyProfileRequest struct {
 	Country  string `json:"country,omitempty"`  // 国家
 }
 
+type CreateUserParams struct {
+	Username     string
+	PasswordHash string
+}
+
 func ModifyProfileRequestToModel(request ModifyProfileRequest) model.User {
 	user := model.User{
 		Email:    request.Email,

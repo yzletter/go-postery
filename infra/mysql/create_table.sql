@@ -10,26 +10,37 @@ use go_postery;
 
 # 建表
 # 创建 user 表
-create table if not exists user
+CREATE TABLE IF NOT EXISTS users
 (
-    id            bigint      not null comment '用户 ID',
-    name          varchar(20) not null comment '用户名',
-    password      char(32)    not null comment '用户密码的 MD5 加密结果',
-    email         varchar(128) comment '用户邮箱',
-    avatar        varchar(255) comment '用户头像 URL',
-    bio           varchar(255) comment '用户个性签名',
-    gender        tinyint comment '用户性别',
-    birthday      date comment '用户生日',
-    location      varchar(64) comment '用户地区',
-    country       varchar(64) comment '用户国家',
-    status        tinyint comment '用户状态',
-    last_login_ip varchar(64) comment '最近一次登录 IP',
-    create_time   datetime default current_timestamp comment '用户注册时间, 默认为创建数据库记录的时间',
-    update_time   datetime default current_timestamp on update current_timestamp comment '数据库记录最后修改时间',
-    primary key (id),
-    unique key idx_name (name),
-    unique key idx_email (email)
-) default charset = utf8mb4 comment '用户信息主表';
+    id            BIGINT UNSIGNED                         NOT NULL COMMENT '用户 ID (雪花算法)',
+    username      VARCHAR(32) COLLATE utf8mb4_unicode_ci  NOT NULL COMMENT '用户名',
+    email         VARCHAR(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
+    password_hash VARCHAR(255)                            NOT NULL COMMENT '密码哈希',
+
+    avatar        VARCHAR(255)                                     DEFAULT NULL COMMENT '头像 URL',
+    bio           VARCHAR(255)                                     DEFAULT NULL COMMENT '个性签名',
+    gender        TINYINT UNSIGNED                        NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
+    birthday      DATE                                             DEFAULT NULL COMMENT '生日',
+    location      VARCHAR(64)                                      DEFAULT NULL COMMENT '地区',
+    country       VARCHAR(64)                                      DEFAULT NULL COMMENT '国家',
+    status        TINYINT UNSIGNED                        NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
+    last_login_ip VARCHAR(45)                                      DEFAULT NULL COMMENT '最后登录 IP',
+    last_login_at DATETIME                                         DEFAULT NULL COMMENT '最后登录时间',
+    created_at    DATETIME                                NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at    DATETIME                                         DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+
+    UNIQUE KEY uk_user_username (username),
+    UNIQUE KEY uk_user_email (email),
+
+    KEY idx_user_status_deleted (status, deleted_at),
+
+    CHECK (gender IN (0, 1, 2, 3)),
+    CHECK (status IN (1, 2, 3))
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT '用户表';
 
 # 创建 post 表
 create table if not exists post
@@ -86,12 +97,12 @@ create table if not exists comment
 create table if not exists tag
 (
     id          bigint primary key comment '标签 id',
-    name        varchar(32) not null comment '标签名',
+    username        varchar(32) not null comment '标签名',
     slug        varchar(32) not null comment '标签唯一标识',
     create_time datetime default current_timestamp comment '创建时间',
     delete_time datetime default null comment '删除时间',
     unique key uq_slug (slug),
-    unique key uq_name (name)
+    unique key uq_name (username)
 ) default charset = utf8mb4 comment '标签信息表';
 
 create table if not exists post_tag
@@ -112,10 +123,10 @@ create table if not exists follow
     create_time datetime default current_timestamp comment '创建时间',
     delete_time datetime default null comment '删除时间',
     update_time datetime default current_timestamp on update current_timestamp comment '更新时间',
-    
+
     unique key uq_follow (follower_id, followee_id),
     key idx_follower (follower_id, delete_time),
     key idx_followee (followee_id, delete_time),
 
-    check (follower_id <> followee_id)  # 避免自己关注自己
+    check (follower_id <> followee_id) # 避免自己关注自己
 ) default charset = utf8mb4 comment '关注信息表';
