@@ -4,26 +4,26 @@ import (
 	"errors"
 
 	dto "github.com/yzletter/go-postery/dto/response"
+	"github.com/yzletter/go-postery/repository"
 	commentRepository "github.com/yzletter/go-postery/repository/comment"
 	postRepository "github.com/yzletter/go-postery/repository/post"
-	userRepository "github.com/yzletter/go-postery/repository/user"
 )
 
 type CommentService struct {
 	CommentDBRepo    *commentRepository.CommentDBRepository
 	CommentCacheRepo *commentRepository.CommentCacheRepository
-	UserDBRepo       *userRepository.UserDBRepository
+	UserRepo         repository.UserRepository
 	PostDBRepo       *postRepository.PostDBRepository
 	PostCacheRepo    *postRepository.PostCacheRepository
 }
 
 func NewCommentService(commentDBRepo *commentRepository.CommentDBRepository, commentCacheRepo *commentRepository.CommentCacheRepository,
-	userDBRepo *userRepository.UserDBRepository,
+	userRepository repository.UserRepository,
 	postDBRepo *postRepository.PostDBRepository, postCacheRepo *postRepository.PostCacheRepository) *CommentService {
 	return &CommentService{
 		CommentDBRepo:    commentDBRepo,
 		CommentCacheRepo: commentCacheRepo,
-		UserDBRepo:       userDBRepo,
+		UserRepo:         userRepository,
 		PostDBRepo:       postDBRepo,
 		PostCacheRepo:    postCacheRepo,
 	}
@@ -31,7 +31,7 @@ func NewCommentService(commentDBRepo *commentRepository.CommentDBRepository, com
 
 func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, content string) (dto.CommentDTO, error) {
 	comment, err := svc.CommentDBRepo.Create(pid, uid, parentId, replyId, content)
-	_, user := svc.UserDBRepo.GetByID(uid)
+	user, _ := svc.UserRepo.GetByID(int64(uid))
 
 	svc.PostDBRepo.ChangeCommentCnt(pid, 1)
 	ok, err := svc.PostCacheRepo.ChangeInteractiveCnt(COMMENT_CNT, pid, 1)
@@ -43,7 +43,7 @@ func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, c
 		}
 	}
 
-	return dto.ToCommentDTO(comment, user), err
+	return dto.ToCommentDTO(comment, *user), err
 }
 
 func (svc *CommentService) Delete(uid, pid, cid int) error {
@@ -77,8 +77,8 @@ func (svc *CommentService) List(pid int) []dto.CommentDTO {
 
 	var commentDTOs []dto.CommentDTO
 	for _, comment := range comments {
-		_, user := svc.UserDBRepo.GetByID(comment.UserId)
-		commentDTO := dto.ToCommentDTO(comment, user)
+		user, _ := svc.UserRepo.GetByID(int64(comment.UserId))
+		commentDTO := dto.ToCommentDTO(comment, *user)
 		commentDTOs = append(commentDTOs, commentDTO)
 	}
 

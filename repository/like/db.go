@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/model"
-	repository "github.com/yzletter/go-postery/repository/user"
+	"github.com/yzletter/go-postery/repository/dao"
 	"gorm.io/gorm"
 )
 
@@ -45,7 +45,7 @@ func (repo *UserLikeDBRepository) Create(uid, pid int) error {
 		// Unique Key 冲突, 说明记录已经存在, 需要判断记录是否被软删除
 		tx = repo.db.Model(&model.UserLike{}).Where("user_id = ? and post_id = ?", uid, pid).Update("delete_time", nil)
 		if tx.Error != nil {
-			return repository.ErrMySQLInternal
+			return dao.ErrInternal
 		}
 
 		if tx.RowsAffected == 1 { // 被软删除了, 恢复记录
@@ -56,14 +56,14 @@ func (repo *UserLikeDBRepository) Create(uid, pid int) error {
 	}
 
 	// 其他内部错误
-	return repository.ErrMySQLInternal
+	return dao.ErrInternal
 }
 
 func (repo *UserLikeDBRepository) Delete(uid, pid int) error {
 	var userLike model.UserLike
 	tx := repo.db.Model(&userLike).Where("user_id = ? and post_id = ? and delete_time is null", uid, pid).Update("delete_time", time.Now())
 	if tx.Error != nil {
-		return repository.ErrMySQLInternal
+		return dao.ErrInternal
 	}
 	if tx.RowsAffected == 0 {
 		return ErrRecordNotExist
@@ -79,7 +79,7 @@ func (repo *UserLikeDBRepository) Get(uid, pid int) (bool, error) {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			slog.Error("MySQL Find Post_Tag Failed")
-			return false, repository.ErrMySQLInternal
+			return false, dao.ErrInternal
 		}
 		return false, nil
 	}

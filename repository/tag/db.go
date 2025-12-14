@@ -7,7 +7,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
-	userRepository "github.com/yzletter/go-postery/repository/user"
+	"github.com/yzletter/go-postery/repository/dao"
 	"gorm.io/gorm"
 )
 
@@ -32,12 +32,12 @@ func (repo *TagDBRepository) Create(name string, slug string) (int, error) {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
 			// 唯一键冲突
-			return 0, userRepository.ErrUniqueKeyConflict
+			return 0, dao.ErrUniqueKeyConflict
 		}
 
 		// 数据库内部错误
 		slog.Error("MySQL Create Tag Failed", "error", tx.Error)
-		return 0, userRepository.ErrMySQLInternal
+		return 0, dao.ErrInternal
 	}
 
 	return tag.Id, nil
@@ -50,7 +50,7 @@ func (repo *TagDBRepository) Exist(name string) (int, error) {
 		// 若错误不是记录未找到, 记录系统错误
 		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			slog.Error("MySQL Find Tag Failed")
-			return 0, userRepository.ErrMySQLInternal
+			return 0, dao.ErrInternal
 		}
 		return 0, gorm.ErrRecordNotFound
 	}
@@ -67,10 +67,10 @@ func (repo *TagDBRepository) Bind(pid, tid int) error {
 	if tx.Error != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return userRepository.ErrUniqueKeyConflict
+			return dao.ErrUniqueKeyConflict
 		}
 		slog.Error("MySQL Create Post_Tag Failed", "error", tx.Error) // 记录日志, 方便后续人工定位问题所在
-		return userRepository.ErrMySQLInternal
+		return dao.ErrInternal
 	}
 
 	return nil
@@ -97,7 +97,7 @@ func (repo *TagDBRepository) FindTagsByPostID(pid int) ([]string, error) {
 	if tx.Error != nil {
 		// 数据库内部错误
 		slog.Error("MySQL Find Tag Failed", "error", tx.Error)
-		return nil, userRepository.ErrMySQLInternal
+		return nil, dao.ErrInternal
 	}
 	return names, nil
 }

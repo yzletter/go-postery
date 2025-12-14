@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/yzletter/go-postery/dto/request"
-	repository "github.com/yzletter/go-postery/repository/user"
+	"github.com/yzletter/go-postery/repository/dao"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -183,7 +183,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	err = hdl.UserService.UpdateProfile(uid, modifyUserProfileRequest)
 	if err != nil {
 		slog.Error("Error", err)
-		if errors.Is(err, repository.ErrUidInvalid) {
+		if errors.Is(err, dao.ErrRecordNotFound) {
 			response.ParamError(ctx, "")
 			return
 		}

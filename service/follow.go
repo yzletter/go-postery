@@ -6,8 +6,9 @@ import (
 	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/response"
+	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/repository/dao"
 	followRepository "github.com/yzletter/go-postery/repository/follow"
-	userRepository "github.com/yzletter/go-postery/repository/user"
 	"gorm.io/gorm"
 )
 
@@ -19,18 +20,18 @@ var (
 type FollowService struct {
 	FollowDBRepo    *followRepository.FollowDBRepository
 	FollowCacheRepo *followRepository.FollowCacheRepository
-	UserDBRepo      *userRepository.UserDBRepository
+	UserRepo        repository.UserRepository
 }
 
 func NewFollowService(followDBRepo *followRepository.FollowDBRepository, followCacheRepo *followRepository.FollowCacheRepository,
-	userDBRepo *userRepository.UserDBRepository) *FollowService {
-	return &FollowService{FollowDBRepo: followDBRepo, FollowCacheRepo: followCacheRepo, UserDBRepo: userDBRepo}
+	userRepo repository.UserRepository) *FollowService {
+	return &FollowService{FollowDBRepo: followDBRepo, FollowCacheRepo: followCacheRepo, UserRepo: userRepo}
 }
 
 func (svc *FollowService) Follow(ferId, feeId int) error {
 	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
 	if err != nil {
-		return userRepository.ErrMySQLInternal // 数据库内部错误
+		return dao.ErrInternal // 数据库内部错误
 	}
 
 	if res == 1 || res == 3 { // 已经关注过了
@@ -39,7 +40,7 @@ func (svc *FollowService) Follow(ferId, feeId int) error {
 
 	err = svc.FollowDBRepo.Follow(ferId, feeId)
 	if err != nil {
-		if errors.Is(err, userRepository.ErrUniqueKeyConflict) {
+		if errors.Is(err, dao.ErrUniqueKeyConflict) {
 			slog.Error("检查过还出错", "error", err)
 			return ErrDuplicatedFollow
 		}
@@ -52,7 +53,7 @@ func (svc *FollowService) Follow(ferId, feeId int) error {
 func (svc *FollowService) DisFollow(ferId, feeId int) error {
 	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
 	if err != nil {
-		return userRepository.ErrMySQLInternal // 数据库内部错误
+		return dao.ErrInternal // 数据库内部错误
 	}
 
 	if res == 2 || res == 0 { // 只有对方关注了我，或者互不关注
@@ -74,7 +75,7 @@ func (svc *FollowService) DisFollow(ferId, feeId int) error {
 func (svc *FollowService) IfFollow(ferId, feeId int) (int, error) {
 	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
 	if err != nil {
-		return 0, userRepository.ErrMySQLInternal // 数据库内部错误
+		return 0, dao.ErrInternal // 数据库内部错误
 	}
 
 	return res, nil
@@ -84,16 +85,16 @@ func (svc *FollowService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
 	followersId, err := svc.FollowDBRepo.GetFollowers(uid)
 	fmt.Println(followersId)
 	if err != nil {
-		return nil, userRepository.ErrMySQLInternal
+		return nil, dao.ErrInternal
 	}
 
 	res := make([]dto.UserBriefDTO, 0)
 	for _, id := range followersId {
-		ok, user := svc.UserDBRepo.GetByID(id)
-		if !ok {
+		user, err := svc.UserRepo.GetByID(int64(id))
+		if err != nil {
 			continue
 		}
-		userBriefDTO := dto.ToUserBriefDTO(user)
+		userBriefDTO := dto.ToUserBriefDTO(*user)
 		res = append(res, userBriefDTO)
 	}
 	fmt.Println(res)
@@ -104,16 +105,17 @@ func (svc *FollowService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
 func (svc *FollowService) GetFollowees(uid int) ([]dto.UserBriefDTO, error) {
 	followeesId, err := svc.FollowDBRepo.GetFollowees(uid)
 	if err != nil {
-		return nil, userRepository.ErrMySQLInternal
+		return nil, dao.ErrInternal
 	}
 
 	res := make([]dto.UserBriefDTO, 0)
 	for _, id := range followeesId {
-		ok, user := svc.UserDBRepo.GetByID(id)
-		if !ok {
+		user, err := svc.UserRepo.GetByID(int64(id))
+		if err != nil {
+
 			continue
 		}
-		userBriefDTO := dto.ToUserBriefDTO(user)
+		userBriefDTO := dto.ToUserBriefDTO(*user)
 		res = append(res, userBriefDTO)
 	}
 

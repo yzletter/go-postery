@@ -8,8 +8,8 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/repository/dao"
 	repository2 "github.com/yzletter/go-postery/repository/like"
-	repository "github.com/yzletter/go-postery/repository/user"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +25,7 @@ func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
 	// 先查是否有软删除的记录
 	tx := repo.db.Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND delete_time is not null", ferId, feeId).Update("delete_time", nil)
 	if tx.Error != nil {
-		return repository.ErrMySQLInternal
+		return dao.ErrInternal
 	}
 	if tx.RowsAffected > 0 {
 		return nil
@@ -45,9 +45,9 @@ func (repo *FollowDBRepository) Follow(ferId, feeId int) error {
 	if tx.Error != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return repository.ErrUniqueKeyConflict
+			return dao.ErrUniqueKeyConflict
 		}
-		return repository.ErrMySQLInternal
+		return dao.ErrInternal
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (repo *FollowDBRepository) DisFollow(ferId, feeId int) error {
 	tx := repo.db.Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND delete_time is null", ferId, feeId).Update("delete_time", time.Now())
 	if tx.Error != nil {
 		slog.Error("MySQL Delete Follow Failed", "error", tx.Error)
-		return repository.ErrMySQLInternal
+		return dao.ErrInternal
 	} else if tx.RowsAffected == 0 {
 		return repository2.ErrRecordNotExist
 	}
@@ -72,11 +72,11 @@ func (repo *FollowDBRepository) IfFollow(ferId, feeId int) (int, error) {
 	tx2 := repo.db.Where("follower_id = ? AND followee_id = ? AND delete_time is null", feeId, ferId).Take(&result2)
 
 	if tx1.Error != nil && !errors.Is(tx1.Error, gorm.ErrRecordNotFound) {
-		return 0, repository.ErrMySQLInternal
+		return 0, dao.ErrInternal
 	}
 
 	if tx2.Error != nil && !errors.Is(tx2.Error, gorm.ErrRecordNotFound) {
-		return 0, repository.ErrMySQLInternal
+		return 0, dao.ErrInternal
 	}
 
 	condition1 := tx1.Error == nil
@@ -103,7 +103,7 @@ func (repo *FollowDBRepository) GetFollowers(uid int) ([]int, error) {
 	tx := repo.db.Model(&model.Follow{}).Where("followee_id = ? AND delete_time is null", uid).Order("create_time desc").Pluck("follower_id", &ids)
 	// Find 不会返回 RecordNotFound
 	if tx.Error != nil {
-		return nil, repository.ErrMySQLInternal
+		return nil, dao.ErrInternal
 	}
 	return ids, nil
 }
@@ -114,7 +114,7 @@ func (repo *FollowDBRepository) GetFollowees(uid int) ([]int, error) {
 	tx := repo.db.Model(&model.Follow{}).Where("follower_id = ? AND delete_time is null", uid).Order("create_time desc").Pluck("followee_id", &ids)
 	// Find 不会返回 RecordNotFound
 	if tx.Error != nil {
-		return nil, repository.ErrMySQLInternal
+		return nil, dao.ErrInternal
 	}
 	return ids, nil
 }

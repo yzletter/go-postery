@@ -12,6 +12,7 @@ import (
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
+	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	commentRepository "github.com/yzletter/go-postery/repository/comment"
@@ -20,9 +21,6 @@ import (
 	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	postRepository "github.com/yzletter/go-postery/repository/post"
 	tagRepository "github.com/yzletter/go-postery/repository/tag"
-	userRepository "github.com/yzletter/go-postery/repository/user"
-
-	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
@@ -54,7 +52,6 @@ func main() {
 	UserService := service.NewUserService(UserRepository)
 
 	// Repository 层
-	UserDBRepo := userRepository.NewUserDBRepository(infraMySQL.GetDB())                   // 注册 UserDBRepo
 	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo
 	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())          // 注册 CommentDBRepo
 	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB())       // 注册 UserLikeDBRepo
@@ -66,14 +63,14 @@ func main() {
 	CommentCacheRepo := commentRepository.NewCommentCacheRepository(infraRedis.GetRedis()) // 注册 CommentCacheRepo
 
 	// Service 层
-	JwtSvc := service.NewJwtService("123456")                                                                       // 注册 JwtSvc
-	MetricSvc := service.NewMetricService()                                                                         // 注册 MetricSvc
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserService)                                   // 注册 AuthSvc
-	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                         // 注册 RateLimitSvc
-	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserDBRepo, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserDBRepo, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
+	JwtSvc := service.NewJwtService("123456")                                                                           // 注册 JwtSvc
+	MetricSvc := service.NewMetricService()                                                                             // 注册 MetricSvc
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserService)                                       // 注册 AuthSvc
+	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                             // 注册 RateLimitSvc
+	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserRepository, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
+	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserRepository, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
 	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
-	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo, UserDBRepo) // 注册 FollowSvc
+	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo, UserRepository) // 注册 FollowSvc
 
 	// Handler 层
 	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserService)           // 注册 UserHandler

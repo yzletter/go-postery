@@ -46,7 +46,7 @@ func (svc *UserService) Register(username, password string) (dto.UserBriefDTO, e
 	} else if errors.Is(err, dao.ErrInternal) { // 数据库内部错误
 		return userDTO, ErrServerInternal
 	}
-	return userDTO, ErrServerInternal
+	return userDTO, nil
 }
 
 func (svc *UserService) GetBriefById(id int64) (bool, dto.UserBriefDTO) {
