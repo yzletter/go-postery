@@ -42,7 +42,7 @@ func (dao *GormCommentDAO) Create(ctx context.Context, comment *model.Comment) (
 func (dao *GormCommentDAO) GetByID(ctx context.Context, id int64) (*model.Comment, error) {
 	comment := &model.Comment{}
 	// Find 不报 ErrRecordNotFound
-	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Select("*").Where("id = ? AND deleted_at IS NULL", id).First(comment)
+	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("id = ? AND deleted_at IS NULL", id).First(comment)
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -104,17 +104,19 @@ func (dao *GormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pa
 	return total, comments, nil
 }
 
-// GetRepliesByParentID 根据 Comment 的 ID 查找 Comment 的子评论
-func (dao *GormCommentDAO) GetRepliesByParentID(ctx context.Context, id int64) ([]*model.Comment, error) {
+// GetRepliesByParentIDs 根据多个 Comment 的 ID 查找 Comment 的子评论
+func (dao *GormCommentDAO) GetRepliesByParentIDs(ctx context.Context, ids []int64) ([]*model.Comment, error) {
+	// 兜底
+	if len(ids) == 0 {
+		return []*model.Comment{}, nil
+	}
+
 	var comments []*model.Comment
-	// Find 不报 ErrRecordNotFound
-	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Select("*").Where("parent_id = ? AND deleted_at IS NULL", id).Find(&comments)
+	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("parent_id IN (?) AND deleted_at IS NULL", ids).Order("parent_id ASC, created_at ASC").Find(&comments)
 	if result.Error != nil {
 		// 系统层面错误
-		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			slog.Error(FindFailed, "parent_id", id, "error", result.Error)
-			return nil, ErrInternal
-		}
+		slog.Error(FindFailed, "parent_ids", ids, "error", result.Error)
+		return nil, ErrInternal
 	}
 
 	return comments, nil
