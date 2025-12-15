@@ -27,10 +27,10 @@ type PostBriefDTO struct {
 
 func ToPostDetailDTO(post model.Post, user model.User) PostDetailDTO {
 	return PostDetailDTO{
-		Id:           post.Id,
+		Id:           post.ID,
 		Title:        post.Title,
 		Content:      post.Content,
-		CreatedAt:    post.CreateTime.Format(time.RFC3339),
+		CreatedAt:    post.CreatedAt.Format(time.RFC3339),
 		Author:       ToUserBriefDTO(user),
 		ViewCount:    post.ViewCount,
 		CommentCount: post.CommentCount,
@@ -41,9 +41,9 @@ func ToPostDetailDTO(post model.Post, user model.User) PostDetailDTO {
 
 func ToPostBriefDTO(post model.Post, user model.User) PostBriefDTO {
 	return PostBriefDTO{
-		Id:        post.Id,
+		Id:        post.ID,
 		Title:     post.Title,
-		CreatedAt: post.CreateTime.Format(time.RFC3339),
+		CreatedAt: post.CreatedAt.Format(time.RFC3339),
 		Author:    ToUserBriefDTO(user),
 	}
 }

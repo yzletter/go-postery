@@ -1,12 +1,10 @@
 package model
 
-import (
-	"time"
-)
+import "time"
 
 // User 定义数据库模型
 type User struct {
-	ID           int64      `gorm:"primaryKey"`                    // 用户 ID (雪花算法)
+	ID           int64      `gorm:"primaryKey"`                    // 用户 ID
 	Username     string     `gorm:"column:username"`               // 用户名
 	Email        string     `gorm:"column:email"`                  // 邮箱
 	PasswordHash string     `json:"-" gorm:"column:password_hash"` // 密码哈希
@@ -24,6 +22,7 @@ type User struct {
 	DeletedAt    *time.Time `gorm:"column:deleted_at"`             // 逻辑删除时间
 }
 
+// TableName 指定表名
 func (u User) TableName() string {
 	return "users"
 }

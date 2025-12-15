@@ -41,7 +41,7 @@ func (svc *UserService) Register(username, password string) (dto.UserBriefDTO, e
 		return userDTO, nil
 	}
 
-	if errors.Is(err, repository.ErrUniqueKeyConflict) { // 唯一键冲突
+	if errors.Is(err, dao.ErrUniqueKeyConflict) { // 唯一键冲突
 		return userDTO, ErrNameDuplicated
 	} else if errors.Is(err, dao.ErrInternal) { // 数据库内部错误
 		return userDTO, ErrServerInternal

@@ -159,7 +159,18 @@ func (dao *GormUserDAO) UpdatePasswordHash(id int64, newHash string) error {
 		return ErrInternal
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
-		return ErrRecordNotFound
+		var cnt int64
+		result2 := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
+		if result2.Error != nil {
+			// 系统层面错误
+			slog.Error(FindFailed, "id", id, "error", result.Error)
+			return ErrInternal
+		}
+
+		if cnt == 0 {
+			// 记录不存在
+			return ErrRecordNotFound
+		}
 	}
 
 	// 2. 返回结果
@@ -176,7 +187,18 @@ func (dao *GormUserDAO) UpdateProfile(id int64, updates map[string]any) error {
 		return ErrInternal
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
-		return ErrRecordNotFound
+		var cnt int64
+		result2 := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
+		if result2.Error != nil {
+			// 系统层面错误
+			slog.Error(FindFailed, "id", id, "error", result.Error)
+			return ErrInternal
+		}
+
+		if cnt == 0 {
+			// 记录不存在
+			return ErrRecordNotFound
+		}
 	}
 
 	// 2. 返回结果

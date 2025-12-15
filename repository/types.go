@@ -14,6 +14,16 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
+	Create(uid int, title, content string) (model.Post, error)
+	Delete(pid int) error
+	Update(pid int, title, content string) error
+	GetByID(pid int) (bool, model.Post)
+	GetByPage(pageNo, pageSize int) (int, []model.Post)
+	GetByPageAndTag(tid, pageNo, pageSize int) (int, []model.Post)
+	GetByUid(uid int) []model.Post
+	ChangeViewCnt(pid int, delta int)
+	ChangeLikeCnt(pid int, delta int)
+	ChangeCommentCnt(pid int, delta int)
 }
 type CommentRepository interface {
 }

@@ -26,12 +26,12 @@ func (repo *PostDBRepository) Create(uid int, title, content string) (model.Post
 	// 模型映射
 	now := time.Now()
 	post := model.Post{
-		Id:         int(snowflake.NextID()),
-		UserId:     uid,     // 作者id
-		Title:      title,   // 标题
-		Content:    content, // 正文
-		CreateTime: &now,
-		DeleteTime: nil, // 须显示指定为 nil, 写入数据库为 null,
+		ID:        int(snowflake.NextID()),
+		UserID:    uid,     // 作者id
+		Title:     title,   // 标题
+		Content:   content, // 正文
+		CreatedAt: &now,
+		DeletedAt: nil, // 须显示指定为 nil, 写入数据库为 null,
 	}
 
 	// 新建数据
@@ -87,7 +87,7 @@ func (repo *PostDBRepository) Update(pid int, title, content string) error {
 // GetByID 根据帖子 id 获取帖子信息
 func (repo *PostDBRepository) GetByID(pid int) (bool, model.Post) {
 	post := model.Post{
-		Id: pid,
+		ID: pid,
 	}
 	tx := repo.db.Select("*").Where("delete_time is null").First(&post) // find 不会报 ErrNotFound
 	if tx.Error != nil {

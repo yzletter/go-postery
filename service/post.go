@@ -132,9 +132,9 @@ func (svc *PostService) GetByPage(pageNo, pageSize int) (int, []dto.PostDetailDT
 	var postDTOs []dto.PostDetailDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		user, err := svc.UserRepo.GetByID(int64(post.UserId))
+		user, err := svc.UserRepo.GetByID(int64(post.UserID))
 		if err != nil {
-			slog.Warn("could not get name of user", "uid", post.UserId)
+			slog.Warn("could not get name of user", "uid", post.UserID)
 		} else {
 			postDTO := dto.ToPostDetailDTO(post, *user)
 			postDTOs = append(postDTOs, postDTO)
@@ -155,9 +155,9 @@ func (svc *PostService) GetByPageAndTag(name string, pageNo, pageSize int) (int,
 	var postDTOs []dto.PostDetailDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		user, err := svc.UserRepo.GetByID(int64(post.UserId))
+		user, err := svc.UserRepo.GetByID(int64(post.UserID))
 		if err != nil {
-			slog.Warn("could not get name of user", "uid", post.UserId)
+			slog.Warn("could not get name of user", "uid", post.UserID)
 		} else {
 			postDTO := dto.ToPostDetailDTO(post, *user)
 			postDTOs = append(postDTOs, postDTO)
@@ -173,11 +173,11 @@ func (svc *PostService) GetDetailById(pid int) (bool, dto.PostDetailDTO) {
 	}
 
 	// 查找作者信息
-	user, _ := svc.UserRepo.GetByID(int64(post.UserId))
+	user, _ := svc.UserRepo.GetByID(int64(post.UserID))
 
 	// 记录 ViewCount + 1
-	svc.PostDBRepo.ChangeViewCnt(post.Id, 1)                                // 数据库中 + 1
-	ok, err := svc.PostCacheRepo.ChangeInteractiveCnt(VIEW_CNT, post.Id, 1) // 缓存中 + 1
+	svc.PostDBRepo.ChangeViewCnt(post.ID, 1)                                // 数据库中 + 1
+	ok, err := svc.PostCacheRepo.ChangeInteractiveCnt(VIEW_CNT, post.ID, 1) // 缓存中 + 1
 	if !ok {                                                                // 缓存中没有 KEY
 		vals := []int{post.ViewCount + 1, post.CommentCount, post.LikeCount}
 		svc.PostCacheRepo.SetKey(pid, Fields, vals)
@@ -198,7 +198,7 @@ func (svc *PostService) GetBriefById(pid int) (bool, dto.PostBriefDTO) {
 	}
 
 	// 查找作者信息
-	user, _ := svc.UserRepo.GetByID(int64(post.UserId))
+	user, _ := svc.UserRepo.GetByID(int64(post.UserID))
 
 	postBriefDTO := dto.ToPostBriefDTO(post, *user)
 	return true, postBriefDTO
@@ -226,7 +226,7 @@ func (svc *PostService) GetByUid(uid int) []dto.PostDetailDTO {
 	postDTOs := make([]dto.PostDetailDTO, 0, len(posts))
 	for _, post := range posts {
 		// 查找作者信息
-		user, _ := svc.UserRepo.GetByID(int64(post.UserId))
+		user, _ := svc.UserRepo.GetByID(int64(post.UserID))
 
 		// 转成 DTO 返回给 Handler
 		postDTO := dto.ToPostDetailDTO(post, *user)

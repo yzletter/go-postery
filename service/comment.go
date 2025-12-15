@@ -12,9 +12,10 @@ import (
 type CommentService struct {
 	CommentDBRepo    *commentRepository.CommentDBRepository
 	CommentCacheRepo *commentRepository.CommentCacheRepository
-	UserRepo         repository.UserRepository
 	PostDBRepo       *postRepository.PostDBRepository
 	PostCacheRepo    *postRepository.PostCacheRepository
+
+	UserRepo repository.UserRepository
 }
 
 func NewCommentService(commentDBRepo *commentRepository.CommentDBRepository, commentCacheRepo *commentRepository.CommentCacheRepository,
@@ -97,5 +98,5 @@ func (svc *CommentService) Belong(cid, uid int) bool {
 	}
 
 	// 帖子属于当前登录用户，或评论属于当前用户
-	return comment.UserId == uid || post.UserId == uid
+	return comment.UserId == uid || post.UserID == uid
 }

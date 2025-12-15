@@ -2,15 +2,14 @@
 -- 创建数据库 go_postery
 create database go_postery;
 -- 创建用户 go_postery_tester 密码为 123456
-create
-u 'go_postery_tester' identified by '123456';
+create user 'go_postery_tester' identified by '123456';
 -- 将数据库 go_postery 的全部权限授予用户 go_postery_tester
 grant all on go_postery.* to go_postery_tester;
 -- 切到 go_postery 数据库
 use go_postery;
 
 # 建表
-# 创建 u 表
+# 创建 user 表
 CREATE TABLE IF NOT EXISTS users
 (
     id            BIGINT                                  NOT NULL COMMENT '用户 ID (雪花算法)',
@@ -45,90 +44,89 @@ CREATE TABLE IF NOT EXISTS users
 
 
 # 创建 post 表
-create table if not exists post
+CREATE TABLE IF NOT EXISTS posts
 (
-    id            bigint       not null comment '帖子 ID',
-    user_id       bigint       not null comment '发布者 ID',
-    title         varchar(255) not null comment '标题',
-    view_count    int unsigned not null default 0 comment '浏览量',
-    like_count    int unsigned not null default 0 comment '点赞数',
-    comment_count int unsigned not null default 0 comment '评论数',
+    id            BIGINT       NOT NULL COMMENT '帖子 ID',
+    user_id       BIGINT       NOT NULL COMMENT '发布者 ID',
+    title         varchar(255) NOT NULL COMMENT '标题',
+    content       TEXT COMMENT '正文',
+    status        TINYINT      NOT NULL DEFAULT 1 COMMENT '状态 1 正常, 2 封禁',
+    view_count    INT       NOT NULL DEFAULT 0 COMMENT '浏览量',
+    like_count    INT          NOT NULL DEFAULT 0 COMMENT '点赞数',
+    comment_count INT          NOT NULL DEFAULT 0 COMMENT '评论数',
 
-    status        tinyint               default 1 comment '状态',
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at    DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
 
-    create_time   datetime              default current_timestamp comment '帖子创建时间',
-    update_time   datetime              default current_timestamp on update current_timestamp comment '帖子最后修改时间',
-    delete_time   datetime              default null comment '帖子删除时间',
-    content       text comment '正文',
-    primary key (id),
-    unique key idx_user (user_id)
-) default charset = utf8mb4 comment '帖子信息表';
+    PRIMARY KEY (id),
+    KEY idx_user_created (user_id, created_at DESC),
+    KEY idx_created (created_at DESC),
+    KEY idx_status_deleted_created (status, deleted_at, created_at DESC)
+) DEFAULT charset = utf8mb4 COMMENT '帖子信息表';
 
-use go_postery;
-alter table post
-    add column comment_count int unsigned not null default 0 comment '评论数';
 
-create table if not exists user_like
+CREATE TABLE IF NOT EXISTS user_like
 (
-    id          bigint auto_increment primary key comment '记录 ID',
-    post_id     bigint not null comment '被点赞帖子 id',
-    user_id     bigint not null comment '点赞者 id',
-    create_time datetime default current_timestamp comment '帖子创建时间',
-    update_time datetime default current_timestamp on update current_timestamp comment '帖子最后修改时间',
-    delete_time datetime default null comment '帖子删除时间',
-    unique key uq_user_post (user_id, post_id),
-    key idx_target (post_id),
+    id          BIGINT auto_increment PRIMARY KEY COMMENT '记录 ID',
+    post_id     BIGINT NOT NULL COMMENT '被点赞帖子 id',
+    user_id     BIGINT NOT NULL COMMENT '点赞者 id',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '帖子创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '帖子最后修改时间',
+    delete_time DATETIME DEFAULT NULL COMMENT '帖子删除时间',
+    UNIQUE KEY uq_user_post (user_id, post_id),
+    KEY idx_target (post_id),
     KEY idx_user (user_id)
-) default charset = utf8mb4 comment '用户点赞表';
+) DEFAULT charset = utf8mb4 COMMENT '用户点赞表';
 
-create table if not exists comment
+CREATE TABLE IF NOT EXISTS COMMENT
 (
-    id          bigint comment '评论 id',
-    post_id     bigint not null comment '所属帖子 id',
-    user_id     bigint not null comment '发布者 id',
-    parent_id   bigint not null comment '父评论 id',
-    reply_id    bigint not null comment '回复评论 id',
-    create_time datetime default current_timestamp comment '帖子创建时间',
-    delete_time datetime default null comment '帖子删除时间',
-    content     text comment '正文',
-    primary key (id),
-    key idx_user (user_id)
-) default charset = utf8mb4 comment '帖子信息表';
+    id          BIGINT COMMENT '评论 id',
+    post_id     BIGINT NOT NULL COMMENT '所属帖子 id',
+    user_id     BIGINT NOT NULL COMMENT '发布者 id',
+    parent_id   BIGINT NOT NULL COMMENT '父评论 id',
+    reply_id    BIGINT NOT NULL COMMENT '回复评论 id',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '帖子创建时间',
+    delete_time DATETIME DEFAULT NULL COMMENT '帖子删除时间',
+    content     TEXT COMMENT '正文',
+    PRIMARY KEY (id),
+    KEY idx_user (user_id)
+) DEFAULT charset = utf8mb4 COMMENT '帖子信息表';
 
 
-create table if not exists tag
+CREATE TABLE IF NOT EXISTS tag
 (
-    id          bigint primary key comment '标签 id',
-    username    varchar(32) not null comment '标签名',
-    slug        varchar(32) not null comment '标签唯一标识',
-    create_time datetime default current_timestamp comment '创建时间',
-    delete_time datetime default null comment '删除时间',
-    unique key uq_slug (slug),
-    unique key uq_name (username)
-) default charset = utf8mb4 comment '标签信息表';
+    id          BIGINT PRIMARY KEY COMMENT '标签 id',
+    username    varchar(32) NOT NULL COMMENT '标签名',
+    slug        varchar(32) NOT NULL COMMENT '标签唯一标识',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    delete_time DATETIME DEFAULT NULL COMMENT '删除时间',
+    UNIQUE KEY uq_slug (slug),
+    UNIQUE KEY uq_name (username)
+) DEFAULT charset = utf8mb4 COMMENT '标签信息表';
 
-create table if not exists post_tag
+CREATE TABLE IF NOT EXISTS post_tag
 (
-    id      bigint primary key comment '记录 id',
-    post_id bigint not null comment '帖子 id',
-    tag_id  bigint not null comment '标签 id',
-    unique key uq_post_tag (post_id, tag_id),
-    key idx_tag (tag_id),
-    key idx_post (post_id)
-) default charset = utf8mb4 comment '帖子——标签绑定信息表';
+    id      BIGINT PRIMARY KEY COMMENT '记录 id',
+    post_id BIGINT NOT NULL COMMENT '帖子 id',
+    tag_id  BIGINT NOT NULL COMMENT '标签 id',
+    UNIQUE KEY uq_post_tag (post_id, tag_id),
+    KEY idx_tag (tag_id),
+    KEY idx_post (post_id)
+) DEFAULT charset = utf8mb4 COMMENT '帖子——标签绑定信息表';
 
-create table if not exists follow
+CREATE TABLE IF NOT EXISTS follow
 (
-    id          bigint not null primary key comment '记录 id',
-    follower_id bigint not null comment '关注者 id',
-    followee_id bigint not null comment '被关注者 id',
-    create_time datetime default current_timestamp comment '创建时间',
-    delete_time datetime default null comment '删除时间',
-    update_time datetime default current_timestamp on update current_timestamp comment '更新时间',
+    id          BIGINT NOT NULL PRIMARY KEY COMMENT '记录 id',
+    follower_id BIGINT NOT NULL COMMENT '关注者 id',
+    followee_id BIGINT NOT NULL COMMENT '被关注者 id',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    delete_time DATETIME DEFAULT NULL COMMENT '删除时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
-    unique key uq_follow (follower_id, followee_id),
-    key idx_follower (follower_id, delete_time),
-    key idx_followee (followee_id, delete_time),
+    UNIQUE KEY uq_follow (follower_id, followee_id),
+    KEY idx_follower (follower_id, delete_time),
+    KEY idx_followee (followee_id, delete_time),
 
-    check (follower_id <> followee_id) # 避免自己关注自己
-) default charset = utf8mb4 comment '关注信息表';
+    CHECK (follower_id <> followee_id) # 避免自己关注自己
+) DEFAULT charset = utf8mb4 COMMENT '关注信息表';
