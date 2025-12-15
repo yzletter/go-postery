@@ -16,7 +16,6 @@ import (
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
-	postRepository "github.com/yzletter/go-postery/repository/post"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
@@ -26,12 +25,13 @@ import (
 
 func main() {
 	// Infra 层
-	infraMySQL.Init("./conf", "db", viper.YAML, "./log") // 注册 MySQL
-	infraRedis.Init("./conf", "redis", viper.YAML)       // 注册 Redis
-	slog.InitSlog("./log/go_postery.log")                // 初始化 slog
-	crontab.InitCrontab()                                // 初始化 定时任务
-	smooth.InitSmoothExit()                              // 初始化 优雅退出
-	snowflake.Init(0)                                    // 初始化 雪花算法
+	infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
+	infraRedis.Init("./conf", "redis", viper.YAML)        // 注册 Redis
+	slog.InitSlog("./logs/go_postery.logs")               // 初始化 slog
+	crontab.InitCrontab()                                 // 初始化 定时任务
+	smooth.InitSmoothExit()                               // 初始化 优雅退出
+	snowflake.Init(0)                                     // 初始化 雪花算法
+
 	// 初始化 gin
 	engine := gin.Default()
 
@@ -52,37 +52,32 @@ func main() {
 	TagCache := cache.NewTagCache(infraRedis.GetRedis())
 
 	// Repository 层
-	UserRepository := repository.NewUserRepository(UserDAO, UserCache)
-	PostRepository := repository.NewPostRepository(PostDAO, PostCache)
-	CommentRepository := repository.NewCommentRepository(CommentDAO, CommentCache)
-	LikeRepository := repository.NewLikeRepository(LikeDAO, LikeCache)
-	FollowReository := repository.NewFollowRepository(FollowDAO, FollowCache)
-	TagRepository := repository.NewTagRepository(TagDAO, TagCache)
+	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 UserRepository
+	PostRepo := repository.NewPostRepository(PostDAO, PostCache)             // 注册 PostRepository
+	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
+	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
+	FollowRepo := repository.NewFollowRepository(FollowDAO, FollowCache)     // 注册 FollowRepository
+	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 
 	// Service 层
-	UserService := service.NewUserService(UserRepository)
-	PostService := service.NewPostService(PostRepository, UserRepository, LikeRepository, TagRepository)
+	UserSvc := service.NewUserService(UserRepo)                              // 注册 userService
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo) // 注册 postService
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo)              // 注册 followService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo) // 注册 CommentService
+	TagSvc := service.NewTagService(TagRepo)                                 // 注册 tagService
 
-	// Repository 层
-	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())          // 注册 PostDBRepo
-	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis()) // 注册 PostCacheRepo
-
-	// Service 层
-	JwtSvc := service.NewJwtService("123456")                                                                           // 注册 JwtSvc
-	MetricSvc := service.NewMetricService()                                                                             // 注册 MetricSvc
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserService)                                       // 注册 AuthSvc
-	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                             // 注册 RateLimitSvc
-	PostSvc := service.NewPostService(PostRepository, UserRepository, UserLikeDBRepo, TagDBRepo)                        // 注册 PostSvc
-	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserRepository, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
-	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
-	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo, UserRepository) // 注册 FollowSvc
+	JwtSvc := service.NewJwtService("123456")                                               // 注册 JwtService
+	MetricSvc := service.NewMetricService()                                                 // 注册 MetricService
+	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000) // 注册 RateLimitService
+	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserSvc)               // 注册 AuthService
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserService)           // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserService, TagSvc)           // 注册 PostHandler
-	CommentHdl := handler.NewCommentHandler(CommentSvc, UserService, PostSvc) // 注册 CommentHandler
-	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHdl
-	FollowHdl := handler.NewFollowHandler(FollowSvc, UserService)
+	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
+	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
+	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
+
+	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
@@ -90,7 +85,7 @@ func main() {
 	AuthAdminMdl := middleware.AuthAdminMiddleware(AuthSvc)       // AuthAdminMdl 要求管理员身份
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},

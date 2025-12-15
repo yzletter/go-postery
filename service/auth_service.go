@@ -23,13 +23,13 @@ const (
 // AuthService 鉴权中间件的 Service
 type AuthService struct {
 	JwtService  *JwtService // 依赖 JWT 相关服务
-	UserService *UserService
+	UserService *userService
 	RedisClient redis.Cmdable // 依赖 Redis 数据库
 }
 
 // NewAuthService 构造函数
 
-func NewAuthService(redisClient redis.Cmdable, jwtService *JwtService, userService *UserService) *AuthService {
+func NewAuthService(redisClient redis.Cmdable, jwtService *JwtService, userService *userService) *AuthService {
 	return &AuthService{
 		JwtService:  jwtService,
 		RedisClient: redisClient,

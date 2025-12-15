@@ -25,18 +25,23 @@ const (
 	LIKE_CNT    = "like_count"
 )
 
-type PostService struct {
+type postService struct {
 	PostRepo repository.PostRepository
 	UserRepo repository.UserRepository
 	LikeRepo repository.LikeRepository
 	TagRepo  repository.TagRepository
 }
 
-func NewPostService(postRepo repository.PostRepository, userRepo repository.UserRepository, likeRepo repository.LikeRepository, tagRepo repository.TagRepository) *PostService {
-	return &PostService{PostRepo: postRepo, UserRepo: userRepo, LikeRepo: likeRepo, TagRepo: tagRepo}
+func NewPostService(postRepo repository.PostRepository, userRepo repository.UserRepository, likeRepo repository.LikeRepository, tagRepo repository.TagRepository) PostService {
+	return &postService{
+		PostRepo: postRepo,
+		UserRepo: userRepo,
+		LikeRepo: likeRepo,
+		TagRepo:  tagRepo,
+	}
 }
 
-func (svc *PostService) Create(ctx context.Context, uid int, title, content string) (dto.PostDetailDTO, error) {
+func (svc *postService) Create(ctx context.Context, uid int, title, content string) (dto.PostDetailDTO, error) {
 	post := &model.Post{
 		ID:      snowflake.NextID(),
 		UserID:  int64(uid),
@@ -52,7 +57,7 @@ func (svc *PostService) Create(ctx context.Context, uid int, title, content stri
 	return postDTO, err
 }
 
-func (svc *PostService) Delete(ctx context.Context, pid, uid int) error {
+func (svc *postService) Delete(ctx context.Context, pid, uid int) error {
 	// 判断登录用户是否是作者
 	ok := svc.Belong(ctx, pid, uid)
 	if !ok {
@@ -65,7 +70,7 @@ func (svc *PostService) Delete(ctx context.Context, pid, uid int) error {
 	return err
 }
 
-func (svc *PostService) Update(ctx context.Context, pid int, uid int, title, content string, tags []string) error {
+func (svc *postService) Update(ctx context.Context, pid int, uid int, title, content string, tags []string) error {
 	// 判断登录用户是否是作者
 	ok := svc.Belong(ctx, pid, uid)
 	if !ok {
@@ -73,7 +78,7 @@ func (svc *PostService) Update(ctx context.Context, pid int, uid int, title, con
 		return errors.New("没有权限")
 	}
 
-	tagsBefore, err := svc.TagDBRepo.FindTagsByPostID(pid)
+	tagsBefore, err := svc.TagRepo.FindTagsByPostID(pid)
 	if err != nil {
 		slog.Error("Get Tags_Before Failed", "error", err)
 	}
@@ -92,12 +97,12 @@ func (svc *PostService) Update(ctx context.Context, pid int, uid int, title, con
 
 	for _, tag := range tagsBefore {
 		if _, ok := hashNow[tag]; !ok { // 原来有现在没有 ——> 删除
-			tid, err := svc.TagDBRepo.Exist(tag) // 查 tid
+			tid, err := svc.TagRepo.Exist(tag) // 查 tid
 			if err != nil {
 				// 这里应该是必须有 tid 的才对
 				slog.Error("Can Not Find Tid", "error", err)
 			}
-			err = svc.TagDBRepo.DeleteBind(pid, tid)
+			err = svc.TagRepo.DeleteBind(pid, tid)
 			if err != nil {
 				slog.Error("Delete Bind Failed", "error", err)
 			}
@@ -106,12 +111,12 @@ func (svc *PostService) Update(ctx context.Context, pid int, uid int, title, con
 
 	for _, tag := range tagsNow {
 		if _, ok := hashBefore[tag]; !ok { // 现在有原来没有 ——> 绑定
-			tid, err := svc.TagDBRepo.Exist(tag) // 查 tid
+			tid, err := svc.TagRepo.Exist(tag) // 查 tid
 			if err != nil {
-				tid, err = svc.TagDBRepo.Create(tag, utils.Slugify(tag)) // 没有 tid 就新建
+				tid, err = svc.TagRepo.Create(tag, utils.Slugify(tag)) // 没有 tid 就新建
 			}
 
-			err = svc.TagDBRepo.Bind(pid, tid)
+			err = svc.TagRepo.Bind(pid, tid)
 			if err != nil {
 
 			}
@@ -126,7 +131,7 @@ func (svc *PostService) Update(ctx context.Context, pid int, uid int, title, con
 	return err
 }
 
-func (svc *PostService) GetByPage(ctx context.Context, pageNo, pageSize int) (int, []dto.PostDetailDTO) {
+func (svc *postService) GetByPage(ctx context.Context, pageNo, pageSize int) (int, []dto.PostDetailDTO) {
 	// 获取帖子总数和当前页帖子列表
 	total, posts, _ := svc.PostRepo.GetByPage(ctx, pageNo, pageSize)
 
@@ -144,8 +149,8 @@ func (svc *PostService) GetByPage(ctx context.Context, pageNo, pageSize int) (in
 	return int(total), postDTOs
 }
 
-func (svc *PostService) GetByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []dto.PostDetailDTO) {
-	tid, err := svc.TagDBRepo.Exist(name)
+func (svc *postService) GetByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []dto.PostDetailDTO) {
+	tid, err := svc.TagRepo.Exist(name)
 	if err != nil {
 		return 0, []dto.PostDetailDTO{}
 	}
@@ -167,7 +172,7 @@ func (svc *PostService) GetByPageAndTag(ctx context.Context, name string, pageNo
 	return int(total), postDTOs
 }
 
-func (svc *PostService) GetDetailById(ctx context.Context, pid int) (bool, dto.PostDetailDTO) {
+func (svc *postService) GetDetailById(ctx context.Context, pid int) (bool, dto.PostDetailDTO) {
 	post, err := svc.PostRepo.GetByID(ctx, int64(pid))
 	if err != nil {
 		return false, dto.PostDetailDTO{}
@@ -184,7 +189,7 @@ func (svc *PostService) GetDetailById(ctx context.Context, pid int) (bool, dto.P
 	return true, postDTO
 }
 
-func (svc *PostService) GetBriefById(ctx context.Context, pid int) (bool, dto.PostBriefDTO) {
+func (svc *postService) GetBriefById(ctx context.Context, pid int) (bool, dto.PostBriefDTO) {
 	post, err := svc.PostRepo.GetByID(ctx, int64(pid))
 	if err != nil {
 		return false, dto.PostBriefDTO{}
@@ -197,12 +202,12 @@ func (svc *PostService) GetBriefById(ctx context.Context, pid int) (bool, dto.Po
 	return true, postBriefDTO
 }
 
-func (svc *PostService) HasMore(ctx context.Context, pageNo, pageSize, total int) bool {
+func (svc *postService) HasMore(ctx context.Context, pageNo, pageSize, total int) bool {
 	return pageNo*pageSize < total
 }
 
 // Belong 判断登录用户是否是帖子作者
-func (svc *PostService) Belong(ctx context.Context, pid, uid int) bool {
+func (svc *postService) Belong(ctx context.Context, pid, uid int) bool {
 	ok, postDTO := svc.GetBriefById(ctx, pid)
 	if !ok || uid != int(postDTO.Author.Id) {
 		return false
@@ -210,7 +215,7 @@ func (svc *PostService) Belong(ctx context.Context, pid, uid int) bool {
 	return true
 }
 
-func (svc *PostService) GetByUid(ctx context.Context, uid int) []dto.PostDetailDTO {
+func (svc *postService) GetByUid(ctx context.Context, uid int) []dto.PostDetailDTO {
 	_, posts, err := svc.PostRepo.GetByUid(ctx, int64(uid), 1, 10)
 	if err != nil {
 		return nil
@@ -229,7 +234,7 @@ func (svc *PostService) GetByUid(ctx context.Context, uid int) []dto.PostDetailD
 	return postDTOs
 }
 
-func (svc *PostService) Like(ctx context.Context, pid, uid int) error {
+func (svc *postService) Like(ctx context.Context, pid, uid int) error {
 	// 查找帖子
 	_, err := svc.PostRepo.GetByID(ctx, int64(pid))
 	if err != nil {
@@ -238,7 +243,7 @@ func (svc *PostService) Like(ctx context.Context, pid, uid int) error {
 	}
 
 	// 创建点赞记录
-	err = svc.UserLikeDBRepo.Create(uid, pid)
+	err = svc.LikeRepo.Create(uid, pid)
 	if err != nil {
 		if errors.Is(err, userLikeRepository.ErrRecordHasExist) {
 			// 重复点赞
@@ -253,7 +258,7 @@ func (svc *PostService) Like(ctx context.Context, pid, uid int) error {
 	return nil
 }
 
-func (svc *PostService) Dislike(ctx context.Context, pid, uid int) error {
+func (svc *postService) Dislike(ctx context.Context, pid, uid int) error {
 	// 查找帖子
 	_, err := svc.PostRepo.GetByID(ctx, int64(pid))
 	if err != nil {
@@ -262,7 +267,7 @@ func (svc *PostService) Dislike(ctx context.Context, pid, uid int) error {
 	}
 
 	// 删除点赞记录
-	err = svc.UserLikeDBRepo.Delete(uid, pid)
+	err = svc.LikeRepo.Delete(uid, pid)
 	if err != nil {
 		if errors.Is(err, userLikeRepository.ErrRecordNotExist) {
 			// 重复删除
@@ -277,8 +282,8 @@ func (svc *PostService) Dislike(ctx context.Context, pid, uid int) error {
 	return nil
 }
 
-func (svc *PostService) IfLike(pid, uid int) (bool, error) {
-	ok, err := svc.UserLikeDBRepo.Get(uid, pid)
+func (svc *postService) IfLike(pid, uid int) (bool, error) {
+	ok, err := svc.LikeRepo.Get(uid, pid)
 	if err != nil {
 		return ok, dao.ErrInternal
 	}

@@ -15,13 +15,13 @@ import (
 )
 
 type UserHandler struct {
+	UserService service.UserService
 	AuthService *service.AuthService
 	JwtService  *service.JwtService
-	UserService *service.UserService
 }
 
 // NewUserHandler 构造函数
-func NewUserHandler(authService *service.AuthService, jwtService *service.JwtService, userService *service.UserService) *UserHandler {
+func NewUserHandler(userService service.UserService, authService *service.AuthService, jwtService *service.JwtService) *UserHandler {
 	return &UserHandler{
 		AuthService: authService,
 		JwtService:  jwtService,

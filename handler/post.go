@@ -14,12 +14,12 @@ import (
 )
 
 type PostHandler struct {
-	PostService *service.PostService
-	UserService *service.UserService
-	TagSvc      *service.TagService
+	PostService service.PostService
+	UserService service.UserService
+	TagSvc      service.TagService
 }
 
-func NewPostHandler(postService *service.PostService, userService *service.UserService, tagSvc *service.TagService) *PostHandler {
+func NewPostHandler(postService service.PostService, userService service.UserService, tagSvc service.TagService) *PostHandler {
 	return &PostHandler{
 		PostService: postService,
 		UserService: userService,

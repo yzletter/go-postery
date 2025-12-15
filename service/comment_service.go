@@ -7,24 +7,28 @@ import (
 	"github.com/yzletter/go-postery/repository"
 )
 
-type CommentService struct {
+type commentService struct {
+	CommentRepo repository.CommentRepository
 	UserRepo    repository.UserRepository
 	PostRepo    repository.PostRepository
-	CommentRepo repository.CommentRepository
 }
 
-func NewCommentService(userRepo repository.UserRepository, postRepo repository.PostRepository, commentRepo repository.CommentRepository) *CommentService {
-	return &CommentService{UserRepo: userRepo, PostRepo: postRepo, CommentRepo: commentRepo}
+func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository) CommentService {
+	return &commentService{
+		CommentRepo: commentRepo,
+		UserRepo:    userRepo,
+		PostRepo:    postRepo,
+	}
 }
 
-func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, content string) (dto.CommentDTO, error) {
-	comment, err := svc.CommentDBRepo.Create(pid, uid, parentId, replyId, content)
+func (svc *commentService) Create(pid int, uid int, parentId int, replyId int, content string) (dto.CommentDTO, error) {
+	comment, err := svc.CommentRepo.Create(pid, uid, parentId, replyId, content)
 	user, _ := svc.UserRepo.GetByID(int64(uid))
 
-	svc.PostDBRepo.ChangeCommentCnt(pid, 1)
+	svc.PostRepo.ChangeCommentCnt(pid, 1)
 	ok, err := svc.PostCacheRepo.ChangeInteractiveCnt(COMMENT_CNT, pid, 1)
 	if !ok {
-		ok, post := svc.PostDBRepo.GetByID(pid)
+		ok, post := svc.PostRepo.GetByID(pid)
 		if ok {
 			vals := []int{post.ViewCount, post.CommentCount, post.LikeCount}
 			svc.PostCacheRepo.SetKey(pid, Fields, vals)
@@ -34,20 +38,20 @@ func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, c
 	return dto.ToCommentDTO(comment, *user), err
 }
 
-func (svc *CommentService) Delete(uid, pid, cid int) error {
+func (svc *commentService) Delete(uid, pid, cid int) error {
 	ok := svc.Belong(cid, uid)
 	if !ok {
 		return errors.New("没有删除权限")
 	}
 
-	ok, post := svc.PostDBRepo.GetByID(pid)
+	ok, post := svc.PostRepo.GetByID(pid)
 
-	cnt, err := svc.CommentDBRepo.Delete(cid) // 返回被删除的个数
+	cnt, err := svc.CommentRepo.Delete(cid) // 返回被删除的个数
 	if err != nil {
 		return errors.New("删除失败")
 	}
 
-	svc.PostDBRepo.ChangeCommentCnt(pid, -cnt)
+	svc.PostRepo.ChangeCommentCnt(pid, -cnt)
 	ok, err = svc.PostCacheRepo.ChangeInteractiveCnt(COMMENT_CNT, pid, -cnt)
 	if !ok {
 		vals := []int{post.ViewCount, post.CommentCount - cnt, post.LikeCount}
@@ -57,8 +61,8 @@ func (svc *CommentService) Delete(uid, pid, cid int) error {
 	return nil
 }
 
-func (svc *CommentService) List(pid int) []dto.CommentDTO {
-	comments, err := svc.CommentDBRepo.GetByPostID(pid)
+func (svc *commentService) List(pid int) []dto.CommentDTO {
+	comments, err := svc.CommentRepo.GetByPostID(pid)
 	if err != nil {
 		return nil
 	}
@@ -73,13 +77,13 @@ func (svc *CommentService) List(pid int) []dto.CommentDTO {
 	return commentDTOs
 }
 
-func (svc *CommentService) Belong(cid, uid int) bool {
-	comment, err := svc.CommentDBRepo.GetByID(cid)
+func (svc *commentService) Belong(cid, uid int) bool {
+	comment, err := svc.CommentRepo.GetByID(cid)
 	if err != nil {
 		return false
 	}
 
-	ok, post := svc.PostDBRepo.GetByID(comment.PostId)
+	ok, post := svc.PostRepo.GetByID(comment.PostId)
 	if !ok {
 		return false
 	}

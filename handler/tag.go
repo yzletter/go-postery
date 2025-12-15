@@ -6,11 +6,13 @@ import (
 )
 
 type TagHandler struct {
-	TagSvc *service.TagService
+	TagSvc service.TagService
 }
 
-func NewTagHandler(tagSvc *service.TagService) *TagHandler {
-	return &TagHandler{TagSvc: tagSvc}
+func NewTagHandler(tagSvc service.TagService) *TagHandler {
+	return &TagHandler{
+		TagSvc: tagSvc,
+	}
 }
 
 func (hdl *TagHandler) Create(ctx *gin.Context) {

@@ -16,17 +16,20 @@ var (
 	ErrDuplicatedDisFollow = errors.New("重复取消关注")
 )
 
-type FollowService struct {
-	UserRepo   repository.UserRepository
+type followService struct {
 	FollowRepo repository.FollowRepository
+	UserRepo   repository.UserRepository
 }
 
-func NewFollowService(userRepo repository.UserRepository, followRepo repository.FollowRepository) *FollowService {
-	return &FollowService{UserRepo: userRepo, FollowRepo: followRepo}
+func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository) FollowService {
+	return &followService{
+		FollowRepo: followRepo,
+		UserRepo:   userRepo,
+	}
 }
 
-func (svc *FollowService) Follow(ferId, feeId int) error {
-	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
+func (svc *followService) Follow(ferId, feeId int) error {
+	res, err := svc.FollowRepo.IfFollow(ferId, feeId)
 	if err != nil {
 		return dao.ErrInternal // 数据库内部错误
 	}
@@ -35,7 +38,7 @@ func (svc *FollowService) Follow(ferId, feeId int) error {
 		return ErrDuplicatedFollow
 	}
 
-	err = svc.FollowDBRepo.Follow(ferId, feeId)
+	err = svc.FollowRepo.Follow(ferId, feeId)
 	if err != nil {
 		if errors.Is(err, dao.ErrUniqueKeyConflict) {
 			slog.Error("检查过还出错", "error", err)
@@ -47,8 +50,8 @@ func (svc *FollowService) Follow(ferId, feeId int) error {
 	return nil
 }
 
-func (svc *FollowService) DisFollow(ferId, feeId int) error {
-	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
+func (svc *followService) DisFollow(ferId, feeId int) error {
+	res, err := svc.FollowRepo.IfFollow(ferId, feeId)
 	if err != nil {
 		return dao.ErrInternal // 数据库内部错误
 	}
@@ -57,7 +60,7 @@ func (svc *FollowService) DisFollow(ferId, feeId int) error {
 		return ErrDuplicatedDisFollow
 	}
 
-	err = svc.FollowDBRepo.DisFollow(ferId, feeId)
+	err = svc.FollowRepo.DisFollow(ferId, feeId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			slog.Error("检查过还出错", "error", err)
@@ -69,8 +72,8 @@ func (svc *FollowService) DisFollow(ferId, feeId int) error {
 	return nil
 }
 
-func (svc *FollowService) IfFollow(ferId, feeId int) (int, error) {
-	res, err := svc.FollowDBRepo.IfFollow(ferId, feeId)
+func (svc *followService) IfFollow(ferId, feeId int) (int, error) {
+	res, err := svc.FollowRepo.IfFollow(ferId, feeId)
 	if err != nil {
 		return 0, dao.ErrInternal // 数据库内部错误
 	}
@@ -78,8 +81,8 @@ func (svc *FollowService) IfFollow(ferId, feeId int) (int, error) {
 	return res, nil
 }
 
-func (svc *FollowService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
-	followersId, err := svc.FollowDBRepo.GetFollowers(uid)
+func (svc *followService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
+	followersId, err := svc.FollowRepo.GetFollowers(uid)
 	fmt.Println(followersId)
 	if err != nil {
 		return nil, dao.ErrInternal
@@ -99,8 +102,8 @@ func (svc *FollowService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
 	return res, nil
 }
 
-func (svc *FollowService) GetFollowees(uid int) ([]dto.UserBriefDTO, error) {
-	followeesId, err := svc.FollowDBRepo.GetFollowees(uid)
+func (svc *followService) GetFollowees(uid int) ([]dto.UserBriefDTO, error) {
+	followeesId, err := svc.FollowRepo.GetFollowees(uid)
 	if err != nil {
 		return nil, dao.ErrInternal
 	}

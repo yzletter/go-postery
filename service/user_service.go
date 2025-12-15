@@ -17,17 +17,17 @@ var (
 	ErrNameDuplicated = errors.New("用户名重复")
 )
 
-type UserService struct {
+type userService struct {
 	UserRepository repository.UserRepository
 }
 
-func NewUserService(userRepository repository.UserRepository) *UserService {
-	return &UserService{
+func NewUserService(userRepository repository.UserRepository) UserService {
+	return &userService{
 		UserRepository: userRepository,
 	}
 }
 
-func (svc *UserService) Register(ctx context.Context, username, password string) (dto.UserBriefDTO, error) {
+func (svc *userService) Register(ctx context.Context, username, password string) (dto.UserBriefDTO, error) {
 	var userDTO dto.UserBriefDTO
 
 	u := &model.User{
@@ -50,7 +50,7 @@ func (svc *UserService) Register(ctx context.Context, username, password string)
 	return userDTO, nil
 }
 
-func (svc *UserService) GetBriefById(ctx context.Context, id int64) (bool, dto.UserBriefDTO) {
+func (svc *userService) GetBriefById(ctx context.Context, id int64) (bool, dto.UserBriefDTO) {
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
 		return false, dto.UserBriefDTO{}
@@ -60,7 +60,7 @@ func (svc *UserService) GetBriefById(ctx context.Context, id int64) (bool, dto.U
 }
 
 // GetDetailById 根据 ID 查找用户的详细信息
-func (svc *UserService) GetDetailById(ctx context.Context, id int64) (bool, dto.UserDetailDTO) {
+func (svc *userService) GetDetailById(ctx context.Context, id int64) (bool, dto.UserDetailDTO) {
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
 		return false, dto.UserDetailDTO{}
@@ -70,7 +70,7 @@ func (svc *UserService) GetDetailById(ctx context.Context, id int64) (bool, dto.
 }
 
 // GetBriefByName 根据 username 查找用户的简要信息
-func (svc *UserService) GetBriefByName(ctx context.Context, username string) dto.UserBriefDTO {
+func (svc *userService) GetBriefByName(ctx context.Context, username string) dto.UserBriefDTO {
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil {
 		return dto.UserBriefDTO{}
@@ -78,12 +78,12 @@ func (svc *UserService) GetBriefByName(ctx context.Context, username string) dto
 	return dto.ToUserBriefDTO(*user)
 }
 
-func (svc *UserService) UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error {
+func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error {
 	err := svc.UserRepository.UpdatePasswordHash(ctx, id, newPass)
 	return err
 }
 
-func (svc *UserService) UpdateProfile(ctx context.Context, id int64, req request.ModifyProfileRequest) error {
+func (svc *userService) UpdateProfile(ctx context.Context, id int64, req request.ModifyProfileRequest) error {
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
 	modelReq := request.ModifyProfileRequestToModel(req)
 
@@ -105,7 +105,7 @@ func (svc *UserService) UpdateProfile(ctx context.Context, id int64, req request
 	return ErrServerInternal
 }
 
-func (svc *UserService) Login(ctx context.Context, username, pass string) (bool, dto.UserBriefDTO) {
+func (svc *userService) Login(ctx context.Context, username, pass string) (bool, dto.UserBriefDTO) {
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil || user.PasswordHash != pass {
 		return false, dto.UserBriefDTO{}
@@ -113,7 +113,7 @@ func (svc *UserService) Login(ctx context.Context, username, pass string) (bool,
 	return true, dto.ToUserBriefDTO(*user)
 }
 
-func (svc *UserService) CheckAdmin(ctx context.Context, id int64) (bool, error) {
+func (svc *userService) CheckAdmin(ctx context.Context, id int64) (bool, error) {
 	status, err := svc.UserRepository.GetStatus(ctx, id)
 	if err != nil {
 		return false, err

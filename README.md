@@ -3,13 +3,13 @@
 ## 简介
 
 用 Go 实现一个现代化论坛
-![首页.png](img/%E9%A6%96%E9%A1%B5.png)
-![帖子详情.png](img/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)
-![评论区.png](img/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)
-![发布帖子.png](img/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png)
-![关注页面.png](img/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)
-![修改个人资料.png](img/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png)
-![个人主页.png](img/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)
+![首页.png](imgs/%E9%A6%96%E9%A1%B5.png)
+![帖子详情.png](imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)
+![评论区.png](imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)
+![发布帖子.png](imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png)
+![关注页面.png](imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)
+![修改个人资料.png](imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png)
+![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)
 
 
 ## 项目进度

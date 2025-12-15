@@ -10,11 +10,11 @@ import (
 )
 
 type FollowHandler struct {
-	FollowSvc *service.FollowService
-	UserSvc   *service.UserService
+	FollowSvc service.FollowService
+	UserSvc   service.UserService
 }
 
-func NewFollowHandler(followSvc *service.FollowService, userSvc *service.UserService) *FollowHandler {
+func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService) *FollowHandler {
 	return &FollowHandler{FollowSvc: followSvc, UserSvc: userSvc}
 }
 

@@ -7,19 +7,21 @@ import (
 	"github.com/yzletter/go-postery/utils"
 )
 
-type TagService struct {
+type tagService struct {
 	TagRepo repository.TagRepository
 }
 
-func NewTagService(tagRepo repository.TagRepository) *TagService {
-	return &TagService{TagRepo: tagRepo}
+func NewTagService(tagRepo repository.TagRepository) TagService {
+	return &tagService{
+		TagRepo: tagRepo,
+	}
 }
 
-func (svc *TagService) Create(name string) (int, error) {
+func (svc *tagService) Create(name string) (int, error) {
 	// 获得唯一标识符
 	tagName := name
 	slug := utils.Slugify(name)
-	tid, err := svc.TagDBRepo.Create(tagName, slug)
+	tid, err := svc.TagRepo.Create(tagName, slug)
 	if err != nil {
 		return 0, err
 	}
@@ -27,10 +29,10 @@ func (svc *TagService) Create(name string) (int, error) {
 }
 
 // Bind 将 Tags 绑定到 post
-func (svc *TagService) Bind(pid int, tags []string) {
+func (svc *tagService) Bind(pid int, tags []string) {
 	slog.Info("tags", "tags", tags)
 	for _, tag := range tags {
-		tid, err := svc.TagDBRepo.Exist(tag)
+		tid, err := svc.TagRepo.Exist(tag)
 		if err != nil {
 			// tag 不存在需要创建
 			tid, err = svc.Create(tag)
@@ -41,13 +43,13 @@ func (svc *TagService) Bind(pid int, tags []string) {
 			}
 		}
 
-		err = svc.TagDBRepo.Bind(pid, tid)
+		err = svc.TagRepo.Bind(pid, tid)
 		if err != nil {
 			slog.Error("Tag 绑定失败", "error", err)
 		}
 	}
 }
-func (svc *TagService) FindTagsByPostID(pid int) []string {
-	res, _ := svc.TagDBRepo.FindTagsByPostID(pid)
+func (svc *tagService) FindTagsByPostID(pid int) []string {
+	res, _ := svc.TagRepo.FindTagsByPostID(pid)
 	return res
 }

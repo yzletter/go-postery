@@ -12,12 +12,12 @@ import (
 )
 
 type CommentHandler struct {
-	CommentService *service.CommentService
-	UserService    *service.UserService
-	PostService    *service.PostService
+	CommentService service.CommentService
+	UserService    service.UserService
+	PostService    service.PostService
 }
 
-func NewCommentHandler(commentService *service.CommentService, userService *service.UserService, postService *service.PostService) *CommentHandler {
+func NewCommentHandler(commentService service.CommentService, userService service.UserService, postService service.PostService) *CommentHandler {
 	return &CommentHandler{
 		CommentService: commentService,
 		UserService:    userService,
