@@ -27,7 +27,7 @@ func main() {
 	// Infra 层
 	infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
 	infraRedis.Init("./conf", "redis", viper.YAML)        // 注册 Redis
-	slog.InitSlog("./logs/go_postery.logs")               // 初始化 slog
+	slog.InitSlog("./logs/go_postery.log")                // 初始化 slog
 	crontab.InitCrontab()                                 // 初始化 定时任务
 	smooth.InitSmoothExit()                               // 初始化 优雅退出
 	snowflake.Init(0)                                     // 初始化 雪花算法
