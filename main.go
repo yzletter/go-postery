@@ -65,7 +65,7 @@ func main() {
 
 	// Service 层
 	UserService := service.NewUserService(UserRepository)
-	PostService := service.NewPostService(PostRepository, PostCache)
+	PostService := service.NewPostService(PostRepository, UserRepository, LikeRepository, TagRepository)
 
 	// Repository 层
 	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())          // 注册 PostDBRepo

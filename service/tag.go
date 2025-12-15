@@ -3,20 +3,16 @@ package service
 import (
 	"log/slog"
 
-	tagRepository "github.com/yzletter/go-postery/repository/tag"
+	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/utils"
 )
 
 type TagService struct {
-	TagCacheRepo *tagRepository.TagCacheRepository
-	TagDBRepo    *tagRepository.TagDBRepository
+	TagRepo repository.TagRepository
 }
 
-func NewTagService(tagDBRepo *tagRepository.TagDBRepository, tagCacheRepo *tagRepository.TagCacheRepository) *TagService {
-	return &TagService{
-		TagCacheRepo: tagCacheRepo,
-		TagDBRepo:    tagDBRepo,
-	}
+func NewTagService(tagRepo repository.TagRepository) *TagService {
+	return &TagService{TagRepo: tagRepo}
 }
 
 func (svc *TagService) Create(name string) (int, error) {

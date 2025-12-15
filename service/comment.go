@@ -5,29 +5,16 @@ import (
 
 	dto "github.com/yzletter/go-postery/dto/response"
 	"github.com/yzletter/go-postery/repository"
-	commentRepository "github.com/yzletter/go-postery/repository/comment"
-	postRepository "github.com/yzletter/go-postery/repository/post"
 )
 
 type CommentService struct {
-	CommentDBRepo    *commentRepository.CommentDBRepository
-	CommentCacheRepo *commentRepository.CommentCacheRepository
-	PostDBRepo       *postRepository.PostDBRepository
-	PostCacheRepo    *postRepository.PostCacheRepository
-
-	UserRepo repository.UserRepository
+	UserRepo    repository.UserRepository
+	PostRepo    repository.PostRepository
+	CommentRepo repository.CommentRepository
 }
 
-func NewCommentService(commentDBRepo *commentRepository.CommentDBRepository, commentCacheRepo *commentRepository.CommentCacheRepository,
-	userRepository repository.UserRepository,
-	postDBRepo *postRepository.PostDBRepository, postCacheRepo *postRepository.PostCacheRepository) *CommentService {
-	return &CommentService{
-		CommentDBRepo:    commentDBRepo,
-		CommentCacheRepo: commentCacheRepo,
-		UserRepo:         userRepository,
-		PostDBRepo:       postDBRepo,
-		PostCacheRepo:    postCacheRepo,
-	}
+func NewCommentService(userRepo repository.UserRepository, postRepo repository.PostRepository, commentRepo repository.CommentRepository) *CommentService {
+	return &CommentService{UserRepo: userRepo, PostRepo: postRepo, CommentRepo: commentRepo}
 }
 
 func (svc *CommentService) Create(pid int, uid int, parentId int, replyId int, content string) (dto.CommentDTO, error) {

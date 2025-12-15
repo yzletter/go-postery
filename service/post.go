@@ -10,8 +10,6 @@ import (
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/dao"
-	userLikeRepository "github.com/yzletter/go-postery/repository/like"
-	tagRepository "github.com/yzletter/go-postery/repository/tag"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -28,23 +26,14 @@ const (
 )
 
 type PostService struct {
-	PostRepo       repository.PostRepository
-	UserRepo       repository.UserRepository
-	UserLikeDBRepo *userLikeRepository.UserLikeDBRepository
-	TagDBRepo      *tagRepository.TagDBRepository
+	PostRepo repository.PostRepository
+	UserRepo repository.UserRepository
+	LikeRepo repository.LikeRepository
+	TagRepo  repository.TagRepository
 }
 
-func NewPostService(postRepository repository.PostRepository, userRepository repository.UserRepository,
-	userLikeDBRepo *userLikeRepository.UserLikeDBRepository,
-	tagDBRepo *tagRepository.TagDBRepository,
-
-) *PostService {
-	return &PostService{
-		PostRepo:       postRepository,
-		UserRepo:       userRepository,
-		UserLikeDBRepo: userLikeDBRepo,
-		TagDBRepo:      tagDBRepo,
-	}
+func NewPostService(postRepo repository.PostRepository, userRepo repository.UserRepository, likeRepo repository.LikeRepository, tagRepo repository.TagRepository) *PostService {
+	return &PostService{PostRepo: postRepo, UserRepo: userRepo, LikeRepo: likeRepo, TagRepo: tagRepo}
 }
 
 func (svc *PostService) Create(ctx context.Context, uid int, title, content string) (dto.PostDetailDTO, error) {

@@ -8,7 +8,6 @@ import (
 	dto "github.com/yzletter/go-postery/dto/response"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/dao"
-	followRepository "github.com/yzletter/go-postery/repository/follow"
 	"gorm.io/gorm"
 )
 
@@ -18,14 +17,12 @@ var (
 )
 
 type FollowService struct {
-	FollowDBRepo    *followRepository.FollowDBRepository
-	FollowCacheRepo *followRepository.FollowCacheRepository
-	UserRepo        repository.UserRepository
+	UserRepo   repository.UserRepository
+	FollowRepo repository.LikeRepository
 }
 
-func NewFollowService(followDBRepo *followRepository.FollowDBRepository, followCacheRepo *followRepository.FollowCacheRepository,
-	userRepo repository.UserRepository) *FollowService {
-	return &FollowService{FollowDBRepo: followDBRepo, FollowCacheRepo: followCacheRepo, UserRepo: userRepo}
+func NewFollowService(userRepo repository.UserRepository, followRepo repository.LikeRepository) *FollowService {
+	return &FollowService{UserRepo: userRepo, FollowRepo: followRepo}
 }
 
 func (svc *FollowService) Follow(ferId, feeId int) error {
