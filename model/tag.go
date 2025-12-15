@@ -11,6 +11,10 @@ type Tag struct {
 	DeletedAt *time.Time `gorm:"column:deleted_at"`
 }
 
+func (t Tag) TableName() string {
+	return "tags"
+}
+
 type PostTag struct {
 	ID        int64      `gorm:"column:id"`
 	PostID    int64      `gorm:"column:post_id"`
@@ -22,8 +26,4 @@ type PostTag struct {
 
 func (pt PostTag) TableName() string {
 	return "post_tag"
-}
-
-func (t Tag) TableName() string {
-	return "tags"
 }
