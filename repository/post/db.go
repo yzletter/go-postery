@@ -2,11 +2,8 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
-	"time"
 
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )

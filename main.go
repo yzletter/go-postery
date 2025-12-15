@@ -42,30 +42,34 @@ func main() {
 	// DAO 层
 	UserDAO := dao.NewUserDAO(infraMySQL.GetDB())
 	PostDAO := dao.NewPostDAO(infraMySQL.GetDB())
+	CommentDAO := dao.NewCommentDAO(infraMySQL.GetDB())
+	LikeDAO := dao.NewLikeDAO(infraMySQL.GetDB())
+	FollowDAO := dao.NewFollowDAO(infraMySQL.GetDB())
+	TagDAO := dao.NewTagDAO(infraMySQL.GetDB())
 
 	// Cache 层
 	UserCache := cache.NewUserCache(infraRedis.GetRedis())
 	PostCache := cache.NewPostCache(infraRedis.GetRedis())
 	CommentCache := cache.NewCommentCache(infraRedis.GetRedis())
-	FollowCache := cache.NewFollowCache(infraRedis.GetRedis())
 	LikeCache := cache.NewLikeCache(infraRedis.GetRedis())
+	FollowCache := cache.NewFollowCache(infraRedis.GetRedis())
 	TagCache := cache.NewTagCache(infraRedis.GetRedis())
 
 	// Repository 层
 	UserRepository := repository.NewUserRepository(UserDAO, UserCache)
 	PostRepository := repository.NewPostRepository(PostDAO, PostCache)
+	CommentRepository := repository.NewCommentRepository(CommentDAO, CommentCache)
+	LikeRepository := repository.NewLikeRepository(LikeDAO, LikeCache)
+	FollowReository := repository.NewFollowRepository(FollowDAO, FollowCache)
+	TagRepository := repository.NewTagRepository(TagDAO, TagCache)
 
 	// Service 层
 	UserService := service.NewUserService(UserRepository)
 	PostService := service.NewPostService(PostRepository, PostCache)
 
 	// Repository 层
-	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())             // 注册 PostDBRepo
-	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())    // 注册 CommentDBRepo
-	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB()) // 注册 UserLikeDBRepo
-	TagDBRepo := tagRepository.NewTagDBRepository(infraMySQL.GetDB())                // 注册 TagDBRepo
-	FollowDBRepo := followRepository.NewFollowDBRepository(infraMySQL.GetDB())       // 注册 FollowDBRepo
-	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())    // 注册 PostCacheRepo
+	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())          // 注册 PostDBRepo
+	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis()) // 注册 PostCacheRepo
 
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                                                                           // 注册 JwtSvc
