@@ -12,18 +12,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// GormFollowDAO 用 Gorm 实现 FollowDAO
-type GormFollowDAO struct {
+// gormFollowDAO 用 Gorm 实现 FollowDAO
+type gormFollowDAO struct {
 	db *gorm.DB
 }
 
 // NewFollowDAO 构造函数
 func NewFollowDAO(db *gorm.DB) FollowDAO {
-	return &GormFollowDAO{db: db}
+	return &gormFollowDAO{db: db}
 }
 
 // Create 创建 ferID 关注 feeID
-func (dao *GormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error {
+func (dao *gormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error {
 	// 1. 操作数据库
 	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NOT NULL", ferID, feeID).Update("deleted_at", nil)
 	if result.Error != nil {
@@ -59,7 +59,7 @@ func (dao *GormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error 
 }
 
 // Delete 删除 ferID 关注 feeID
-func (dao *GormFollowDAO) Delete(ctx context.Context, ferID, feeID int64) error {
+func (dao *gormFollowDAO) Delete(ctx context.Context, ferID, feeID int64) error {
 	now := time.Now()
 	// 1. 操作数据库
 	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", ferID, feeID).Update("deleted_at", &now)
@@ -77,7 +77,7 @@ func (dao *GormFollowDAO) Delete(ctx context.Context, ferID, feeID int64) error 
 }
 
 // Exists 判断存在关注关系 0 表示互不关注, 1 表示 a 关注 b, 2 表示 b 关注 a, 3 表示互相关注
-func (dao *GormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, error) {
+func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, error) {
 	exists := func(a, b int64) (bool, error) {
 		var cnt int64
 		result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", a, b).Count(&cnt)
@@ -115,7 +115,7 @@ func (dao *GormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, 
 }
 
 // GetFollowers 按页返回关注当前用户的 ID 并按时间排序
-func (dao *GormFollowDAO) GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error) {
+func (dao *gormFollowDAO) GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error) {
 	base := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("followee_id = ? AND deleted_at IS NULL", id)
 
 	var total int64
@@ -143,7 +143,7 @@ func (dao *GormFollowDAO) GetFollowers(ctx context.Context, id int64, pageNo, pa
 }
 
 // GetFollowees 按页返回当前用户关注的所有 ID 并按时间排序
-func (dao *GormFollowDAO) GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error) {
+func (dao *gormFollowDAO) GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error) {
 	base := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND deleted_at IS NULL", id)
 
 	var total int64

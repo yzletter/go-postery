@@ -11,18 +11,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type GormCommentDAO struct {
+type gormCommentDAO struct {
 	db *gorm.DB
 }
 
 func NewCommentDAO(db *gorm.DB) CommentDAO {
-	return &GormCommentDAO{
+	return &gormCommentDAO{
 		db: db,
 	}
 }
 
 // Create 创建 Comment
-func (dao *GormCommentDAO) Create(ctx context.Context, comment *model.Comment) (*model.Comment, error) {
+func (dao *gormCommentDAO) Create(ctx context.Context, comment *model.Comment) (*model.Comment, error) {
 	result := dao.db.WithContext(ctx).Create(comment)
 	if result.Error != nil {
 		// 业务层面错误
@@ -39,7 +39,7 @@ func (dao *GormCommentDAO) Create(ctx context.Context, comment *model.Comment) (
 }
 
 // GetByID 根据 Comment 的 ID 查找 Comment
-func (dao *GormCommentDAO) GetByID(ctx context.Context, id int64) (*model.Comment, error) {
+func (dao *gormCommentDAO) GetByID(ctx context.Context, id int64) (*model.Comment, error) {
 	comment := &model.Comment{}
 	// Find 不报 ErrRecordNotFound
 	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("id = ? AND deleted_at IS NULL", id).First(comment)
@@ -58,7 +58,7 @@ func (dao *GormCommentDAO) GetByID(ctx context.Context, id int64) (*model.Commen
 }
 
 // Delete 软删除 Comment 并返回删除的条数
-func (dao *GormCommentDAO) Delete(ctx context.Context, id int64) (int, error) {
+func (dao *gormCommentDAO) Delete(ctx context.Context, id int64) (int, error) {
 	now := time.Now()
 	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("(id = ? OR parent_id = ?) AND deleted_at IS NULL", id, id).Update("deleted_at", &now)
 	if result.Error != nil {
@@ -70,7 +70,7 @@ func (dao *GormCommentDAO) Delete(ctx context.Context, id int64) (int, error) {
 }
 
 // GetByPostID 查找 Post 的一级评论
-func (dao *GormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error) {
+func (dao *gormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error) {
 	// 0. 兜底
 	if pageNo < 1 || pageSize <= 0 || pageSize > 100 {
 		return 0, nil, ErrParamsInvalid
@@ -105,7 +105,7 @@ func (dao *GormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pa
 }
 
 // GetRepliesByParentIDs 根据多个 Comment 的 ID 查找 Comment 的子评论
-func (dao *GormCommentDAO) GetRepliesByParentIDs(ctx context.Context, ids []int64) ([]*model.Comment, error) {
+func (dao *gormCommentDAO) GetRepliesByParentIDs(ctx context.Context, ids []int64) ([]*model.Comment, error) {
 	// 兜底
 	if len(ids) == 0 {
 		return []*model.Comment{}, nil

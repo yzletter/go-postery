@@ -11,18 +11,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// GormLikeDAO 用 Gorm 实现 LikeDAO
-type GormLikeDAO struct {
+// gormLikeDAO 用 Gorm 实现 LikeDAO
+type gormLikeDAO struct {
 	db *gorm.DB
 }
 
 // NewLikeDAO 构造函数
 func NewLikeDAO(db *gorm.DB) LikeDAO {
-	return &GormLikeDAO{db: db}
+	return &gormLikeDAO{db: db}
 }
 
 // Create 创建 Like
-func (dao *GormLikeDAO) Create(ctx context.Context, like *model.Like) error {
+func (dao *gormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 	// 0. 兜底
 	if like == nil || like.UserID == 0 || like.PostID == 0 {
 		return ErrParamsInvalid
@@ -58,7 +58,7 @@ func (dao *GormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 }
 
 // Delete 删除 Like
-func (dao *GormLikeDAO) Delete(ctx context.Context, uid, pid int64) error {
+func (dao *gormLikeDAO) Delete(ctx context.Context, uid, pid int64) error {
 	now := time.Now()
 	result := dao.db.WithContext(ctx).Model(&model.Like{}).Where("user_id = ? AND post_id = ? AND deleted_at IS NULL", uid, pid).Update("deleted_at", &now)
 	if result.Error != nil {
@@ -75,7 +75,7 @@ func (dao *GormLikeDAO) Delete(ctx context.Context, uid, pid int64) error {
 }
 
 // Exists 判断 Like 存在
-func (dao *GormLikeDAO) Exists(ctx context.Context, uid, pid int64) (bool, error) {
+func (dao *gormLikeDAO) Exists(ctx context.Context, uid, pid int64) (bool, error) {
 	userLike := model.Like{}
 	result := dao.db.WithContext(ctx).Where("user_id = ? AND post_id = ? AND deleted_at IS NULL", uid, pid).First(&userLike)
 	if result.Error != nil {

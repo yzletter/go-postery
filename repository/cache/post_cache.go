@@ -18,16 +18,16 @@ const (
 //go:embed lua/change_cnt_script.lua
 var addCntScript string
 
-type RedisPostCache struct {
+type redisPostCache struct {
 	client redis.Cmdable
 }
 
 func NewPostCache(client redis.Cmdable) PostCache {
-	return &RedisPostCache{client: client}
+	return &redisPostCache{client: client}
 }
 
 // ChangeInteractiveCnt HIncrBy KEY 对应 Field 的值, 值为 Delta
-func (cache *RedisPostCache) ChangeInteractiveCnt(ctx context.Context, pid int64, field model.PostCntField, delta int) (bool, error) {
+func (cache *redisPostCache) ChangeInteractiveCnt(ctx context.Context, pid int64, field model.PostCntField, delta int) (bool, error) {
 	col, err := field.Column()
 	if err != nil {
 		return false, err
@@ -36,7 +36,7 @@ func (cache *RedisPostCache) ChangeInteractiveCnt(ctx context.Context, pid int64
 	return cache.client.Eval(ctx, addCntScript, []string{redisKey}, col, delta).Bool()
 }
 
-func (cache *RedisPostCache) SetKey(ctx context.Context, pid int64, fields []model.PostCntField, vals []int) {
+func (cache *redisPostCache) SetKey(ctx context.Context, pid int64, fields []model.PostCntField, vals []int) {
 	// 拼接 Key
 	redisKey := fmt.Sprintf("%s:%d", postInteractiveKeyPrefix, pid)
 

@@ -4738,3 +4738,9 @@
 
 2025/12/15 17:45:32 /Users/yzletter/go_project/go-postery/repository/tag/db.go:95
 [0.116ms] [rows:4] SELECT `t`.`slug` FROM post_tag pt JOIN tag t ON t.id = pt.tag_id WHERE pt.post_id = 183927501223100509
+
+2025/12/15 22:44:21 /Users/yzletter/go_project/go-postery/repository/post/db.go:107 Error 1146 (42S02): Table 'go_postery.post' doesn't exist
+[1.308ms] [rows:0] SELECT count(*) FROM `post` WHERE delete_time is null
+
+2025/12/15 22:44:21 /Users/yzletter/go_project/go-postery/repository/post/db.go:107 Error 1146 (42S02): Table 'go_postery.post' doesn't exist
+[3.348ms] [rows:0] SELECT count(*) FROM `post` WHERE delete_time is null
