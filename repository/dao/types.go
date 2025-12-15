@@ -37,7 +37,11 @@ type LikeDAO interface {
 }
 
 type TagDAO interface {
+	Create(name string, slug string) (int, error)
+	Exist(name string) (int, error)
+	Bind(pid, tid int) error
+	DeleteBind(pid, tid int) error
+	FindTagsByPostID(pid int) ([]string, error)
 }
-
 type FollowDAO interface {
 }
