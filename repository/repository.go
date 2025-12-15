@@ -29,9 +29,17 @@ type PostRepository interface {
 }
 type CommentRepository interface {
 }
-type TagRepository interface {
-}
+
 type LikeRepository interface {
 }
+
+type TagRepository interface {
+}
+
 type FollowRepository interface {
+	Follow(ctx context.Context, ferID, feeID int64) error
+	UnFollow(ctx context.Context, ferID, feeID int64) error
+	IfFollow(ctx context.Context, ferID, feeID int64) (int, error)
+	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
+	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }

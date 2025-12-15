@@ -15,7 +15,7 @@ const (
 	POST_EXPIRE_TIME         = time.Minute * 15
 )
 
-//go:embed change_cnt_script.lua
+//go:embed lua/change_cnt_script.lua
 var addCntScript string
 
 type RedisPostCache struct {
