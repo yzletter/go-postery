@@ -12,10 +12,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// GormFollowDAO 用 Gorm 实现 FollowDAO
 type GormFollowDAO struct {
 	db *gorm.DB
 }
 
+// NewFollowDAO 构造函数
 func NewFollowDAO(db *gorm.DB) FollowDAO {
 	return &GormFollowDAO{db: db}
 }

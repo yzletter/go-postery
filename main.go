@@ -15,12 +15,8 @@ import (
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
-	commentRepository "github.com/yzletter/go-postery/repository/comment"
 	"github.com/yzletter/go-postery/repository/dao"
-	followRepository "github.com/yzletter/go-postery/repository/follow"
-	userLikeRepository "github.com/yzletter/go-postery/repository/like"
 	postRepository "github.com/yzletter/go-postery/repository/post"
-	tagRepository "github.com/yzletter/go-postery/repository/tag"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
@@ -94,7 +90,7 @@ func main() {
 	AuthAdminMdl := middleware.AuthAdminMiddleware(AuthSvc)       // AuthAdminMdl 要求管理员身份
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
