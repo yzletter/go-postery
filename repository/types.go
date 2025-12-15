@@ -1,6 +1,10 @@
 package repository
 
-import "github.com/yzletter/go-postery/model"
+import (
+	"context"
+
+	"github.com/yzletter/go-postery/model"
+)
 
 type UserRepository interface {
 	Create(user *model.User) (*model.User, error)
@@ -14,16 +18,14 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
-	Create(uid int, title, content string) (model.Post, error)
-	Delete(pid int) error
-	Update(pid int, title, content string) error
-	GetByID(pid int) (bool, model.Post)
-	GetByPage(pageNo, pageSize int) (int, []model.Post)
-	GetByPageAndTag(tid, pageNo, pageSize int) (int, []model.Post)
-	GetByUid(uid int) []model.Post
-	ChangeViewCnt(pid int, delta int)
-	ChangeLikeCnt(pid int, delta int)
-	ChangeCommentCnt(pid int, delta int)
+	Create(ctx context.Context, post *model.Post) (*model.Post, error)
+	Delete(ctx context.Context, id int64) error
+	UpdateCount(ctx context.Context, id int64, field model.PostCntField, delta int) error
+	Update(ctx context.Context, id int64, updates map[string]any) error
+	GetByID(ctx context.Context, id int64) (*model.Post, error)
+	GetByUid(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Post, error)
+	GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []*model.Post, error)
+	GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []*model.Post, error)
 }
 type CommentRepository interface {
 }

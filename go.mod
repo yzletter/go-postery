@@ -12,6 +12,7 @@ require (
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/mozillazg/go-pinyin v0.21.0
 	github.com/prometheus/client_golang v1.23.2
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/xid v1.6.0
 	github.com/spf13/viper v1.21.0
@@ -27,6 +28,7 @@ require (
 	github.com/bytedance/sonic/loader v0.4.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
