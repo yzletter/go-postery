@@ -46,6 +46,10 @@ func main() {
 	// Cache 层
 	UserCache := cache.NewUserCache(infraRedis.GetRedis())
 	PostCache := cache.NewPostCache(infraRedis.GetRedis())
+	CommentCache := cache.NewCommentCache(infraRedis.GetRedis())
+	FollowCache := cache.NewFollowCache(infraRedis.GetRedis())
+	LikeCache := cache.NewLikeCache(infraRedis.GetRedis())
+	TagCache := cache.NewTagCache(infraRedis.GetRedis())
 
 	// Repository 层
 	UserRepository := repository.NewUserRepository(UserDAO, UserCache)
@@ -53,25 +57,22 @@ func main() {
 
 	// Service 层
 	UserService := service.NewUserService(UserRepository)
-	PostService := service.NewPostService(PostRepository)
+	PostService := service.NewPostService(PostRepository, PostCache)
 
 	// Repository 层
-	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo
-	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())          // 注册 CommentDBRepo
-	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB())       // 注册 UserLikeDBRepo
-	TagDBRepo := tagRepository.NewTagDBRepository(infraMySQL.GetDB())                      // 注册 TagDBRepo
-	FollowDBRepo := followRepository.NewFollowDBRepository(infraMySQL.GetDB())             // 注册 FollowDBRepo
-	FollowCacheRepo := followRepository.NewFollowCacheRepository(infraRedis.GetRedis())    // 注册 FollowCacheRepo
-	TagCacheRepo := tagRepository.NewTagCacheRepository(infraRedis.GetRedis())             // 注册 TagCacheRepo
-	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())          // 注册 PostCacheRepo
-	CommentCacheRepo := commentRepository.NewCommentCacheRepository(infraRedis.GetRedis()) // 注册 CommentCacheRepo
+	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())             // 注册 PostDBRepo
+	CommentDBRepo := commentRepository.NewCommentDBRepository(infraMySQL.GetDB())    // 注册 CommentDBRepo
+	UserLikeDBRepo := userLikeRepository.NewUserLikeDBRepository(infraMySQL.GetDB()) // 注册 UserLikeDBRepo
+	TagDBRepo := tagRepository.NewTagDBRepository(infraMySQL.GetDB())                // 注册 TagDBRepo
+	FollowDBRepo := followRepository.NewFollowDBRepository(infraMySQL.GetDB())       // 注册 FollowDBRepo
+	PostCacheRepo := postRepository.NewPostCacheRepository(infraRedis.GetRedis())    // 注册 PostCacheRepo
 
 	// Service 层
 	JwtSvc := service.NewJwtService("123456")                                                                           // 注册 JwtSvc
 	MetricSvc := service.NewMetricService()                                                                             // 注册 MetricSvc
 	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserService)                                       // 注册 AuthSvc
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000)                             // 注册 RateLimitSvc
-	PostSvc := service.NewPostService(PostDBRepo, PostCacheRepo, UserRepository, UserLikeDBRepo, TagDBRepo)             // 注册 PostSvc
+	PostSvc := service.NewPostService(PostRepository, UserRepository, UserLikeDBRepo, TagDBRepo)                        // 注册 PostSvc
 	CommentSvc := service.NewCommentService(CommentDBRepo, CommentCacheRepo, UserRepository, PostDBRepo, PostCacheRepo) // 注册 CommentSvc
 	TagSvc := service.NewTagService(TagDBRepo, TagCacheRepo)
 	FollowSvc := service.NewFollowService(FollowDBRepo, FollowCacheRepo, UserRepository) // 注册 FollowSvc

@@ -1,1 +1,13 @@
 package cache
+
+import "github.com/redis/go-redis/v9"
+
+// RedisLikeCache 用 Redis 实现 LikeCache
+type RedisLikeCache struct {
+	client redis.Cmdable
+}
+
+// NewLikeCache 构造函数
+func NewLikeCache(redisClient redis.Cmdable) LikeCache {
+	return &RedisLikeCache{client: redisClient}
+}
