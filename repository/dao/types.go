@@ -36,12 +36,12 @@ type CommentDAO interface {
 type LikeDAO interface {
 }
 
-type TagDAO interface {
-	Create(name string, slug string) (int, error)
-	Exist(name string) (int, error)
-	Bind(pid, tid int) error
-	DeleteBind(pid, tid int) error
-	FindTagsByPostID(pid int) ([]string, error)
-}
+type TagDAO interface{}
+
 type FollowDAO interface {
+	Follow(ctx context.Context, ferID, feeID int64) error
+	UnFollow(ctx context.Context, ferID, feeID int64) error
+	IfFollow(ctx context.Context, ferID, feeID int64) (int, error)
+	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
+	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }

@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS posts
     KEY idx_user_created (user_id, created_at DESC),
     KEY idx_created (created_at DESC),
     KEY idx_status_deleted_created (status, deleted_at, created_at DESC)
-) DEFAULT charset = utf8mb4 COMMENT '帖子信息表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子信息表';
 
 
 CREATE TABLE IF NOT EXISTS user_like
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS user_like
     UNIQUE KEY uq_user_post (user_id, post_id),
     KEY idx_target (post_id),
     KEY idx_user (user_id)
-) DEFAULT charset = utf8mb4 COMMENT '用户点赞表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户点赞表';
 
 CREATE TABLE IF NOT EXISTS COMMENT
 (
@@ -91,8 +91,7 @@ CREATE TABLE IF NOT EXISTS COMMENT
     content     TEXT COMMENT '正文',
     PRIMARY KEY (id),
     KEY idx_user (user_id)
-) DEFAULT charset = utf8mb4 COMMENT '帖子信息表';
-
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子信息表';
 
 CREATE TABLE IF NOT EXISTS tag
 (
@@ -103,7 +102,7 @@ CREATE TABLE IF NOT EXISTS tag
     delete_time DATETIME DEFAULT NULL COMMENT '删除时间',
     UNIQUE KEY uq_slug (slug),
     UNIQUE KEY uq_name (username)
-) DEFAULT charset = utf8mb4 COMMENT '标签信息表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '标签信息表';
 
 CREATE TABLE IF NOT EXISTS post_tag
 (
@@ -113,20 +112,21 @@ CREATE TABLE IF NOT EXISTS post_tag
     UNIQUE KEY uq_post_tag (post_id, tag_id),
     KEY idx_tag (tag_id),
     KEY idx_post (post_id)
-) DEFAULT charset = utf8mb4 COMMENT '帖子——标签绑定信息表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签绑定信息表';
 
-CREATE TABLE IF NOT EXISTS follow
+CREATE TABLE IF NOT EXISTS follows
 (
     id          BIGINT NOT NULL PRIMARY KEY COMMENT '记录 id',
     follower_id BIGINT NOT NULL COMMENT '关注者 id',
     followee_id BIGINT NOT NULL COMMENT '被关注者 id',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    delete_time DATETIME DEFAULT NULL COMMENT '删除时间',
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at    DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
 
     UNIQUE KEY uq_follow (follower_id, followee_id),
-    KEY idx_follower (follower_id, delete_time),
-    KEY idx_followee (followee_id, delete_time),
+    KEY idx_follower (follower_id, deleted_at),
+    KEY idx_followee (followee_id, deleted_at),
 
     CHECK (follower_id <> followee_id) # 避免自己关注自己
-) DEFAULT charset = utf8mb4 COMMENT '关注信息表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '关注信息表';

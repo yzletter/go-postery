@@ -18,10 +18,10 @@ var (
 
 type FollowService struct {
 	UserRepo   repository.UserRepository
-	FollowRepo repository.LikeRepository
+	FollowRepo repository.FollowRepository
 }
 
-func NewFollowService(userRepo repository.UserRepository, followRepo repository.LikeRepository) *FollowService {
+func NewFollowService(userRepo repository.UserRepository, followRepo repository.FollowRepository) *FollowService {
 	return &FollowService{UserRepo: userRepo, FollowRepo: followRepo}
 }
 
