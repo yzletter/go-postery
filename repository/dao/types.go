@@ -9,14 +9,14 @@ import (
 // 定义 DAO 层所有接口
 
 type UserDAO interface {
-	Create(user *model.User) (*model.User, error)
-	Delete(id int64) error
-	GetPasswordHash(id int64) (string, error)
-	GetStatus(id int64) (int, error)
-	GetByID(id int64) (*model.User, error)
-	GetByUsername(username string) (*model.User, error)
-	UpdatePasswordHash(id int64, newHash string) error
-	UpdateProfile(id int64, updates map[string]any) error
+	Create(ctx context.Context, user *model.User) (*model.User, error)
+	Delete(ctx context.Context, id int64) error
+	GetPasswordHash(ctx context.Context, id int64) (string, error)
+	GetStatus(ctx context.Context, id int64) (int, error)
+	GetByID(ctx context.Context, id int64) (*model.User, error)
+	GetByUsername(ctx context.Context, username string) (*model.User, error)
+	UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
+	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error
 }
 
 type PostDAO interface {

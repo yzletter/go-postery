@@ -1,6 +1,6 @@
 package cache
 
-import "github.com/go-redis/redis"
+import "github.com/redis/go-redis/v9"
 
 // RedisUserCache 用 Redis 实现 UserCache
 type RedisUserCache struct {

@@ -22,7 +22,7 @@ type RedisPostCache struct {
 	client redis.Cmdable
 }
 
-func NewPostCache(client redis.Cmdable) *RedisPostCache {
+func NewPostCache(client redis.Cmdable) PostCache {
 	return &RedisPostCache{client: client}
 }
 

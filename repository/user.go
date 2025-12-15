@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
@@ -17,8 +19,8 @@ func NewUserRepository(userDAO dao.UserDAO, userCache cache.UserCache) UserRepos
 	return &userRepository{dao: userDAO, cache: userCache}
 }
 
-func (repo *userRepository) Create(user *model.User) (*model.User, error) {
-	u, err := repo.dao.Create(user)
+func (repo *userRepository) Create(ctx context.Context, user *model.User) (*model.User, error) {
+	u, err := repo.dao.Create(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +30,8 @@ func (repo *userRepository) Create(user *model.User) (*model.User, error) {
 	return u, nil
 }
 
-func (repo *userRepository) Delete(id int64) error {
-	err := repo.dao.Delete(id)
+func (repo *userRepository) Delete(ctx context.Context, id int64) error {
+	err := repo.dao.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -39,50 +41,50 @@ func (repo *userRepository) Delete(id int64) error {
 	return nil
 }
 
-func (repo *userRepository) GetPasswordHash(id int64) (string, error) {
-	passwordHash, err := repo.dao.GetPasswordHash(id)
+func (repo *userRepository) GetPasswordHash(ctx context.Context, id int64) (string, error) {
+	passwordHash, err := repo.dao.GetPasswordHash(ctx, id)
 	if err != nil {
 		return "", err
 	}
 	return passwordHash, nil
 }
 
-func (repo *userRepository) GetStatus(id int64) (int, error) {
+func (repo *userRepository) GetStatus(ctx context.Context, id int64) (int, error) {
 	// todo 查 Cache
 
-	status, err := repo.dao.GetStatus(id)
+	status, err := repo.dao.GetStatus(ctx, id)
 	if err != nil {
 		return 0, err
 	}
 	return status, nil
 }
 
-func (repo *userRepository) GetByID(id int64) (*model.User, error) {
+func (repo *userRepository) GetByID(ctx context.Context, id int64) (*model.User, error) {
 	// todo 查 Cache
 
-	user, err := repo.dao.GetByID(id)
+	user, err := repo.dao.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (repo *userRepository) GetByUsername(username string) (*model.User, error) {
+func (repo *userRepository) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	// todo 查 Cache
 
-	user, err := repo.dao.GetByUsername(username)
+	user, err := repo.dao.GetByUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (repo *userRepository) UpdatePasswordHash(id int64, newHash string) error {
-	return repo.dao.UpdatePasswordHash(id, newHash)
+func (repo *userRepository) UpdatePasswordHash(ctx context.Context, id int64, newHash string) error {
+	return repo.dao.UpdatePasswordHash(ctx, id, newHash)
 }
 
-func (repo *userRepository) UpdateProfile(id int64, updates map[string]any) error {
-	err := repo.dao.UpdateProfile(id, updates)
+func (repo *userRepository) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
+	err := repo.dao.UpdateProfile(ctx, id, updates)
 	if err != nil {
 		return err
 	}

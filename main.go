@@ -41,15 +41,19 @@ func main() {
 
 	// DAO 层
 	UserDAO := dao.NewUserDAO(infraMySQL.GetDB())
+	PostDAO := dao.NewPostDAO(infraMySQL.GetDB())
 
 	// Cache 层
 	UserCache := cache.NewUserCache(infraRedis.GetRedis())
+	PostCache := cache.NewPostCache(infraRedis.GetRedis())
 
 	// Repository 层
 	UserRepository := repository.NewUserRepository(UserDAO, UserCache)
+	PostRepository := repository.NewPostRepository(PostDAO, PostCache)
 
 	// Service 层
 	UserService := service.NewUserService(UserRepository)
+	PostService := service.NewPostService(PostRepository)
 
 	// Repository 层
 	PostDBRepo := postRepository.NewPostDBRepository(infraMySQL.GetDB())                   // 注册 PostDBRepo

@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"time"
@@ -24,7 +25,7 @@ func NewUserDAO(db *gorm.DB) *GormUserDAO {
 }
 
 // Create 创建 User
-func (dao *GormUserDAO) Create(user *model.User) (*model.User, error) {
+func (dao *GormUserDAO) Create(ctx context.Context, user *model.User) (*model.User, error) {
 	// 0. 技术字段完整性保证
 	if user.ID == 0 {
 		user.ID = snowflake.NextID()
@@ -34,7 +35,7 @@ func (dao *GormUserDAO) Create(user *model.User) (*model.User, error) {
 	}
 
 	// 1. 操作数据库
-	result := dao.db.Create(user)
+	result := dao.db.WithContext(ctx).Create(user)
 	if result.Error != nil {
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
@@ -52,10 +53,10 @@ func (dao *GormUserDAO) Create(user *model.User) (*model.User, error) {
 }
 
 // Delete 软删除 User
-func (dao *GormUserDAO) Delete(id int64) error {
+func (dao *GormUserDAO) Delete(ctx context.Context, id int64) error {
 	// 1. 操作数据库
 	now := time.Now()
-	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now)
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now)
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(DeleteFailed, "id", id, "error", result.Error)
@@ -70,10 +71,10 @@ func (dao *GormUserDAO) Delete(id int64) error {
 }
 
 // GetPasswordHash 返回 User 的 PasswordHash
-func (dao *GormUserDAO) GetPasswordHash(id int64) (string, error) {
+func (dao *GormUserDAO) GetPasswordHash(ctx context.Context, id int64) (string, error) {
 	// 1. 操作数据库
 	var res string
-	result := dao.db.Model(&model.User{}).Select("password_hash").Where("id = ? AND deleted_at IS NULL", id).Take(&res)
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Select("password_hash").Where("id = ? AND deleted_at IS NULL", id).Take(&res)
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -89,10 +90,10 @@ func (dao *GormUserDAO) GetPasswordHash(id int64) (string, error) {
 }
 
 // GetStatus 返回 User 的 Status
-func (dao *GormUserDAO) GetStatus(id int64) (int, error) {
+func (dao *GormUserDAO) GetStatus(ctx context.Context, id int64) (int, error) {
 	// 1. 操作数据库
 	var status int
-	result := dao.db.Model(&model.User{}).Select("status").Where("id = ? AND deleted_at IS NULL", id).Take(&status)
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Select("status").Where("id = ? AND deleted_at IS NULL", id).Take(&status)
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -108,12 +109,12 @@ func (dao *GormUserDAO) GetStatus(id int64) (int, error) {
 }
 
 // GetByID 根据 User 的 ID 查找不带密码的 User
-func (dao *GormUserDAO) GetByID(id int64) (*model.User, error) {
+func (dao *GormUserDAO) GetByID(ctx context.Context, id int64) (*model.User, error) {
 	// 1. 构造结构体对象
 	user := &model.User{}
 
 	// 2. 操作数据库
-	result := dao.db.Omit("password_hash").Where("id = ? AND deleted_at IS NULL", id).First(user)
+	result := dao.db.WithContext(ctx).Omit("password_hash").Where("id = ? AND deleted_at IS NULL", id).First(user)
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -129,12 +130,12 @@ func (dao *GormUserDAO) GetByID(id int64) (*model.User, error) {
 }
 
 // GetByUsername 根据 User 的 Username 查找带密码的 User
-func (dao *GormUserDAO) GetByUsername(username string) (*model.User, error) {
+func (dao *GormUserDAO) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	// 1. 构造结构体对象
 	user := &model.User{}
 
 	// 2. 操作数据库
-	result := dao.db.Where("username = ? AND deleted_at IS NULL", username).First(user)
+	result := dao.db.WithContext(ctx).Where("username = ? AND deleted_at IS NULL", username).First(user)
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -150,9 +151,9 @@ func (dao *GormUserDAO) GetByUsername(username string) (*model.User, error) {
 }
 
 // UpdatePasswordHash 更新 User 的 PasswordHash
-func (dao *GormUserDAO) UpdatePasswordHash(id int64, newHash string) error {
+func (dao *GormUserDAO) UpdatePasswordHash(ctx context.Context, id int64, newHash string) error {
 	// 1. 操作数据库
-	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("password_hash", newHash)
+	result := dao.db.WithContext(ctx).WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("password_hash", newHash)
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "error", result.Error)
@@ -160,7 +161,7 @@ func (dao *GormUserDAO) UpdatePasswordHash(id int64, newHash string) error {
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		var cnt int64
-		result2 := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
+		result2 := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result.Error)
@@ -178,9 +179,9 @@ func (dao *GormUserDAO) UpdatePasswordHash(id int64, newHash string) error {
 }
 
 // UpdateProfile 更新 User 的多个字段
-func (dao *GormUserDAO) UpdateProfile(id int64, updates map[string]any) error {
+func (dao *GormUserDAO) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
 	// 1. 操作数据库
-	result := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Updates(updates)
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Updates(updates)
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "error", result.Error)
@@ -188,7 +189,7 @@ func (dao *GormUserDAO) UpdateProfile(id int64, updates map[string]any) error {
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		var cnt int64
-		result2 := dao.db.Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
+		result2 := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result.Error)

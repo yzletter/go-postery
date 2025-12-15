@@ -1,10 +1,11 @@
 package infra
 
 import (
+	"context"
 	"log/slog"
 	"sync"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/infra/viper"
 )
 
@@ -33,7 +34,7 @@ func Init(confDir, confFileName, confFileType string) {
 	})
 
 	// 尝试 ping 通
-	if err := globalRedisClient.Ping().Err(); err != nil { // 须加上.Err(), 否则会报 ping 通错
+	if err := globalRedisClient.Ping(context.Background()).Err(); err != nil { // 须加上.Err(), 否则会报 ping 通错
 		slog.Error("connect to Redis failed", "error", err)
 		panic(err)
 	} else {
@@ -52,7 +53,7 @@ func GetRedis() *redis.Client {
 // Ping ping 一下数据库 保持连接
 func Ping() {
 	if globalRedisClient != nil {
-		err := globalRedisClient.Ping().Err()
+		err := globalRedisClient.Ping(context.Background()).Err()
 		if err != nil {
 			slog.Info("ping globalRedisClient failed")
 			return

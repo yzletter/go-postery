@@ -42,7 +42,7 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	ok, userBriefDTO := hdl.UserService.Login(loginRequest.Name, loginRequest.PassWord)
+	ok, userBriefDTO := hdl.UserService.Login(ctx, loginRequest.Name, loginRequest.PassWord)
 	if !ok {
 		// 根据 name 未找到 user或密码不正确
 		response.ParamError(ctx, "用户名或密码错误")
@@ -93,7 +93,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.UserService.UpdatePassword(uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
+	err = hdl.UserService.UpdatePassword(ctx, uid, modifyPassRequest.OldPass, modifyPassRequest.NewPass)
 	if err != nil {
 		// 密码更改失败
 		response.ServerError(ctx, "")
@@ -115,7 +115,7 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	userBriefDTO, err := hdl.UserService.Register(createUserRequest.Name, createUserRequest.PassWord)
+	userBriefDTO, err := hdl.UserService.Register(ctx, createUserRequest.Name, createUserRequest.PassWord)
 	if err != nil {
 		if errors.Is(err, service.ErrNameDuplicated) { // 唯一键冲突
 			response.ParamError(ctx, "用户名重复")
@@ -153,7 +153,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 		return
 	}
 
-	ok, userDetailDTO := hdl.UserService.GetDetailById(int64(uid))
+	ok, userDetailDTO := hdl.UserService.GetDetailById(ctx, int64(uid))
 	if !ok {
 		response.ServerError(ctx, "")
 		return
@@ -180,7 +180,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.UserService.UpdateProfile(uid, modifyUserProfileRequest)
+	err = hdl.UserService.UpdateProfile(ctx, uid, modifyUserProfileRequest)
 	if err != nil {
 		slog.Error("Error", err)
 		if errors.Is(err, dao.ErrRecordNotFound) {

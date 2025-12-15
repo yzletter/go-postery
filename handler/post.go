@@ -39,13 +39,13 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs := hdl.PostService.GetByPage(pageNo, pageSize)
+	total, postDTOs := hdl.PostService.GetByPage(ctx, pageNo, pageSize)
 	for k := range postDTOs {
-		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(postDTOs[k].Id)
+		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(int(postDTOs[k].ID))
 	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := hdl.PostService.HasMore(pageNo, pageSize, total)
+	hasMore := hdl.PostService.HasMore(ctx, pageNo, pageSize, total)
 
 	// 返回
 	response.Success(ctx, gin.H{
@@ -69,13 +69,13 @@ func (hdl *PostHandler) ListByTag(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs := hdl.PostService.GetByPageAndTag(name, pageNo, pageSize)
+	total, postDTOs := hdl.PostService.GetByPageAndTag(ctx, name, pageNo, pageSize)
 	for k := range postDTOs {
-		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(postDTOs[k].Id)
+		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(int(postDTOs[k].ID))
 	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := hdl.PostService.HasMore(pageNo, pageSize, total)
+	hasMore := hdl.PostService.HasMore(ctx, pageNo, pageSize, total)
 
 	// 返回
 	response.Success(ctx, gin.H{
@@ -97,12 +97,12 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	ok, postDTO := hdl.PostService.GetDetailById(pid)
+	ok, postDTO := hdl.PostService.GetDetailById(ctx, pid)
 	if !ok {
 		response.ServerError(ctx, "")
 		return
 	}
-	postDTO.Tags = hdl.TagSvc.FindTagsByPostID(postDTO.Id)
+	postDTO.Tags = hdl.TagSvc.FindTagsByPostID(int(postDTO.ID))
 	response.Success(ctx, postDTO)
 }
 
@@ -125,7 +125,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.PostService.Create(int(uid), createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.PostService.Create(ctx, int(uid), createRequest.Title, createRequest.Content)
 	if err != nil {
 		// 创建帖子失败
 		response.ServerError(ctx, "")
@@ -133,7 +133,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 建立标签
-	hdl.TagSvc.Bind(postDTO.Id, createRequest.Tags)
+	hdl.TagSvc.Bind(int(postDTO.ID), createRequest.Tags)
 
 	response.Success(ctx, postDTO)
 }
@@ -155,7 +155,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 进行删除
-	err = hdl.PostService.Delete(pid, int(uid))
+	err = hdl.PostService.Delete(ctx, pid, int(uid))
 	if err != nil {
 		if err.Error() == "没有权限" {
 			response.Unauthorized(ctx, "")
@@ -187,7 +187,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = hdl.PostService.Update(updateRequest.Id, int(uid), updateRequest.Title, updateRequest.Content, updateRequest.Tags)
+	err = hdl.PostService.Update(ctx, updateRequest.Id, int(uid), updateRequest.Title, updateRequest.Content, updateRequest.Tags)
 	if err != nil {
 		if err.Error() == "没有权限" {
 			response.Unauthorized(ctx, "")
@@ -217,7 +217,7 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	ok := hdl.PostService.Belong(pid, int(uid))
+	ok := hdl.PostService.Belong(ctx, pid, int(uid))
 	if !ok {
 		response.Unauthorized(ctx, "")
 		return
@@ -237,7 +237,7 @@ func (hdl *PostHandler) ListByUid(ctx *gin.Context) {
 		return
 	}
 
-	postDTOs := hdl.PostService.GetByUid(uid)
+	postDTOs := hdl.PostService.GetByUid(ctx, uid)
 	response.Success(ctx, postDTOs)
 }
 
@@ -256,7 +256,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.PostService.Like(pid, int(uid))
+	err = hdl.PostService.Like(ctx, pid, int(uid))
 	if err != nil {
 		if errors.Is(err, userLikeRepository.ErrRecordHasExist) {
 			response.Fail(ctx, response.CodeBadRequest, "重复点赞")
@@ -284,7 +284,7 @@ func (hdl *PostHandler) Dislike(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.PostService.Dislike(pid, int(uid))
+	err = hdl.PostService.Dislike(ctx, pid, int(uid))
 	if err != nil {
 		if errors.Is(err, userLikeRepository.ErrRecordNotExist) {
 			response.Fail(ctx, response.CodeBadRequest, "重复取消")
