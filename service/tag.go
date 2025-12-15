@@ -36,7 +36,7 @@ func (svc *TagService) Bind(pid int, tags []string) {
 			tid, err = svc.Create(tag)
 			if err != nil {
 				// 虽然有错误, 但尽可能的多绑定
-				slog.Error("Tag Not Exist And Created Failed", "error", err)
+				slog.Error("Tag Not Exists And CreatedAt Failed", "error", err)
 				continue
 			}
 		}

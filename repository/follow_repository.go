@@ -16,8 +16,8 @@ func NewFollowRepository(followDAO dao.FollowDAO, followCache cache.FollowCache)
 	return &followRepository{dao: followDAO, cache: followCache}
 }
 
-func (repo *followRepository) Follow(ctx context.Context, ferID, feeID int64) error {
-	err := repo.dao.Follow(ctx, ferID, feeID)
+func (repo *followRepository) Create(ctx context.Context, ferID, feeID int64) error {
+	err := repo.dao.Create(ctx, ferID, feeID)
 	if err != nil {
 		return err
 	}
@@ -25,8 +25,8 @@ func (repo *followRepository) Follow(ctx context.Context, ferID, feeID int64) er
 	return nil
 }
 
-func (repo *followRepository) UnFollow(ctx context.Context, ferID, feeID int64) error {
-	err := repo.dao.UnFollow(ctx, ferID, feeID)
+func (repo *followRepository) Delete(ctx context.Context, ferID, feeID int64) error {
+	err := repo.dao.Delete(ctx, ferID, feeID)
 	if err != nil {
 		return err
 	}
@@ -34,8 +34,8 @@ func (repo *followRepository) UnFollow(ctx context.Context, ferID, feeID int64) 
 	return nil
 }
 
-func (repo *followRepository) IfFollow(ctx context.Context, ferID, feeID int64) (int, error) {
-	ok, err := repo.dao.IfFollow(ctx, ferID, feeID)
+func (repo *followRepository) Exists(ctx context.Context, ferID, feeID int64) (int, error) {
+	ok, err := repo.dao.Exists(ctx, ferID, feeID)
 	if err != nil {
 		return 0, err
 	}

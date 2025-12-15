@@ -22,8 +22,8 @@ func NewFollowDAO(db *gorm.DB) FollowDAO {
 	return &GormFollowDAO{db: db}
 }
 
-// Follow ferID 关注 feeID
-func (dao *GormFollowDAO) Follow(ctx context.Context, ferID, feeID int64) error {
+// Create 创建 ferID 关注 feeID
+func (dao *GormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error {
 	// 1. 操作数据库
 	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NOT NULL", ferID, feeID).Update("deleted_at", nil)
 	if result.Error != nil {
@@ -58,8 +58,8 @@ func (dao *GormFollowDAO) Follow(ctx context.Context, ferID, feeID int64) error 
 	return nil
 }
 
-// UnFollow 取消 ferID 关注 feeID
-func (dao *GormFollowDAO) UnFollow(ctx context.Context, ferID, feeID int64) error {
+// Delete 删除 ferID 关注 feeID
+func (dao *GormFollowDAO) Delete(ctx context.Context, ferID, feeID int64) error {
 	now := time.Now()
 	// 1. 操作数据库
 	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", ferID, feeID).Update("deleted_at", &now)
@@ -76,8 +76,8 @@ func (dao *GormFollowDAO) UnFollow(ctx context.Context, ferID, feeID int64) erro
 	return nil
 }
 
-// IfFollow 判断关注关系 0 表示互不关注, 1 表示 a 关注 b, 2 表示 b 关注 a, 3 表示互相关注
-func (dao *GormFollowDAO) IfFollow(ctx context.Context, ferID, feeID int64) (int, error) {
+// Exists 判断存在关注关系 0 表示互不关注, 1 表示 a 关注 b, 2 表示 b 关注 a, 3 表示互相关注
+func (dao *GormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, error) {
 	exists := func(a, b int64) (bool, error) {
 		var cnt int64
 		result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", a, b).Count(&cnt)

@@ -27,6 +27,7 @@ type PostRepository interface {
 	GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []*model.Post, error)
 	GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []*model.Post, error)
 }
+
 type CommentRepository interface {
 	Create(ctx context.Context, comment *model.Comment) (*model.Comment, error)
 	GetByID(ctx context.Context, id int64) (*model.Comment, error)
@@ -36,15 +37,18 @@ type CommentRepository interface {
 }
 
 type LikeRepository interface {
+	Like(ctx context.Context, like *model.Like) error
+	UnLike(ctx context.Context, uid, pid int64) error
+	HasLiked(ctx context.Context, uid, pid int64) (bool, error)
 }
 
 type TagRepository interface {
 }
 
 type FollowRepository interface {
-	Follow(ctx context.Context, ferID, feeID int64) error
-	UnFollow(ctx context.Context, ferID, feeID int64) error
-	IfFollow(ctx context.Context, ferID, feeID int64) (int, error)
+	Create(ctx context.Context, ferID, feeID int64) error
+	Delete(ctx context.Context, ferID, feeID int64) error
+	Exists(ctx context.Context, ferID, feeID int64) (int, error)
 	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }

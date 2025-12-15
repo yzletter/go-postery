@@ -2,15 +2,15 @@ package model
 
 import "time"
 
-type UserLike struct {
-	Id         int        `gorm:"primaryKey"`
-	UserId     int        `gorm:"column:user_id"`
-	PostId     int        `gorm:"column:post_id"`
-	CreateTime *time.Time `gorm:"column:create_time"`
-	UpdateTime *time.Time `gorm:"column:update_time"`
-	DeleteTime *time.Time `gorm:"column:delete_time"`
+type Like struct {
+	ID        int64      `gorm:"primaryKey"`
+	UserID    int64      `gorm:"column:user_id"`
+	PostID    int64      `gorm:"column:post_id"`
+	CreatedAt time.Time  `gorm:"column:created_at"`
+	UpdatedAt time.Time  `gorm:"column:updated_at"`
+	DeletedAt *time.Time `gorm:"column:deleted_at"`
 }
 
-func (u UserLike) TableName() string {
-	return "user_like"
+func (l Like) TableName() string {
+	return "likes"
 }

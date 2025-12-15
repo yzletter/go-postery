@@ -32,21 +32,24 @@ type PostDAO interface {
 
 type CommentDAO interface {
 	Create(ctx context.Context, comment *model.Comment) (*model.Comment, error)
-	GetByID(ctx context.Context, id int64) (*model.Comment, error)
 	Delete(ctx context.Context, id int64) (int, error)
+	GetByID(ctx context.Context, id int64) (*model.Comment, error)
 	GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
 	GetRepliesByParentIDs(ctx context.Context, ids []int64) ([]*model.Comment, error)
 }
 
 type LikeDAO interface {
+	Create(ctx context.Context, like *model.Like) error
+	Delete(ctx context.Context, uid, pid int64) error
+	Exists(ctx context.Context, uid, pid int64) (bool, error)
 }
 
 type TagDAO interface{}
 
 type FollowDAO interface {
-	Follow(ctx context.Context, ferID, feeID int64) error
-	UnFollow(ctx context.Context, ferID, feeID int64) error
-	IfFollow(ctx context.Context, ferID, feeID int64) (int, error)
+	Create(ctx context.Context, ferID, feeID int64) error
+	Delete(ctx context.Context, ferID, feeID int64) error
+	Exists(ctx context.Context, ferID, feeID int64) (int, error)
 	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }

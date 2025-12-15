@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"time"
@@ -10,77 +11,82 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	ErrRecordHasExist = errors.New("该记录已存在")
-	ErrRecordNotExist = errors.New("该记录不存在")
-)
-
+// GormLikeDAO 用 Gorm 实现 LikeDAO
 type GormLikeDAO struct {
 	db *gorm.DB
 }
 
+// NewLikeDAO 构造函数
 func NewLikeDAO(db *gorm.DB) LikeDAO {
 	return &GormLikeDAO{db: db}
 }
 
-func (repo *GormLikeDAO) Create(uid, pid int) error {
-	now := time.Now()
-	userLike := model.UserLike{
-		UserId:     uid,
-		PostId:     pid,
-		CreateTime: &now,
-		UpdateTime: &now,
-		DeleteTime: nil,
+// Create 创建 Like
+func (dao *GormLikeDAO) Create(ctx context.Context, like *model.Like) error {
+	// 0. 兜底
+	if like == nil || like.UserID == 0 || like.PostID == 0 {
+		return ErrParamsInvalid
 	}
-	tx := repo.db.Create(&userLike)
 
-	// 创建成功
-	if tx.Error == nil {
+	// 1. 恢复软删除
+	result := dao.db.WithContext(ctx).Model(&model.Like{}).Where("user_id = ? AND post_id = ? AND deleted_at IS NOT NULL", like.UserID, like.PostID).Update("deleted_at", nil)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(UpdateFailed, "error", result.Error)
+		return ErrInternal
+	}
+	if result.RowsAffected != 0 {
+		// 恢复成功
 		return nil
 	}
 
-	var mysqlErr *mysql.MySQLError
-	if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-		// Unique Key 冲突, 说明记录已经存在, 需要判断记录是否被软删除
-		tx = repo.db.Model(&model.UserLike{}).Where("user_id = ? and post_id = ?", uid, pid).Update("delete_time", nil)
-		if tx.Error != nil {
-			return ErrInternal
-		}
-
-		if tx.RowsAffected == 1 { // 被软删除了, 恢复记录
+	// 2. 创建新记录
+	result = dao.db.WithContext(ctx).Create(like)
+	if result.Error != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 { // 记录没有被软删且已存在 -> 已经点赞
+			// 幂等
 			return nil
 		}
 
-		return ErrRecordHasExist
-	}
-
-	// 其他内部错误
-	return ErrInternal
-}
-
-func (repo *GormLikeDAO) Delete(uid, pid int) error {
-	var userLike model.UserLike
-	tx := repo.db.Model(&userLike).Where("user_id = ? and post_id = ? and delete_time is null", uid, pid).Update("delete_time", time.Now())
-	if tx.Error != nil {
+		// 系统层面错误
+		slog.Error(CreateFailed, "error", result.Error)
 		return ErrInternal
-	}
-	if tx.RowsAffected == 0 {
-		return ErrRecordNotExist
 	}
 
 	return nil
 }
 
-func (repo *GormLikeDAO) Get(uid, pid int) (bool, error) {
-	var userLike model.UserLike
-	tx := repo.db.Where("user_id = ? and post_id = ? and delete_time is null", uid, pid).First(&userLike)
-	if tx.Error != nil {
-		// 若错误不是记录未找到, 记录系统错误
-		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			slog.Error("MySQL Find Post_Tag Failed")
-			return false, ErrInternal
+// Delete 删除 Like
+func (dao *GormLikeDAO) Delete(ctx context.Context, uid, pid int64) error {
+	now := time.Now()
+	result := dao.db.WithContext(ctx).Model(&model.Like{}).Where("user_id = ? AND post_id = ? AND deleted_at IS NULL", uid, pid).Update("deleted_at", &now)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(DeleteFailed, "user_id", uid, "post_id", pid, "error", result.Error)
+		return ErrInternal
+	}
+	if result.RowsAffected == 0 {
+		// 幂等
+		return nil
+	}
+
+	return nil
+}
+
+// Exists 判断 Like 存在
+func (dao *GormLikeDAO) Exists(ctx context.Context, uid, pid int64) (bool, error) {
+	userLike := model.Like{}
+	result := dao.db.WithContext(ctx).Where("user_id = ? AND post_id = ? AND deleted_at IS NULL", uid, pid).First(&userLike)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// 业务层面错误
+			return false, ErrRecordNotFound
 		}
-		return false, nil
+
+		// 系统层面错误
+		slog.Error(FindFailed, "user_id", uid, "post_id", pid, "error", result.Error)
+		return false, ErrInternal
 	}
 	return true, nil
 }
