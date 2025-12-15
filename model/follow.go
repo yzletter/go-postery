@@ -10,3 +10,8 @@ type Follow struct {
 	UpdatedAt  time.Time  `gorm:"column:updated_at"`
 	DeletedAt  *time.Time `gorm:"column:deleted_at"`
 }
+
+// TableName 指定表名
+func (f Follow) TableName() string {
+	return "follows"
+}

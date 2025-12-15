@@ -31,6 +31,11 @@ type PostDAO interface {
 }
 
 type CommentDAO interface {
+	Create(ctx context.Context, comment *model.Comment) (*model.Comment, error)
+	GetByID(ctx context.Context, id int64) (*model.Comment, error)
+	Delete(ctx context.Context, id int64) (int, error)
+	GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
+	GetRepliesByParentID(ctx context.Context, id int64) ([]*model.Comment, error)
 }
 
 type LikeDAO interface {

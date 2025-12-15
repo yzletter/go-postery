@@ -1,12 +1,12 @@
 package dao
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"time"
 
-	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/infra/snowflake"
+	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -21,61 +21,100 @@ func NewCommentDAO(db *gorm.DB) CommentDAO {
 	}
 }
 
-func (dao *GormCommentDAO) Create(pid int, uid int, parentId int, replyId int, content string) (model.Comment, error) {
-	now := time.Now()
-	comment := model.Comment{
-		Id:         int(snowflake.NextID()),
-		PostId:     pid,      // 所属帖子 id
-		ParentId:   parentId, // 父评论 id, 若为 0 则为主评论
-		ReplyId:    replyId,  // 当前评论所评论的Id
-		UserId:     uid,      // 评论的用户 id
-		Content:    content,  // 内容
-		CreateTime: &now,
-		DeleteTime: nil,
-	}
-	if err := dao.db.Create(&comment).Error; err != nil {
-		slog.Error("评论发表失败", "error", err)
-		return model.Comment{}, errno.ErrCreateFailed
-	}
-	return comment, nil
-}
-
-func (dao *GormCommentDAO) GetByID(cid int) (model.Comment, error) {
-	comment := model.Comment{Id: cid}
-	// Find 不报 ErrRecordNotFound
-	tx := dao.db.Select("*").Where("delete_time is null").First(&comment)
-	if tx.Error != nil {
-		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) { // 并非未找到, 而是其他错误
-			slog.Error("评论查找失败", "cid", cid, "error", tx.Error)
-			return model.Comment{}, errno.ErrGetFailed
-		} else {
-			return model.Comment{}, errno.ErrRecordNotFound
+// Create 创建 Comment
+func (dao *GormCommentDAO) Create(ctx context.Context, comment *model.Comment) (*model.Comment, error) {
+	result := dao.db.WithContext(ctx).Create(comment)
+	if result.Error != nil {
+		// 业务层面错误
+		var mysqlErr *mysql.MySQLError
+		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+			return nil, ErrUniqueKeyConflict
 		}
+		// 系统层面错误
+		slog.Error(CreateFailed, "error", result.Error)
+		return nil, ErrInternal
 	}
+
 	return comment, nil
 }
 
-func (dao *GormCommentDAO) Delete(cid int) (int, error) {
-	var comment model.Comment
-	tx := dao.db.Model(&comment).Where("id = ?", cid).Or("parent_id = ?", cid).Update("delete_time", time.Now())
-	if tx.Error != nil {
-		slog.Error("删除失败", "cid", cid)
-		return 0, errno.ErrDeleteFailed
+// GetByID 根据 Comment 的 ID 查找 Comment
+func (dao *GormCommentDAO) GetByID(ctx context.Context, id int64) (*model.Comment, error) {
+	comment := &model.Comment{}
+	// Find 不报 ErrRecordNotFound
+	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Select("*").Where("id = ? AND deleted_at IS NULL", id).First(comment)
+	if result.Error != nil {
+		// 业务层面错误
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		// 系统层面错误
+		slog.Error(FindFailed, "comment_id", id, "error", result.Error)
+		return nil, ErrInternal
 	}
 
-	if tx.RowsAffected == 0 {
-		return 0, errno.ErrRecordNotFound
-	}
-	return int(tx.RowsAffected), nil
+	return comment, nil
 }
 
-func (dao *GormCommentDAO) GetByPostID(pid int) ([]model.Comment, error) {
-	var comments []model.Comment
-	// 按时间降序
-	tx := dao.db.Model(&model.Comment{}).Where("post_id = ?", pid).Where("delete_time is null").Order("create_time desc").Find(&comments)
-	if tx.Error != nil {
-		slog.Error("获取帖子的评论失败", "pid", pid, "error", tx.Error)
-		return nil, errno.ErrGetFailed
+// Delete 软删除 Comment 并返回删除的条数
+func (dao *GormCommentDAO) Delete(ctx context.Context, id int64) (int, error) {
+	now := time.Now()
+	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("(id = ? OR parent_id = ?) AND deleted_at IS NULL", id, id).Update("deleted_at", &now)
+	if result.Error != nil {
+		slog.Error(DeleteFailed, "comment_id", id, "error", result.Error)
+		return 0, ErrInternal
+	}
+
+	return int(result.RowsAffected), nil
+}
+
+// GetByPostID 查找 Post 的一级评论
+func (dao *GormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error) {
+	// 0. 兜底
+	if pageNo < 1 || pageSize <= 0 || pageSize > 100 {
+		return 0, nil, ErrParamsInvalid
+	}
+
+	// 1. 操作数据库
+	base := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("post_id = ? AND parent_id = 0 AND deleted_at IS NULL", id)
+
+	// 2. 获取总数
+	var total int64
+	result := base.Count(&total)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(FindFailed, "post_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
+		return 0, nil, ErrInternal
+	} else if total == 0 {
+		return 0, []*model.Comment{}, nil
+	}
+
+	// 3. 获取评论
+	var comments []*model.Comment
+	offset := (pageNo - 1) * pageSize
+	result = base.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&comments)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(FindFailed, "post_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
+		return 0, nil, ErrInternal
+	}
+
+	// 4. 返回结果
+	return total, comments, nil
+}
+
+// GetRepliesByParentID 根据 Comment 的 ID 查找 Comment 的子评论
+func (dao *GormCommentDAO) GetRepliesByParentID(ctx context.Context, id int64) ([]*model.Comment, error) {
+	var comments []*model.Comment
+	// Find 不报 ErrRecordNotFound
+	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Select("*").Where("parent_id = ? AND deleted_at IS NULL", id).Find(&comments)
+	if result.Error != nil {
+		// 系统层面错误
+		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			slog.Error(FindFailed, "parent_id", id, "error", result.Error)
+			return nil, ErrInternal
+		}
 	}
 
 	return comments, nil

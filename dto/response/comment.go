@@ -18,10 +18,10 @@ type CommentDTO struct {
 
 func ToCommentDTO(comment model.Comment, user model.User) CommentDTO {
 	return CommentDTO{
-		Id:        comment.Id,
-		PostId:    comment.PostId,
-		ParentId:  comment.ParentId,
-		ReplyId:   comment.ReplyId,
+		Id:        comment.ID,
+		PostId:    comment.PostID,
+		ParentId:  comment.ParentID,
+		ReplyId:   comment.ReplyID,
 		Content:   comment.Content,
 		CreatedAt: comment.CreateTime.Format(time.RFC3339),
 		Author:    ToUserBriefDTO(user),

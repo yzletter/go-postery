@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS posts
     title         varchar(255) NOT NULL COMMENT '标题',
     content       TEXT COMMENT '正文',
     status        TINYINT      NOT NULL DEFAULT 1 COMMENT '状态 1 正常, 2 封禁',
-    view_count    INT       NOT NULL DEFAULT 0 COMMENT '浏览量',
+    view_count    INT          NOT NULL DEFAULT 0 COMMENT '浏览量',
     like_count    INT          NOT NULL DEFAULT 0 COMMENT '点赞数',
     comment_count INT          NOT NULL DEFAULT 0 COMMENT '评论数',
 
@@ -64,6 +64,24 @@ CREATE TABLE IF NOT EXISTS posts
     KEY idx_created (created_at DESC),
     KEY idx_status_deleted_created (status, deleted_at, created_at DESC)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '帖子信息表';
+
+# 创建 follow 表
+CREATE TABLE IF NOT EXISTS follows
+(
+    id          BIGINT   NOT NULL PRIMARY KEY COMMENT '记录 id',
+    follower_id BIGINT   NOT NULL COMMENT '关注者 id',
+    followee_id BIGINT   NOT NULL COMMENT '被关注者 id',
+
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at  DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    UNIQUE KEY uq_follow (follower_id, followee_id),
+    KEY idx_follower (follower_id, deleted_at),
+    KEY idx_followee (followee_id, deleted_at),
+
+    CHECK (follower_id <> followee_id) # 避免自己关注自己
+) DEFAULT CHARSET = utf8mb4 COMMENT '关注信息表';
 
 
 CREATE TABLE IF NOT EXISTS user_like
@@ -79,19 +97,24 @@ CREATE TABLE IF NOT EXISTS user_like
     KEY idx_user (user_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '用户点赞表';
 
-CREATE TABLE IF NOT EXISTS COMMENT
+CREATE TABLE IF NOT EXISTS comments
 (
-    id          BIGINT COMMENT '评论 id',
-    post_id     BIGINT NOT NULL COMMENT '所属帖子 id',
-    user_id     BIGINT NOT NULL COMMENT '发布者 id',
-    parent_id   BIGINT NOT NULL COMMENT '父评论 id',
-    reply_id    BIGINT NOT NULL COMMENT '回复评论 id',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '帖子创建时间',
-    delete_time DATETIME DEFAULT NULL COMMENT '帖子删除时间',
-    content     TEXT COMMENT '正文',
+    id         BIGINT   NOT NULL COMMENT '评论 id',
+    post_id    BIGINT   NOT NULL COMMENT '所属帖子 id',
+    user_id    BIGINT   NOT NULL COMMENT '发布者 id',
+    parent_id  BIGINT   NOT NULL DEFAULT 0 COMMENT '父评论 id',
+    reply_id   BIGINT   NOT NULL DEFAULT 0 COMMENT '回复评论 id',
+    content    TEXT     NOT NULL COMMENT '正文',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
     PRIMARY KEY (id),
-    KEY idx_user (user_id)
-) DEFAULT CHARSET = utf8mb4 COMMENT '帖子信息表';
+    KEY idx_post_created (post_id, created_at),
+    KEY idx_post_parent_created (post_id, parent_id, created_at),
+    KEY idx_post_reply_created (post_id, reply_id, created_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '评论信息表';
 
 CREATE TABLE IF NOT EXISTS tag
 (
@@ -114,19 +137,3 @@ CREATE TABLE IF NOT EXISTS post_tag
     KEY idx_post (post_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签绑定信息表';
 
-CREATE TABLE IF NOT EXISTS follows
-(
-    id          BIGINT NOT NULL PRIMARY KEY COMMENT '记录 id',
-    follower_id BIGINT NOT NULL COMMENT '关注者 id',
-    followee_id BIGINT NOT NULL COMMENT '被关注者 id',
-
-    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted_at    DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
-
-    UNIQUE KEY uq_follow (follower_id, followee_id),
-    KEY idx_follower (follower_id, deleted_at),
-    KEY idx_followee (followee_id, deleted_at),
-
-    CHECK (follower_id <> followee_id) # 避免自己关注自己
-) DEFAULT CHARSET = utf8mb4 COMMENT '关注信息表';
