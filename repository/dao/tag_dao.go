@@ -1,11 +1,12 @@
 package dao
 
 import (
+	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -18,84 +19,128 @@ func NewTagDAO(db *gorm.DB) TagDAO {
 	return &GormTagDAO{db: db}
 }
 
-func (dao *GormTagDAO) Create(name string, slug string) (int, error) {
-	tag := model.Tag{
-		Id:         int(snowflake.NextID()),
-		Name:       name,
-		Slug:       slug,
-		DeleteTime: nil,
+// Create 创建 Tag
+func (dao *GormTagDAO) Create(ctx context.Context, tag *model.Tag) error {
+	// 1. 恢复软删除
+	result := dao.db.WithContext(ctx).Model(&model.Tag{}).Where("(name = ? OR slug = ?) AND deleted_at IS NOT NULL", tag.Name, tag.Slug).Update("deleted_at", nil)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(UpdateFailed, "tag", tag, "error", result.Error)
+		return ErrInternal
+	}
+	if result.RowsAffected != 0 {
+		// 恢复成功
+		return nil
 	}
 
-	tx := dao.db.Create(&tag)
-	if tx.Error != nil {
+	// 2. 创建新记录
+	result = dao.db.WithContext(ctx).Create(tag)
+	if result.Error != nil {
 		var mysqlErr *mysql.MySQLError
-		if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			// 唯一键冲突
-			return 0, ErrUniqueKeyConflict
+		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 { // 记录没有被软删且已存在 -> 标签已存在
+			// 幂等
+			return nil
 		}
 
-		// 数据库内部错误
-		slog.Error("MySQL Create Tag Failed", "error", tx.Error)
-		return 0, ErrInternal
-	}
-
-	return tag.Id, nil
-}
-
-func (dao *GormTagDAO) Exist(name string) (int, error) {
-	tag := model.Tag{}
-	tx := dao.db.Select("id").Where("name = ?", name).First(&tag)
-	if tx.Error != nil {
-		// 若错误不是记录未找到, 记录系统错误
-		if !errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			slog.Error("MySQL Find Tag Failed")
-			return 0, ErrInternal
-		}
-		return 0, gorm.ErrRecordNotFound
-	}
-	return tag.Id, nil
-}
-
-func (dao *GormTagDAO) Bind(pid, tid int) error {
-	postTag := model.PostTag{
-		Id:     int(snowflake.NextID()),
-		PostId: pid,
-		TagId:  tid,
-	}
-	tx := dao.db.Create(&postTag)
-	if tx.Error != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(tx.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return ErrUniqueKeyConflict
-		}
-		slog.Error("MySQL Create Post_Tag Failed", "error", tx.Error) // 记录日志, 方便后续人工定位问题所在
+		// 系统层面错误
+		slog.Error(CreateFailed, "tag", tag, "error", result.Error)
 		return ErrInternal
 	}
 
 	return nil
 }
 
-func (dao *GormTagDAO) DeleteBind(pid, tid int) error {
-	tx := dao.db.Where("post_id = ? AND tag_id = ?", pid, tid).Delete(&model.PostTag{})
-	if tx.RowsAffected == 0 {
-		slog.Error("MySQL Delete Post_Tag Failed", "error", tx.Error) // 记录日志, 方便后续人工定位问题所在
-		return errors.New("删除失败")
+// GetBySlug 根据 Slug 查找 Tag
+func (dao *GormTagDAO) GetBySlug(ctx context.Context, slug string) (*model.Tag, error) {
+	tag := &model.Tag{}
+	result := dao.db.WithContext(ctx).Model(&model.Tag{}).Where("slug = ? AND deleted_at IS NULL", slug).First(tag)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// 业务层面错误
+			return nil, ErrRecordNotFound
+		}
+		// 系统层面错误
+		slog.Error(FindFailed, "tag_slug", slug, "error", result.Error)
+		return nil, ErrInternal
+	}
+	return tag, nil
+}
+
+// GetByName 根据 Name 查找 Tag
+func (dao *GormTagDAO) GetByName(ctx context.Context, name string) (*model.Tag, error) {
+	tag := &model.Tag{}
+	result := dao.db.WithContext(ctx).Model(&model.Tag{}).Where("name = ? AND deleted_at IS NULL", name).First(tag)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// 业务层面错误
+			return nil, ErrRecordNotFound
+		}
+		// 系统层面错误
+		slog.Error(FindFailed, "tag_name", name, "error", result.Error)
+		return nil, ErrInternal
+	}
+	return tag, nil
+}
+
+// Bind 绑定 Post 和 Tag
+func (dao *GormTagDAO) Bind(ctx context.Context, postTag *model.PostTag) error {
+	// 1. 恢复软删除
+	result := dao.db.WithContext(ctx).Model(&model.PostTag{}).Where("post_id = ? AND tag_id = ? AND deleted_at IS NOT NULL", postTag.PostID, postTag.TagID).Update("deleted_at", nil)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(UpdateFailed, "post_tag", postTag, "error", result.Error)
+		return ErrInternal
+	}
+	if result.RowsAffected != 0 {
+		// 恢复成功
+		return nil
+	}
+
+	// 2. 创建新记录
+	result = dao.db.WithContext(ctx).Create(postTag)
+	if result.Error != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 { // 记录没有被软删且已存在 -> 标签已经存在
+			// 幂等
+			return nil
+		}
+
+		// 系统层面错误
+		slog.Error(CreateFailed, "post_tag", postTag, "error", result.Error)
+		return ErrInternal
+	}
+
+	return nil
+}
+
+// DeleteBind 删除 Post 和 Tag 绑定关系
+func (dao *GormTagDAO) DeleteBind(ctx context.Context, pid, tid int64) error {
+	now := time.Now()
+	result := dao.db.WithContext(ctx).Model(&model.PostTag{}).Where("post_id = ? AND tag_id = ? AND deleted_at IS NULL", pid, tid).Update("deleted_at", &now)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(DeleteFailed, "post_id", pid, "tag_id", tid, "error", result.Error)
+		return ErrInternal
+	}
+	if result.RowsAffected == 0 {
+		// 幂等
+		return nil
 	}
 
 	return nil
 }
 
 // FindTagsByPostID 根据 PostID 查找 Tags
-func (dao *GormTagDAO) FindTagsByPostID(pid int) ([]string, error) {
+func (dao *GormTagDAO) FindTagsByPostID(ctx context.Context, pid int64) ([]string, error) {
 	var names []string
-	tx := dao.db.Table("post_tag pt").
-		Joins("JOIN tag t ON t.id = pt.tag_id").
-		Where("pt.post_id = ?", pid).
+	result := dao.db.WithContext(ctx).Table("post_tag pt").
+		Joins("JOIN tags t ON t.id = pt.tag_id").
+		Where("pt.post_id = ? AND pt.deleted_at IS NULL AND t.deleted_at IS NULL", pid).
 		Pluck("t.name", &names)
 
-	if tx.Error != nil {
-		// 数据库内部错误
-		slog.Error("MySQL Find Tag Failed", "error", tx.Error)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(FindFailed, "post_id", pid, "error", result.Error)
 		return nil, ErrInternal
 	}
 	return names, nil

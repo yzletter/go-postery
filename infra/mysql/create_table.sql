@@ -121,24 +121,33 @@ CREATE TABLE IF NOT EXISTS likes
 ) DEFAULT CHARSET = utf8mb4 COMMENT '用户点赞表';
 
 
-CREATE TABLE IF NOT EXISTS tag
+CREATE TABLE IF NOT EXISTS tags
 (
-    id          BIGINT PRIMARY KEY COMMENT '标签 id',
-    username    varchar(32) NOT NULL COMMENT '标签名',
-    slug        varchar(32) NOT NULL COMMENT '标签唯一标识',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    delete_time DATETIME DEFAULT NULL COMMENT '删除时间',
+    id         BIGINT      NOT NULL COMMENT '标签 id',
+    slug       varchar(32) NOT NULL COMMENT '标签名',
+    slug       varchar(32) NOT NULL COMMENT '标签唯一标识',
+
+    created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
     UNIQUE KEY uq_slug (slug),
-    UNIQUE KEY uq_name (username)
+    UNIQUE KEY uq_name (slug)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '标签信息表';
 
 CREATE TABLE IF NOT EXISTS post_tag
 (
-    id      BIGINT PRIMARY KEY COMMENT '记录 id',
+    id      BIGINT NOT NULL COMMENT '记录 id',
     post_id BIGINT NOT NULL COMMENT '帖子 id',
     tag_id  BIGINT NOT NULL COMMENT '标签 id',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME DEFAULT NULL COMMENT '逻辑删除时间',
+    PRIMARY KEY (id),
     UNIQUE KEY uq_post_tag (post_id, tag_id),
     KEY idx_tag (tag_id),
     KEY idx_post (post_id)
-) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签绑定信息表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签信息表';
 

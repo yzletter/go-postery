@@ -44,12 +44,19 @@ type LikeDAO interface {
 	Exists(ctx context.Context, uid, pid int64) (bool, error)
 }
 
-type TagDAO interface{}
-
 type FollowDAO interface {
 	Create(ctx context.Context, ferID, feeID int64) error
 	Delete(ctx context.Context, ferID, feeID int64) error
 	Exists(ctx context.Context, ferID, feeID int64) (int, error)
 	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
+}
+
+type TagDAO interface {
+	Create(ctx context.Context, tag *model.Tag) error
+	GetBySlug(ctx context.Context, slug string) (*model.Tag, error)
+	GetByName(ctx context.Context, name string) (*model.Tag, error)
+	Bind(ctx context.Context, postTag *model.PostTag) error
+	DeleteBind(ctx context.Context, pid, tid int64) error
+	FindTagsByPostID(ctx context.Context, pid int64) ([]string, error)
 }

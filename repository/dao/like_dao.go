@@ -32,10 +32,10 @@ func (dao *GormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 	result := dao.db.WithContext(ctx).Model(&model.Like{}).Where("user_id = ? AND post_id = ? AND deleted_at IS NOT NULL", like.UserID, like.PostID).Update("deleted_at", nil)
 	if result.Error != nil {
 		// 系统层面错误
-		slog.Error(UpdateFailed, "error", result.Error)
+		slog.Error(UpdateFailed, "like", like, "error", result.Error)
 		return ErrInternal
 	}
-	if result.RowsAffected != 0 {
+	if result.RowsAffected > 0 {
 		// 恢复成功
 		return nil
 	}
@@ -50,7 +50,7 @@ func (dao *GormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 		}
 
 		// 系统层面错误
-		slog.Error(CreateFailed, "error", result.Error)
+		slog.Error(CreateFailed, "like", like, "error", result.Error)
 		return ErrInternal
 	}
 
