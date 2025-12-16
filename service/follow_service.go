@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	dto "github.com/yzletter/go-postery/dto/response"
+	dto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/repository/dao"
 	"gorm.io/gorm"
 )
 
@@ -81,20 +80,20 @@ func (svc *followService) IfFollow(ferId, feeId int) (int, error) {
 	return res, nil
 }
 
-func (svc *followService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
+func (svc *followService) GetFollowers(uid int) ([]dto.BriefDTO, error) {
 	followersId, err := svc.FollowRepo.GetFollowers(uid)
 	fmt.Println(followersId)
 	if err != nil {
 		return nil, repository.ErrServerInternal
 	}
 
-	res := make([]dto.UserBriefDTO, 0)
+	res := make([]dto.BriefDTO, 0)
 	for _, id := range followersId {
 		user, err := svc.UserRepo.GetByID(int64(id))
 		if err != nil {
 			continue
 		}
-		userBriefDTO := dto.ToUserBriefDTO(*user)
+		userBriefDTO := user.ToUserBriefDTO(*user)
 		res = append(res, userBriefDTO)
 	}
 	fmt.Println(res)
@@ -102,20 +101,20 @@ func (svc *followService) GetFollowers(uid int) ([]dto.UserBriefDTO, error) {
 	return res, nil
 }
 
-func (svc *followService) GetFollowees(uid int) ([]dto.UserBriefDTO, error) {
+func (svc *followService) GetFollowees(uid int) ([]dto.BriefDTO, error) {
 	followeesId, err := svc.FollowRepo.GetFollowees(uid)
 	if err != nil {
 		return nil, repository.ErrServerInternal
 	}
 
-	res := make([]dto.UserBriefDTO, 0)
+	res := make([]dto.BriefDTO, 0)
 	for _, id := range followeesId {
 		user, err := svc.UserRepo.GetByID(int64(id))
 		if err != nil {
 
 			continue
 		}
-		userBriefDTO := dto.ToUserBriefDTO(*user)
+		userBriefDTO := user.ToUserBriefDTO(*user)
 		res = append(res, userBriefDTO)
 	}
 

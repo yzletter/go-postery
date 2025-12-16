@@ -112,7 +112,7 @@ export default function Messages() {
             <div className="flex items-center space-x-3">
               <img
                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=msg-${activeId}`}
-                alt="chat-u"
+                alt="chat-user"
                 className="w-10 h-10 rounded-full"
               />
               <div>

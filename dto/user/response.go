@@ -1,4 +1,4 @@
-package dto
+package user
 
 import (
 	"time"
@@ -6,15 +6,15 @@ import (
 	"github.com/yzletter/go-postery/model"
 )
 
-// UserBriefDTO 后端返回简要 User 信息
-type UserBriefDTO struct {
-	Id     int64  `json:"id,string"` // ID 雪花算法
+// BriefDTO 后端返回简要 User 信息
+type BriefDTO struct {
+	Id     int64  `json:"id,string"` // ID
 	Name   string `json:"name"`      // 用户名
 	Avatar string `json:"avatar"`    // 头像 URL
 }
 
-// UserDetailDTO 后端返回详细 User 信息
-type UserDetailDTO struct {
+// DetailDTO 后端返回详细 User 信息
+type DetailDTO struct {
 	Id          int64  `json:"id,string"`     // ID 雪花算法
 	Name        string `json:"name"`          // 用户名
 	Email       string `json:"email"`         // 邮箱
@@ -27,18 +27,18 @@ type UserDetailDTO struct {
 	LastLoginIP string `json:"last_login_ip"` // 最近一次登录 IP
 }
 
-// ToUserBriefDTO model.User 转 UserDTO
-func ToUserBriefDTO(user *model.User) UserBriefDTO {
-	return UserBriefDTO{
+// ToBriefDTO model.User 转 UserDTO
+func ToBriefDTO(user *model.User) BriefDTO {
+	return BriefDTO{
 		Id:     user.ID,
 		Name:   user.Username,
 		Avatar: "", // todo
 	}
 }
 
-// ToUserDetailDTO model.User 转 UserDetailDTO
-func ToUserDetailDTO(user *model.User) UserDetailDTO {
-	userDetailDTO := UserDetailDTO{
+// ToDetailDTO model.User 转 DetailDTO
+func ToDetailDTO(user *model.User) DetailDTO {
+	userDetailDTO := DetailDTO{
 		Id:          user.ID,
 		Name:        user.Username,
 		Email:       user.Email,

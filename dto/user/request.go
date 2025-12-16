@@ -1,4 +1,4 @@
-package request
+package user
 
 import (
 	"time"
@@ -6,14 +6,14 @@ import (
 	"github.com/yzletter/go-postery/model"
 )
 
-// UserJWTInfo 用于存放进 JWT 自定义字段和放入 ctx 的用户信息
-type UserJWTInfo struct {
+// JWTInfo 用于存放进 JWT 自定义字段和放入 ctx 的用户信息
+type JWTInfo struct {
 	Id   string `json:"id"`
 	Name string
 }
 
-// CreateUserRequest 定义前端提交注册表单信息的模型映射
-type CreateUserRequest struct {
+// CreateRequest 定义前端提交注册表单信息的模型映射
+type CreateRequest struct {
 	Name     string `json:"name" form:"name" binding:"required,gte=2"`          // 长度 >= 2
 	PassWord string `json:"password" form:"password" binding:"required,len=32"` // 长度 == 32
 }
@@ -38,11 +38,6 @@ type ModifyProfileRequest struct {
 	BirthDay string `json:"birthday,omitempty"` // 生日
 	Location string `json:"location,omitempty"` // 地区
 	Country  string `json:"country,omitempty"`  // 国家
-}
-
-type CreateUserParams struct {
-	Username     string
-	PasswordHash string
 }
 
 func ModifyProfileRequestToModel(request ModifyProfileRequest) model.User {

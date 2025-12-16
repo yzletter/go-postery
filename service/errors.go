@@ -7,7 +7,8 @@ import (
 	"github.com/yzletter/go-postery/repository"
 )
 
-func toServiceErr(err error) error {
+// 将 Repository 层的 error 映射为 Errno 的错误
+func toErrnoErr(err error) error {
 	switch {
 	case errors.Is(err, repository.ErrServerInternal):
 		return errno.ErrServerInternal

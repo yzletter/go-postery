@@ -9,7 +9,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/xid"
-	"github.com/yzletter/go-postery/dto/request"
+	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 )
 
@@ -60,7 +60,7 @@ func NewJwtService(redisClient redis.Cmdable, secret string) *JwtService {
 }
 
 // GetUserInfoFromJWT 从 JWT Token 中获取 uid
-func (svc *JwtService) GetUserInfoFromJWT(jwtToken string) *request.UserJWTInfo {
+func (svc *JwtService) GetUserInfoFromJWT(jwtToken string) *user.JWTInfo {
 	// 校验 JWT Token
 	payload, err := svc.VerifyToken(jwtToken)
 	if err != nil { // JWT Token 校验失败
@@ -75,7 +75,7 @@ func (svc *JwtService) GetUserInfoFromJWT(jwtToken string) *request.UserJWTInfo 
 		if k == USERINFO_IN_JWT_PAYLOAD {
 			// todo 待优化
 			bs, _ := json.Marshal(v)
-			var userInfo request.UserJWTInfo
+			var userInfo user.JWTInfo
 			_ = json.Unmarshal(bs, &userInfo)
 			slog.Info("JwtService 获得 UserInfo 成功 ... ", "userInfo", userInfo)
 			return &userInfo
@@ -89,7 +89,7 @@ func (svc *JwtService) GetUserInfoFromJWT(jwtToken string) *request.UserJWTInfo 
 
 // IssueTokenForUser 为 User 签发双 token
 func (svc *JwtService) IssueTokenForUser(uid int64, uname string) (string, string, error) {
-	userInfo := request.UserJWTInfo{
+	userInfo := user.JWTInfo{
 		Id:   strconv.Itoa(int(uid)),
 		Name: uname,
 	}

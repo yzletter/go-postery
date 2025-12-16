@@ -3,8 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/dto/request"
-	"github.com/yzletter/go-postery/dto/response"
+	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
@@ -24,8 +23,8 @@ func NewUserService(userRepository repository.UserRepository, passwordHasher Pas
 }
 
 // Register 注册用户
-func (svc *userService) Register(ctx context.Context, username, email, password string) (dto.UserBriefDTO, error) {
-	var empty dto.UserBriefDTO
+func (svc *userService) Register(ctx context.Context, username, email, password string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
 
 	// 参数校验
 	if username == "" || password == "" || email == "" {
@@ -42,7 +41,7 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 	}
 
 	// 构造指针
-	user := &model.User{
+	u := &model.User{
 		ID:           snowflake.NextID(),
 		Username:     username,
 		Email:        email,
@@ -50,17 +49,17 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 	}
 
 	// 创建记录
-	err = svc.UserRepository.Create(ctx, user)
+	err = svc.UserRepository.Create(ctx, u)
 	if err != nil {
-		return empty, toServiceErr(err)
+		return empty, toErrnoErr(err)
 	}
 
-	return dto.ToUserBriefDTO(user), nil
+	return userdto.ToBriefDTO(u), nil
 }
 
 // GetBriefById 根据 ID 查找用户的简要信息
-func (svc *userService) GetBriefById(ctx context.Context, id int64) (dto.UserBriefDTO, error) {
-	var empty dto.UserBriefDTO
+func (svc *userService) GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
 
 	// 参数校验
 	if id <= 0 {
@@ -70,7 +69,7 @@ func (svc *userService) GetBriefById(ctx context.Context, id int64) (dto.UserBri
 	// 获取用户
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
-		return empty, toServiceErr(err)
+		return empty, toErrnoErr(err)
 	}
 
 	// panic 兜底
@@ -78,12 +77,12 @@ func (svc *userService) GetBriefById(ctx context.Context, id int64) (dto.UserBri
 		return empty, errno.ErrUserNotFound
 	}
 
-	return dto.ToUserBriefDTO(user), nil
+	return userdto.ToBriefDTO(user), nil
 }
 
 // GetDetailById 根据 ID 查找用户的详细信息
-func (svc *userService) GetDetailById(ctx context.Context, id int64) (dto.UserDetailDTO, error) {
-	var empty dto.UserDetailDTO
+func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.DetailDTO, error) {
+	var empty userdto.DetailDTO
 
 	// 参数校验
 	if id <= 0 {
@@ -93,7 +92,7 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (dto.UserDe
 	// 获取用户
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
-		return empty, toServiceErr(err)
+		return empty, toErrnoErr(err)
 	}
 
 	// panic 兜底
@@ -101,12 +100,12 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (dto.UserDe
 		return empty, errno.ErrUserNotFound
 	}
 
-	return dto.ToUserDetailDTO(user), nil
+	return userdto.ToDetailDTO(user), nil
 }
 
 // GetBriefByName 根据 username 查找用户的简要信息
-func (svc *userService) GetBriefByName(ctx context.Context, username string) (dto.UserBriefDTO, error) {
-	var empty dto.UserBriefDTO
+func (svc *userService) GetBriefByName(ctx context.Context, username string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
 
 	// 参数校验
 	if len(username) <= 0 {
@@ -116,14 +115,14 @@ func (svc *userService) GetBriefByName(ctx context.Context, username string) (dt
 	// 获取用户
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil {
-		return empty, toServiceErr(err)
+		return empty, toErrnoErr(err)
 	}
 
 	// panic 兜底
 	if user == nil {
 		return empty, errno.ErrUserNotFound
 	}
-	return dto.ToUserBriefDTO(user), nil
+	return userdto.ToBriefDTO(user), nil
 }
 
 // UpdatePassword 更新密码
@@ -137,11 +136,10 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	}
 
 	// todo 并发安全
-
 	// 获取用户
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
-		return toServiceErr(err)
+		return toErrnoErr(err)
 	}
 	if user == nil {
 		return errno.ErrUserNotFound
@@ -162,20 +160,20 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	// 改新密码
 	err = svc.UserRepository.UpdatePasswordHash(ctx, id, string(newPassHash))
 	if err != nil {
-		return toServiceErr(err)
+		return toErrnoErr(err)
 	}
 
 	return nil
 }
 
 // UpdateProfile 修改个人资料
-func (svc *userService) UpdateProfile(ctx context.Context, id int64, req request.ModifyProfileRequest) error {
+func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto.ModifyProfileRequest) error {
 	if id <= 0 {
 		return errno.ErrInvalidParam
 	}
 
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
-	modelReq := request.ModifyProfileRequestToModel(req)
+	modelReq := userdto.ModifyProfileRequestToModel(req)
 
 	updates := map[string]any{
 		"email":    modelReq.Email,
@@ -188,14 +186,14 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req request
 	}
 
 	if err := svc.UserRepository.UpdateProfile(ctx, id, updates); err != nil {
-		return toServiceErr(err)
+		return toErrnoErr(err)
 	}
 	return nil
 }
 
 // Login 登录
-func (svc *userService) Login(ctx context.Context, username, pass string) (dto.UserBriefDTO, error) {
-	var empty dto.UserBriefDTO
+func (svc *userService) Login(ctx context.Context, username, pass string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
 
 	// 参数校验
 	if username == "" || pass == "" {
@@ -205,7 +203,7 @@ func (svc *userService) Login(ctx context.Context, username, pass string) (dto.U
 	// 获取用户
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil {
-		return empty, toServiceErr(err)
+		return empty, toErrnoErr(err)
 	}
 	if user == nil {
 		return empty, errno.ErrServerInternal
@@ -217,5 +215,5 @@ func (svc *userService) Login(ctx context.Context, username, pass string) (dto.U
 		return empty, err
 	}
 
-	return dto.ToUserBriefDTO(user), nil
+	return userdto.ToBriefDTO(user), nil
 }

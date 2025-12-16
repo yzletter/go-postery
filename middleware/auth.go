@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/dto/request"
+	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -132,7 +132,7 @@ func AuthAdminMiddleware(authService *service.JwtService) gin.HandlerFunc {
 }
 
 // 将用户信息放入上下文
-func setUserInfoInCTX(ctx *gin.Context, userInfo *request.UserJWTInfo) {
+func setUserInfoInCTX(ctx *gin.Context, userInfo *user.JWTInfo) {
 	ctx.Set(service.UID_IN_CTX, userInfo.Id)
 	ctx.Set(service.UNAME_IN_CTX, userInfo.Name)
 	slog.Info("用户信息放入上下文成功 ...", "UserInfo", userInfo)

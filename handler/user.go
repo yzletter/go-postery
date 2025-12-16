@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/yzletter/go-postery/dto/request"
+	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/repository/dao"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
@@ -29,7 +29,7 @@ func NewUserHandler(userService service.UserService, jwtService *service.JwtServ
 
 // Login 用户登录 Handler
 func (hdl *UserHandler) Login(ctx *gin.Context) {
-	var loginRequest = request.LoginRequest{}
+	var loginRequest = user.LoginRequest{}
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&loginRequest)
 	if err != nil {
@@ -74,7 +74,7 @@ func (hdl *UserHandler) Logout(ctx *gin.Context) {
 
 // ModifyPass 修改密码 Handler
 func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
-	var modifyPassRequest request.ModifyPassRequest
+	var modifyPassRequest user.ModifyPassRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyPassRequest)
 	if err != nil {
@@ -104,7 +104,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 
 // Register 用户注册 Handler
 func (hdl *UserHandler) Register(ctx *gin.Context) {
-	var createUserRequest request.CreateUserRequest
+	var createUserRequest user.CreateRequest
 	err := ctx.ShouldBind(&createUserRequest)
 	if err != nil {
 		// 参数绑定失败
@@ -161,7 +161,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 }
 
 func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
-	var modifyUserProfileRequest request.ModifyProfileRequest
+	var modifyUserProfileRequest user.ModifyProfileRequest
 	// 将请求参数绑定到结构体
 	err := ctx.ShouldBind(&modifyUserProfileRequest)
 	if err != nil {

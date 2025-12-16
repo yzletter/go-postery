@@ -62,7 +62,7 @@
   {
     "id": "1",
     "username": "用户名",
-    "email": "u@example.com",
+    "email": "user@example.com",
     "avatar": "https://example.com/avatar.png",
     "bio": "个人简介",
     "gender": 1,
