@@ -16,6 +16,7 @@ import (
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/router"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
@@ -76,12 +77,8 @@ func main() {
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
 
-	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHandler
-
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(JwtSvc) // AuthRequiredMdl 强制登录
-	AuthOptionalMdl := middleware.AuthOptionalMiddleware(JwtSvc) // AuthOptionalMdl 非强制要求登录
-	AuthAdminMdl := middleware.AuthAdminMiddleware(JwtSvc)       // AuthAdminMdl 要求管理员身份
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)          // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc) // RateLimitMdl 限流中间件
 	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
@@ -100,54 +97,75 @@ func main() {
 		RateLimitMdl, // 限流中间件
 	)
 
-	// 定义路由
+	// 运维接口
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
 		promhttp.Handler().ServeHTTP(ctx.Writer, ctx.Request) // 固定写法
 	})
 
+	// 业务接口
+	api := engine.Group("/api")
+	v1 := api.Group("/v1")
+
+	// 身份认证模块
+	auth := v1.Group("/auth")
+	{
+		// todo AuthHandler
+		auth.POST("/register", UserHdl.Register)
+		auth.POST("/login", UserHdl.Login)
+
+		authedAuth := auth.Group("")
+		authedAuth.Use(AuthRequiredMdl)
+		authedAuth.POST("/logout", UserHdl.Logout)
+	}
+
 	// 用户模块
-	engine.POST("/register/submit", UserHdl.Register) // 用户注册
-	engine.POST("/login/submit", UserHdl.Login)       // 用户登录
-	engine.GET("/logout", UserHdl.Logout)             // 用户退出
-	engine.GET("/profile/:id", UserHdl.Profile)       // 用户资料
-	// 强制登录
-	engine.POST("/modify_pass/submit", AuthRequiredMdl, UserHdl.ModifyPass)       // 修改密码
-	engine.POST("/modify_profile/submit", AuthRequiredMdl, UserHdl.ModifyProfile) // 修改个人资料
+	users := v1.Group("/users")
+	{
+		users.GET("/:id", UserHdl.Profile)
+		users.GET("/:id/posts", PostHdl.ListByUid) // 替代 /posts/user/:uid
+
+		// 个人模块
+		me := users.Group("/me")
+		me.Use(AuthRequiredMdl)
+		me.PATCH("", UserHdl.ModifyProfile)
+		me.PATCH("/password", UserHdl.ModifyPass)
+		me.GET("/followers", FollowHdl.ListFollowers)
+		me.GET("/followees", FollowHdl.ListFollowees)
+
+		// 关注模块
+		follow := users.Group("/:id/follow")
+		follow.Use(AuthRequiredMdl)
+		{
+			follow.PUT("", FollowHdl.Follow)      // 关注
+			follow.DELETE("", FollowHdl.UnFollow) // 取关
+			follow.GET("", FollowHdl.IfFollow)    // 是否关注
+		}
+	}
 
 	// 帖子模块
-	engine.GET("/posts", PostHdl.List)               // 获取帖子列表
-	engine.GET("/posts_tag", PostHdl.ListByTag)      // 根据标签获取帖子列表
-	engine.GET("/posts/:pid", PostHdl.Detail)        // 获取帖子详情
-	engine.GET("/posts_uid/:uid", PostHdl.ListByUid) // 获取目标用户发布的帖子
-	// 强制登录
-	engine.POST("/posts/new", AuthRequiredMdl, PostHdl.Create)         // 创建帖子
-	engine.GET("/posts/delete/:id", AuthRequiredMdl, PostHdl.Delete)   // 删除帖子
-	engine.POST("/posts/update", AuthRequiredMdl, PostHdl.Update)      // 修改帖子
-	engine.GET("/posts/like/:id", AuthRequiredMdl, PostHdl.Like)       // 点赞
-	engine.GET("/posts/dislike/:id", AuthRequiredMdl, PostHdl.Dislike) // 取消点赞
-	engine.GET("/posts/iflike/:id", AuthRequiredMdl, PostHdl.IfLike)   // 取消点赞
-	// 非强制要求登录
-	engine.GET("/posts/belong", AuthOptionalMdl, PostHdl.Belong) // 查询帖子是否归属当前登录用户
+	posts := v1.Group("/posts")
+	{
+		posts.GET("", PostHdl.List) // 支持 ?pageNo&pageSize&tagId&uid...
+		posts.GET("/:id", PostHdl.Detail)
+		posts.GET("/:id/comments", CommentHdl.List)
 
-	// 评论模块
-	engine.GET("/comment/list/:post_id", CommentHdl.List) // 列出评论
-	// 强制登录
-	engine.POST("/comment/new", AuthRequiredMdl, CommentHdl.Create)             // 创建评论
-	engine.GET("/comment/delete/:pid/:cid", AuthRequiredMdl, CommentHdl.Delete) // 删除评论
-	engine.GET("/comment/belong", AuthRequiredMdl, CommentHdl.Belong)           // 删除评论
+		authedPosts := posts.Group("")
+		authedPosts.Use(AuthRequiredMdl)
+		authedPosts.POST("", PostHdl.Create) // 替代 /me/posts/new
+		authedPosts.PATCH("/:id", PostHdl.Update)
+		authedPosts.DELETE("/:id", PostHdl.Delete)
 
-	// 标签模块
-	//engine.POST("/tag/new", AuthRequiredMdl, TagHdl.Create) // 创建标签
-
-	// 关注模块
-	engine.GET("/follow/:id", AuthRequiredMdl, FollowHdl.Follow)       // 关注
-	engine.GET("/disfollow/:id", AuthRequiredMdl, FollowHdl.DisFollow) // 取消关注
-	engine.GET("/iffollow/:id", AuthRequiredMdl, FollowHdl.IfFollow)   // 判断关注关系 0 表示 互不关注 1 表示关注了对方 2 表示对方关注了自己 3 表示互相关注
-	engine.GET("/followers", AuthRequiredMdl, FollowHdl.ListFollowers) // 返回粉丝列表
-	engine.GET("/followees", AuthRequiredMdl, FollowHdl.ListFollowees) // 返回关注列表
+		authedPosts.POST("/:id/comments", CommentHdl.Create)         // 替代 /me/comments/new
+		authedPosts.DELETE("/:pid/comments/:cid", CommentHdl.Delete) // 或 DELETE /comments/:cid
+		authedPosts.PUT("/:id/likes", PostHdl.Like)                  // 幂等点赞
+		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)             // 幂等取消
+	}
 
 	// 管理员模块
-	engine.GET("/admin", AuthRequiredMdl, AuthAdminMdl) // 返回关注列表
+	admin := v1.Group("/admin")
+	{
+		admin.Use(AuthRequiredMdl, AdminRequiredMdl)
+	}
 
 	if err := engine.Run("localhost:8765"); err != nil {
 		panic(err)
