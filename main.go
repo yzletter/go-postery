@@ -106,11 +106,12 @@ func main() {
 	api := engine.Group("/api")
 	v1 := api.Group("/v1")
 
+	// localhost:8765/api/v1
 	// 身份认证模块
 	auth := v1.Group("/auth")
 	{
 		// todo AuthHandler
-		auth.POST("/register", UserHdl.Register)
+		auth.POST("/register", UserHdl.Register) // localhost:8765/api/v1/auth/register
 		auth.POST("/login", UserHdl.Login)
 
 		authedAuth := auth.Group("")

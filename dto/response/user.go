@@ -28,7 +28,7 @@ type UserDetailDTO struct {
 }
 
 // ToUserBriefDTO model.User 转 UserDTO
-func ToUserBriefDTO(user model.User) UserBriefDTO {
+func ToUserBriefDTO(user *model.User) UserBriefDTO {
 	return UserBriefDTO{
 		Id:     user.ID,
 		Name:   user.Username,

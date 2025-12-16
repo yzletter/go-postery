@@ -10,11 +10,7 @@ import (
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/dao"
-)
-
-var (
-	ErrServerInternal = errors.New("注册失败, 请稍后重试")
-	ErrNameDuplicated = errors.New("用户名重复")
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userService struct {
@@ -27,29 +23,47 @@ func NewUserService(userRepository repository.UserRepository) UserService {
 	}
 }
 
-func (svc *userService) Register(ctx context.Context, username, password string) (dto.UserBriefDTO, error) {
-	var userDTO dto.UserBriefDTO
+// Register 注册用户
+func (svc *userService) Register(ctx context.Context, username, email, password string) (dto.UserBriefDTO, error) {
+	var empty dto.UserBriefDTO
 
-	u := &model.User{
+	// 参数校验
+	if username == "" || password == "" || email == "" {
+		return empty, ErrInvalidParam
+	}
+	if len(password) < 8 {
+		return empty, ErrPasswordWeak
+	}
+
+	// 对密码进行加密
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return empty, ErrEncryptFailed
+	}
+
+	// 构造指针
+	user := &model.User{
 		ID:           snowflake.NextID(),
 		Username:     username,
-		Email:        "",
-		PasswordHash: password,
-	}
-	user, err := svc.UserRepository.Create(ctx, u)
-	if err == nil {
-		userDTO = dto.ToUserBriefDTO(*user)
-		return userDTO, nil
+		Email:        email,
+		PasswordHash: string(passwordHash),
 	}
 
-	if errors.Is(err, dao.ErrUniqueKeyConflict) { // 唯一键冲突
-		return userDTO, ErrNameDuplicated
-	} else if errors.Is(err, dao.ErrInternal) { // 数据库内部错误
-		return userDTO, ErrServerInternal
+	// 创建记录
+	err = svc.UserRepository.Create(ctx, user)
+	if err != nil {
+		if errors.Is(err, dao.ErrUniqueKey) { // 唯一键冲突
+			return empty, ErrDuplicated
+		} else if errors.Is(err, dao.ErrInternal) { // 数据库内部错误
+			return empty, ErrServerInternal
+		}
+		return empty, ErrServerInternal
 	}
-	return userDTO, nil
+
+	return dto.ToUserBriefDTO(user), nil
 }
 
+// GetBriefById 根据 ID 查找用户的简要信息
 func (svc *userService) GetBriefById(ctx context.Context, id int64) (bool, dto.UserBriefDTO) {
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {

@@ -25,13 +25,13 @@ func NewUserDAO(db *gorm.DB) UserDAO {
 }
 
 // Create 创建 User
-func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) (*model.User, error) {
+func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) error {
 	// 0. 技术字段完整性保证
 	if user.ID == 0 {
 		user.ID = snowflake.NextID()
 	}
 	if user.Username == "" || user.Email == "" || user.PasswordHash == "" {
-		return nil, ErrParamsInvalid
+		return ErrParamsInvalid
 	}
 
 	// 1. 操作数据库
@@ -40,16 +40,16 @@ func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) (*model.Us
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 { // 判断是否为 Unique Key 冲突
-			return nil, ErrUniqueKeyConflict
+			return ErrUniqueKey
 		}
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "username", user.Username, "error", result.Error)
-		return nil, ErrInternal
+		return ErrInternal
 	}
 
 	// 2. 返回结果
-	return user, nil
+	return nil
 }
 
 // Delete 软删除 User

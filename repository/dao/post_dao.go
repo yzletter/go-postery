@@ -38,7 +38,7 @@ func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) (*model.Po
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return nil, ErrUniqueKeyConflict
+			return nil, ErrUniqueKey
 		}
 
 		// 系统层面错误

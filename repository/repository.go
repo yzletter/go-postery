@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, user *model.User) (*model.User, error)
+	Create(ctx context.Context, user *model.User) error
 	Delete(ctx context.Context, id int64) error
 	GetPasswordHash(ctx context.Context, id int64) (string, error)
 	GetStatus(ctx context.Context, id int64) (int, error)

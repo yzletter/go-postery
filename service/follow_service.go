@@ -40,7 +40,7 @@ func (svc *followService) Follow(ferId, feeId int) error {
 
 	err = svc.FollowRepo.Follow(ferId, feeId)
 	if err != nil {
-		if errors.Is(err, dao.ErrUniqueKeyConflict) {
+		if errors.Is(err, dao.ErrUniqueKey) {
 			slog.Error("检查过还出错", "error", err)
 			return ErrDuplicatedFollow
 		}

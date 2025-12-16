@@ -28,7 +28,7 @@ func (dao *gormCommentDAO) Create(ctx context.Context, comment *model.Comment) (
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return nil, ErrUniqueKeyConflict
+			return nil, ErrUniqueKey
 		}
 		// 系统层面错误
 		slog.Error(CreateFailed, "error", result.Error)
