@@ -22,7 +22,7 @@ func NewUserRepository(userDAO dao.UserDAO, userCache cache.UserCache) UserRepos
 func (repo *userRepository) Create(ctx context.Context, user *model.User) error {
 	err := repo.dao.Create(ctx, user)
 	if err != nil {
-		return toRepoErr(err)
+		return toRepositoryErr(err)
 	}
 
 	// todo 写 Cache
@@ -33,7 +33,7 @@ func (repo *userRepository) Create(ctx context.Context, user *model.User) error 
 func (repo *userRepository) Delete(ctx context.Context, id int64) error {
 	err := repo.dao.Delete(ctx, id)
 	if err != nil {
-		return toRepoErr(err)
+		return toRepositoryErr(err)
 	}
 
 	// todo 删 Cache
@@ -44,7 +44,7 @@ func (repo *userRepository) Delete(ctx context.Context, id int64) error {
 func (repo *userRepository) GetPasswordHash(ctx context.Context, id int64) (string, error) {
 	passwordHash, err := repo.dao.GetPasswordHash(ctx, id)
 	if err != nil {
-		return "", toRepoErr(err)
+		return "", toRepositoryErr(err)
 	}
 	return passwordHash, nil
 }
@@ -54,7 +54,7 @@ func (repo *userRepository) GetStatus(ctx context.Context, id int64) (int, error
 
 	status, err := repo.dao.GetStatus(ctx, id)
 	if err != nil {
-		return 0, toRepoErr(err)
+		return 0, toRepositoryErr(err)
 	}
 	return status, nil
 }
@@ -64,7 +64,7 @@ func (repo *userRepository) GetByID(ctx context.Context, id int64) (*model.User,
 
 	user, err := repo.dao.GetByID(ctx, id)
 	if err != nil {
-		return nil, toRepoErr(err)
+		return nil, toRepositoryErr(err)
 	}
 	return user, nil
 }
@@ -74,7 +74,7 @@ func (repo *userRepository) GetByUsername(ctx context.Context, username string) 
 
 	user, err := repo.dao.GetByUsername(ctx, username)
 	if err != nil {
-		return nil, toRepoErr(err)
+		return nil, toRepositoryErr(err)
 	}
 	return user, nil
 }
@@ -82,7 +82,7 @@ func (repo *userRepository) GetByUsername(ctx context.Context, username string) 
 func (repo *userRepository) UpdatePasswordHash(ctx context.Context, id int64, newHash string) error {
 	err := repo.dao.UpdatePasswordHash(ctx, id, newHash)
 	if err != nil {
-		return toRepoErr(err)
+		return toRepositoryErr(err)
 	}
 
 	return nil
@@ -91,7 +91,7 @@ func (repo *userRepository) UpdatePasswordHash(ctx context.Context, id int64, ne
 func (repo *userRepository) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
 	err := repo.dao.UpdateProfile(ctx, id, updates)
 	if err != nil {
-		return toRepoErr(err)
+		return toRepositoryErr(err)
 	}
 
 	// todo 更新 Cache

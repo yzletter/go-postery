@@ -45,7 +45,7 @@ func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) error {
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "username", user.Username, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 
 	// 2. 返回结果
@@ -60,7 +60,7 @@ func (dao *gormUserDAO) Delete(ctx context.Context, id int64) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(DeleteFailed, "id", id, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		return ErrRecordNotFound
@@ -82,7 +82,7 @@ func (dao *gormUserDAO) GetPasswordHash(ctx context.Context, id int64) (string, 
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "id", id, "error", result.Error)
-		return "", ErrInternal
+		return "", ErrServerInternal
 	}
 
 	// 2. 返回结果
@@ -101,7 +101,7 @@ func (dao *gormUserDAO) GetStatus(ctx context.Context, id int64) (int, error) {
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "id", id, "error", result.Error)
-		return 0, ErrInternal
+		return 0, ErrServerInternal
 	}
 
 	// 2. 返回结果
@@ -122,7 +122,7 @@ func (dao *gormUserDAO) GetByID(ctx context.Context, id int64) (*model.User, err
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "id", id, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	// 3. 返回结果
@@ -143,7 +143,7 @@ func (dao *gormUserDAO) GetByUsername(ctx context.Context, username string) (*mo
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "username", username, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	// 3. 返回结果
@@ -157,7 +157,7 @@ func (dao *gormUserDAO) UpdatePasswordHash(ctx context.Context, id int64, newHas
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		var cnt int64
@@ -165,7 +165,7 @@ func (dao *gormUserDAO) UpdatePasswordHash(ctx context.Context, id int64, newHas
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result.Error)
-			return ErrInternal
+			return ErrServerInternal
 		}
 
 		if cnt == 0 {
@@ -185,7 +185,7 @@ func (dao *gormUserDAO) UpdateProfile(ctx context.Context, id int64, updates map
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		var cnt int64
@@ -193,7 +193,7 @@ func (dao *gormUserDAO) UpdateProfile(ctx context.Context, id int64, updates map
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result.Error)
-			return ErrInternal
+			return ErrServerInternal
 		}
 
 		if cnt == 0 {

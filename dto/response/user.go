@@ -37,7 +37,7 @@ func ToUserBriefDTO(user *model.User) UserBriefDTO {
 }
 
 // ToUserDetailDTO model.User 转 UserDetailDTO
-func ToUserDetailDTO(user model.User) UserDetailDTO {
+func ToUserDetailDTO(user *model.User) UserDetailDTO {
 	userDetailDTO := UserDetailDTO{
 		Id:          user.ID,
 		Name:        user.Username,

@@ -43,7 +43,7 @@ func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) (*model.Po
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "post_id", post.ID, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	// 2. 返回结果
@@ -58,7 +58,7 @@ func (dao *gormPostDAO) Delete(ctx context.Context, id int64) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(DeleteFailed, "id", id, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		return ErrRecordNotFound
@@ -81,7 +81,7 @@ func (dao *gormPostDAO) UpdateCount(ctx context.Context, id int64, field model.P
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "field", col, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected == 0 {
 		// 业务层面错误
@@ -90,7 +90,7 @@ func (dao *gormPostDAO) UpdateCount(ctx context.Context, id int64, field model.P
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result2.Error)
-			return ErrInternal
+			return ErrServerInternal
 		}
 
 		if cnt == 0 {
@@ -110,7 +110,7 @@ func (dao *gormPostDAO) Update(ctx context.Context, id int64, updates map[string
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "updates", updates, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected == 0 {
 		// 业务层面错误
@@ -119,7 +119,7 @@ func (dao *gormPostDAO) Update(ctx context.Context, id int64, updates map[string
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result2.Error)
-			return ErrInternal
+			return ErrServerInternal
 		}
 
 		if cnt == 0 {
@@ -146,7 +146,7 @@ func (dao *gormPostDAO) GetByID(ctx context.Context, id int64) (*model.Post, err
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "id", id, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	// 3. 返回结果
@@ -169,7 +169,7 @@ func (dao *gormPostDAO) GetByUid(ctx context.Context, id int64, pageNo, pageSize
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "user_id", id, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	} else if total == 0 {
 		// 没有帖子
 		return 0, []*model.Post{}, nil
@@ -182,7 +182,7 @@ func (dao *gormPostDAO) GetByUid(ctx context.Context, id int64, pageNo, pageSize
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "user_id", id, "page_no", pageNo, "page_size", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 
 	// 4. 返回结果
@@ -205,7 +205,7 @@ func (dao *gormPostDAO) GetByPage(ctx context.Context, pageNo, pageSize int) (in
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	} else if total == 0 {
 		return 0, []*model.Post{}, nil
 	}
@@ -217,7 +217,7 @@ func (dao *gormPostDAO) GetByPage(ctx context.Context, pageNo, pageSize int) (in
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 
 	// 4. 返回结果
@@ -241,7 +241,7 @@ func (dao *gormPostDAO) GetByPageAndTag(ctx context.Context, tid int64, pageNo, 
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "tag_id", tid, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	} else if total == 0 {
 		return 0, []*model.Post{}, nil
 	}
@@ -253,7 +253,7 @@ func (dao *gormPostDAO) GetByPageAndTag(ctx context.Context, tid int64, pageNo, 
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "tag_id", tid, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 
 	// 4. 返回结果

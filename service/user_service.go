@@ -9,7 +9,6 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/repository/dao"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -52,52 +51,128 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 	// 创建记录
 	err = svc.UserRepository.Create(ctx, user)
 	if err != nil {
-		if errors.Is(err, dao.ErrUniqueKey) { // 唯一键冲突
-			return empty, ErrDuplicated
-		} else if errors.Is(err, dao.ErrInternal) { // 数据库内部错误
-			return empty, ErrServerInternal
-		}
-		return empty, ErrServerInternal
+		return empty, toServiceErr(err)
 	}
 
 	return dto.ToUserBriefDTO(user), nil
 }
 
 // GetBriefById 根据 ID 查找用户的简要信息
-func (svc *userService) GetBriefById(ctx context.Context, id int64) (bool, dto.UserBriefDTO) {
-	user, err := svc.UserRepository.GetByID(ctx, id)
-	if err != nil {
-		return false, dto.UserBriefDTO{}
+func (svc *userService) GetBriefById(ctx context.Context, id int64) (dto.UserBriefDTO, error) {
+	var empty dto.UserBriefDTO
+
+	// 参数校验
+	if id <= 0 {
+		return empty, ErrInvalidParam
 	}
 
-	return true, dto.ToUserBriefDTO(*user)
+	user, err := svc.UserRepository.GetByID(ctx, id)
+	if err != nil {
+		return empty, toServiceErr(err)
+	}
+
+	// panic 兜底
+	if user == nil {
+		return empty, ErrNotFound
+	}
+
+	return dto.ToUserBriefDTO(user), nil
 }
 
 // GetDetailById 根据 ID 查找用户的详细信息
-func (svc *userService) GetDetailById(ctx context.Context, id int64) (bool, dto.UserDetailDTO) {
-	user, err := svc.UserRepository.GetByID(ctx, id)
-	if err != nil {
-		return false, dto.UserDetailDTO{}
+func (svc *userService) GetDetailById(ctx context.Context, id int64) (dto.UserDetailDTO, error) {
+	var empty dto.UserDetailDTO
+
+	// 参数校验
+	if id <= 0 {
+		return empty, ErrInvalidParam
 	}
 
-	return true, dto.ToUserDetailDTO(*user)
+	user, err := svc.UserRepository.GetByID(ctx, id)
+	if err != nil {
+		return empty, toServiceErr(err)
+	}
+
+	// panic 兜底
+	if user == nil {
+		return empty, ErrNotFound
+	}
+
+	return dto.ToUserDetailDTO(user), nil
 }
 
 // GetBriefByName 根据 username 查找用户的简要信息
-func (svc *userService) GetBriefByName(ctx context.Context, username string) dto.UserBriefDTO {
+func (svc *userService) GetBriefByName(ctx context.Context, username string) (dto.UserBriefDTO, error) {
+	var empty dto.UserBriefDTO
+
+	// 参数校验
+	if len(username) <= 0 {
+		return empty, ErrInvalidParam
+	}
+
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil {
-		return dto.UserBriefDTO{}
+		return empty, toServiceErr(err)
 	}
-	return dto.ToUserBriefDTO(*user)
+
+	// panic 兜底
+	if user == nil {
+		return empty, ErrNotFound
+	}
+	return dto.ToUserBriefDTO(user), nil
 }
 
+// UpdatePassword 更新密码
 func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error {
-	err := svc.UserRepository.UpdatePasswordHash(ctx, id, newPass)
-	return err
+	if id <= 0 || len(oldPass) <= 0 || len(newPass) <= 0 {
+		return ErrInvalidParam
+	}
+
+	if len(newPass) < 8 {
+		return ErrPasswordWeak
+	}
+
+	// todo 并发安全
+	user, err := svc.UserRepository.GetByID(ctx, id)
+	if err != nil {
+		return toServiceErr(err)
+	}
+	if user == nil {
+		return ErrNotFound
+	}
+
+	// 判断旧密码是否正确
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPass))
+	if err != nil {
+		// 业务层面错误
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrPassword
+		}
+		// 系统层面错误
+		return ErrServerInternal
+	}
+
+	// 对新密码进行加密
+	newPassHash, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost)
+	if err != nil {
+		return ErrServerInternal
+	}
+
+	// 改新密码
+	err = svc.UserRepository.UpdatePasswordHash(ctx, id, string(newPassHash))
+	if err != nil {
+		return toServiceErr(err)
+	}
+
+	return nil
 }
 
+// UpdateProfile 修改个人资料
 func (svc *userService) UpdateProfile(ctx context.Context, id int64, req request.ModifyProfileRequest) error {
+	if id <= 0 {
+		return ErrInvalidParam
+	}
+
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
 	modelReq := request.ModifyProfileRequestToModel(req)
 
@@ -110,30 +185,37 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req request
 		"location": modelReq.Location,
 		"country":  modelReq.Country,
 	}
-	if err := svc.UserRepository.UpdateProfile(ctx, id, updates); err == nil {
-		return nil
-	} else if errors.Is(err, dao.ErrRecordNotFound) {
-		// 如果是用户 ID 错误, 直接返回该错误
-		return err
+
+	if err := svc.UserRepository.UpdateProfile(ctx, id, updates); err != nil {
+		return toServiceErr(err)
 	}
-	return ErrServerInternal
+	return nil
 }
 
-func (svc *userService) Login(ctx context.Context, username, pass string) (bool, dto.UserBriefDTO) {
+// Login 登录
+func (svc *userService) Login(ctx context.Context, username, pass string) (dto.UserBriefDTO, error) {
+	var empty dto.UserBriefDTO
+
+	// 参数校验
+	if username == "" || pass == "" {
+		return empty, ErrInvalidParam
+	}
+
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
-	if err != nil || user.PasswordHash != pass {
-		return false, dto.UserBriefDTO{}
-	}
-	return true, dto.ToUserBriefDTO(*user)
-}
-
-func (svc *userService) CheckAdmin(ctx context.Context, id int64) (bool, error) {
-	status, err := svc.UserRepository.GetStatus(ctx, id)
 	if err != nil {
-		return false, err
+		return empty, toServiceErr(err)
 	}
-	if status == 5 {
-		return true, nil
+	if user == nil {
+		return empty, ErrServerInternal
 	}
-	return false, nil
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(pass))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return empty, ErrPassword
+		}
+		return empty, ErrEncryptFailed
+	}
+
+	return dto.ToUserBriefDTO(user), nil
 }

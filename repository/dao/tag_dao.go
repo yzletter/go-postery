@@ -26,7 +26,7 @@ func (dao *gormTagDAO) Create(ctx context.Context, tag *model.Tag) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "tag", tag, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected != 0 {
 		// 恢复成功
@@ -44,7 +44,7 @@ func (dao *gormTagDAO) Create(ctx context.Context, tag *model.Tag) error {
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "tag", tag, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (dao *gormTagDAO) GetBySlug(ctx context.Context, slug string) (*model.Tag, 
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "tag_slug", slug, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 	return tag, nil
 }
@@ -77,7 +77,7 @@ func (dao *gormTagDAO) GetByName(ctx context.Context, name string) (*model.Tag, 
 		}
 		// 系统层面错误
 		slog.Error(FindFailed, "tag_name", name, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 	return tag, nil
 }
@@ -89,7 +89,7 @@ func (dao *gormTagDAO) Bind(ctx context.Context, postTag *model.PostTag) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "post_tag", postTag, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected != 0 {
 		// 恢复成功
@@ -107,7 +107,7 @@ func (dao *gormTagDAO) Bind(ctx context.Context, postTag *model.PostTag) error {
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "post_tag", postTag, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 
 	return nil
@@ -120,7 +120,7 @@ func (dao *gormTagDAO) DeleteBind(ctx context.Context, pid, tid int64) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(DeleteFailed, "post_id", pid, "tag_id", tid, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected == 0 {
 		// 幂等
@@ -141,7 +141,7 @@ func (dao *gormTagDAO) FindTagsByPostID(ctx context.Context, pid int64) ([]strin
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "post_id", pid, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 	return names, nil
 }

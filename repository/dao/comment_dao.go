@@ -32,7 +32,7 @@ func (dao *gormCommentDAO) Create(ctx context.Context, comment *model.Comment) (
 		}
 		// 系统层面错误
 		slog.Error(CreateFailed, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	return comment, nil
@@ -51,7 +51,7 @@ func (dao *gormCommentDAO) GetByID(ctx context.Context, id int64) (*model.Commen
 
 		// 系统层面错误
 		slog.Error(FindFailed, "comment_id", id, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	return comment, nil
@@ -63,7 +63,7 @@ func (dao *gormCommentDAO) Delete(ctx context.Context, id int64) (int, error) {
 	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("(id = ? OR parent_id = ?) AND deleted_at IS NULL", id, id).Update("deleted_at", &now)
 	if result.Error != nil {
 		slog.Error(DeleteFailed, "comment_id", id, "error", result.Error)
-		return 0, ErrInternal
+		return 0, ErrServerInternal
 	}
 
 	return int(result.RowsAffected), nil
@@ -85,7 +85,7 @@ func (dao *gormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pa
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "post_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	} else if total == 0 {
 		return 0, []*model.Comment{}, nil
 	}
@@ -97,7 +97,7 @@ func (dao *gormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pa
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "post_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 
 	// 4. 返回结果
@@ -116,7 +116,7 @@ func (dao *gormCommentDAO) GetRepliesByParentIDs(ctx context.Context, ids []int6
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "parent_ids", ids, "error", result.Error)
-		return nil, ErrInternal
+		return nil, ErrServerInternal
 	}
 
 	return comments, nil

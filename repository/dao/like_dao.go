@@ -33,7 +33,7 @@ func (dao *gormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "like", like, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected > 0 {
 		// 恢复成功
@@ -51,7 +51,7 @@ func (dao *gormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "like", like, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 
 	return nil
@@ -64,7 +64,7 @@ func (dao *gormLikeDAO) Delete(ctx context.Context, uid, pid int64) error {
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(DeleteFailed, "user_id", uid, "post_id", pid, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected == 0 {
 		// 幂等
@@ -86,7 +86,7 @@ func (dao *gormLikeDAO) Exists(ctx context.Context, uid, pid int64) (bool, error
 
 		// 系统层面错误
 		slog.Error(FindFailed, "user_id", uid, "post_id", pid, "error", result.Error)
-		return false, ErrInternal
+		return false, ErrServerInternal
 	}
 	return true, nil
 }

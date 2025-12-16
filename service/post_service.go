@@ -250,7 +250,7 @@ func (svc *postService) Like(ctx context.Context, pid, uid int) error {
 			return userLikeRepository.ErrRecordHasExist
 		}
 		// 系统内部错误
-		return dao.ErrInternal
+		return repository.ErrServerInternal
 	}
 
 	svc.PostRepo.UpdateCount(ctx, int64(pid), 3, 1)
@@ -274,7 +274,7 @@ func (svc *postService) Dislike(ctx context.Context, pid, uid int) error {
 			return userLikeRepository.ErrRecordNotExist
 		}
 		// 系统内部错误
-		return dao.ErrInternal
+		return repository.ErrServerInternal
 	}
 
 	svc.PostRepo.UpdateCount(ctx, int64(pid), 3, -1) // 数据库 + 1
@@ -285,7 +285,7 @@ func (svc *postService) Dislike(ctx context.Context, pid, uid int) error {
 func (svc *postService) IfLike(pid, uid int) (bool, error) {
 	ok, err := svc.LikeRepo.Get(uid, pid)
 	if err != nil {
-		return ok, dao.ErrInternal
+		return ok, repository.ErrServerInternal
 	}
 	return ok, nil
 }

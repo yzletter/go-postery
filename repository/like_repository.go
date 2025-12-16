@@ -20,7 +20,7 @@ func NewLikeRepository(likeDAO dao.LikeDAO, likeCache cache.LikeCache) LikeRepos
 func (repo *likeRepository) Like(ctx context.Context, like *model.Like) error {
 	err := repo.dao.Create(ctx, like)
 	if err != nil {
-		return toRepoErr(err)
+		return toRepositoryErr(err)
 	}
 	return nil
 }
@@ -28,7 +28,7 @@ func (repo *likeRepository) Like(ctx context.Context, like *model.Like) error {
 func (repo *likeRepository) UnLike(ctx context.Context, uid, pid int64) error {
 	err := repo.dao.Delete(ctx, uid, pid)
 	if err != nil {
-		return toRepoErr(err)
+		return toRepositoryErr(err)
 	}
 	return nil
 }
@@ -37,7 +37,7 @@ func (repo *likeRepository) HasLiked(ctx context.Context, uid, pid int64) (bool,
 	// todo 查 Cache
 	ok, err := repo.dao.Exists(ctx, uid, pid)
 	if err != nil {
-		return false, toRepoErr(err)
+		return false, toRepositoryErr(err)
 	}
 
 	return ok, nil

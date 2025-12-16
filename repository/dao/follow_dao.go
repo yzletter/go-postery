@@ -28,7 +28,7 @@ func (dao *gormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error 
 	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NOT NULL", ferID, feeID).Update("deleted_at", nil)
 	if result.Error != nil {
 		// 系统层面错误
-		return ErrInternal
+		return ErrServerInternal
 	}
 	if result.RowsAffected > 0 {
 		// 恢复软删除成功
@@ -51,7 +51,7 @@ func (dao *gormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error 
 		}
 		// 系统层面错误
 		slog.Error(CreateFailed, "follower_id", ferID, "followee_id", feeID, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	}
 
 	// 3. 返回结果
@@ -66,7 +66,7 @@ func (dao *gormFollowDAO) Delete(ctx context.Context, ferID, feeID int64) error 
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", result.Error)
-		return ErrInternal
+		return ErrServerInternal
 	} else if result.RowsAffected == 0 {
 		// 幂等成功
 		return nil
@@ -83,7 +83,7 @@ func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, 
 		result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", a, b).Count(&cnt)
 		if result.Error != nil {
 			slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", result.Error)
-			return false, ErrInternal
+			return false, ErrServerInternal
 		}
 		return cnt > 0, nil
 	}
@@ -91,12 +91,12 @@ func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, 
 	condition1, err := exists(ferID, feeID)
 	if err != nil {
 		slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", err.Error)
-		return 0, ErrInternal
+		return 0, ErrServerInternal
 	}
 	condition2, err := exists(feeID, ferID)
 	if err != nil {
 		slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", err.Error)
-		return 0, ErrInternal
+		return 0, ErrServerInternal
 	}
 
 	switch {
@@ -123,7 +123,7 @@ func (dao *gormFollowDAO) GetFollowers(ctx context.Context, id int64, pageNo, pa
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "followee_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 	if total == 0 {
 		return 0, []int64{}, nil
@@ -135,7 +135,7 @@ func (dao *gormFollowDAO) GetFollowers(ctx context.Context, id int64, pageNo, pa
 	// Find 不会返回 RecordNotFound
 	if result.Error != nil {
 		slog.Error(FindFailed, "followee_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 
 	// 2. 返回结果
@@ -151,7 +151,7 @@ func (dao *gormFollowDAO) GetFollowees(ctx context.Context, id int64, pageNo, pa
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "follower_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 	if total == 0 {
 		return 0, []int64{}, nil
@@ -163,7 +163,7 @@ func (dao *gormFollowDAO) GetFollowees(ctx context.Context, id int64, pageNo, pa
 	// Find 不会返回 RecordNotFound
 	if result.Error != nil {
 		slog.Error(FindFailed, "follower_id", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrInternal
+		return 0, nil, ErrServerInternal
 	}
 
 	// 2. 返回结果
