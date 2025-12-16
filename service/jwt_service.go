@@ -1,23 +1,27 @@
 package service
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/rs/xid"
+	"github.com/yzletter/go-postery/dto/request"
 )
 
 // 可容忍的时间偏移
 const defaultLeeway = 5 * time.Second
-
-type JwtHeader struct {
-	Algo string `json:"alg"` // 哈希算法, HS256
-	Type string `json:"typ"` // JWT
-}
+const (
+	UID_IN_CTX                = "uid" // uid 在上下文中的 name
+	UNAME_IN_CTX              = "uname"
+	ACCESS_TOKEN_COOKIE_NAME  = "jwt-access-token"  // AccessToken 在 cookie 中的 name
+	REFRESH_TOKEN_COOKIE_NAME = "jwt-refresh-token" // RefreshToken 在 cookie 中的 name
+	USERINFO_IN_JWT_PAYLOAD   = "userInfo"
+	REFRESH_KEY_PREFIX        = "session_"
+)
 
 type JwtPayload struct {
 	ID          string         `json:"jti"` // JWT ID
@@ -29,24 +33,23 @@ type JwtPayload struct {
 	Expiration  int64          `json:"exp"` // 过期时间（秒），0=永不过期
 	UserDefined map[string]any `json:"ud"`  // 自定义字段
 }
+type JwtHeader struct {
+	Algo string `json:"alg"` // 哈希算法, HS256
+	Type string `json:"typ"` // JWT
+}
 
-var (
-	ErrJwtInvalidParam       = errors.New("jwt 传入非法参数")
-	ErrJwtMarshalFailed      = errors.New("jwt json 序列化失败")
-	ErrJwtBase64DecodeFailed = errors.New("jwt json base64 解码失败")
-	ErrJwtUnMarshalFailed    = errors.New("jwt json 反序列化失败")
-	ErrJwtInvalidTime        = errors.New("jwt 时间错误")
-)
-
+// JwtService 鉴权中间件的 Service
 type JwtService struct {
-	Secret string // 用于签名加密的 Secret
-	Header JwtHeader
+	RedisClient redis.Cmdable // 依赖 Redis 数据库
+	Secret      string        // 用于签名加密的 Secret
+	Header      JwtHeader
 }
 
 // NewJwtService 构造函数
-func NewJwtService(secret string) *JwtService {
+func NewJwtService(redisClient redis.Cmdable, secret string) *JwtService {
 	return &JwtService{
-		Secret: secret,
+		RedisClient: redisClient,
+		Secret:      secret,
 		// 默认的 JWT Header
 		Header: JwtHeader{
 			Algo: "HS256",
@@ -55,8 +58,65 @@ func NewJwtService(secret string) *JwtService {
 	}
 }
 
-// GenToken 根据 payload 生成 JWT Token
-func (svc *JwtService) GenToken(payload JwtPayload) (string, error) {
+// GetUserInfoFromJWT 从 JWT Token 中获取 uid
+func (svc *JwtService) GetUserInfoFromJWT(jwtToken string) *request.UserJWTInfo {
+	// 校验 JWT Token
+	payload, err := svc.VerifyToken(jwtToken)
+	if err != nil { // JWT Token 校验失败
+		slog.Error("JwtService 校验 JWT Token 失败 ...", "err", err)
+		return nil
+	}
+
+	slog.Info("JwtService 校验 JWT Token 成功 ...", "payload", payload)
+
+	// 从 payload 的自定义字段中获取用户信息
+	for k, v := range payload.UserDefined {
+		if k == USERINFO_IN_JWT_PAYLOAD {
+			// todo 待优化
+			bs, _ := json.Marshal(v)
+			var userInfo request.UserJWTInfo
+			_ = json.Unmarshal(bs, &userInfo)
+			slog.Info("JwtService 获得 UserInfo 成功 ... ", "userInfo", userInfo)
+			return &userInfo
+		}
+	}
+
+	// 未获得用户信息
+	slog.Info("JwtService 获得 UserInfo 失败 ... ")
+	return nil
+}
+
+// IssueTokenForUser 为 User 签发双 token
+func (svc *JwtService) IssueTokenForUser(uid int64, uname string) (string, string, error) {
+	userInfo := request.UserJWTInfo{
+		Id:   strconv.Itoa(int(uid)),
+		Name: uname,
+	}
+
+	// 生成 RefreshToken
+	refreshToken := xid.New().String() //	生成一个随机的字符串
+
+	// 生成 AccessToken
+	payload := JwtPayload{
+		Issue:       "yzletter",
+		IssueAt:     time.Now().Unix(),                                 // 签发日期为当前时间
+		Expiration:  0,                                                 // 永不过期
+		UserDefined: map[string]any{USERINFO_IN_JWT_PAYLOAD: userInfo}, // 用户自定义字段
+	}
+
+	accessToken, err := svc.GenToken(payload)
+	if err != nil {
+		return "", "", err
+	}
+
+	// < session_refreshToken, accessToken > 放入 redis
+	svc.RedisClient.Set(REFRESH_KEY_PREFIX+refreshToken, accessToken, 7*86400*time.Second)
+
+	return refreshToken, accessToken, nil
+}
+
+// 根据 payload 生成 JWT Token
+func (svc *JwtService) genToken(payload JwtPayload) (string, error) {
 	// 参数校验
 	if svc.Secret == "" {
 		return "", ErrJwtInvalidParam
@@ -81,8 +141,8 @@ func (svc *JwtService) GenToken(payload JwtPayload) (string, error) {
 	return jwtMsg + "." + jwtSignature, nil
 }
 
-// VerifyToken 校验 JWT Token, 获得 payload
-func (svc *JwtService) VerifyToken(token string) (*JwtPayload, error) {
+// 校验 JWT Token, 获得 payload
+func (svc *JwtService) verifyToken(token string) (*JwtPayload, error) {
 	// 参数校验
 	if token == "" || svc.Secret == "" {
 		return nil, ErrJwtInvalidParam
@@ -136,35 +196,4 @@ func (svc *JwtService) VerifyToken(token string) (*JwtPayload, error) {
 
 	slog.Info("verify payload", payload)
 	return &payload, nil
-}
-
-// 对结构体依次进行 json 序列化和 base64 编码
-func marshalBase64Encode(v any) (string, error) {
-	bs, err := json.Marshal(v)
-	if err != nil {
-		return "", ErrJwtMarshalFailed
-	} else {
-		return base64.RawURLEncoding.EncodeToString(bs), nil
-	}
-}
-
-// 对字符串依次进行 base64 解码和 json 反序列化
-func base64DecodeUnmarshal(s string, v any) error {
-	bs, err := base64.RawURLEncoding.DecodeString(s)
-	if err != nil {
-		return ErrJwtBase64DecodeFailed
-	}
-	// 将 bs 反序列化到 v 中
-	err = json.Unmarshal(bs, v)
-	if err != nil {
-		return ErrJwtUnMarshalFailed
-	}
-	return nil
-}
-
-// 用 sha256 哈希算法生成 JWT 签名, 传入 JWT Token 的前两部分和密钥, 返回生成的签名字符串
-func signSha256(jwtMsg string, secret string) string {
-	hash := hmac.New(sha256.New, []byte(secret))               // 根据 secret 生成 sha256 哈希算法器
-	hash.Write([]byte(jwtMsg))                                 // 将 jwtMsg 写入
-	return base64.RawURLEncoding.EncodeToString(hash.Sum(nil)) // 对哈希结果进行 base64 编码
 }

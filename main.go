@@ -66,13 +66,12 @@ func main() {
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo) // 注册 CommentService
 	TagSvc := service.NewTagService(TagRepo)                                 // 注册 tagService
 
-	JwtSvc := service.NewJwtService("123456")                                               // 注册 JwtService
+	JwtSvc := service.NewJwtService(infraRedis.GetRedis(), "123456")                        // 注册 JwtService
 	MetricSvc := service.NewMetricService()                                                 // 注册 MetricService
 	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000) // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(infraRedis.GetRedis(), JwtSvc, UserSvc)               // 注册 AuthService
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(AuthSvc, JwtSvc, UserSvc)           // 注册 UserHandler
+	UserHdl := handler.NewUserHandler(UserSvc, JwtSvc)                    // 注册 UserHandler
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
@@ -80,11 +79,11 @@ func main() {
 	//TagHdl := handler.NewTagHandler(TagSvc)                               // 注册 TagHandler
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
-	AuthOptionalMdl := middleware.AuthOptionalMiddleware(AuthSvc) // AuthOptionalMdl 非强制要求登录
-	AuthAdminMdl := middleware.AuthAdminMiddleware(AuthSvc)       // AuthAdminMdl 要求管理员身份
-	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
-	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(JwtSvc) // AuthRequiredMdl 强制登录
+	AuthOptionalMdl := middleware.AuthOptionalMiddleware(JwtSvc) // AuthOptionalMdl 非强制要求登录
+	AuthAdminMdl := middleware.AuthAdminMiddleware(JwtSvc)       // AuthAdminMdl 要求管理员身份
+	MetricMdl := middleware.MetricMiddleware(MetricSvc)          // MetricMdl 用于 Prometheus 监控中间件
+	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc) // RateLimitMdl 限流中间件
 	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

@@ -16,16 +16,14 @@ import (
 
 type UserHandler struct {
 	UserService service.UserService
-	AuthService *service.AuthService
 	JwtService  *service.JwtService
 }
 
 // NewUserHandler 构造函数
-func NewUserHandler(userService service.UserService, authService *service.AuthService, jwtService *service.JwtService) *UserHandler {
+func NewUserHandler(userService service.UserService, jwtService *service.JwtService) *UserHandler {
 	return &UserHandler{
-		AuthService: authService,
-		JwtService:  jwtService,
 		UserService: userService,
+		JwtService:  jwtService,
 	}
 }
 
@@ -51,7 +49,7 @@ func (hdl *UserHandler) Login(ctx *gin.Context) {
 	slog.Info("登录成功", "userBriefDTO", userBriefDTO.Id)
 
 	// 将 user info 放入 jwt 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userBriefDTO.Id, userBriefDTO.Name)
+	refreshToken, accessToken, err := hdl.JwtService.IssueTokenForUser(userBriefDTO.Id, userBriefDTO.Name)
 	if err != nil {
 		// Token 签发失败
 		slog.Error("Token 签发失败", "error", err)
@@ -130,7 +128,7 @@ func (hdl *UserHandler) Register(ctx *gin.Context) {
 	slog.Info("Register User Success", "user", userBriefDTO)
 
 	// 将 user info 放入 jwt 签发双 Token
-	refreshToken, accessToken, err := hdl.AuthService.IssueTokenForUser(userBriefDTO.Id, createUserRequest.Name)
+	refreshToken, accessToken, err := hdl.JwtService.IssueTokenForUser(userBriefDTO.Id, createUserRequest.Name)
 	if err != nil {
 		// 双 Token 签发失败
 		slog.Error("Dual Token Issue Failed", "error", err)
