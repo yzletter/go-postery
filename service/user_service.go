@@ -2,23 +2,23 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/dto/response"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type userService struct {
 	UserRepository repository.UserRepository
+	PasswordHasher PasswordHasher // 用于加密和比较密码
 }
 
-func NewUserService(userRepository repository.UserRepository) UserService {
+func NewUserService(userRepository repository.UserRepository, passwordHasher PasswordHasher) UserService {
 	return &userService{
 		UserRepository: userRepository,
+		PasswordHasher: passwordHasher,
 	}
 }
 
@@ -35,7 +35,7 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 	}
 
 	// 对密码进行加密
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	passwordHash, err := svc.PasswordHasher.Hash(password)
 	if err != nil {
 		return empty, ErrEncryptFailed
 	}
@@ -142,20 +142,15 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	}
 
 	// 判断旧密码是否正确
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPass))
+	err = svc.PasswordHasher.Compare(user.PasswordHash, oldPass)
 	if err != nil {
-		// 业务层面错误
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return ErrPassword
-		}
-		// 系统层面错误
-		return ErrServerInternal
+		return ErrEncryptFailed
 	}
 
 	// 对新密码进行加密
-	newPassHash, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost)
+	newPassHash, err := svc.PasswordHasher.Hash(newPass)
 	if err != nil {
-		return ErrServerInternal
+		return ErrEncryptFailed
 	}
 
 	// 改新密码
@@ -209,11 +204,8 @@ func (svc *userService) Login(ctx context.Context, username, pass string) (dto.U
 		return empty, ErrServerInternal
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(pass))
+	err = svc.PasswordHasher.Compare(user.PasswordHash, pass)
 	if err != nil {
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return empty, ErrPassword
-		}
 		return empty, ErrEncryptFailed
 	}
 

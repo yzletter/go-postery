@@ -9,7 +9,6 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/repository/dao"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -245,9 +244,9 @@ func (svc *postService) Like(ctx context.Context, pid, uid int) error {
 	// 创建点赞记录
 	err = svc.LikeRepo.Create(uid, pid)
 	if err != nil {
-		if errors.Is(err, userLikeRepository.ErrRecordHasExist) {
+		if errors.Is(err, repository.ErrRecordHasExist) {
 			// 重复点赞
-			return userLikeRepository.ErrRecordHasExist
+			return repository.ErrRecordHasExist
 		}
 		// 系统内部错误
 		return repository.ErrServerInternal
@@ -269,9 +268,9 @@ func (svc *postService) Dislike(ctx context.Context, pid, uid int) error {
 	// 删除点赞记录
 	err = svc.LikeRepo.Delete(uid, pid)
 	if err != nil {
-		if errors.Is(err, userLikeRepository.ErrRecordNotExist) {
+		if errors.Is(err, repository.ErrRecordNotExist) {
 			// 重复删除
-			return userLikeRepository.ErrRecordNotExist
+			return repository.ErrRecordNotExist
 		}
 		// 系统内部错误
 		return repository.ErrServerInternal
