@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -23,9 +22,9 @@ func NewFollowDAO(db *gorm.DB) FollowDAO {
 }
 
 // Create 创建 ferID 关注 feeID
-func (dao *gormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error {
+func (dao *gormFollowDAO) Create(ctx context.Context, follow *model.Follow) error {
 	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NOT NULL", ferID, feeID).Update("deleted_at", nil)
+	result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NOT NULL", follow.FollowerID, follow.FolloweeID).Update("deleted_at", nil)
 	if result.Error != nil {
 		// 系统层面错误
 		return ErrServerInternal
@@ -36,13 +35,7 @@ func (dao *gormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error 
 	}
 
 	// 2. 新建记录
-	var follow = model.Follow{
-		ID:         snowflake.NextID(),
-		FollowerID: ferID,
-		FolloweeID: feeID,
-		DeletedAt:  nil,
-	}
-	result = dao.db.WithContext(ctx).Create(&follow)
+	result = dao.db.WithContext(ctx).Create(follow)
 	if result.Error != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
@@ -50,7 +43,7 @@ func (dao *gormFollowDAO) Create(ctx context.Context, ferID, feeID int64) error 
 			return nil
 		}
 		// 系统层面错误
-		slog.Error(CreateFailed, "follower_id", ferID, "followee_id", feeID, "error", result.Error)
+		slog.Error(CreateFailed, "follower_id", follow.FollowerID, "followee_id", follow.FolloweeID, "error", result.Error)
 		return ErrServerInternal
 	}
 

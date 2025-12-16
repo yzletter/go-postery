@@ -8,14 +8,14 @@ import (
 
 // BriefDTO 后端返回简要 User 信息
 type BriefDTO struct {
-	Id     int64  `json:"id,string"` // ID
+	ID     int64  `json:"id,string"` // ID
 	Name   string `json:"name"`      // 用户名
 	Avatar string `json:"avatar"`    // 头像 URL
 }
 
 // DetailDTO 后端返回详细 User 信息
 type DetailDTO struct {
-	Id          int64  `json:"id,string"`     // ID 雪花算法
+	ID          int64  `json:"id,string"`     // ID 雪花算法
 	Name        string `json:"name"`          // 用户名
 	Email       string `json:"email"`         // 邮箱
 	Avatar      string `json:"avatar"`        // 头像 URL
@@ -30,7 +30,7 @@ type DetailDTO struct {
 // ToBriefDTO model.User 转 UserDTO
 func ToBriefDTO(user *model.User) BriefDTO {
 	return BriefDTO{
-		Id:     user.ID,
+		ID:     user.ID,
 		Name:   user.Username,
 		Avatar: "", // todo
 	}
@@ -39,7 +39,7 @@ func ToBriefDTO(user *model.User) BriefDTO {
 // ToDetailDTO model.User 转 DetailDTO
 func ToDetailDTO(user *model.User) DetailDTO {
 	userDetailDTO := DetailDTO{
-		Id:          user.ID,
+		ID:          user.ID,
 		Name:        user.Username,
 		Email:       user.Email,
 		Avatar:      user.Avatar,

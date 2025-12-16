@@ -23,41 +23,6 @@ func NewUserService(userRepo repository.UserRepository, idGen IDGenerator, passH
 	}
 }
 
-// Register 注册用户
-func (svc *userService) Register(ctx context.Context, username, email, password string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 参数校验
-	if username == "" || password == "" || email == "" {
-		return empty, errno.ErrInvalidParam
-	}
-	if len(password) < 8 {
-		return empty, errno.ErrPasswordWeak
-	}
-
-	// 对密码进行加密
-	passwordHash, err := svc.passHasher.Hash(password)
-	if err != nil {
-		return empty, err
-	}
-
-	// 构造指针
-	u := &model.User{
-		ID:           svc.idGen.NextID(),
-		Username:     username,
-		Email:        email,
-		PasswordHash: passwordHash,
-	}
-
-	// 创建记录
-	err = svc.userRepo.Create(ctx, u)
-	if err != nil {
-		return empty, toErrnoErr(err)
-	}
-
-	return userdto.ToBriefDTO(u), nil
-}
-
 // GetBriefById 根据 ID 查找用户的简要信息
 func (svc *userService) GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error) {
 	var empty userdto.BriefDTO
@@ -159,7 +124,7 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	}
 
 	// 改新密码
-	err = svc.userRepo.UpdatePasswordHash(ctx, id, string(newPassHash))
+	err = svc.userRepo.UpdatePasswordHash(ctx, id, newPassHash)
 	if err != nil {
 		return toErrnoErr(err)
 	}
@@ -190,31 +155,4 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto
 		return toErrnoErr(err)
 	}
 	return nil
-}
-
-// Login 登录
-func (svc *userService) Login(ctx context.Context, username, pass string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 参数校验
-	if username == "" || pass == "" {
-		return empty, errno.ErrInvalidParam
-	}
-
-	// 获取用户
-	user, err := svc.userRepo.GetByUsername(ctx, username)
-	if err != nil {
-		return empty, toErrnoErr(err)
-	}
-	if user == nil {
-		return empty, errno.ErrServerInternal
-	}
-
-	// 比较密码
-	err = svc.passHasher.Compare(user.PasswordHash, pass)
-	if err != nil {
-		return empty, err
-	}
-
-	return userdto.ToBriefDTO(user), nil
 }

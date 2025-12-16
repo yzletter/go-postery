@@ -2,138 +2,78 @@ package middleware
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/dto/user"
+	"github.com/redis/go-redis/v9"
+	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
-	"github.com/yzletter/go-postery/utils/response"
 )
 
 // AuthRequiredMiddleware 强制登录
-func AuthRequiredMiddleware(authService *service.JwtService) gin.HandlerFunc {
+func AuthRequiredMiddleware(manager service.JwtManager, cmdable redis.Cmdable) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// 尝试通过 AccessToken 认证
-		accessToken := utils.GetValueFromCookie(ctx, service.ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
-		userInfo := authService.GetUserInfoFromJWT(accessToken)
+		accessToken := utils.GetValueFromCookie(ctx, handler.AccessTokenInCookie)   // 获取 AccessToken
+		refreshToken := utils.GetValueFromCookie(ctx, handler.RefreshTokenInCookie) // 获取 RefreshToken
 
-		// AccessToken 认证直接通过
-		if userInfo != nil {
-			slog.Info("JwtService 认证 AccessToken 成功 ...", "UserInfo", userInfo)
+		// 1. 尝试直接通过 AccessToken 认证
+		claim, err := manager.VerifyToken(accessToken)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 
-			// 把 userInfo 放入上下文, 以便后续中间件直接使用
-			setUserInfoInCTX(ctx, userInfo)
+		if claim != nil {
+			// 查询缓存
+			ok, err := cmdable.Exists(ctx, service.ClearTokenPrefix+claim.SSid).Result()
+			if err != nil || ok == 1 {
+				ctx.SetCookie(handler.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
+				ctx.SetCookie(handler.AccessTokenInCookie, "", -1, "/", "localhost", false, true)
+
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+
+			// AccessToken 认证直接通过
+			slog.Info("AuthMiddleware 认证 AccessToken 成功 ...", "user_id", claim.ID)
+			ctx.Set(handler.UserIDInCtx, claim.ID) // 把用户 ID 放入上下文, 以便后续中间件直接使用
 			ctx.Next()
 			return
 		}
 
-		slog.Info("JwtService 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
+		slog.Info("AuthMiddleware 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
 
 		// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
-		refreshToken := utils.GetValueFromCookie(ctx, service.REFRESH_TOKEN_COOKIE_NAME)    // 获取 RefreshToken
-		result := authService.RedisClient.Get(ctx, service.REFRESH_KEY_PREFIX+refreshToken) // 从 Redis 尝试获取 AccessToken
+		result := cmdable.Get(ctx, service.FreshTokenPrefix+refreshToken) // 从 Redis 尝试获取 AccessToken
 		if result.Err() != nil {
-			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
-			slog.Info("JwtService 认证 RefreshToken 失败, 需重新登录 ...")
-			response.Unauthorized(ctx, "")
-			ctx.Abort() // 当前中间件执行完, 后续中间件不执行
+			// 没拿到 redis 中存的 AccessToken, 说明 RefreshToken 也认证不通过, 没招了
+			slog.Info("AuthMiddleware 认证 RefreshToken 失败, 需重新登录 ...")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		// 如果 redis 能拿到, 重新放到 Cookie 中
-		accessToken = result.Val()
-		userInfo = authService.GetUserInfoFromJWT(accessToken)
-		if userInfo == nil {
-			// 虽然拿到了, 但是有问题 (很小概率)
-			slog.Error("JwtService 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
-			response.Unauthorized(ctx, "")
-			ctx.Abort() // 当前中间件执行完, 后续中间件不执行
-			return
-		}
+		// 如果 redis 能拿到, 检验一下是否被踢出, 重新放到 Cookie 中
+		newAccessToken := result.Val()
+		newClaim, err := manager.VerifyToken(newAccessToken)
+		if newClaim != nil {
+			// 查询缓存
+			ok, err := cmdable.Exists(ctx, service.ClearTokenPrefix+newClaim.SSid).Result()
+			if err != nil || ok == 1 {
+				ctx.SetCookie(handler.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
+				ctx.SetCookie(handler.AccessTokenInCookie, "", -1, "/", "localhost", false, true)
 
-		// 拿到了, 并且也没问题, 放到 Cookie 中
-		ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
-		slog.Info("JwtService 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
 
-		// 把 userInfo 放入上下文, 以便后续中间件直接使用
-		setUserInfoInCTX(ctx, userInfo)
-		ctx.Next()
-	}
-}
+			// 没被踢出, 重放到 Cookie 中
+			ctx.SetCookie(handler.AccessTokenInCookie, accessToken, 0, "/", "localhost", false, true)
 
-// AuthOptionalMiddleware 非强制要求登录
-func AuthOptionalMiddleware(authService *service.JwtService) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		// 尝试通过 AccessToken 认证
-		accessToken := utils.GetValueFromCookie(ctx, service.ACCESS_TOKEN_COOKIE_NAME) // 获取 AccessToken
-		userInfo := authService.GetUserInfoFromJWT(accessToken)
-
-		// AccessToken 认证直接通过
-		if userInfo != nil {
-			slog.Info("JwtService 认证 AccessToken 成功 ...", "UserInfo", userInfo)
-
-			// 把 userInfo 放入上下文, 以便后续中间件直接使用
-			setUserInfoInCTX(ctx, userInfo)
-			ctx.Next()
-		}
-
-		slog.Info("JwtService 认证 AccessToken 失败, 尝试认证 RefreshToken ...")
-
-		// AccessToken 认证不通过, 尝试通过 RefreshToken 认证
-		refreshToken := utils.GetValueFromCookie(ctx, service.REFRESH_TOKEN_COOKIE_NAME)    // 获取 RefreshToken
-		result := authService.RedisClient.Get(ctx, service.REFRESH_KEY_PREFIX+refreshToken) // 从 Redis 尝试获取 AccessToken
-		if result.Err() != nil {
-			// 没拿到 redis 中存的 accessToken, RefreshToken 也认证不通过, 没招了
-			slog.Info("JwtService 认证 RefreshToken 失败, 需重新登录 ...")
+			slog.Info("AuthMiddleware 认证 RefreshToken 成功 ...", "user_id", newClaim.ID)
+			ctx.Set(handler.UserIDInCtx, newClaim.ID) // 把用户 ID 放入上下文, 以便后续中间件直接使用
 			ctx.Next()
 			return
 		}
-
-		// 如果 redis 能拿到, 重新放到 Cookie 中
-		accessToken = result.Val()
-		userInfo = authService.GetUserInfoFromJWT(accessToken)
-		if userInfo == nil {
-			// 虽然拿到了, 但是有问题 (很小概率)
-			slog.Error("JwtService 从 Redis 中获取到错误的 AccessToken ...", "user", userInfo)
-			ctx.Next()
-			return
-		}
-
-		// 拿到了, 并且也没问题, 放到 Cookie 中
-		ctx.SetCookie(service.ACCESS_TOKEN_COOKIE_NAME, accessToken, 0, "/", "localhost", false, true)
-		slog.Info("JwtService 认证 RefreshToken 成功 ...", "UserInfo", userInfo)
-
-		// 把 userInfo 放入上下文, 以便后续中间件直接使用
-		setUserInfoInCTX(ctx, userInfo)
-		ctx.Next()
 	}
-}
-
-func AuthAdminMiddleware(authService *service.JwtService) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		//// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-		//uid, err := service.GetUidFromCTX(ctx)
-		//if err != nil {
-		//	response.Unauthorized(ctx, "请先登录")
-		//	return
-		//}
-		//
-		//ok, err := authService.CheckAdmin(uid)
-		//if err != nil {
-		//	response.ServerError(ctx, "")
-		//	return
-		//} else if !ok {
-		//	response.Unauthorized(ctx, "抱歉，没有管理权限")
-		//	return
-		//}
-		//
-		//ctx.Next()
-	}
-}
-
-// 将用户信息放入上下文
-func setUserInfoInCTX(ctx *gin.Context, userInfo *user.JWTInfo) {
-	ctx.Set(service.UID_IN_CTX, userInfo.Id)
-	ctx.Set(service.UNAME_IN_CTX, userInfo.Name)
-	slog.Info("用户信息放入上下文成功 ...", "UserInfo", userInfo)
 }

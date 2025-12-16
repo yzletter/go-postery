@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/response"
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/utils"
@@ -29,6 +28,7 @@ type postService struct {
 	UserRepo repository.UserRepository
 	LikeRepo repository.LikeRepository
 	TagRepo  repository.TagRepository
+	idGen    IDGenerator // 用于生成 ID
 }
 
 func NewPostService(postRepo repository.PostRepository, userRepo repository.UserRepository, likeRepo repository.LikeRepository, tagRepo repository.TagRepository) PostService {
@@ -42,7 +42,7 @@ func NewPostService(postRepo repository.PostRepository, userRepo repository.User
 
 func (svc *postService) Create(ctx context.Context, uid int, title, content string) (dto.PostDetailDTO, error) {
 	post := &model.Post{
-		ID:      snowflake.NextID(),
+		ID:      svc.idGen.NextID(),
 		UserID:  int64(uid),
 		Title:   title,
 		Content: content,

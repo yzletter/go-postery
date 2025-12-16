@@ -1,33 +1,27 @@
 package snowflake
 
 import (
-	"sync"
-
 	"log/slog"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/yzletter/go-postery/service"
 )
 
-var (
+type snowflakeIDGenerator struct {
 	node *snowflake.Node
-	once sync.Once
-)
-
-// Init 初始化 Snowflake 节点
-func Init(nodeID int) {
-	once.Do(func() {
-		n, err := snowflake.NewNode(int64(nodeID))
-		if err != nil {
-			slog.Error("初始化雪花算法失败 ...", "error", err)
-		}
-		node = n
-	})
 }
 
-// NextID 生成下一个 ID
-func NextID() int64 {
-	if node == nil {
+func NewSnowflakeIDGenerator(nodeID int) service.IDGenerator {
+	node, err := snowflake.NewNode(int64(nodeID))
+	if err != nil {
+		slog.Error("初始化雪花算法失败 ...", "error", err)
+	}
+	return &snowflakeIDGenerator{node: node}
+}
+
+func (sf *snowflakeIDGenerator) NextID() int64 {
+	if sf.node == nil {
 		slog.Error("未初始化雪花算法")
 	}
-	return int64(node.Generate())
+	return int64(sf.node.Generate())
 }

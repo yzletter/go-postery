@@ -8,12 +8,14 @@ import (
 
 // JWTInfo 用于存放进 JWT 自定义字段和放入 ctx 的用户信息
 type JWTInfo struct {
-	Id   string `json:"id"`
-	Name string
+	Id   string `json:"user_id"`
+	Name string `json:"user_name"`
+	Role string `json:"role"`
 }
 
 // CreateRequest 定义前端提交注册表单信息的模型映射
 type CreateRequest struct {
+	Email    string `json:"email"`
 	Name     string `json:"name" form:"name" binding:"required,gte=2"`          // 长度 >= 2
 	PassWord string `json:"password" form:"password" binding:"required,len=32"` // 长度 == 32
 }

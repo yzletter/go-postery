@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -27,10 +26,7 @@ func NewUserDAO(db *gorm.DB) UserDAO {
 // Create 创建 User
 func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) error {
 	// 0. 技术字段完整性保证
-	if user.ID == 0 {
-		user.ID = snowflake.NextID()
-	}
-	if user.Username == "" || user.Email == "" || user.PasswordHash == "" {
+	if user.ID == 0 || user.Username == "" || user.Email == "" || user.PasswordHash == "" {
 		return ErrParamsInvalid
 	}
 

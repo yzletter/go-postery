@@ -26,7 +26,7 @@ type PoolConfig struct {
 }
 
 // Init 初始化数据库
-func Init(confDir, confFileName, confFileType, logDir string) {
+func Init(confDir, confFileName, confFileType, logDir string) *gorm.DB {
 	// 读取 MySQL 相关配置
 	vip := viper.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
 	host := vip.GetString("mysql.host")
@@ -79,13 +79,7 @@ func Init(confDir, confFileName, confFileType, logDir string) {
 
 	// 赋给全局变量 globalDB
 	globalDB = db
-}
 
-// GetDB 获取全局DB
-func GetDB() *gorm.DB {
-	if globalDB == nil {
-		slog.Error("未初始化 MySQL ...")
-	}
 	return globalDB
 }
 

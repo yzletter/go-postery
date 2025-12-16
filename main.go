@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
+	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/snowflake"
@@ -16,7 +17,6 @@ import (
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
-	"github.com/yzletter/go-postery/router"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/service/ratelimit"
 
@@ -26,34 +26,37 @@ import (
 
 func main() {
 	// Infra 层
-	infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
-	infraRedis.Init("./conf", "redis", viper.YAML)        // 注册 Redis
-	slog.InitSlog("./logs/go_postery.log")                // 初始化 slog
-	crontab.InitCrontab()                                 // 初始化 定时任务
-	smooth.InitSmoothExit()                               // 初始化 优雅退出
-	snowflake.Init(0)                                     // 初始化 雪花算法
+	slog.InitSlog("./logs/go_postery.log") // 初始化 slog
+	crontab.InitCrontab()                  // 初始化 定时任务
+	smooth.InitSmoothExit()                // 初始化 优雅退出
+
+	// Infra 层
+	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
+	RedisCmd := infraRedis.Init("./conf", "redis", viper.YAML)      // 初始化 Redis
+	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)             // 初始化 雪花算法
+	PasswordHasher := security.NewBcryptPasswordHasher(0)           // 初始化 密码哈希器
 
 	// 初始化 gin
 	engine := gin.Default()
 
 	// DAO 层
-	UserDAO := dao.NewUserDAO(infraMySQL.GetDB())
-	PostDAO := dao.NewPostDAO(infraMySQL.GetDB())
-	CommentDAO := dao.NewCommentDAO(infraMySQL.GetDB())
-	LikeDAO := dao.NewLikeDAO(infraMySQL.GetDB())
-	FollowDAO := dao.NewFollowDAO(infraMySQL.GetDB())
-	TagDAO := dao.NewTagDAO(infraMySQL.GetDB())
+	UserDAO := dao.NewUserDAO(GormDB)
+	PostDAO := dao.NewPostDAO(GormDB)
+	CommentDAO := dao.NewCommentDAO(GormDB)
+	LikeDAO := dao.NewLikeDAO(GormDB)
+	FollowDAO := dao.NewFollowDAO(GormDB)
+	TagDAO := dao.NewTagDAO(GormDB)
 
 	// Cache 层
-	UserCache := cache.NewUserCache(infraRedis.GetRedis())
-	PostCache := cache.NewPostCache(infraRedis.GetRedis())
-	CommentCache := cache.NewCommentCache(infraRedis.GetRedis())
-	LikeCache := cache.NewLikeCache(infraRedis.GetRedis())
-	FollowCache := cache.NewFollowCache(infraRedis.GetRedis())
-	TagCache := cache.NewTagCache(infraRedis.GetRedis())
+	UserCache := cache.NewUserCache(RedisCmd)
+	PostCache := cache.NewPostCache(RedisCmd)
+	CommentCache := cache.NewCommentCache(RedisCmd)
+	LikeCache := cache.NewLikeCache(RedisCmd)
+	FollowCache := cache.NewFollowCache(RedisCmd)
+	TagCache := cache.NewTagCache(RedisCmd)
 
 	// Repository 层
-	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 userRepo
+	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 UserRepo
 	PostRepo := repository.NewPostRepository(PostDAO, PostCache)             // 注册 PostRepository
 	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
 	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
@@ -61,18 +64,22 @@ func main() {
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 
 	// Service 层
-	UserSvc := service.NewUserService(UserRepo)                              // 注册 userService
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo) // 注册 postService
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo)              // 注册 followService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo) // 注册 CommentService
-	TagSvc := service.NewTagService(TagRepo)                                 // 注册 tagService
-
-	JwtSvc := service.NewJwtService(infraRedis.GetRedis(), "123456")                        // 注册 JwtService
-	MetricSvc := service.NewMetricService()                                                 // 注册 MetricService
-	RateLimitSvc := ratelimit.NewRateLimitService(infraRedis.GetRedis(), time.Minute, 1000) // 注册 RateLimitService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher) // 注册 UserService
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(UserSvc, JwtSvc)                    // 注册 UserHandler
+	UserHdl := handler.NewUserHandler(UserSvc, JwtSvc) // 注册 UserHandler
+
+	// todo 待重构
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo) // 注册 PostService
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo)              // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo) // 注册 CommentService
+	TagSvc := service.NewTagService(TagRepo)                                 // 注册 TagService
+
+	JwtSvc := security.NewJwtService(RedisCmd, "123456")                       // 注册 JwtManager
+	MetricSvc := service.NewMetricService()                                    // 注册 MetricService
+	RateLimitSvc := ratelimit.NewRateLimitService(RedisCmd, time.Minute, 1000) // 注册 RateLimitService
+
+	// Handler 层
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)

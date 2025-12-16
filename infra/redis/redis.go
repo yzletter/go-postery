@@ -15,7 +15,7 @@ var (
 )
 
 // Init 连接到 Redis 数据库, 生成一个 *redis.Client 赋给全局数据库变量 globalRedisClient
-func Init(confDir, confFileName, confFileType string) {
+func Init(confDir, confFileName, confFileType string) redis.Cmdable {
 	// 初始化 Viper 进行配置读取
 	viper := viper.InitViper(confDir, confFileName, confFileType)
 	host := viper.GetString("redis.host")
@@ -40,13 +40,7 @@ func Init(confDir, confFileName, confFileType string) {
 	} else {
 		slog.Info("connect to Redis succeed")
 	}
-}
 
-// GetRedis 获取全局DB
-func GetRedis() *redis.Client {
-	if globalRedisClient == nil {
-		slog.Error("未初始化 Redis ...")
-	}
 	return globalRedisClient
 }
 

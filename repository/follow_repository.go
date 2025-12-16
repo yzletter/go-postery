@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
 )
@@ -16,8 +17,8 @@ func NewFollowRepository(followDAO dao.FollowDAO, followCache cache.FollowCache)
 	return &followRepository{dao: followDAO, cache: followCache}
 }
 
-func (repo *followRepository) Create(ctx context.Context, ferID, feeID int64) error {
-	err := repo.dao.Create(ctx, ferID, feeID)
+func (repo *followRepository) Create(ctx context.Context, follow *model.Follow) error {
+	err := repo.dao.Create(ctx, follow)
 	if err != nil {
 		return toRepositoryErr(err)
 	}

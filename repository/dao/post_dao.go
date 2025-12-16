@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -25,10 +24,7 @@ func NewPostDAO(db *gorm.DB) PostDAO {
 // Create 创建 Post
 func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) (*model.Post, error) {
 	// 0. 兜底
-	if post.ID == 0 {
-		post.ID = snowflake.NextID()
-	}
-	if post.UserID == 0 || post.Title == "" || post.Content == "" {
+	if post.ID == 0 || post.UserID == 0 || post.Title == "" || post.Content == "" {
 		return nil, ErrParamsInvalid
 	}
 
