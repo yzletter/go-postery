@@ -5,20 +5,21 @@ import (
 
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 )
 
 type userService struct {
-	UserRepository repository.UserRepository
-	PasswordHasher PasswordHasher // 用于加密和比较密码
+	userRepo   repository.UserRepository // 依赖 UserRepository
+	idGen      IDGenerator               // 用于生成 ID
+	passHasher PasswordHasher            // 用于加密和比较密码
 }
 
-func NewUserService(userRepository repository.UserRepository, passwordHasher PasswordHasher) UserService {
+func NewUserService(userRepo repository.UserRepository, idGen IDGenerator, passHasher PasswordHasher) UserService {
 	return &userService{
-		UserRepository: userRepository,
-		PasswordHasher: passwordHasher,
+		userRepo:   userRepo,
+		idGen:      idGen,
+		passHasher: passHasher,
 	}
 }
 
@@ -35,21 +36,21 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 	}
 
 	// 对密码进行加密
-	passwordHash, err := svc.PasswordHasher.Hash(password)
+	passwordHash, err := svc.passHasher.Hash(password)
 	if err != nil {
 		return empty, err
 	}
 
 	// 构造指针
 	u := &model.User{
-		ID:           snowflake.NextID(),
+		ID:           svc.idGen.NextID(),
 		Username:     username,
 		Email:        email,
 		PasswordHash: passwordHash,
 	}
 
 	// 创建记录
-	err = svc.UserRepository.Create(ctx, u)
+	err = svc.userRepo.Create(ctx, u)
 	if err != nil {
 		return empty, toErrnoErr(err)
 	}
@@ -67,7 +68,7 @@ func (svc *userService) GetBriefById(ctx context.Context, id int64) (userdto.Bri
 	}
 
 	// 获取用户
-	user, err := svc.UserRepository.GetByID(ctx, id)
+	user, err := svc.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return empty, toErrnoErr(err)
 	}
@@ -90,7 +91,7 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.De
 	}
 
 	// 获取用户
-	user, err := svc.UserRepository.GetByID(ctx, id)
+	user, err := svc.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return empty, toErrnoErr(err)
 	}
@@ -113,7 +114,7 @@ func (svc *userService) GetBriefByName(ctx context.Context, username string) (us
 	}
 
 	// 获取用户
-	user, err := svc.UserRepository.GetByUsername(ctx, username)
+	user, err := svc.userRepo.GetByUsername(ctx, username)
 	if err != nil {
 		return empty, toErrnoErr(err)
 	}
@@ -137,7 +138,7 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 
 	// todo 并发安全
 	// 获取用户
-	user, err := svc.UserRepository.GetByID(ctx, id)
+	user, err := svc.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return toErrnoErr(err)
 	}
@@ -146,19 +147,19 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	}
 
 	// 判断旧密码是否正确
-	err = svc.PasswordHasher.Compare(user.PasswordHash, oldPass)
+	err = svc.passHasher.Compare(user.PasswordHash, oldPass)
 	if err != nil {
 		return err
 	}
 
 	// 对新密码进行加密
-	newPassHash, err := svc.PasswordHasher.Hash(newPass)
+	newPassHash, err := svc.passHasher.Hash(newPass)
 	if err != nil {
 		return err
 	}
 
 	// 改新密码
-	err = svc.UserRepository.UpdatePasswordHash(ctx, id, string(newPassHash))
+	err = svc.userRepo.UpdatePasswordHash(ctx, id, string(newPassHash))
 	if err != nil {
 		return toErrnoErr(err)
 	}
@@ -185,7 +186,7 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto
 		"country":  modelReq.Country,
 	}
 
-	if err := svc.UserRepository.UpdateProfile(ctx, id, updates); err != nil {
+	if err := svc.userRepo.UpdateProfile(ctx, id, updates); err != nil {
 		return toErrnoErr(err)
 	}
 	return nil
@@ -201,7 +202,7 @@ func (svc *userService) Login(ctx context.Context, username, pass string) (userd
 	}
 
 	// 获取用户
-	user, err := svc.UserRepository.GetByUsername(ctx, username)
+	user, err := svc.userRepo.GetByUsername(ctx, username)
 	if err != nil {
 		return empty, toErrnoErr(err)
 	}
@@ -210,7 +211,7 @@ func (svc *userService) Login(ctx context.Context, username, pass string) (userd
 	}
 
 	// 比较密码
-	err = svc.PasswordHasher.Compare(user.PasswordHash, pass)
+	err = svc.passHasher.Compare(user.PasswordHash, pass)
 	if err != nil {
 		return empty, err
 	}
