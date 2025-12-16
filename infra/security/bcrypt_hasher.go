@@ -3,6 +3,7 @@ package security
 import (
 	"errors"
 
+	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,7 +24,7 @@ func NewBcryptPasswordHasher(cost int) service.PasswordHasher {
 func (hasher *BcryptPasswordHasher) Hash(password string) (string, error) {
 	res, err := bcrypt.GenerateFromPassword([]byte(password), hasher.cost)
 	if err != nil {
-		return "", ErrHashFailed
+		return "", errno.ErrPasswordEncryptFailed
 	}
 
 	return string(res), nil
@@ -33,9 +34,9 @@ func (hasher *BcryptPasswordHasher) Compare(hashedPassword, plainPassword string
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return ErrMismatchedHashAndPassword
+			return errno.ErrMismatchedHashAndPassword
 		}
-		return ErrHashFailed
+		return errno.ErrPasswordEncryptFailed
 	}
 	return nil
 }

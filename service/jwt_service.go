@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/dto/request"
+	"github.com/yzletter/go-postery/errno"
 )
 
 // 可容忍的时间偏移
@@ -119,7 +120,7 @@ func (svc *JwtService) IssueTokenForUser(uid int64, uname string) (string, strin
 func (svc *JwtService) genToken(payload JwtPayload) (string, error) {
 	// 参数校验
 	if svc.Secret == "" {
-		return "", ErrJwtInvalidParam
+		return "", errno.ErrJwtInvalidParam
 	}
 
 	// 1. header 转成 json, 再用 base64 编码, 得到 JWT 第一部分
@@ -145,12 +146,12 @@ func (svc *JwtService) genToken(payload JwtPayload) (string, error) {
 func (svc *JwtService) verifyToken(token string) (*JwtPayload, error) {
 	// 参数校验
 	if token == "" || svc.Secret == "" {
-		return nil, ErrJwtInvalidParam
+		return nil, errno.ErrJwtInvalidParam
 	}
 	parts := strings.SplitN(token, ".", 3)
 	if len(parts) != 3 {
 		// 传入的 JWT 格式有误
-		return nil, ErrJwtInvalidParam
+		return nil, errno.ErrJwtInvalidParam
 	}
 
 	// 获得 msg 和 signature 部分
@@ -162,7 +163,7 @@ func (svc *JwtService) verifyToken(token string) (*JwtPayload, error) {
 	thisSignature := signSha256(jwtMsg, svc.Secret)
 	if thisSignature != jwtSignature {
 		// 签名校验失败
-		return nil, ErrJwtInvalidParam
+		return nil, errno.ErrJwtInvalidParam
 	}
 
 	// 2. 反解出 header 和 payload
@@ -183,15 +184,15 @@ func (svc *JwtService) verifyToken(token string) (*JwtPayload, error) {
 	now := time.Now()
 	if payload.IssueAt > 0 && now.Add(defaultLeeway).Unix() < payload.IssueAt {
 		// 当前时间(加上漂移量) < 签名时间, 签在未来
-		return nil, ErrJwtInvalidTime
+		return nil, errno.ErrJwtInvalidTime
 	}
 	if payload.NotBefore > 0 && now.Add(defaultLeeway).Unix() < payload.NotBefore {
 		// 当前时间(加上漂移量) > 生效时间, 还未生效
-		return nil, ErrJwtInvalidTime
+		return nil, errno.ErrJwtInvalidTime
 	}
 	if payload.Expiration > 0 && now.Add(-defaultLeeway).Unix() > payload.Expiration {
 		// 当前时间(减去漂移量) > 过期时间，已经过期
-		return nil, ErrJwtInvalidTime
+		return nil, errno.ErrJwtInvalidTime
 	}
 
 	slog.Info("verify payload", payload)

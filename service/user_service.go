@@ -5,6 +5,7 @@ import (
 
 	"github.com/yzletter/go-postery/dto/request"
 	"github.com/yzletter/go-postery/dto/response"
+	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
@@ -28,16 +29,16 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 
 	// 参数校验
 	if username == "" || password == "" || email == "" {
-		return empty, ErrInvalidParam
+		return empty, errno.ErrInvalidParam
 	}
 	if len(password) < 8 {
-		return empty, ErrPasswordWeak
+		return empty, errno.ErrPasswordWeak
 	}
 
 	// 对密码进行加密
 	passwordHash, err := svc.PasswordHasher.Hash(password)
 	if err != nil {
-		return empty, ErrEncryptFailed
+		return empty, err
 	}
 
 	// 构造指针
@@ -45,7 +46,7 @@ func (svc *userService) Register(ctx context.Context, username, email, password 
 		ID:           snowflake.NextID(),
 		Username:     username,
 		Email:        email,
-		PasswordHash: string(passwordHash),
+		PasswordHash: passwordHash,
 	}
 
 	// 创建记录
@@ -63,9 +64,10 @@ func (svc *userService) GetBriefById(ctx context.Context, id int64) (dto.UserBri
 
 	// 参数校验
 	if id <= 0 {
-		return empty, ErrInvalidParam
+		return empty, errno.ErrInvalidParam
 	}
 
+	// 获取用户
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
 		return empty, toServiceErr(err)
@@ -73,7 +75,7 @@ func (svc *userService) GetBriefById(ctx context.Context, id int64) (dto.UserBri
 
 	// panic 兜底
 	if user == nil {
-		return empty, ErrNotFound
+		return empty, errno.ErrUserNotFound
 	}
 
 	return dto.ToUserBriefDTO(user), nil
@@ -85,9 +87,10 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (dto.UserDe
 
 	// 参数校验
 	if id <= 0 {
-		return empty, ErrInvalidParam
+		return empty, errno.ErrInvalidParam
 	}
 
+	// 获取用户
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
 		return empty, toServiceErr(err)
@@ -95,7 +98,7 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (dto.UserDe
 
 	// panic 兜底
 	if user == nil {
-		return empty, ErrNotFound
+		return empty, errno.ErrUserNotFound
 	}
 
 	return dto.ToUserDetailDTO(user), nil
@@ -107,9 +110,10 @@ func (svc *userService) GetBriefByName(ctx context.Context, username string) (dt
 
 	// 参数校验
 	if len(username) <= 0 {
-		return empty, ErrInvalidParam
+		return empty, errno.ErrInvalidParam
 	}
 
+	// 获取用户
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil {
 		return empty, toServiceErr(err)
@@ -117,7 +121,7 @@ func (svc *userService) GetBriefByName(ctx context.Context, username string) (dt
 
 	// panic 兜底
 	if user == nil {
-		return empty, ErrNotFound
+		return empty, errno.ErrUserNotFound
 	}
 	return dto.ToUserBriefDTO(user), nil
 }
@@ -125,32 +129,34 @@ func (svc *userService) GetBriefByName(ctx context.Context, username string) (dt
 // UpdatePassword 更新密码
 func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error {
 	if id <= 0 || len(oldPass) <= 0 || len(newPass) <= 0 {
-		return ErrInvalidParam
+		return errno.ErrInvalidParam
 	}
 
 	if len(newPass) < 8 {
-		return ErrPasswordWeak
+		return errno.ErrPasswordWeak
 	}
 
 	// todo 并发安全
+
+	// 获取用户
 	user, err := svc.UserRepository.GetByID(ctx, id)
 	if err != nil {
 		return toServiceErr(err)
 	}
 	if user == nil {
-		return ErrNotFound
+		return errno.ErrUserNotFound
 	}
 
 	// 判断旧密码是否正确
 	err = svc.PasswordHasher.Compare(user.PasswordHash, oldPass)
 	if err != nil {
-		return ErrEncryptFailed
+		return err
 	}
 
 	// 对新密码进行加密
 	newPassHash, err := svc.PasswordHasher.Hash(newPass)
 	if err != nil {
-		return ErrEncryptFailed
+		return err
 	}
 
 	// 改新密码
@@ -165,7 +171,7 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 // UpdateProfile 修改个人资料
 func (svc *userService) UpdateProfile(ctx context.Context, id int64, req request.ModifyProfileRequest) error {
 	if id <= 0 {
-		return ErrInvalidParam
+		return errno.ErrInvalidParam
 	}
 
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
@@ -193,20 +199,22 @@ func (svc *userService) Login(ctx context.Context, username, pass string) (dto.U
 
 	// 参数校验
 	if username == "" || pass == "" {
-		return empty, ErrInvalidParam
+		return empty, errno.ErrInvalidParam
 	}
 
+	// 获取用户
 	user, err := svc.UserRepository.GetByUsername(ctx, username)
 	if err != nil {
 		return empty, toServiceErr(err)
 	}
 	if user == nil {
-		return empty, ErrServerInternal
+		return empty, errno.ErrServerInternal
 	}
 
+	// 比较密码
 	err = svc.PasswordHasher.Compare(user.PasswordHash, pass)
 	if err != nil {
-		return empty, ErrEncryptFailed
+		return empty, err
 	}
 
 	return dto.ToUserBriefDTO(user), nil

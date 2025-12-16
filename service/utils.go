@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/errno"
 )
 
 var (
@@ -34,7 +35,7 @@ func GetUidFromCTX(ctx *gin.Context) (int64, error) {
 func marshalBase64Encode(v any) (string, error) {
 	bs, err := json.Marshal(v)
 	if err != nil {
-		return "", ErrJwtMarshalFailed
+		return "", errno.ErrJwtMarshalFailed
 	} else {
 		return base64.RawURLEncoding.EncodeToString(bs), nil
 	}
@@ -44,12 +45,12 @@ func marshalBase64Encode(v any) (string, error) {
 func base64DecodeUnmarshal(s string, v any) error {
 	bs, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
-		return ErrJwtBase64DecodeFailed
+		return errno.ErrJwtBase64DecodeFailed
 	}
 	// 将 bs 反序列化到 v 中
 	err = json.Unmarshal(bs, v)
 	if err != nil {
-		return ErrJwtUnMarshalFailed
+		return errno.ErrJwtUnMarshalFailed
 	}
 	return nil
 }
