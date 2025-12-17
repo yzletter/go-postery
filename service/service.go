@@ -42,7 +42,7 @@ type PostService interface {
 type CommentService interface {
 	Create(ctx context.Context, pid int64, uid int64, parentId int64, replyId int64, content string) (comment.DTO, error)
 	Delete(ctx context.Context, uid, cid int64) error
-	List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []comment.DTO)
+	List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []comment.DTO, error)
 	CheckAuth(ctx context.Context, cid, uid int64) bool
 }
 

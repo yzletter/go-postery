@@ -110,11 +110,11 @@ func (svc *commentService) Delete(ctx context.Context, uid, cid int64) error {
 	return nil
 }
 
-func (svc *commentService) List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []commentdto.DTO) {
+func (svc *commentService) List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []commentdto.DTO, error) {
 	var empty []commentdto.DTO
 	total, comments, err := svc.CommentRepo.GetByPostID(ctx, pid, pageNo, pageSize)
 	if err != nil {
-		return 0, empty
+		return 0, empty, errno.ErrCommentNotFound
 	}
 
 	var commentDTOs []commentdto.DTO
@@ -127,7 +127,7 @@ func (svc *commentService) List(ctx context.Context, pid int64, pageNo, pageSize
 		commentDTOs = append(commentDTOs, commentDTO)
 	}
 
-	return int(total), commentDTOs
+	return int(total), commentDTOs, nil
 }
 
 // CheckAuth 判断是否有删除权限

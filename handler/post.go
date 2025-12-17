@@ -269,7 +269,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 	response.Success(ctx, "")
 }
 
-func (hdl *PostHandler) Dislike(ctx *gin.Context) {
+func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 	// 从路由中获取帖子 id
 	pid, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
