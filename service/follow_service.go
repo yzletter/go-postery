@@ -92,7 +92,7 @@ func (svc *followService) IfFollow(ctx context.Context, ferId, feeId int64) (mod
 }
 
 // GetFollowersByPage 按页查找粉丝
-func (svc *followService) GetFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
+func (svc *followService) ListFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
 	var empty []dto.BriefDTO
 	total, followersId, err := svc.FollowRepo.GetFollowers(ctx, uid, pageNo, pageSize)
 	if err != nil {
@@ -113,7 +113,7 @@ func (svc *followService) GetFollowersByPage(ctx context.Context, uid int64, pag
 }
 
 // GetFolloweesByPage 按页查找关注对象
-func (svc *followService) GetFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
+func (svc *followService) ListFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
 	var empty []dto.BriefDTO
 	total, followeesId, err := svc.FollowRepo.GetFollowees(ctx, uid, pageNo, pageSize)
 	if err != nil {

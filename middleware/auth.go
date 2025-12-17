@@ -36,7 +36,7 @@ func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.Unive
 
 			// AccessToken 认证通过
 			slog.Info("AuthMiddleware 认证 AccessToken 成功 ...", "user_id", claim.Uid)
-			ctx.Set(handler.UserIDInCtx, claim.Uid) // 把用户 ID 放入上下文, 以便后续中间件直接使用
+			ctx.Set(handler.UserIDInContext, claim.Uid) // 把用户 ID 放入上下文, 以便后续中间件直接使用
 			ctx.Next()
 			return
 		}
@@ -83,7 +83,7 @@ func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.Unive
 		setTokens(ctx, newAccessToken, newRefreshToken)
 
 		slog.Info("AuthMiddleware 认证 RefreshToken 成功 ...", "user_id", id)
-		ctx.Set(handler.UserIDInCtx, id) // 把用户 ID 放入上下文, 以便后续中间件直接使用
+		ctx.Set(handler.UserIDInContext, id) // 把用户 ID 放入上下文, 以便后续中间件直接使用
 		ctx.Next()
 		return
 	}

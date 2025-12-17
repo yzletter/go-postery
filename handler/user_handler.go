@@ -37,7 +37,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInCtx)
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -82,7 +82,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInCtx)
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return

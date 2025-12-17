@@ -56,6 +56,6 @@ type FollowService interface {
 	Follow(ctx context.Context, ferId, feeId int64) error
 	UnFollow(ctx context.Context, ferId, feeId int64) error
 	IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error)
-	GetFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
-	GetFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
+	ListFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
+	ListFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
 }

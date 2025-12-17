@@ -12,10 +12,6 @@ import (
 	"github.com/yzletter/go-postery/utils/response"
 )
 
-const (
-	UserIDInCtx = "user_id" // uid 在上下文中的 name
-)
-
 type AuthHandler struct {
 	AuthSvc service.AuthService
 }
