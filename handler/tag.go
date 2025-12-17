@@ -16,7 +16,7 @@ func NewTagHandler(tagSvc service.TagService) *TagHandler {
 }
 
 func (hdl *TagHandler) Create(ctx *gin.Context) {
-	//name := ctx.ShouldBind()
+	//name := ctx.ShouldBindJSON()
 	//err := hdl.TagSvc.Create(name)
 	//if err != nil {
 	//	if errors.Is(err, repository.ErrUniqueKeyConflict) {

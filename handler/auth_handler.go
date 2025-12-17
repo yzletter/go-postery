@@ -28,7 +28,7 @@ func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
 func (hdl *AuthHandler) Register(ctx *gin.Context) {
 	// 参数校验
 	var registerReq user.RegisterRequest
-	err := ctx.ShouldBind(&registerReq)
+	err := ctx.ShouldBindJSON(&registerReq)
 	if err != nil {
 		// 参数绑定失败
 		slog.Error("Register Param Bind Failed", "error", utils.BindErrMsg(err))
@@ -62,7 +62,7 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	// 参数校验
 	var loginReq user.LoginRequest
-	err := ctx.ShouldBind(&loginReq)
+	err := ctx.ShouldBindJSON(&loginReq)
 	if err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))

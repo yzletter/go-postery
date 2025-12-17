@@ -17,7 +17,7 @@ var (
 	ErrUserDuplicated    = &Error{40009, 409, "用户名或邮箱已存在"}
 	ErrPasswordWeak      = &Error{40009, 409, "密码强度过低"}
 	ErrInvalidCredential = &Error{40009, 409, "账号或密码错误"}
-	ErrNotLogin          = &Error{40003, 401, "未登录"}
+	ErrUserNotLogin      = &Error{40003, 401, "用户未登录"}
 	ErrUnauthorized      = &Error{40003, 401, "没有权限"}
 	ErrConflict          = &Error{40009, 409, "资源冲突"}
 )

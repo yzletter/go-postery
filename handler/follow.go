@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/service"
+	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
 )
 
@@ -20,7 +21,7 @@ func NewFollowHandler(followSvc service.FollowService, userSvc service.UserServi
 
 func (hdl *FollowHandler) Follow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -48,7 +49,7 @@ func (hdl *FollowHandler) Follow(ctx *gin.Context) {
 
 func (hdl *FollowHandler) DisFollow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -76,7 +77,7 @@ func (hdl *FollowHandler) DisFollow(ctx *gin.Context) {
 
 func (hdl *FollowHandler) IfFollow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -101,7 +102,7 @@ func (hdl *FollowHandler) IfFollow(ctx *gin.Context) {
 // ListFollowers 返回关注我的人
 func (hdl *FollowHandler) ListFollowers(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -119,7 +120,7 @@ func (hdl *FollowHandler) ListFollowers(ctx *gin.Context) {
 // ListFollowees 返回被我关注的人
 func (hdl *FollowHandler) ListFollowees(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return

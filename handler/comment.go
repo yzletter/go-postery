@@ -28,7 +28,7 @@ func NewCommentHandler(commentService service.CommentService, userService servic
 // Create 新建评论
 func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -36,7 +36,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 
 	// 获取参数并校验
 	var comment request.CreateCommentRequest
-	if err := ctx.ShouldBind(&comment); err != nil || comment.ParentId < 0 {
+	if err := ctx.ShouldBindJSON(&comment); err != nil || comment.ParentId < 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
@@ -55,7 +55,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 
 func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -107,7 +107,7 @@ func (hdl *CommentHandler) List(ctx *gin.Context) {
 
 func (hdl *CommentHandler) Belong(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return

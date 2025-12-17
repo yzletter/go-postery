@@ -108,7 +108,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 // Create 创建帖子
 func (hdl *PostHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -116,7 +116,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 
 	// 参数绑定
 	var createRequest request.CreatePostRequest
-	err = ctx.ShouldBind(&createRequest)
+	err = ctx.ShouldBindJSON(&createRequest)
 	if err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
@@ -140,7 +140,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 // Delete 删除帖子
 func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -169,7 +169,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -177,7 +177,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 
 	// 参数绑定
 	var updateRequest request.UpdatePostRequest
-	err = ctx.ShouldBind(&updateRequest)
+	err = ctx.ShouldBindJSON(&updateRequest)
 
 	if err != nil || updateRequest.Id == 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -209,7 +209,7 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -249,7 +249,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 	}
 
 	// 从 CTX 中获取 uid
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -277,7 +277,7 @@ func (hdl *PostHandler) Dislike(ctx *gin.Context) {
 	}
 
 	// 从 CTX 中获取 uid
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
@@ -305,7 +305,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 	}
 
 	// 从 CTX 中获取 uid
-	uid, err := service.GetUidFromCTX(ctx)
+	uid, err := utils.GetUidFromCTX(ctx)
 	if err != nil {
 		response.Unauthorized(ctx, "请先登录")
 		return
