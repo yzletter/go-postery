@@ -238,12 +238,12 @@ func (svc *postService) Update(ctx context.Context, pid int64, uid int64, title,
 }
 
 // ListByPage 按页获取帖子列表
-func (svc *postService) ListByPage(ctx context.Context, pageNo, pageSize int) (int, []postdto.DetailDTO) {
+func (svc *postService) ListByPage(ctx context.Context, pageNo, pageSize int) (int, []postdto.DetailDTO, error) {
 	var empty []postdto.DetailDTO
 	// 获取帖子总数和当前页帖子列表
 	total, posts, err := svc.postRepo.GetByPage(ctx, pageNo, pageSize)
 	if err != nil {
-		return 0, empty
+		return 0, empty, errno.ErrPostNotFound
 	}
 
 	// todo 避免性能问题，优化 SQL
@@ -258,21 +258,21 @@ func (svc *postService) ListByPage(ctx context.Context, pageNo, pageSize int) (i
 		postDTO := postdto.ToDetailDTO(post, author)
 		postDTOs = append(postDTOs, postDTO)
 	}
-	return int(total), postDTOs
+	return int(total), postDTOs, nil
 }
 
-// ListByUid 根据作者 ID 获取帖子简要信息列表
-func (svc *postService) ListByUid(ctx context.Context, uid int64, pageNo, pageSize int) (int, []postdto.BriefDTO) {
+// ListByPageAndUid 根据作者 ID 获取帖子简要信息列表
+func (svc *postService) ListByPageAndUid(ctx context.Context, uid int64, pageNo, pageSize int) (int, []postdto.BriefDTO, error) {
 	var empty []postdto.BriefDTO
 	total, posts, err := svc.postRepo.GetByUid(ctx, uid, pageNo, pageSize)
 	if err != nil {
-		return 0, empty
+		return 0, empty, errno.ErrPostNotFound
 	}
 
 	// 查找作者信息
 	author, err := svc.userRepo.GetByID(ctx, uid)
 	if err != nil {
-		return 0, empty
+		return 0, empty, errno.ErrPostNotFound
 	}
 
 	// 转化 Post
@@ -283,23 +283,23 @@ func (svc *postService) ListByUid(ctx context.Context, uid int64, pageNo, pageSi
 		postDTOs = append(postDTOs, postDTO)
 	}
 
-	return int(total), postDTOs
+	return int(total), postDTOs, nil
 }
 
 // ListByPageAndTag 根据 Tag 分页查找帖子
-func (svc *postService) ListByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []postdto.DetailDTO) {
+func (svc *postService) ListByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []postdto.DetailDTO, error) {
 	var empty []postdto.DetailDTO
 
 	tag, err := svc.tagRepo.GetByName(ctx, name)
 	if err != nil {
-		return 0, empty
+		return 0, empty, errno.ErrPostNotFound
 	}
 	// todo 避免性能问题，优化 SQL
 
 	// 获取帖子总数和当前页帖子列表
 	total, posts, err := svc.postRepo.GetByPageAndTag(ctx, tag.ID, pageNo, pageSize)
 	if err != nil {
-		return 0, empty
+		return 0, empty, errno.ErrPostNotFound
 	}
 
 	// 转化
@@ -315,7 +315,7 @@ func (svc *postService) ListByPageAndTag(ctx context.Context, name string, pageN
 		postDTO := postdto.ToDetailDTO(post, author)
 		postDTOs = append(postDTOs, postDTO)
 	}
-	return int(total), postDTOs
+	return int(total), postDTOs, nil
 }
 
 // Like 点赞帖子

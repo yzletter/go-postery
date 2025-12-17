@@ -34,9 +34,12 @@ type PostService interface {
 	Belong(ctx context.Context, pid, uid int64) bool
 	Delete(ctx context.Context, pid, uid int64) error
 	Update(ctx context.Context, pid int64, uid int64, title, content string, tags []string) error
-	ListByPage(ctx context.Context, pageNo, pageSize int) (int, []post.DetailDTO)
-	ListByUid(ctx context.Context, uid int64, pageNo, pageSize int) (int, []post.BriefDTO)
-	ListByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []post.DetailDTO)
+	ListByPage(ctx context.Context, pageNo, pageSize int) (int, []post.DetailDTO, error)
+	ListByPageAndUid(ctx context.Context, uid int64, pageNo, pageSize int) (int, []post.BriefDTO, error)
+	ListByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []post.DetailDTO, error)
+	Like(ctx context.Context, pid, uid int64) error
+	Unlike(ctx context.Context, pid, uid int64) error
+	IfLike(ctx context.Context, pid, uid int64) (bool, error)
 }
 
 type CommentService interface {
