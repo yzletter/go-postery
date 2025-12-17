@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 )
 
@@ -23,29 +23,6 @@ func NewUserService(userRepo repository.UserRepository, idGen IDGenerator, passH
 	}
 }
 
-// GetBriefById 根据 ID 查找用户的简要信息
-func (svc *userService) GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 参数校验
-	if id <= 0 {
-		return empty, errno.ErrInvalidParam
-	}
-
-	// 获取用户
-	user, err := svc.userRepo.GetByID(ctx, id)
-	if err != nil {
-		return empty, toErrnoErr(err)
-	}
-
-	// panic 兜底
-	if user == nil {
-		return empty, errno.ErrUserNotFound
-	}
-
-	return userdto.ToBriefDTO(user), nil
-}
-
 // GetDetailById 根据 ID 查找用户的详细信息
 func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.DetailDTO, error) {
 	var empty userdto.DetailDTO
@@ -58,7 +35,10 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.De
 	// 获取用户
 	user, err := svc.userRepo.GetByID(ctx, id)
 	if err != nil {
-		return empty, toErrnoErr(err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
 	}
 
 	// panic 兜底
@@ -67,6 +47,23 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.De
 	}
 
 	return userdto.ToDetailDTO(user), nil
+}
+
+// GetBriefById 根据 ID 查找用户的简要信息
+func (svc *userService) GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
+
+	userDetailDTO, err := svc.GetDetailById(ctx, id)
+	if err != nil {
+		return empty, err
+	}
+
+	return userdto.BriefDTO{
+		ID:     userDetailDTO.ID,
+		Email:  userDetailDTO.Email,
+		Name:   userDetailDTO.Name,
+		Avatar: userDetailDTO.Avatar,
+	}, nil
 }
 
 // GetBriefByName 根据 username 查找用户的简要信息
@@ -81,7 +78,10 @@ func (svc *userService) GetBriefByName(ctx context.Context, username string) (us
 	// 获取用户
 	user, err := svc.userRepo.GetByUsername(ctx, username)
 	if err != nil {
-		return empty, toErrnoErr(err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
 	}
 
 	// panic 兜底
@@ -105,7 +105,10 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	// 获取用户
 	user, err := svc.userRepo.GetByID(ctx, id)
 	if err != nil {
-		return toErrnoErr(err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errno.ErrUserNotFound
+		}
+		return errno.ErrServerInternal
 	}
 	if user == nil {
 		return errno.ErrUserNotFound
@@ -126,7 +129,10 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 	// 改新密码
 	err = svc.userRepo.UpdatePasswordHash(ctx, id, newPassHash)
 	if err != nil {
-		return toErrnoErr(err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errno.ErrUserNotFound
+		}
+		return errno.ErrServerInternal
 	}
 
 	return nil
@@ -152,7 +158,10 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto
 	}
 
 	if err := svc.userRepo.UpdateProfile(ctx, id, updates); err != nil {
-		return toErrnoErr(err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errno.ErrUserNotFound
+		}
+		return errno.ErrServerInternal
 	}
 	return nil
 }

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -22,11 +24,11 @@ type authService struct {
 	jwtManager JwtManager
 	passHasher PasswordHasher
 	idGen      IDGenerator
-	client     redis.Cmdable
+	client     redis.UniversalClient
 }
 
 // NewAuthService 构造函数
-func NewAuthService(userRepo repository.UserRepository, jwtManager JwtManager, passHasher PasswordHasher, idGen IDGenerator, client redis.Cmdable) AuthService {
+func NewAuthService(userRepo repository.UserRepository, jwtManager JwtManager, passHasher PasswordHasher, idGen IDGenerator, client redis.UniversalClient) AuthService {
 	return &authService{
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
@@ -39,7 +41,6 @@ func NewAuthService(userRepo repository.UserRepository, jwtManager JwtManager, p
 // Register 注册
 func (svc *authService) Register(ctx context.Context, username, email, password string) (userdto.BriefDTO, error) {
 	var empty userdto.BriefDTO
-
 	// 参数校验
 	if username == "" || password == "" || email == "" {
 		return empty, errno.ErrInvalidParam
@@ -51,7 +52,8 @@ func (svc *authService) Register(ctx context.Context, username, email, password 
 	// 对密码进行加密
 	passwordHash, err := svc.passHasher.Hash(password)
 	if err != nil {
-		return empty, err
+		slog.Error("PasswordHasher Hash Failed", "error", err)
+		return empty, errno.ErrServerInternal
 	}
 
 	// 构造指针
@@ -65,7 +67,10 @@ func (svc *authService) Register(ctx context.Context, username, email, password 
 	// 创建记录
 	err = svc.userRepo.Create(ctx, u)
 	if err != nil {
-		return empty, toErrnoErr(err)
+		if errors.Is(err, repository.ErrUniqueKey) {
+			return empty, errno.ErrUserDuplicated
+		}
+		return empty, errno.ErrServerInternal
 	}
 
 	return userdto.ToBriefDTO(u), nil
@@ -77,45 +82,50 @@ func (svc *authService) Login(ctx context.Context, username, pass string) (userd
 
 	// 参数校验
 	if username == "" || pass == "" {
-		return empty, errno.ErrInvalidParam
+		return empty, errno.ErrInvalidCredential
 	}
 
 	// 获取用户
 	user, err := svc.userRepo.GetByUsername(ctx, username)
 	if err != nil {
-		return empty, toErrnoErr(err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
 	}
 	if user == nil {
-		return empty, errno.ErrInvalidCredential
+		return empty, errno.ErrServerInternal
 	}
 
 	// 比较密码
 	err = svc.passHasher.Compare(user.PasswordHash, pass)
 	if err != nil {
-		return empty, err
+		if errors.Is(err, ErrInvalidPassword) { // 密码错误, 返回为账号或密码错误
+			return empty, errno.ErrInvalidCredential
+		}
+		return empty, errno.ErrServerInternal
 	}
 
 	return userdto.ToBriefDTO(user), nil
 }
 
-// ClearTokens 登出
+// ClearTokens 清除 Tokens
 func (svc *authService) ClearTokens(ctx context.Context, accessToken, refreshToken string) error {
-	if accessToken != "" {
-		claim, err := svc.VerifyToken(accessToken)
-		if err != nil {
-			return errno.ErrLogoutFailed
-		}
-		ssid := claim.SSid
-
-		// 将 < auth:ssid:xxxxxx, > 放入缓存表明解析出有 ssid 的用户已经被踢下线
-		err = svc.client.Set(ctx, conf.ClearTokenPrefix+ssid, "", conf.RefreshTokenCookieMaxAgeSecs).Err()
-		if err != nil {
+	// 删除 refreshToken
+	if refreshToken != "" {
+		if err := svc.client.Del(ctx, conf.RefreshTokenPrefix+refreshToken).Err(); err != nil {
 			return errno.ErrLogoutFailed
 		}
 	}
 
-	// 将刷新 Token 删除
-	svc.client.Del(ctx, conf.RefreshTokenPrefix+refreshToken)
+	// 拉黑 ssid
+	if accessToken != "" {
+		if claim, err := svc.VerifyAccessToken(accessToken); err == nil && claim != nil && claim.SSid != "" {
+			ttl := time.Duration(conf.RefreshTokenMaxAgeSecs) * time.Second
+			// accessToken 解析失败就跳过，不影响 logout 成功
+			_ = svc.client.Set(ctx, conf.ClearTokenPrefix+claim.SSid, "", ttl).Err()
+		}
+	}
 
 	return nil
 }
@@ -141,12 +151,12 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 	}
 
 	// 生成 AccessToken
-	accessToken, err := svc.GenToken(accessClaims)
+	accessToken, err := svc.jwtManager.GenToken(accessClaims)
 	if err != nil {
-		return "", "", errno.ErrJwtTokenIssueFailed
+		return "", "", errno.ErrServerInternal
 	}
 
-	// 生成 RefreshTokenCookieMaxAgeSecs
+	// 生成 RefreshTokenMaxAgeSecs
 	refreshToken := xid.New().String()
 
 	// 将 < auth:refresh:xxxxxx, ssid > 存入
@@ -155,16 +165,23 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 		"ssid":    ssid,
 		"role":    role,
 	}
-	svc.client.HSet(ctx, conf.RefreshTokenPrefix+refreshToken, mp)
-	svc.client.Expire(ctx, conf.RefreshTokenPrefix+refreshToken, conf.RefreshTokenCookieMaxAgeSecs)
+
+	// 避免返回了 Token 但服务端没存的不一致
+	pipe := svc.client.Pipeline()
+	ttl := time.Duration(conf.RefreshTokenMaxAgeSecs) * time.Second
+	pipe.HSet(ctx, conf.RefreshTokenPrefix+refreshToken, mp)
+	pipe.Expire(ctx, conf.RefreshTokenPrefix+refreshToken, ttl)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return "", "", errno.ErrServerInternal
+	}
 
 	return accessToken, refreshToken, nil
 }
 
-func (svc *authService) GenToken(claim JWTTokenClaims) (string, error) {
-	return svc.jwtManager.GenToken(claim)
-}
-
-func (svc *authService) VerifyToken(tokenString string) (*JWTTokenClaims, error) {
-	return svc.jwtManager.VerifyToken(tokenString)
+func (svc *authService) VerifyAccessToken(tokenString string) (*JWTTokenClaims, error) {
+	claim, err := svc.jwtManager.VerifyToken(tokenString)
+	if err != nil {
+		return nil, errno.ErrUnauthorized
+	}
+	return claim, nil
 }

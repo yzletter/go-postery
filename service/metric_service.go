@@ -8,8 +8,8 @@ import (
 )
 
 type MetricService struct {
-	requestCounter *prometheus.CounterVec // Counter是一个积累量（单调增），跟历史值有关
-	requestTimer   *prometheus.GaugeVec   // Gauge是每个记录是独立的
+	requestCounter *prometheus.CounterVec // Counter 是一个积累量（单调增），跟历史值有关
+	requestTimer   *prometheus.GaugeVec   // Gauge 是每个记录是独立的
 }
 
 func NewMetricService() *MetricService {

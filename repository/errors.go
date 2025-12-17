@@ -8,9 +8,8 @@ import (
 
 var (
 	ErrServerInternal = errors.New("内部错误")
-	ErrNotFound       = errors.New("资源不存在")
-	ErrConflict       = errors.New("资源冲突")
-	ErrInvalidArg     = errors.New("参数非法")
+	ErrRecordNotFound = errors.New("资源不存在")
+	ErrUniqueKey      = errors.New("资源冲突")
 )
 
 func toRepositoryErr(err error) error {
@@ -18,9 +17,9 @@ func toRepositoryErr(err error) error {
 	case errors.Is(err, dao.ErrServerInternal):
 		return ErrServerInternal
 	case errors.Is(err, dao.ErrRecordNotFound):
-		return ErrNotFound
+		return ErrRecordNotFound
 	case errors.Is(err, dao.ErrUniqueKey):
-		return ErrConflict
+		return ErrUniqueKey
 	default:
 		return ErrServerInternal
 	}

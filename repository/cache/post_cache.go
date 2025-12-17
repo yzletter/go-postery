@@ -19,10 +19,10 @@ const (
 var addCntScript string
 
 type redisPostCache struct {
-	client redis.Cmdable
+	client redis.UniversalClient
 }
 
-func NewPostCache(client redis.Cmdable) PostCache {
+func NewPostCache(client redis.UniversalClient) PostCache {
 	return &redisPostCache{client: client}
 }
 

@@ -10,4 +10,17 @@ func (e *Error) Error() string { return e.Msg }
 
 var (
 	ErrServerInternal = &Error{50001, 500, "系统繁忙，请稍后重试"}
+	ErrInvalidParam   = &Error{40001, 400, "参数错误"}
+)
+var (
+	ErrUserNotFound      = &Error{40004, 404, "用户不存在"}
+	ErrUserDuplicated    = &Error{40009, 409, "用户名或邮箱已存在"}
+	ErrPasswordWeak      = &Error{40009, 409, "密码强度过低"}
+	ErrInvalidCredential = &Error{40009, 409, "账号或密码错误"}
+	ErrNotLogin          = &Error{40003, 401, "未登录"}
+	ErrUnauthorized      = &Error{40003, 401, "没有权限"}
+	ErrConflict          = &Error{40009, 409, "资源冲突"}
+)
+var (
+	ErrLogoutFailed = &Error{40009, 409, "登出失败"}
 )

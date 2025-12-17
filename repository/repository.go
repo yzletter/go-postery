@@ -43,6 +43,12 @@ type LikeRepository interface {
 }
 
 type TagRepository interface {
+	Create(ctx context.Context, tag *model.Tag) error
+	GetBySlug(ctx context.Context, slug string) (*model.Tag, error)
+	GetByName(ctx context.Context, name string) (*model.Tag, error)
+	Bind(ctx context.Context, postTag *model.PostTag) error
+	DeleteBind(ctx context.Context, pid, tid int64) error
+	FindTagsByPostID(ctx context.Context, pid int64) ([]string, error)
 }
 
 type FollowRepository interface {

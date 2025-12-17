@@ -1,9 +1,11 @@
 package response
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/errno"
 )
 
 // Response 统一定义后端返回数据格式
@@ -22,17 +24,11 @@ const (
 	// 其他业务错误码
 )
 
-// Success 成功返回（200 + 业务码 0）
-func Success(ctx *gin.Context, data interface{}) {
-	ctx.JSON(http.StatusOK, Response{
-		Code: CodeSuccess,
-		Msg:  "success",
-		Data: data,
-	})
-}
-
-// SuccessMsg 成功但自定义提示信息
-func SuccessMsg(ctx *gin.Context, msg string, data interface{}) {
+// Success 成功
+func Success(ctx *gin.Context, msg string, data interface{}) {
+	if msg == "" {
+		msg = "success"
+	}
 	ctx.JSON(http.StatusOK, Response{
 		Code: CodeSuccess,
 		Msg:  msg,
@@ -40,46 +36,25 @@ func SuccessMsg(ctx *gin.Context, msg string, data interface{}) {
 	})
 }
 
-// Fail 业务失败，但不是服务崩了（也是 200，前端看 Code）
-func Fail(ctx *gin.Context, code int, msg string) {
-	ctx.JSON(http.StatusOK, Response{
-		Code: code,
-		Msg:  msg,
-		Data: nil,
-	})
-}
-
-// ParamError 参数错误
-func ParamError(ctx *gin.Context, msg string) {
-	if msg == "" {
-		msg = "参数错误"
+// Error 失败
+func Error(ctx *gin.Context, err error) {
+	var e *errno.Error
+	if errors.As(err, &e) && e != nil {
+		failWithHTTP(ctx, e.HTTPStatus, e.Code, e.Msg)
+		return
 	}
-	ctx.JSON(http.StatusBadRequest, Response{
-		Code: CodeBadRequest,
-		Msg:  msg,
-		Data: nil,
-	})
-}
 
-// Unauthorized 未登录/无权限
-func Unauthorized(ctx *gin.Context, msg string) {
-	if msg == "" {
-		msg = "未登录或无权限"
-	}
-	ctx.JSON(http.StatusUnauthorized, Response{
-		Code: CodeUnauthorized,
-		Msg:  msg,
-		Data: nil,
-	})
-}
-
-// ServerError 服务端错误
-func ServerError(ctx *gin.Context, msg string) {
-	if msg == "" {
-		msg = "系统繁忙，请稍后重试"
-	}
+	// 兜底：非 errno.Error 的未知错误
 	ctx.JSON(http.StatusInternalServerError, Response{
 		Code: CodeServerError,
+		Msg:  "系统繁忙，请稍后重试",
+		Data: nil,
+	})
+}
+
+func failWithHTTP(ctx *gin.Context, httpCode int, code int, msg string) {
+	ctx.JSON(httpCode, Response{
+		Code: code,
 		Msg:  msg,
 		Data: nil,
 	})

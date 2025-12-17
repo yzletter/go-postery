@@ -15,7 +15,7 @@ var (
 )
 
 // Init 连接到 Redis 数据库, 生成一个 *redis.Client 赋给全局数据库变量 globalRedisClient
-func Init(confDir, confFileName, confFileType string) redis.Cmdable {
+func Init(confDir, confFileName, confFileType string) redis.UniversalClient {
 	// 初始化 Viper 进行配置读取
 	viper := viper.InitViper(confDir, confFileName, confFileType)
 	host := viper.GetString("redis.host")

@@ -14,13 +14,13 @@ import (
 )
 
 // AuthRequiredMiddleware 强制登录
-func AuthRequiredMiddleware(authSvc service.AuthService, cmdable redis.Cmdable) gin.HandlerFunc {
+func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.UniversalClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		accessToken := ctx.GetHeader(conf.AccessTokenInHeader)                   // 获取 AccessToken
 		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie) // 获取 RefreshToken
 
 		// 尝试直接通过 AccessToken 认证
-		claim, err := authSvc.VerifyToken(accessToken)
+		claim, err := authSvc.VerifyAccessToken(accessToken)
 		if err == nil && claim != nil {
 			// 黑名单检查
 			ssid := claim.SSid
@@ -28,7 +28,7 @@ func AuthRequiredMiddleware(authSvc service.AuthService, cmdable redis.Cmdable) 
 				unauthorized(ctx)
 				return
 			}
-			ok, err := cmdable.Exists(ctx, conf.ClearTokenPrefix+ssid).Result()
+			ok, err := redisClient.Exists(ctx, conf.ClearTokenPrefix+ssid).Result()
 			if err != nil || ok > 0 {
 				unauthorized(ctx)
 				return
@@ -47,7 +47,7 @@ func AuthRequiredMiddleware(authSvc service.AuthService, cmdable redis.Cmdable) 
 		}
 
 		// 从缓存中获取信息
-		mp, err := cmdable.HGetAll(ctx, conf.RefreshTokenPrefix+refreshToken).Result()
+		mp, err := redisClient.HGetAll(ctx, conf.RefreshTokenPrefix+refreshToken).Result()
 		if err != nil || len(mp) == 0 {
 			// RefreshToken 已经过期
 			unauthorized(ctx)
@@ -63,7 +63,7 @@ func AuthRequiredMiddleware(authSvc service.AuthService, cmdable redis.Cmdable) 
 		}
 
 		// 黑名单检查
-		ok, err := cmdable.Exists(ctx, conf.ClearTokenPrefix+ssid).Result()
+		ok, err := redisClient.Exists(ctx, conf.ClearTokenPrefix+ssid).Result()
 		if err != nil || ok > 1 {
 			unauthorized(ctx)
 			return
@@ -92,7 +92,7 @@ func AuthRequiredMiddleware(authSvc service.AuthService, cmdable redis.Cmdable) 
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
 	ctx.Header(conf.AccessTokenInHeader, accessToken)
-	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenCookieMaxAgeSecs, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 }
 
 func unauthorized(ctx *gin.Context) {

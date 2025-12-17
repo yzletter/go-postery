@@ -1,8 +1,9 @@
 package security
 
 import (
+	"log/slog"
+
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 )
 
@@ -10,7 +11,7 @@ type jwtManager struct {
 	tokenKey []byte
 }
 
-func newJwtManager(tokenKey string) service.JwtManager {
+func NewJwtManager(tokenKey string) service.JwtManager {
 	return &jwtManager{
 		tokenKey: []byte(tokenKey),
 	}
@@ -24,7 +25,8 @@ func (manager *jwtManager) GenToken(claim service.JWTTokenClaims) (string, error
 	// 3. 对 Token 进行加密
 	tokenString, err := token.SignedString(manager.tokenKey) // 用长 token 秘钥进行加密
 	if err != nil {
-		return "", errno.ErrJwtTokenIssueFailed
+		slog.Error("Token Gen Failed", "error", err)
+		return "", service.ErrTokenGenFailed
 	}
 
 	return tokenString, nil
@@ -34,18 +36,15 @@ func (manager *jwtManager) GenToken(claim service.JWTTokenClaims) (string, error
 func (manager *jwtManager) VerifyToken(tokenString string) (*service.JWTTokenClaims, error) {
 	// 1. 校验用到的 keyFunc 函数
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
-		if token.Method != jwt.SigningMethodHS512 {
-			return nil, errno.ErrJwtTokenVerifyFailed
-		}
 		return manager.tokenKey, nil
 	}
 
 	// 2. 解析 JWT
-	var claim *service.JWTTokenClaims
-	token, err := jwt.ParseWithClaims(tokenString, claim, keyFunc)
+	claims := &service.JWTTokenClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, keyFunc)
 	if err != nil || token == nil || !token.Valid {
-		return nil, errno.ErrJwtTokenVerifyFailed
+		return nil, service.ErrTokenInvalid
 	}
 
-	return claim, nil
+	return claims, nil
 }

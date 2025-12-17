@@ -12,12 +12,12 @@ import (
 var luaSlideWindowScript string // luaSlideWindowScript 滑动窗口算法 lua 脚本
 
 type RateLimitService struct {
-	redisClient redis.Cmdable // 依赖 Redis 数据库
-	internal    time.Duration // 窗口大小
-	rate        int           // 阈值
+	redisClient redis.UniversalClient // 依赖 Redis 数据库
+	internal    time.Duration         // 窗口大小
+	rate        int                   // 阈值
 }
 
-func NewRateLimitService(redisClient redis.Cmdable, interval time.Duration, rate int) *RateLimitService {
+func NewRateLimitService(redisClient redis.UniversalClient, interval time.Duration, rate int) *RateLimitService {
 	return &RateLimitService{
 		redisClient: redisClient,
 		internal:    interval,

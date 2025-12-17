@@ -33,10 +33,10 @@ func main() {
 
 	// Infra 层
 	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
-	RedisCmd := infraRedis.Init("./conf", "redis", viper.YAML)      // 初始化 Redis
+	RedisClient := infraRedis.Init("./conf", "redis", viper.YAML)   // 初始化 Redis
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)             // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0)           // 初始化 密码哈希器
-
+	JwtManager := security.NewJwtManager("123456")
 	// 初始化 gin
 	engine := gin.Default()
 
@@ -49,12 +49,12 @@ func main() {
 	TagDAO := dao.NewTagDAO(GormDB)
 
 	// Cache 层
-	UserCache := cache.NewUserCache(RedisCmd)
-	PostCache := cache.NewPostCache(RedisCmd)
-	CommentCache := cache.NewCommentCache(RedisCmd)
-	LikeCache := cache.NewLikeCache(RedisCmd)
-	FollowCache := cache.NewFollowCache(RedisCmd)
-	TagCache := cache.NewTagCache(RedisCmd)
+	UserCache := cache.NewUserCache(RedisClient)
+	PostCache := cache.NewPostCache(RedisClient)
+	CommentCache := cache.NewCommentCache(RedisClient)
+	LikeCache := cache.NewLikeCache(RedisClient)
+	FollowCache := cache.NewFollowCache(RedisClient)
+	TagCache := cache.NewTagCache(RedisClient)
 
 	// Repository 层
 	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 UserRepo
@@ -66,19 +66,27 @@ func main() {
 
 	// Service 层
 	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher) // 注册 UserService
+	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient)
 
 	// Handler 层
-	UserHdl := handler.NewUserHandler(UserSvc, JwtSvc) // 注册 UserHandler
+	AuthHdl := handler.NewAuthHandler(AuthSvc)
+	UserHdl := handler.NewUserHandler(UserSvc) // 注册 UserHandler
 
+	// 中间件层
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
+
+	// todo 待重构
+	// todo 待重构
+	// todo 待重构
+	// todo 待重构
 	// todo 待重构
 	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo) // 注册 PostService
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo)              // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo) // 注册 CommentService
 	TagSvc := service.NewTagService(TagRepo)                                 // 注册 TagService
 
-	JwtSvc := security.NewJwtService(RedisCmd, "123456")                       // 注册 JwtManager
-	MetricSvc := service.NewMetricService()                                    // 注册 MetricService
-	RateLimitSvc := ratelimit.NewRateLimitService(RedisCmd, time.Minute, 1000) // 注册 RateLimitService
+	MetricSvc := service.NewMetricService()                                       // 注册 MetricService
+	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000) // 注册 RateLimitService
 
 	// Handler 层
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
@@ -86,7 +94,6 @@ func main() {
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(JwtSvc) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)          // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc) // RateLimitMdl 限流中间件
 
@@ -122,17 +129,17 @@ func main() {
 	api := engine.Group("/api")
 	v1 := api.Group("/v1")
 
-	// localhost:8765/api/v1
+	// /api/v1
 	// 身份认证模块
 	auth := v1.Group("/auth")
 	{
 		// todo AuthHandler
-		auth.POST("/register", UserHdl.Register) // localhost:8765/api/v1/auth/register
-		auth.POST("/login", UserHdl.Login)
+		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register
+		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
-		authedAuth.POST("/logout", UserHdl.Logout)
+		authedAuth.POST("/logout", UserHdl.Logout) // POST /api/v1/auth/logout
 	}
 
 	// 用户模块

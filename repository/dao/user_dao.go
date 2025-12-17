@@ -25,11 +25,6 @@ func NewUserDAO(db *gorm.DB) UserDAO {
 
 // Create 创建 User
 func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) error {
-	// 0. 技术字段完整性保证
-	if user.ID == 0 || user.Username == "" || user.Email == "" || user.PasswordHash == "" {
-		return ErrParamsInvalid
-	}
-
 	// 1. 操作数据库
 	result := dao.db.WithContext(ctx).Create(user)
 	if result.Error != nil {

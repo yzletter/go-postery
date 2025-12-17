@@ -13,8 +13,8 @@ type JWTInfo struct {
 	Role string `json:"role"`
 }
 
-// CreateRequest 定义前端提交注册表单信息的模型映射
-type CreateRequest struct {
+// RegisterRequest 定义前端提交注册表单信息的模型映射
+type RegisterRequest struct {
 	Email    string `json:"email"`
 	Name     string `json:"name" form:"name" binding:"required,gte=2"`          // 长度 >= 2
 	PassWord string `json:"password" form:"password" binding:"required,len=32"` // 长度 == 32
