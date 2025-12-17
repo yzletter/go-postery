@@ -18,11 +18,11 @@ type commentService struct {
 	idGen       IDGenerator
 }
 
-func NewCommentService(commentRepo repository.CommentRepository, postRepo repository.PostRepository, userRepo repository.UserRepository, idGen IDGenerator) CommentService {
+func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository, idGen IDGenerator) CommentService {
 	return &commentService{
 		CommentRepo: commentRepo,
-		PostRepo:    postRepo,
 		UserRepo:    userRepo,
+		PostRepo:    postRepo,
 		idGen:       idGen,
 	}
 }

@@ -13,7 +13,7 @@ const RateLimitPrefix = "ip-limit"
 func RateLimitMiddleware(rateLimitService *ratelimit.RateLimitService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 传入 Redis 的前缀和当前 IP
-		limited, err := rateLimitService.Limit(RateLimitPrefix, ctx.ClientIP())
+		limited, err := rateLimitService.Limit(ctx, RateLimitPrefix, ctx.ClientIP())
 		if err != nil {
 			slog.Error("RateLimit Wrong", "error", err)
 			// 限流出错了 (一般为 Redis 出错)

@@ -1,6 +1,7 @@
 package ratelimit
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"time"
@@ -25,7 +26,7 @@ func NewRateLimitService(redisClient redis.UniversalClient, interval time.Durati
 	}
 }
 
-func (svc *RateLimitService) Limit(prefix, IP string) (bool, error) {
+func (svc *RateLimitService) Limit(ctx context.Context, prefix, IP string) (bool, error) {
 	// 拼接 Redis Key
 	redisKey := fmt.Sprintf("%s:%s", prefix, IP)
 
@@ -35,5 +36,5 @@ func (svc *RateLimitService) Limit(prefix, IP string) (bool, error) {
 	nowTime := time.Now().Unix()
 
 	// 返回脚本执行结果
-	return svc.redisClient.Eval(luaSlideWindowScript, []string{redisKey}, windowScale, maxRate, nowTime).Bool()
+	return svc.redisClient.Eval(ctx, luaSlideWindowScript, []string{redisKey}, windowScale, maxRate, nowTime).Bool()
 }

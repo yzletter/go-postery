@@ -65,44 +65,31 @@ func main() {
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 
 	// Service 层
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher) // 注册 UserService
-	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient)
+	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient) // 注册 AuthService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                          // 注册 UserService
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)             // 注册 PostService
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                          // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 CommentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
+	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
+	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)                     // 注册 RateLimitService
 
 	// Handler 层
-	AuthHdl := handler.NewAuthHandler(AuthSvc)
-	UserHdl := handler.NewUserHandler(UserSvc) // 注册 UserHandler
+	AuthHdl := handler.NewAuthHandler(AuthSvc)                            // 注册 AuthHandler
+	UserHdl := handler.NewUserHandler(UserSvc)                            // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
+	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
+	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
-
-	// todo 待重构
-	// todo 待重构
-	// todo 待重构
-	// todo 待重构
-	// todo 待重构
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo) // 注册 PostService
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo)              // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo) // 注册 CommentService
-	TagSvc := service.NewTagService(TagRepo)                                 // 注册 TagService
-
-	MetricSvc := service.NewMetricService()                                       // 注册 MetricService
-	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000) // 注册 RateLimitService
-
-	// Handler 层
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
-	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
-	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)
-
-	// 中间件层
-	MetricMdl := middleware.MetricMiddleware(MetricSvc)          // MetricMdl 用于 Prometheus 监控中间件
-	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc) // RateLimitMdl 限流中间件
-
+	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
+	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
 	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:  []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:  []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders: []string{"Content-Length", "x-jwt-token"},
-
 		// 判断来源的函数
 		AllowOriginFunc: func(origin string) bool {
 			if strings.Contains(origin, "http://localhost") { // 开发环境
@@ -139,7 +126,7 @@ func main() {
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
-		authedAuth.POST("/logout", UserHdl.Logout) // POST /api/v1/auth/logout
+		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout
 	}
 
 	// 用户模块
@@ -151,8 +138,8 @@ func main() {
 		// 个人模块
 		me := users.Group("/me")
 		me.Use(AuthRequiredMdl)
-		me.PATCH("", UserHdl.ModifyProfile)
-		me.PATCH("/password", UserHdl.ModifyPass)
+		me.POST("", UserHdl.ModifyProfile)
+		me.POST("/password", UserHdl.ModifyPass)
 		me.GET("/followers", FollowHdl.ListFollowers)
 		me.GET("/followees", FollowHdl.ListFollowees)
 
@@ -176,19 +163,13 @@ func main() {
 		authedPosts := posts.Group("")
 		authedPosts.Use(AuthRequiredMdl)
 		authedPosts.POST("", PostHdl.Create) // 替代 /me/posts/new
-		authedPosts.PATCH("/:id", PostHdl.Update)
+		authedPosts.POST("/:id", PostHdl.Update)
 		authedPosts.DELETE("/:id", PostHdl.Delete)
 
-		authedPosts.POST("/:id/comments", CommentHdl.Create)         // 替代 /me/comments/new
-		authedPosts.DELETE("/:pid/comments/:cid", CommentHdl.Delete) // 或 DELETE /comments/:cid
-		authedPosts.PUT("/:id/likes", PostHdl.Like)                  // 幂等点赞
-		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)             // 幂等取消
-	}
-
-	// 管理员模块
-	admin := v1.Group("/admin")
-	{
-		admin.Use(AuthRequiredMdl, AdminRequiredMdl)
+		authedPosts.POST("/:id/comments", CommentHdl.Create)        // 替代 /me/comments/new
+		authedPosts.DELETE("/:id/comments/:cid", CommentHdl.Delete) // 或 DELETE /comments/:cid
+		authedPosts.POST("/:id/likes", PostHdl.Like)                // 幂等点赞
+		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)            // 幂等取消
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {
