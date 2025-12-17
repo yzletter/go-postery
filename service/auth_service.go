@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/model"
 
 	"time"
@@ -13,12 +15,6 @@ import (
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/repository"
-)
-
-const (
-	FreshTokenPrefix       = "auth:refresh:"
-	ClearTokenPrefix       = "auth:clear:"
-	RefreshTokenExpiration = 7 * 86400 * time.Second
 )
 
 type authService struct {
@@ -102,49 +98,73 @@ func (svc *authService) Login(ctx context.Context, username, pass string) (userd
 	return userdto.ToBriefDTO(user), nil
 }
 
-// Logout 登出
-func (svc *authService) Logout(ctx context.Context, accessToken string) error {
-	claim, err := svc.jwtManager.VerifyToken(accessToken)
-	if err != nil {
-		return errno.ErrLogoutFailed
-	}
-	ssid := claim.SSid
+// ClearTokens 登出
+func (svc *authService) ClearTokens(ctx context.Context, accessToken, refreshToken string) error {
+	if accessToken != "" {
+		claim, err := svc.VerifyToken(accessToken)
+		if err != nil {
+			return errno.ErrLogoutFailed
+		}
+		ssid := claim.SSid
 
-	// 将 < auth:ssid:xxxxxx, > 放入缓存表明解析出有 ssid 的用户已经被踢下线
-	err = svc.client.Set(ctx, ClearTokenPrefix+ssid, "", RefreshTokenExpiration).Err()
-	if err != nil {
-		return errno.ErrLogoutFailed
+		// 将 < auth:ssid:xxxxxx, > 放入缓存表明解析出有 ssid 的用户已经被踢下线
+		err = svc.client.Set(ctx, conf.ClearTokenPrefix+ssid, "", conf.RefreshTokenCookieMaxAgeSecs).Err()
+		if err != nil {
+			return errno.ErrLogoutFailed
+		}
 	}
+
+	// 将刷新 Token 删除
+	svc.client.Del(ctx, conf.RefreshTokenPrefix+refreshToken)
 
 	return nil
 }
 
 // IssueTokens 签发 Token
-func (svc *authService) IssueTokens(ctx context.Context, id int64, role int) (string, string, error) {
+func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error) {
 	// 参数校验
 	if role > 1 || role < 0 {
 		role = 0
 	}
 
-	// 构造 Jwt 中存放的 Claims
+	// AccessToken 的 Claims
 	ssid := uuid.New().String()
-	claims := JwtClaim{
-		ID:   id,
-		Role: role,
-		SSid: ssid,
+	accessClaims := JWTTokenClaims{
+		Uid:       id,
+		SSid:      ssid,
+		Role:      role,
+		UserAgent: agent,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "go-postery",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AccessTokenExpiration * time.Second)),
+		},
 	}
 
 	// 生成 AccessToken
-	accessToken, err := svc.jwtManager.GenToken(claims, 0)
+	accessToken, err := svc.GenToken(accessClaims)
 	if err != nil {
 		return "", "", errno.ErrJwtTokenIssueFailed
 	}
 
-	// 生成 RefreshToken
+	// 生成 RefreshTokenCookieMaxAgeSecs
 	refreshToken := xid.New().String()
 
-	// 将 < auth:refresh:xxxx.xxxx.xxx, xxxx.xxxx.xxx> 放入缓存
-	svc.client.Set(ctx, FreshTokenPrefix+refreshToken, accessToken, RefreshTokenExpiration)
+	// 将 < auth:refresh:xxxxxx, ssid > 存入
+	mp := map[string]any{
+		"user_id": id,
+		"ssid":    ssid,
+		"role":    role,
+	}
+	svc.client.HSet(ctx, conf.RefreshTokenPrefix+refreshToken, mp)
+	svc.client.Expire(ctx, conf.RefreshTokenPrefix+refreshToken, conf.RefreshTokenCookieMaxAgeSecs)
 
 	return accessToken, refreshToken, nil
+}
+
+func (svc *authService) GenToken(claim JWTTokenClaims) (string, error) {
+	return svc.jwtManager.GenToken(claim)
+}
+
+func (svc *authService) VerifyToken(tokenString string) (*JWTTokenClaims, error) {
+	return svc.jwtManager.VerifyToken(tokenString)
 }

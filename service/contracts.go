@@ -1,5 +1,7 @@
 package service
 
+import "github.com/golang-jwt/jwt/v5"
+
 type PasswordHasher interface {
 	Hash(password string) (string, error)
 	Compare(hashedPassword, plainPassword string) error
@@ -10,15 +12,15 @@ type IDGenerator interface {
 }
 
 type JwtManager interface {
-	GenToken(claims JwtClaim, expiration int64) (string, error)
-	VerifyToken(token string) (*JwtClaim, error)
+	GenToken(claim JWTTokenClaims) (string, error)
+	VerifyToken(tokenString string) (*JWTTokenClaims, error)
 }
 
-type RefreshSessionStore interface {
-}
-
-type JwtClaim struct {
-	ID   int64
-	Role int
-	SSid string
+// JWTTokenClaims 用于生成 JWT Token 的 Claim
+type JWTTokenClaims struct {
+	Uid       int64
+	SSid      string
+	Role      int
+	UserAgent string
+	jwt.RegisteredClaims
 }

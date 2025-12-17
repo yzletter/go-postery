@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -88,13 +89,21 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(JwtSvc) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)          // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc) // RateLimitMdl 限流中间件
+
 	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
-		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		AllowOrigins:  []string{"http://localhost:5173"}, // 允许域名跨域
+		AllowMethods:  []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders: []string{"Content-Length", "x-jwt-token"},
+
+		// 判断来源的函数
+		AllowOriginFunc: func(origin string) bool {
+			if strings.Contains(origin, "http://localhost") { // 开发环境
+				return true
+			}
+			return strings.Contains(origin, "gopostery.com")
+		},
+		MaxAge: 12 * time.Hour,
 	})
 
 	// 注册全局中间件

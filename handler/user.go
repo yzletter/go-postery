@@ -30,7 +30,7 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 func (hdl *UserHandler) Logout(ctx *gin.Context) {
 	// 设置 Cookie 里的双 Token 都置为 -1
 	ctx.SetCookie(RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
-	ctx.SetCookie(AccessTokenInCookie, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(AccessTokenInHeader, "", -1, "/", "localhost", false, true)
 	response.Success(ctx, nil)
 }
 

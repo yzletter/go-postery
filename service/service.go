@@ -36,6 +36,8 @@ type TagService interface {
 type AuthService interface {
 	Register(ctx context.Context, username, email, password string) (userdto.BriefDTO, error)
 	Login(ctx context.Context, username, pass string) (userdto.BriefDTO, error)
-	IssueTokens(ctx context.Context, id int64, role int) (string, string, error)
-	Logout(ctx context.Context, accessToken string) error
+	ClearTokens(ctx context.Context, accessToken, refreshToken string) error
+	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)
+	GenToken(claim JWTTokenClaims) (string, error)
+	VerifyToken(tokenString string) (*JWTTokenClaims, error)
 }
