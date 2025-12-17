@@ -1,13 +1,14 @@
 package service
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 
 	dto "github.com/yzletter/go-postery/dto/user"
+	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
-	"gorm.io/gorm"
 )
 
 var (
@@ -18,105 +19,117 @@ var (
 type followService struct {
 	FollowRepo repository.FollowRepository
 	UserRepo   repository.UserRepository
+	idGen      IDGenerator
 }
 
-func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository) FollowService {
+func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository, idGen IDGenerator) FollowService {
 	return &followService{
 		FollowRepo: followRepo,
 		UserRepo:   userRepo,
+		idGen:      idGen,
 	}
 }
 
-func (svc *followService) Follow(ferId, feeId int) error {
-	res, err := svc.FollowRepo.IfFollow(ferId, feeId)
+// Follow 关注
+func (svc *followService) Follow(ctx context.Context, ferId, feeId int64) error {
+	res, err := svc.FollowRepo.Exists(ctx, ferId, feeId)
 	if err != nil {
-		return repository.ErrServerInternal // 数据库内部错误
+		return errno.ErrServerInternal // 数据库内部错误
 	}
 
 	if res == 1 || res == 3 { // 已经关注过了
-		return ErrDuplicatedFollow
+		return errno.ErrDuplicatedFollow
 	}
 
-	err = svc.FollowRepo.Follow(ferId, feeId)
+	follow := &model.Follow{
+		ID:         svc.idGen.NextID(),
+		FollowerID: ferId,
+		FolloweeID: feeId,
+	}
+	err = svc.FollowRepo.Create(ctx, follow)
 	if err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
-			slog.Error("检查过还出错", "error", err)
-			return ErrDuplicatedFollow
+			// 检查过仍冲突
+			slog.Error("Follow Failed", "error", err)
+			return errno.ErrDuplicatedFollow
 		}
-		return errors.New("关注失败, 请稍后重试")
+		return errno.ErrServerInternal
 	}
 
 	return nil
 }
 
-func (svc *followService) DisFollow(ferId, feeId int) error {
-	res, err := svc.FollowRepo.IfFollow(ferId, feeId)
+// UnFollow 取消关注
+func (svc *followService) UnFollow(ctx context.Context, ferId, feeId int64) error {
+	res, err := svc.FollowRepo.Exists(ctx, ferId, feeId)
 	if err != nil {
-		return repository.ErrServerInternal // 数据库内部错误
+		return errno.ErrServerInternal // 数据库内部错误
 	}
 
 	if res == 2 || res == 0 { // 只有对方关注了我，或者互不关注
-		return ErrDuplicatedDisFollow
+		return errno.ErrDuplicatedUnFollow
 	}
 
-	err = svc.FollowRepo.DisFollow(ferId, feeId)
+	err = svc.FollowRepo.Delete(ctx, ferId, feeId)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("检查过还出错", "error", err)
-			return ErrDuplicatedDisFollow
+			return errno.ErrDuplicatedUnFollow
 		}
-		return errors.New("取消关注失败")
+		return errno.ErrServerInternal
 	}
 
 	return nil
 }
 
-func (svc *followService) IfFollow(ferId, feeId int) (int, error) {
-	res, err := svc.FollowRepo.IfFollow(ferId, feeId)
+// IfFollow 判断关注关系
+func (svc *followService) IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error) {
+	res, err := svc.FollowRepo.Exists(ctx, ferId, feeId)
 	if err != nil {
-		return 0, repository.ErrServerInternal // 数据库内部错误
+		return -1, errno.ErrServerInternal // 数据库内部错误
 	}
-
 	return res, nil
 }
 
-func (svc *followService) GetFollowers(uid int) ([]dto.BriefDTO, error) {
-	followersId, err := svc.FollowRepo.GetFollowers(uid)
-	fmt.Println(followersId)
+// GetFollowersByPage 按页查找粉丝
+func (svc *followService) GetFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
+	var empty []dto.BriefDTO
+	total, followersId, err := svc.FollowRepo.GetFollowers(ctx, uid, pageNo, pageSize)
 	if err != nil {
-		return nil, repository.ErrServerInternal
+		return 0, empty, errno.ErrServerInternal
 	}
 
 	res := make([]dto.BriefDTO, 0)
 	for _, id := range followersId {
-		user, err := svc.UserRepo.GetByID(int64(id))
+		user, err := svc.UserRepo.GetByID(ctx, id)
 		if err != nil {
 			continue
 		}
-		userBriefDTO := user.ToUserBriefDTO(*user)
+		userBriefDTO := dto.ToBriefDTO(user)
 		res = append(res, userBriefDTO)
 	}
-	fmt.Println(res)
 
-	return res, nil
+	return int(total), res, nil
 }
 
-func (svc *followService) GetFollowees(uid int) ([]dto.BriefDTO, error) {
-	followeesId, err := svc.FollowRepo.GetFollowees(uid)
+// GetFolloweesByPage 按页查找关注对象
+func (svc *followService) GetFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
+	var empty []dto.BriefDTO
+	total, followeesId, err := svc.FollowRepo.GetFollowees(ctx, uid, pageNo, pageSize)
 	if err != nil {
-		return nil, repository.ErrServerInternal
+		return 0, empty, errno.ErrServerInternal
 	}
 
 	res := make([]dto.BriefDTO, 0)
 	for _, id := range followeesId {
-		user, err := svc.UserRepo.GetByID(int64(id))
+		user, err := svc.UserRepo.GetByID(ctx, id)
 		if err != nil {
 
 			continue
 		}
-		userBriefDTO := user.ToUserBriefDTO(*user)
+		userBriefDTO := dto.ToBriefDTO(user)
 		res = append(res, userBriefDTO)
 	}
 
-	return res, nil
+	return int(total), res, nil
 }

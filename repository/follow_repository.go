@@ -35,15 +35,15 @@ func (repo *followRepository) Delete(ctx context.Context, ferID, feeID int64) er
 	return nil
 }
 
-func (repo *followRepository) Exists(ctx context.Context, ferID, feeID int64) (int, error) {
-	ok, err := repo.dao.Exists(ctx, ferID, feeID)
+func (repo *followRepository) Exists(ctx context.Context, ferID, feeID int64) (model.FollowType, error) {
+	res, err := repo.dao.Exists(ctx, ferID, feeID)
 	if err != nil {
 		return 0, toRepositoryErr(err)
 	}
 
 	// todo 写 Cache
 
-	return ok, nil
+	return res, nil
 }
 
 func (repo *followRepository) GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error) {

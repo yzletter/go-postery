@@ -6,6 +6,7 @@ import (
 	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/dto/post"
 	userdto "github.com/yzletter/go-postery/dto/user"
+	"github.com/yzletter/go-postery/model"
 )
 
 // 定义 Service 层所有接口
@@ -52,4 +53,9 @@ type TagService interface {
 }
 
 type FollowService interface {
+	Follow(ctx context.Context, ferId, feeId int64) error
+	UnFollow(ctx context.Context, ferId, feeId int64) error
+	IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error)
+	GetFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
+	GetFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
 }

@@ -37,3 +37,8 @@ var (
 var (
 	ErrTagDuplicatedBind = &Error{40009, 409, "标签重复绑定"}
 )
+
+var (
+	ErrDuplicatedFollow   = &Error{40009, 409, "重复关注"}
+	ErrDuplicatedUnFollow = &Error{40009, 409, "重复取消关注"}
+)

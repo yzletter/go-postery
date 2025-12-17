@@ -16,9 +16,10 @@ type tagService struct {
 	idGen   IDGenerator
 }
 
-func NewTagService(tagRepo repository.TagRepository) TagService {
+func NewTagService(tagRepo repository.TagRepository, idGen IDGenerator) TagService {
 	return &tagService{
 		tagRepo: tagRepo,
+		idGen:   idGen,
 	}
 }
 

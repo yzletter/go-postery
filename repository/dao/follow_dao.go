@@ -70,7 +70,7 @@ func (dao *gormFollowDAO) Delete(ctx context.Context, ferID, feeID int64) error 
 }
 
 // Exists 判断存在关注关系 0 表示互不关注, 1 表示 a 关注 b, 2 表示 b 关注 a, 3 表示互相关注
-func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (int, error) {
+func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (model.FollowType, error) {
 	exists := func(a, b int64) (bool, error) {
 		var cnt int64
 		result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", a, b).Count(&cnt)

@@ -47,7 +47,7 @@ type LikeDAO interface {
 type FollowDAO interface {
 	Create(ctx context.Context, follow *model.Follow) error
 	Delete(ctx context.Context, ferID, feeID int64) error
-	Exists(ctx context.Context, ferID, feeID int64) (int, error)
+	Exists(ctx context.Context, ferID, feeID int64) (model.FollowType, error)
 	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }
