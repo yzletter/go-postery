@@ -17,13 +17,13 @@ func NewCommentRepository(commentDAO dao.CommentDAO, commentCache cache.CommentC
 	return &commentRepository{dao: commentDAO, cache: commentCache}
 }
 
-func (repo *commentRepository) Create(ctx context.Context, comment *model.Comment) (*model.Comment, error) {
-	c, err := repo.dao.Create(ctx, comment)
+func (repo *commentRepository) Create(ctx context.Context, comment *model.Comment) error {
+	err := repo.dao.Create(ctx, comment)
 	if err != nil {
-		return nil, toRepositoryErr(err)
+		return toRepositoryErr(err)
 	}
 
-	return c, nil
+	return nil
 }
 
 func (repo *commentRepository) GetByID(ctx context.Context, id int64) (*model.Comment, error) {

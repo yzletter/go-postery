@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/dto/post"
 	userdto "github.com/yzletter/go-postery/dto/user"
 )
@@ -38,9 +39,10 @@ type PostService interface {
 }
 
 type CommentService interface {
-}
-
-type LikeService interface {
+	Create(ctx context.Context, pid int64, uid int64, parentId int64, replyId int64, content string) (comment.DTO, error)
+	Delete(ctx context.Context, uid, cid int64) error
+	List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []comment.DTO)
+	CheckAuth(ctx context.Context, cid, uid int64) bool
 }
 
 type FollowService interface {

@@ -2,14 +2,14 @@
 -- 创建数据库 go_postery
 create database go_postery;
 -- 创建用户 go_postery_tester 密码为 123456
-create user 'go_postery_tester' identified by '123456';
+create author 'go_postery_tester' identified by '123456';
 -- 将数据库 go_postery 的全部权限授予用户 go_postery_tester
 grant all on go_postery.* to go_postery_tester;
 -- 切到 go_postery 数据库
 use go_postery;
 
 # 建表
-# 创建 user 表
+# 创建 author 表
 CREATE TABLE IF NOT EXISTS users
 (
     id            BIGINT                                  NOT NULL COMMENT '用户 ID (雪花算法)',

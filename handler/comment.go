@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/dto/request"
+	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -35,15 +35,15 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	}
 
 	// 获取参数并校验
-	var comment request.CreateCommentRequest
-	if err := ctx.ShouldBindJSON(&comment); err != nil || comment.ParentId < 0 {
+	var comment comment.CreateRequest
+	if err := ctx.ShouldBindJSON(&comment); err != nil || comment.ParentID < 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.ParamError(ctx, "")
 		return
 	}
 
 	// 调用 service 层创建评论
-	commentDTO, err := hdl.CommentService.Create(comment.PostId, int(uid), comment.ParentId, comment.ReplyId, comment.Content)
+	commentDTO, err := hdl.CommentService.Create(comment.PostID, int(uid), comment.ParentID, comment.ReplyID, comment.Content)
 	if err != nil {
 		slog.Error("Create Comment Failed", "error", err)
 		response.ServerError(ctx, "")

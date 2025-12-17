@@ -22,20 +22,20 @@ func NewCommentDAO(db *gorm.DB) CommentDAO {
 }
 
 // Create 创建 Comment
-func (dao *gormCommentDAO) Create(ctx context.Context, comment *model.Comment) (*model.Comment, error) {
+func (dao *gormCommentDAO) Create(ctx context.Context, comment *model.Comment) error {
 	result := dao.db.WithContext(ctx).Create(comment)
 	if result.Error != nil {
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return nil, ErrUniqueKey
+			return ErrUniqueKey
 		}
 		// 系统层面错误
 		slog.Error(CreateFailed, "error", result.Error)
-		return nil, ErrServerInternal
+		return ErrServerInternal
 	}
 
-	return comment, nil
+	return nil
 }
 
 // GetByID 根据 Comment 的 ID 查找 Comment

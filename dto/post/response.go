@@ -14,7 +14,7 @@ type DetailDTO struct {
 	CommentCount int              `json:"comment_count"`
 	Title        string           `json:"title"`
 	Content      string           `json:"content"`
-	CreatedAt    string           `json:"createdAt"`
+	CreatedAt    string           `json:"created_at"`
 	Author       userdto.BriefDTO `json:"author"`
 	Tags         []string         `json:"tags"`
 }
@@ -22,7 +22,7 @@ type DetailDTO struct {
 type BriefDTO struct {
 	ID        int64            `json:"id,string"`
 	Title     string           `json:"title"`
-	CreatedAt string           `json:"createdAt"`
+	CreatedAt string           `json:"created_at"`
 	Author    userdto.BriefDTO `json:"author"`
 }
 

@@ -30,3 +30,7 @@ var (
 	ErrDuplicatedLike   = &Error{40004, 404, "重复点赞帖子"}
 	ErrDuplicatedUnLike = &Error{40004, 404, "重复取消点赞帖子"}
 )
+
+var (
+	ErrCommentNotFound = &Error{40004, 404, "评论不存在"}
+)

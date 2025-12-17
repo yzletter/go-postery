@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto/post"
+	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -33,12 +34,12 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
 	if err1 != nil || err2 != nil {
 		// 获取帖子列表请求的参数不合法
-		response.ParamError(ctx, "")
+		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs := hdl.PostService.GetByPage(ctx, pageNo, pageSize)
+	total, postDTOs := hdl.PostService.ListByPage(ctx, pageNo, pageSize)
 	for k := range postDTOs {
 		postDTOs[k].Tags = hdl.TagSvc.FindTagsByPostID(int(postDTOs[k].ID))
 	}
