@@ -22,10 +22,10 @@ func NewPostDAO(db *gorm.DB) PostDAO {
 }
 
 // Create 创建 Post
-func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) (*model.Post, error) {
+func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) error {
 	// 0. 兜底
 	if post.ID == 0 || post.UserID == 0 || post.Title == "" || post.Content == "" {
-		return nil, ErrParamsInvalid
+		return ErrParamsInvalid
 	}
 
 	// 1. 操作数据库
@@ -34,16 +34,16 @@ func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) (*model.Po
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return nil, ErrUniqueKey
+			return ErrUniqueKey
 		}
 
 		// 系统层面错误
 		slog.Error(CreateFailed, "post_id", post.ID, "error", result.Error)
-		return nil, ErrServerInternal
+		return ErrServerInternal
 	}
 
 	// 2. 返回结果
-	return post, nil
+	return nil
 }
 
 // Delete 删除 Post

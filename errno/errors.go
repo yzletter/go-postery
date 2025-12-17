@@ -24,3 +24,9 @@ var (
 var (
 	ErrLogoutFailed = &Error{40009, 409, "登出失败"}
 )
+
+var (
+	ErrPostNotFound     = &Error{40004, 404, "帖子不存在"}
+	ErrDuplicatedLike   = &Error{40004, 404, "重复点赞帖子"}
+	ErrDuplicatedUnLike = &Error{40004, 404, "重复取消点赞帖子"}
+)

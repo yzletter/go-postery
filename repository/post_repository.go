@@ -18,15 +18,15 @@ func NewPostRepository(postDao dao.PostDAO, postCache cache.PostCache) PostRepos
 	return &postRepository{dao: postDao, cache: postCache}
 }
 
-func (repo *postRepository) Create(ctx context.Context, post *model.Post) (*model.Post, error) {
-	p, err := repo.dao.Create(ctx, post)
+func (repo *postRepository) Create(ctx context.Context, post *model.Post) error {
+	err := repo.dao.Create(ctx, post)
 	if err != nil {
-		return nil, toRepositoryErr(err)
+		return toRepositoryErr(err)
 	}
 
 	// todo 写 Cache
 
-	return p, nil
+	return nil
 }
 
 func (repo *postRepository) Delete(ctx context.Context, id int64) error {

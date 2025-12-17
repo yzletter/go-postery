@@ -35,7 +35,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/search" element={<Search />} />
-      <Route path="/post/:id" element={<PostDetail />} />
+      <Route path="/postDetailDTO/:id" element={<PostDetail />} />
       <Route path="/edit/:id" element={<EditPost />} />
       <Route path="/login" element={<Login />} />
       <Route path="/agent" element={<Agent />} />

@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/dto/request"
+	"github.com/yzletter/go-postery/dto/post"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -44,7 +44,7 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := hdl.PostService.HasMore(ctx, pageNo, pageSize, total)
+	hasMore := pageNo*pageSize < total
 
 	// 返回
 	response.Success(ctx, gin.H{
@@ -115,7 +115,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var createRequest request.CreatePostRequest
+	var createRequest post.CreateRequest
 	err = ctx.ShouldBindJSON(&createRequest)
 	if err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -176,7 +176,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var updateRequest request.UpdatePostRequest
+	var updateRequest post.UpdateRequest
 	err = ctx.ShouldBindJSON(&updateRequest)
 
 	if err != nil || updateRequest.Id == 0 {

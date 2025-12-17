@@ -57,7 +57,7 @@ func main() {
 	TagCache := cache.NewTagCache(RedisClient)
 
 	// Repository 层
-	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 UserRepo
+	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 userRepo
 	PostRepo := repository.NewPostRepository(PostDAO, PostCache)             // 注册 PostRepository
 	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
 	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
