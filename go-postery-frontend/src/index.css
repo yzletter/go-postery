@@ -3,30 +3,69 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply h-full;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply min-h-full text-gray-900 antialiased;
+    background:
+      radial-gradient(60% 55% at 10% 0%, rgba(14, 165, 233, 0.22) 0%, rgba(14, 165, 233, 0) 60%),
+      radial-gradient(55% 50% at 90% 10%, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0) 62%),
+      radial-gradient(50% 45% at 50% 100%, rgba(34, 197, 94, 0.10) 0%, rgba(34, 197, 94, 0) 55%),
+      linear-gradient(180deg, #f8fafc 0%, #ffffff 45%, #f8fafc 100%);
+    background-attachment: fixed;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+
+  ::selection {
+    background: rgba(14, 165, 233, 0.22);
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md;
+    @apply bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-sm ring-1 ring-gray-200/60 transition-shadow duration-200;
   }
   
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150;
+    @apply bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600;
+    @apply hover:shadow-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-2 focus:ring-offset-gray-50;
+    @apply active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
   
   .btn-secondary {
-    @apply bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150;
+    @apply bg-white/70 text-gray-800 ring-1 ring-gray-200/70 shadow-sm backdrop-blur;
+    @apply hover:bg-white hover:ring-gray-300 hover:shadow-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-200 focus:ring-offset-2 focus:ring-offset-gray-50;
+    @apply active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150;
+    @apply bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-700 hover:to-rose-600;
+    @apply hover:shadow-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 focus:ring-offset-gray-50;
+    @apply active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
   
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full rounded-xl px-4 py-2.5 text-sm shadow-sm;
+    @apply bg-white/80 border border-gray-200/70 placeholder:text-gray-400;
+    @apply focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-300;
+    @apply disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
   
   .textarea {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none;
+    @apply w-full rounded-xl px-4 py-2.5 text-sm shadow-sm resize-none;
+    @apply bg-white/80 border border-gray-200/70 placeholder:text-gray-400;
+    @apply focus:outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-300;
+    @apply disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
 }
-

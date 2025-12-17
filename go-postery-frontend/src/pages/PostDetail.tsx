@@ -328,7 +328,7 @@ export default function PostDetail() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 lg:-ml-1">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* 返回按钮 */}
       <Link
         to="/"
@@ -339,28 +339,28 @@ export default function PostDetail() {
       </Link>
 
       {/* 帖子内容 */}
-      <article className="card px-12">
+      <article className="card p-6 sm:p-8">
         {/* 标题和元信息 */}
         <div className="mb-6">
           <div className="flex items-start justify-between mb-4">
-            <h1 className="text-3xl font-bold text-gray-900 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex-1">
               {post.title}
             </h1>
             {/* 操作按钮 */}
             {isAuthor && (
-              <div className="flex space-x-2 ml-4">
+              <div className="flex flex-col sm:flex-row gap-2 ml-4">
                 <Link
                   to={`/edit/${post.id}`}
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                  className="btn-secondary !px-3 !py-2"
                 >
-                  <Edit className="h-4 w-4 mr-1" />
+                  <Edit className="h-4 w-4" />
                   编辑
                 </Link>
                 <button
                   onClick={handleDeletePost}
-                  className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                  className="btn-danger !px-3 !py-2"
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
+                  <Trash2 className="h-4 w-4" />
                   删除
                 </button>
               </div>
@@ -415,30 +415,30 @@ export default function PostDetail() {
         )}
 
         {/* 正文内容 */}
-        <div className="prose prose-gray max-w-none mb-6 px-4">
-          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-lg">
+        <div className="max-w-none mb-6">
+          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base sm:text-lg">
             {post.content}
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-6 mt-8 space-y-3 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200/60 pt-6 mt-8 gap-3">
           <div className="flex items-center space-x-4">
             <button
               type="button"
               onClick={handleLikePost}
               disabled={isLiking || isCheckingLike}
-              className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold shadow-sm ring-1 transition-colors ${
                 hasLiked
-                  ? 'bg-primary-50 border-primary-200 text-primary-700 hover:border-primary-300 hover:bg-primary-100'
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700'
+                  ? 'bg-primary-50 text-primary-700 ring-primary-200 hover:bg-primary-100'
+                  : 'bg-white/70 text-gray-800 ring-gray-200/70 hover:bg-white hover:ring-gray-300'
               } disabled:opacity-70 disabled:cursor-not-allowed`}
             >
               <Heart
-                className="h-4 w-4 mr-2"
+                className="h-4 w-4"
                 fill={hasLiked ? 'currentColor' : 'none'}
               />
               <span>{hasLiked ? '取消点赞' : '点赞'}</span>
-              <span className="ml-2 text-gray-500">{likeCount}</span>
+              <span className={hasLiked ? 'text-primary-700' : 'text-gray-500'}>{likeCount}</span>
             </button>
             <span className="text-sm text-gray-500">
               {likeCount > 0 ? `${likeCount} 人觉得这篇内容不错` : '成为第一个点赞的人'}
@@ -515,7 +515,7 @@ export default function PostDetail() {
                     />
                   </Link>
                   <div className="flex-1">
-                    <div className="bg-gray-50 rounded-lg p-4 mb-2">
+                    <div className="bg-white/70 ring-1 ring-gray-200/60 rounded-xl p-4 mb-2">
                       <div className="flex items-center justify-between mb-2">
                         <Link
                           to={`/users/${parent.author.id}`}
@@ -570,7 +570,7 @@ export default function PostDetail() {
                           />
                         </Link>
                         <div className="flex-1">
-                          <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                          <div className="bg-white/70 ring-1 ring-gray-200/60 rounded-xl p-3 mb-2">
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center space-x-2">
                                 <Link

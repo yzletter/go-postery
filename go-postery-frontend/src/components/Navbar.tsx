@@ -8,47 +8,57 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
   const profileLink = user?.id ? `/users/${user.id}` : '/profile'
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-5">
-        <div className="flex items-center h-16 gap-4">
+    <nav className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/70 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center h-16 gap-4 md:gap-8">
           <Link
             to="/"
             reloadDocument
-            className="flex items-center space-x-2 group flex-shrink-0 -ml-3 sm:-ml-20"
+            className="flex items-center gap-2 group flex-shrink-0 lg:-ml-20"
           >
             <MessageSquare className="h-8 w-8 text-primary-600 group-hover:text-primary-700 transition-colors" />
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+            <span className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-primary-700 transition-colors">
               Go Postery
             </span>
           </Link>
 
           <form
-            className="flex-1 max-w-xl hidden sm:block sm:ml-20 md:ml-20"
+            className="hidden md:block flex-1 max-w-xl lg:ml-10"
             onSubmit={(e) => {
               e.preventDefault()
               const query = searchTerm.trim()
+              setShowMobileSearch(false)
               navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
             }}
           >
             <div className="relative">
-              <Search className="h-5 w-5 text-gray-800 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="搜索帖子标题、内容或作者..."
-                className="input w-full pl-10 pr-4 h-10 bg-gray-50 border-gray-200 focus:border-primary-400 focus:ring-primary-200"
+                className="input w-full pl-10 pr-4 h-11"
               />
             </div>
           </form>
           
-          <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 ml-auto">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
+            <button
+              type="button"
+              onClick={() => setShowMobileSearch(prev => !prev)}
+              className="md:hidden btn-secondary !px-3 !py-2"
+              aria-label={showMobileSearch ? '关闭搜索' : '打开搜索'}
+            >
+              <Search className="h-5 w-5" />
+            </button>
             <Link
               to="/agent"
-              className="relative overflow-hidden group flex items-center space-x-2 px-3.5 py-2 rounded-full border border-primary-100 bg-gradient-to-r from-primary-50 via-white to-white text-primary-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+              className="relative overflow-hidden group flex items-center gap-2 px-3.5 py-2 rounded-full border border-primary-100 bg-gradient-to-r from-primary-50 via-white to-white text-primary-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
               <span className="absolute inset-0 bg-primary-100/40 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" aria-hidden />
               <Bot className="h-5 w-5 relative z-10" />
@@ -71,7 +81,7 @@ export default function Navbar() {
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/60 ring-1 ring-gray-200/70 shadow-sm hover:bg-white transition-colors"
                   >
                     <img
                       src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
@@ -89,8 +99,8 @@ export default function Navbar() {
                         className="fixed inset-0 z-10"
                         onClick={() => setShowUserMenu(false)}
                       />
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                        <div className="px-4 py-2 border-b border-gray-200">
+                      <div className="absolute right-0 mt-2 w-52 bg-white/90 backdrop-blur-md rounded-xl shadow-xl ring-1 ring-gray-200/70 py-1 z-20">
+                        <div className="px-4 py-2 border-b border-gray-200/60">
                           <p className="text-sm font-medium text-gray-900">{user.name}</p>
                         </div>
                         <Link
@@ -152,6 +162,30 @@ export default function Navbar() {
             )}
           </div>
         </div>
+
+        {showMobileSearch && (
+          <div className="md:hidden pb-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const query = searchTerm.trim()
+                setShowMobileSearch(false)
+                navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+              }}
+            >
+              <div className="relative">
+                <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="搜索帖子标题、内容或作者..."
+                  className="input w-full pl-10 pr-4 h-11"
+                />
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </nav>
   )

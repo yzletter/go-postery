@@ -35,7 +35,7 @@ const mockChat: Record<number, ChatMessage[]> = {
 }
 
 export default function Messages() {
-  const { author } = useAuth()
+  const { user } = useAuth()
   const [activeId, setActiveId] = useState<number>(mockConversations[0]?.id ?? 0)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -122,8 +122,8 @@ export default function Messages() {
                 <p className="text-xs text-gray-500">示例会话</p>
               </div>
             </div>
-            {author && (
-              <div className="text-xs text-gray-500">我：{author.name}</div>
+            {user && (
+              <div className="text-xs text-gray-500">我：{user.name}</div>
             )}
           </div>
 
@@ -148,7 +148,7 @@ export default function Messages() {
                   </div>
                   {isMe && (
                     <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${author?.name || 'me'}`}
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'me'}`}
                       alt="me"
                       className="w-8 h-8 rounded-full ml-2"
                     />
