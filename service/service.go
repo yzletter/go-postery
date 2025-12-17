@@ -45,8 +45,11 @@ type CommentService interface {
 	CheckAuth(ctx context.Context, cid, uid int64) bool
 }
 
-type FollowService interface {
+type TagService interface {
+	Create(ctx context.Context, name string) (int64, error)
+	Bind(ctx context.Context, pid int64, tags []string) error
+	FindTagsByPostID(ctx context.Context, pid int64) ([]string, error)
 }
 
-type TagService interface {
+type FollowService interface {
 }

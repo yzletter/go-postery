@@ -1,55 +1,90 @@
 package service
 
 import (
+	"context"
+	"errors"
 	"log/slog"
 
+	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/utils"
 )
 
 type tagService struct {
-	TagRepo repository.TagRepository
+	tagRepo repository.TagRepository
+	idGen   IDGenerator
 }
 
 func NewTagService(tagRepo repository.TagRepository) TagService {
 	return &tagService{
-		TagRepo: tagRepo,
+		tagRepo: tagRepo,
 	}
 }
 
-func (svc *tagService) Create(name string) (int, error) {
+// Create 新建 Tag
+func (svc *tagService) Create(ctx context.Context, name string) (int64, error) {
 	// 获得唯一标识符
 	tagName := name
 	slug := utils.Slugify(name)
-	tid, err := svc.TagRepo.Create(tagName, slug)
-	if err != nil {
-		return 0, err
+
+	tag := &model.Tag{
+		ID:   svc.idGen.NextID(),
+		Name: tagName,
+		Slug: slug,
 	}
-	return tid, nil
+
+	err := svc.tagRepo.Create(ctx, tag)
+	if err != nil {
+		if !errors.Is(err, repository.ErrUniqueKey) {
+			return 0, errno.ErrServerInternal
+		}
+	}
+	return tag.ID, nil
 }
 
 // Bind 将 Tags 绑定到 post
-func (svc *tagService) Bind(pid int, tags []string) {
-	slog.Info("tags", "tags", tags)
-	for _, tag := range tags {
-		tid, err := svc.TagRepo.Exist(tag)
+func (svc *tagService) Bind(ctx context.Context, pid int64, tags []string) error {
+	for _, tagName := range tags {
+		// todo GetOrCreateByName 并发
+		tag, err := svc.tagRepo.GetByName(ctx, tagName) // 查 tid
 		if err != nil {
-			// tag 不存在需要创建
-			tid, err = svc.Create(tag)
+			newTag := &model.Tag{
+				ID:   svc.idGen.NextID(),
+				Name: tagName,
+				Slug: utils.Slugify(tagName),
+			}
+			err = svc.tagRepo.Create(ctx, newTag) // 没有 tag 就新建
 			if err != nil {
-				// 虽然有错误, 但尽可能的多绑定
-				slog.Error("Tag Not Exists And CreatedAt Failed", "error", err)
 				continue
 			}
+			tag = newTag
 		}
 
-		err = svc.TagRepo.Bind(pid, tid)
-		if err != nil {
-			slog.Error("Tag 绑定失败", "error", err)
+		// 绑定
+		postTag := &model.PostTag{
+			ID:     svc.idGen.NextID(),
+			PostID: pid,
+			TagID:  tag.ID,
+		}
+		if err = svc.tagRepo.Bind(ctx, postTag); err != nil {
+			slog.Error("Bind Post Tag Failed", "error", err)
+			if errors.Is(err, repository.ErrUniqueKey) {
+				return errno.ErrTagDuplicatedBind
+			}
+			return errno.ErrServerInternal
 		}
 	}
+
+	return nil
 }
-func (svc *tagService) FindTagsByPostID(pid int) []string {
-	res, _ := svc.TagRepo.FindTagsByPostID(pid)
-	return res
+
+// FindTagsByPostID 根据帖子 ID 查找 Tag
+func (svc *tagService) FindTagsByPostID(ctx context.Context, pid int64) ([]string, error) {
+	var empty []string
+	res, err := svc.tagRepo.FindTagsByPostID(ctx, pid)
+	if err != nil {
+		return empty, errno.ErrServerInternal
+	}
+	return res, nil
 }

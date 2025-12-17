@@ -19,7 +19,6 @@ var (
 	ErrInvalidCredential = &Error{40009, 409, "账号或密码错误"}
 	ErrUserNotLogin      = &Error{40003, 401, "用户未登录"}
 	ErrUnauthorized      = &Error{40003, 401, "没有权限"}
-	ErrConflict          = &Error{40009, 409, "资源冲突"}
 )
 var (
 	ErrLogoutFailed = &Error{40009, 409, "登出失败"}
@@ -33,4 +32,8 @@ var (
 
 var (
 	ErrCommentNotFound = &Error{40004, 404, "评论不存在"}
+)
+
+var (
+	ErrTagDuplicatedBind = &Error{40009, 409, "标签重复绑定"}
 )
