@@ -9,6 +9,7 @@ import (
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/service/ports"
 
 	"time"
 
@@ -20,14 +21,14 @@ import (
 
 type authService struct {
 	userRepo   repository.UserRepository
-	jwtManager JwtManager
-	passHasher PasswordHasher
-	idGen      IDGenerator
+	jwtManager ports.JwtManager
+	passHasher ports.PasswordHasher
+	idGen      ports.IDGenerator
 	client     redis.UniversalClient
 }
 
 // NewAuthService 构造函数
-func NewAuthService(userRepo repository.UserRepository, jwtManager JwtManager, passHasher PasswordHasher, idGen IDGenerator, client redis.UniversalClient) AuthService {
+func NewAuthService(userRepo repository.UserRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator, client redis.UniversalClient) AuthService {
 	return &authService{
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
@@ -99,7 +100,7 @@ func (svc *authService) Login(ctx context.Context, username, pass string) (userd
 	// 比较密码
 	err = svc.passHasher.Compare(user.PasswordHash, pass)
 	if err != nil {
-		if errors.Is(err, ErrInvalidPassword) { // 密码错误, 返回为账号或密码错误
+		if errors.Is(err, ports.ErrInvalidPassword) { // 密码错误, 返回为账号或密码错误
 			return empty, errno.ErrInvalidCredential
 		}
 		return empty, errno.ErrServerInternal
@@ -139,7 +140,7 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 	// AccessToken 的 Claims
 	ssid := uuid.New().String()
 	expir := time.Now().Add(conf.AccessTokenExpiration * time.Second)
-	accessClaims := JWTTokenClaims{
+	accessClaims := ports.JWTTokenClaims{
 		Uid:       id,
 		SSid:      ssid,
 		Role:      role,
@@ -176,7 +177,7 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 	return accessToken, refreshToken, nil
 }
 
-func (svc *authService) VerifyAccessToken(tokenString string) (*JWTTokenClaims, error) {
+func (svc *authService) VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error) {
 	claim, err := svc.jwtManager.VerifyToken(tokenString)
 	if err != nil {
 		return nil, errno.ErrUnauthorized

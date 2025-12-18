@@ -7,6 +7,7 @@ import (
 	"github.com/yzletter/go-postery/dto/post"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/service/ports"
 )
 
 // 定义 Service 层所有接口
@@ -16,7 +17,7 @@ type AuthService interface {
 	Login(ctx context.Context, username, pass string) (userdto.BriefDTO, error)
 	ClearTokens(ctx context.Context, accessToken, refreshToken string) error
 	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)
-	VerifyAccessToken(tokenString string) (*JWTTokenClaims, error)
+	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)
 }
 
 type UserService interface {

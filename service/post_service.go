@@ -9,6 +9,7 @@ import (
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/service/ports"
 	"github.com/yzletter/go-postery/utils"
 )
 
@@ -17,13 +18,13 @@ type postService struct {
 	userRepo repository.UserRepository
 	likeRepo repository.LikeRepository
 	tagRepo  repository.TagRepository
-	idGen    IDGenerator // 用于生成 ID
+	idGen    ports.IDGenerator // 用于生成 ID
 }
 
 func NewPostService(
 	postRepo repository.PostRepository, userRepo repository.UserRepository,
 	likeRepo repository.LikeRepository, tagRepo repository.TagRepository,
-	idGen IDGenerator) PostService {
+	idGen ports.IDGenerator) PostService {
 	return &postService{
 		postRepo: postRepo,
 		userRepo: userRepo,

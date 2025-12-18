@@ -9,6 +9,7 @@ import (
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/service/ports"
 )
 
 var (
@@ -19,10 +20,10 @@ var (
 type followService struct {
 	FollowRepo repository.FollowRepository
 	UserRepo   repository.UserRepository
-	idGen      IDGenerator
+	idGen      ports.IDGenerator
 }
 
-func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository, idGen IDGenerator) FollowService {
+func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository, idGen ports.IDGenerator) FollowService {
 	return &followService{
 		FollowRepo: followRepo,
 		UserRepo:   userRepo,

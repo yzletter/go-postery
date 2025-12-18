@@ -9,16 +9,17 @@ import (
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/service/ports"
 )
 
 type commentService struct {
 	CommentRepo repository.CommentRepository
 	UserRepo    repository.UserRepository
 	PostRepo    repository.PostRepository
-	idGen       IDGenerator
+	idGen       ports.IDGenerator
 }
 
-func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository, idGen IDGenerator) CommentService {
+func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository, idGen ports.IDGenerator) CommentService {
 	return &commentService{
 		CommentRepo: commentRepo,
 		UserRepo:    userRepo,

@@ -8,15 +8,16 @@ import (
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/service/ports"
 	"github.com/yzletter/go-postery/utils"
 )
 
 type tagService struct {
 	tagRepo repository.TagRepository
-	idGen   IDGenerator
+	idGen   ports.IDGenerator
 }
 
-func NewTagService(tagRepo repository.TagRepository, idGen IDGenerator) TagService {
+func NewTagService(tagRepo repository.TagRepository, idGen ports.IDGenerator) TagService {
 	return &tagService{
 		tagRepo: tagRepo,
 		idGen:   idGen,
