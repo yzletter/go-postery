@@ -79,14 +79,12 @@ func (dao *gormLikeDAO) Exists(ctx context.Context, uid, pid int64) (bool, error
 	userLike := model.Like{}
 	result := dao.db.WithContext(ctx).Where("user_id = ? AND post_id = ? AND deleted_at IS NULL", uid, pid).First(&userLike)
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// 业务层面错误
-			return false, ErrRecordNotFound
+		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// 系统层面错误
+			slog.Error(FindFailed, "user_id", uid, "post_id", pid, "error", result.Error)
+			return false, ErrServerInternal
 		}
-
-		// 系统层面错误
-		slog.Error(FindFailed, "user_id", uid, "post_id", pid, "error", result.Error)
-		return false, ErrServerInternal
+		return false, nil
 	}
 	return true, nil
 }

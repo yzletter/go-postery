@@ -298,7 +298,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 	}
 
 	// 获取帖子 id
-	pid, err := strconv.ParseInt(ctx.Param("pid"), 10, 64)
+	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return

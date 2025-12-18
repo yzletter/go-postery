@@ -85,7 +85,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:  []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:  []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
@@ -173,7 +173,6 @@ func main() {
 		authedPosts.GET("/:id/likes", PostHdl.IfLike)               // GET /api/v1/posts/:id/likes	查询是否点赞了帖子
 		authedPosts.POST("/:id/likes", PostHdl.Like)                // POST /api/v1/posts/:id/likes	点赞帖子
 		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)            // DELETE /api/v1/posts/:id/likes 取消点赞帖子
-
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {
