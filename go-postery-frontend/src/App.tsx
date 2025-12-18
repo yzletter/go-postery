@@ -14,6 +14,8 @@ import Messages from './pages/Messages'
 import Search from './pages/Search'
 import Lottery from './pages/Lottery'
 import { useAuth } from './contexts/AuthContext'
+import Admin from './pages/admin/Admin'
+import { isAdminUser } from './utils/admin'
 
 // 保护需要登录的路由
 function ProtectedRoute({ children }: { children: React.ReactElement }) {
@@ -30,6 +32,24 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
   return user ? children : <Navigate to="/login" replace />
 }
 
+function AdminRoute({ children }: { children: React.ReactElement }) {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  return isAdminUser(user) ? children : <Navigate to="/" replace />
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -41,6 +61,14 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/agent" element={<Agent />} />
       <Route path="/lottery" element={<Lottery />} />
+      <Route
+        path="/admin/*"
+        element={
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
+        }
+      />
       <Route
         path="/follows"
         element={

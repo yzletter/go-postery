@@ -91,6 +91,14 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 
 // Logout 登出 Handler
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		slog.Error("Get Uid From CTX Failed", "error", err)
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
 	// 从 Header 中获取 AccessToken, 从 Cookie 中获取 RefreshToken
 	accessToken := ctx.GetHeader(conf.AccessTokenInHeader)
 	refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)

@@ -1,26 +1,21 @@
 package utils
 
 import (
-	"context"
-	"errors"
-	"strconv"
+	"log/slog"
+
+	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/errno"
 )
 
-var (
-	ErrNotLogin = errors.New("请先登录")
-)
-
-func GetUidFromCTX(ctx context.Context, key string) (int64, error) {
-	idStr, ok := ctx.Value(key).(string)
+func GetUidFromCTX(ctx *gin.Context, key string) (int64, error) {
+	v, ok := ctx.Get(key)
 	if !ok {
-		return 0, ErrNotLogin
+		return 0, errno.ErrUserNotLogin
 	}
-
-	uid, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		// 没有登录
-		return 0, ErrNotLogin
+	uid, ok := v.(int64)
+	if !ok {
+		return 0, errno.ErrUserNotLogin
 	}
-
+	slog.Info("Get Uid From CTX Success", "uid", uid)
 	return uid, nil
 }

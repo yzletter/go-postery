@@ -62,6 +62,7 @@ func (svc *authService) Register(ctx context.Context, username, email, password 
 		Username:     username,
 		Email:        email,
 		PasswordHash: passwordHash,
+		Status:       1,
 	}
 
 	// 创建记录

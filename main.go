@@ -85,9 +85,9 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:  []string{"http://localhost:5173"}, // 允许域名跨域
-		AllowMethods:  []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods:  []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders: []string{"Content-Length", "x-jwt-token"},
 		// 判断来源的函数
@@ -116,17 +116,16 @@ func main() {
 	api := engine.Group("/api")
 	v1 := api.Group("/v1")
 
-	// /api/v1
 	// 身份认证模块
 	auth := v1.Group("/auth")
 	{
 		// todo AuthHandler
-		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register
-		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login
+		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register 	注册
+		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login 		登录
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
-		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout
+		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout	登出
 	}
 
 	// 用户模块

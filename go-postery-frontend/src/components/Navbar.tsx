@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send, Sparkles } from 'lucide-react'
+import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send, Sparkles, Shield } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { isAdminUser } from '../utils/admin'
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -10,6 +11,7 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const profileLink = user?.id ? `/users/${user.id}` : '/profile'
+  const showAdmin = isAdminUser(user)
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/70 backdrop-blur-md">
@@ -68,6 +70,15 @@ export default function Navbar() {
                 新
               </span>
             </Link>
+            {showAdmin && (
+              <Link
+                to="/admin"
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <Shield className="h-5 w-5" />
+                <span className="hidden sm:inline">后台</span>
+              </Link>
+            )}
             {user ? (
               <>
                 <Link

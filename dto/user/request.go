@@ -16,20 +16,21 @@ type JWTInfo struct {
 // RegisterRequest 定义前端提交注册表单信息的模型映射
 type RegisterRequest struct {
 	Email    string `json:"email"`
-	Name     string `json:"name" form:"name" binding:"required,gte=2"`          // 长度 >= 2
-	PassWord string `json:"password" form:"password" binding:"required,len=32"` // 长度 == 32
+	Name     string `json:"name" binding:"required,gte=2"`       // 长度 >= 2
+	PassWord string `json:"password"  binding:"required,len=32"` // 长度 == 32
 }
 
 // LoginRequest 定义前端提交登录表单信息的模型映射
 type LoginRequest struct {
-	Name     string `json:"name" form:"name" binding:"required,gte=2"`          // 长度 >= 2
-	PassWord string `json:"password" form:"password" binding:"required,len=32"` // 长度 == 32
+	//Email    string `json:"email" binding:"required,gte=2"`
+	Name     string `json:"name"  binding:"required,gte=2"`      // 长度 >= 2
+	PassWord string `json:"password"  binding:"required,len=32"` // 长度 == 32
 }
 
 // ModifyPassRequest 定义前端提交修改密码表单信息的模型映射
 type ModifyPassRequest struct {
-	OldPass string `json:"old_pass" form:"old_pass" binding:"required,len=32"` // 长度 == 32
-	NewPass string `json:"new_pass" form:"new_pass" binding:"required,len=32"` // 长度 == 32
+	OldPass string `json:"old_pass"  binding:"required,len=32"` // 长度 == 32
+	NewPass string `json:"new_pass" binding:"required,len=32"`  // 长度 == 32
 }
 
 type ModifyProfileRequest struct {

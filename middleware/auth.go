@@ -19,6 +19,9 @@ func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.Unive
 		accessToken := ctx.GetHeader(conf.AccessTokenInHeader)                   // 获取 AccessToken
 		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie) // 获取 RefreshToken
 
+		slog.Info("AccessToken", "AccessToken", accessToken)
+		slog.Info("RefreshToken", "RefreshToken", refreshToken)
+
 		// 尝试直接通过 AccessToken 认证
 		claim, err := authSvc.VerifyAccessToken(accessToken)
 		if err == nil && claim != nil {
