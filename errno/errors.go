@@ -9,37 +9,36 @@ type Error struct {
 func (e *Error) Error() string { return e.Msg }
 
 var (
-	ErrServerInternal = &Error{50001, 500, "系统繁忙，请稍后重试"}
-	ErrInvalidParam   = &Error{40001, 400, "参数错误"}
-)
-var (
-	ErrUserNotFound       = &Error{40004, 404, "用户不存在"}
-	ErrUserDuplicated     = &Error{40009, 409, "用户名或邮箱已存在"}
-	ErrPasswordWeak       = &Error{40009, 409, "密码强度过低"}
-	ErrInvalidCredential  = &Error{40009, 409, "账号或密码错误"}
-	ErrUserNotLogin       = &Error{40003, 401, "用户未登录"}
-	ErrUnauthorized       = &Error{40003, 401, "没有权限"}
-	ErrOldPasswordInvalid = &Error{40003, 401, "旧密码错误"}
-)
-var (
-	ErrLogoutFailed = &Error{40009, 409, "登出失败"}
+	ErrServerInternal = &Error{10001, 500, "系统繁忙，请稍后重试"}
+	ErrInvalidParam   = &Error{10002, 400, "参数错误"}
 )
 
 var (
-	ErrPostNotFound     = &Error{40004, 404, "帖子不存在"}
-	ErrDuplicatedLike   = &Error{40004, 404, "重复点赞帖子"}
-	ErrDuplicatedUnLike = &Error{40004, 404, "重复取消点赞帖子"}
+	ErrUserNotFound       = &Error{20001, 404, "用户不存在"}
+	ErrUserDuplicated     = &Error{20002, 409, "用户名或邮箱已存在"}
+	ErrPasswordWeak       = &Error{20003, 400, "密码强度过低"}
+	ErrInvalidCredential  = &Error{20004, 401, "账号或密码错误"}
+	ErrUserNotLogin       = &Error{20005, 401, "用户未登录"}
+	ErrUnauthorized       = &Error{20006, 403, "没有权限"}
+	ErrLogoutFailed       = &Error{20007, 500, "登出失败"}
+	ErrOldPasswordInvalid = &Error{20008, 401, "旧密码错误"}
 )
 
 var (
-	ErrCommentNotFound = &Error{40004, 404, "评论不存在"}
+	ErrPostNotFound     = &Error{30001, 404, "帖子不存在"}
+	ErrDuplicatedLike   = &Error{30002, 409, "已经点赞过该帖子"}
+	ErrDuplicatedUnLike = &Error{30003, 409, "尚未点赞，无法取消"}
 )
 
 var (
-	ErrTagDuplicatedBind = &Error{40009, 409, "标签重复绑定"}
+	ErrCommentNotFound = &Error{40001, 404, "评论不存在"}
 )
 
 var (
-	ErrDuplicatedFollow   = &Error{40009, 409, "重复关注"}
-	ErrDuplicatedUnFollow = &Error{40009, 409, "重复取消关注"}
+	ErrTagDuplicatedBind = &Error{50001, 409, "标签重复绑定"}
+)
+
+var (
+	ErrDuplicatedFollow   = &Error{60001, 409, "已经关注过该用户"}
+	ErrDuplicatedUnFollow = &Error{60002, 409, "尚未关注，无法取消"}
 )
