@@ -85,7 +85,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
 		AllowOrigins:  []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:  []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
@@ -147,7 +147,7 @@ func main() {
 		follow := users.Group("/:id/follow")
 		follow.Use(AuthRequiredMdl)
 		{
-			follow.PUT("", FollowHdl.Follow)      // 关注
+			follow.POST("", FollowHdl.Follow)     // 关注
 			follow.DELETE("", FollowHdl.UnFollow) // 取关
 			follow.GET("", FollowHdl.IfFollow)    // 是否关注
 		}

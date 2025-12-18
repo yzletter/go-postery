@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/conf"
@@ -139,15 +138,14 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 
 	// AccessToken 的 Claims
 	ssid := uuid.New().String()
+	expir := time.Now().Add(conf.AccessTokenExpiration * time.Second)
 	accessClaims := JWTTokenClaims{
 		Uid:       id,
 		SSid:      ssid,
 		Role:      role,
 		UserAgent: agent,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "go-postery",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AccessTokenExpiration * time.Second)),
-		},
+		Issuer:    "go-postery",
+		ExpiresAt: &expir,
 	}
 
 	// 生成 AccessToken

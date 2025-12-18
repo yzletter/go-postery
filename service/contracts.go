@@ -2,8 +2,7 @@ package service
 
 import (
 	"errors"
-
-	"github.com/golang-jwt/jwt/v5"
+	"time"
 )
 
 type PasswordHasher interface {
@@ -34,9 +33,18 @@ var (
 
 // JWTTokenClaims 定义用于生成 JWT Token 的 Claim
 type JWTTokenClaims struct {
+	// 用户字段
 	Uid       int64
 	SSid      string
 	Role      int
 	UserAgent string
-	jwt.RegisteredClaims
+
+	// JWT 字段
+	Issuer    string
+	Subject   string
+	Audience  []string
+	ExpiresAt *time.Time
+	NotBefore *time.Time
+	IssuedAt  *time.Time
+	ID        string
 }
