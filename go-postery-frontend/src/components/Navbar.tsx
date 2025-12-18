@@ -29,7 +29,7 @@ export default function Navbar() {
           </Link>
 
           <form
-            className="hidden md:block flex-1 max-w-xl lg:ml-10"
+            className="hidden md:block flex-1 max-w-xl lg:ml-20"
             onSubmit={(e) => {
               e.preventDefault()
               const query = searchTerm.trim()

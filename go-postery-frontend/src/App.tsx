@@ -15,6 +15,7 @@ import Search from './pages/Search'
 import Lottery from './pages/Lottery'
 import { useAuth } from './contexts/AuthContext'
 import Admin from './pages/admin/Admin'
+import AdminForbidden from './pages/admin/AdminForbidden'
 import { isAdminUser } from './utils/admin'
 
 // 保护需要登录的路由
@@ -47,7 +48,7 @@ function AdminRoute({ children }: { children: React.ReactElement }) {
     return <Navigate to="/login" replace />
   }
 
-  return isAdminUser(user) ? children : <Navigate to="/" replace />
+  return isAdminUser(user) ? children : <AdminForbidden />
 }
 
 function AppRoutes() {

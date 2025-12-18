@@ -71,9 +71,9 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 }
 
 func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
-	var modifyUserProfileRequest user.ModifyProfileRequest
+	var modifyProfileReq user.ModifyProfileRequest
 	// 将请求参数绑定到结构体
-	err := ctx.ShouldBindJSON(&modifyUserProfileRequest)
+	err := ctx.ShouldBindJSON(&modifyProfileReq)
 	if err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -88,7 +88,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.UserService.UpdateProfile(ctx, uid, modifyUserProfileRequest)
+	err = hdl.UserService.UpdateProfile(ctx, uid, modifyProfileReq)
 	if err != nil {
 		response.Error(ctx, err)
 		return

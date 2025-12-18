@@ -17,7 +17,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const normalizeUserFromResponse = (raw: any, fallbackName: string): User => {
   const responseUser = raw?.user ?? raw ?? {}
-  const resolvedId = normalizeId(responseUser.id ?? responseUser.Id ?? raw?.Id ?? raw?.id)
+  const resolvedId = normalizeId(
+    responseUser.id ??
+      responseUser.Id ??
+      responseUser.ID ??
+      raw?.Id ??
+      raw?.ID ??
+      raw?.id
+  )
   return {
     id: resolvedId || Date.now().toString(),
     name: responseUser.name ?? responseUser.Name ?? raw?.Name ?? fallbackName,

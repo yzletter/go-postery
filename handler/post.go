@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -248,11 +249,12 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	return
 }
 
-// ListByUid 获取目标用户发布的帖子
-func (hdl *PostHandler) ListByUid(ctx *gin.Context) {
+// ListByPageAndUid 按页获取目标用户发布的帖子
+func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 	// 从路由中获取 uid
-	uid, err := strconv.ParseInt(ctx.Param("uid"), 10, 64)
+	uid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
+		fmt.Println(uid)
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}

@@ -104,27 +104,27 @@ func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, n
 
 	// todo 并发安全
 	// 获取用户
-	user, err := svc.userRepo.GetByID(ctx, id)
+	oldPasswordHash, err := svc.userRepo.GetPasswordHash(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return errno.ErrUserNotFound
 		}
 		return errno.ErrServerInternal
 	}
-	if user == nil {
-		return errno.ErrUserNotFound
-	}
 
 	// 判断旧密码是否正确
-	err = svc.passHasher.Compare(user.PasswordHash, oldPass)
+	err = svc.passHasher.Compare(oldPasswordHash, oldPass)
 	if err != nil {
-		return err
+		if errors.Is(err, ports.ErrInvalidPassword) {
+			return errno.ErrOldPasswordInvalid
+		}
+		return errno.ErrServerInternal
 	}
 
 	// 对新密码进行加密
 	newPassHash, err := svc.passHasher.Hash(newPass)
 	if err != nil {
-		return err
+		return errno.ErrServerInternal
 	}
 
 	// 改新密码

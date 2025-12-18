@@ -131,16 +131,16 @@ func main() {
 	// 用户模块
 	users := v1.Group("/users")
 	{
-		users.GET("/:id", UserHdl.Profile)
-		users.GET("/:id/posts", PostHdl.ListByUid) // 替代 /posts/user/:uid
+		users.GET("/:id", UserHdl.Profile)                // GET /api/v1/users/:id									获取个人资料
+		users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
 
 		// 个人模块
 		me := users.Group("/me")
 		me.Use(AuthRequiredMdl)
-		me.POST("", UserHdl.ModifyProfile)
-		me.POST("/password", UserHdl.ModifyPass)
-		me.GET("/followers", FollowHdl.ListFollowers)
-		me.GET("/followees", FollowHdl.ListFollowees)
+		me.POST("", UserHdl.ModifyProfile)            // POST /api/v1/users/me									修改个人资料
+		me.POST("/password", UserHdl.ModifyPass)      // POST /api/v1/users/me/password 							修改密码
+		me.GET("/followers", FollowHdl.ListFollowers) // GET /api/v1/users/me/followers?pageNo=1&pageSize=10		按页获取用户粉丝
+		me.GET("/followees", FollowHdl.ListFollowees) // GET /api/v1/users/me/followees?pageNo=1&pageSize=10 	按页获取用户关注的人
 
 		// 关注模块
 		follow := users.Group("/:id/follow")

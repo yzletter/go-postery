@@ -29,8 +29,8 @@ type LoginRequest struct {
 
 // ModifyPassRequest 定义前端提交修改密码表单信息的模型映射
 type ModifyPassRequest struct {
-	OldPass string `json:"old_pass"  binding:"required,len=32"` // 长度 == 32
-	NewPass string `json:"new_pass" binding:"required,len=32"`  // 长度 == 32
+	OldPass string `json:"old_password"  binding:"required,len=32"` // 长度 == 32
+	NewPass string `json:"new_password" binding:"required,len=32"`  // 长度 == 32
 }
 
 type ModifyProfileRequest struct {
