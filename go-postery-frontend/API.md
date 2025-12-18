@@ -21,15 +21,17 @@
 
 ## 认证说明
 
-- AccessToken：响应头/请求头 `x-jwt-token`
+- AccessToken：请求头/响应头 `Authorization: Bearer <access_token>`
 - RefreshToken：Cookie `refresh-token`（HTTPOnly）
+- 自动续期：访问需要登录接口时，若 AccessToken 无效但 RefreshToken 有效，中间件会重新签发并在响应头写回 `Authorization: Bearer <access_token>`，同时更新 `refresh-token` Cookie。
+- 前端读取响应头：如需在浏览器跨域环境读取响应头里的 `Authorization`，服务端 CORS 需要配置 `ExposeHeaders: Authorization`。
 - 需要登录的接口：
-  - 请求时携带 `x-jwt-token: <access_token>`
+  - 请求时携带 `Authorization: Bearer <access_token>`
   - RefreshToken 由浏览器 Cookie 自动携带（如使用跨域 Cookie，请确保前后端允许携带凭证）
 
 ## 全局中间件行为（需要注意）
 
-- 鉴权失败（需要登录接口）：直接返回 HTTP `401`，响应体可能为空，并清空 `x-jwt-token` / 删除 `refresh-token` Cookie。
+- 鉴权失败（需要登录接口）：直接返回 HTTP `401`，响应体可能为空，并清空 `Authorization` / 删除 `refresh-token` Cookie。
 - 触发限流：直接返回 HTTP `429`，响应体为空。
 - 限流组件异常：直接返回 HTTP `500`，响应体为空。
 
@@ -97,7 +99,7 @@ Prometheus 拉取指标使用（返回文本格式，非 JSON）。
 
 注册用户；成功后：
 
-- 响应头写入 `x-jwt-token: <access_token>`
+- 响应头写入 `Authorization: Bearer <access_token>`
 - 下发 Cookie：`refresh-token=<refresh_token>`
 
 请求体：
@@ -132,7 +134,7 @@ Prometheus 拉取指标使用（返回文本格式，非 JSON）。
 
 ### POST `/api/v1/auth/login`
 
-登录；成功后同样会返回 `x-jwt-token` 并下发 `refresh-token` Cookie。
+登录；成功后同样会在响应头返回 `Authorization: Bearer <access_token>`，并下发 `refresh-token` Cookie。
 
 请求体：
 
@@ -167,7 +169,7 @@ Prometheus 拉取指标使用（返回文本格式，非 JSON）。
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 请求体：无
 
@@ -182,7 +184,7 @@ Prometheus 拉取指标使用（返回文本格式，非 JSON）。
 
 说明：
 
-- 服务端会清理 token，并将 `x-jwt-token` 置空、`refresh-token` Cookie 置为过期。
+- 服务端会清理 token，并将 `Authorization` 置空、`refresh-token` Cookie 置为过期。
 
 ## 用户模块
 
@@ -260,7 +262,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 请求体（字段均可选）：
 
@@ -295,7 +297,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 请求体：
 
@@ -327,7 +329,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 Query 参数：
 
@@ -356,7 +358,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 Query 参数：
 
@@ -389,7 +391,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应：
 
@@ -414,7 +416,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应：
 
@@ -439,7 +441,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应 `data`：关注关系（数字枚举）
 
@@ -539,7 +541,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 请求体：
 
@@ -581,7 +583,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 请求体：
 
@@ -617,7 +619,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应：
 
@@ -710,7 +712,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 请求体：
 
@@ -755,7 +757,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应：
 
@@ -783,7 +785,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应 `data`：`true/false`
 
@@ -805,7 +807,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应：
 
@@ -831,7 +833,7 @@ Query 参数：
 
 请求头：
 
-- `x-jwt-token: <access_token>`
+- `Authorization: Bearer <access_token>`
 
 响应：
 

@@ -18,25 +18,32 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('token')
 }
 
+function normalizeBearerToken(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  return trimmed.replace(/^Bearer\s+/i, '').trim()
+}
+
 function persistAuthToken(token: string | null) {
   if (!token) {
     localStorage.removeItem('token')
     return
   }
 
-  const trimmed = token.trim()
-  if (!trimmed) {
+  const normalized = normalizeBearerToken(token)
+  if (!normalized) {
     localStorage.removeItem('token')
     return
   }
 
-  localStorage.setItem('token', trimmed)
+  localStorage.setItem('token', normalized)
 }
 
 function buildHeaders(options: ApiRequestOptions, token: string | null, isJsonBody: boolean) {
+  const normalizedToken = token ? normalizeBearerToken(token) : ''
   const headers: HeadersInit = {
     ...(isJsonBody ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { 'x-jwt-token': token } : {}),
+    ...(normalizedToken ? { Authorization: `Bearer ${normalizedToken}` } : {}),
     ...options.headers,
   }
 
@@ -74,7 +81,9 @@ export async function apiRequest<T>(
     body: normalizedBody,
   })
 
-  const nextToken = response.headers.get('x-jwt-token')
+  const nextToken =
+    response.headers.get('Authorization') ??
+    response.headers.get('x-jwt-token')
   if (nextToken !== null) {
     persistAuthToken(nextToken)
   }
