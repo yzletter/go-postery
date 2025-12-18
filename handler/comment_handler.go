@@ -35,6 +35,13 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 		return
 	}
 
+	// 获取帖子 id
+	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
 	// 获取参数并校验
 	var createReq comment.CreateRequest
 	if err := ctx.ShouldBindJSON(&createReq); err != nil || createReq.ParentID < 0 {
@@ -44,7 +51,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	}
 
 	// 调用 service 层创建评论
-	commentDTO, err := hdl.CommentService.Create(ctx, createReq.PostID, uid, createReq.ParentID, createReq.ReplyID, createReq.Content)
+	commentDTO, err := hdl.CommentService.Create(ctx, pid, uid, createReq.ParentID, createReq.ReplyID, createReq.Content)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -61,7 +68,14 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	// 从路由中获取参数 cid 和 pid
+	// 获取帖子 id
+	_, err = strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 从路由中获取参数 cid
 	cid, err := strconv.ParseInt(ctx.Param("cid"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -74,14 +88,13 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 		response.Error(ctx, err)
 		return
 	}
-
 	// 返回数据
 	response.Success(ctx, "评论删除成功", nil)
 }
 
-func (hdl *CommentHandler) List(ctx *gin.Context) {
+func (hdl *CommentHandler) ListByPage(ctx *gin.Context) {
 	// 获取参数
-	pid, err := strconv.ParseInt(ctx.Param("pid"), 10, 64)
+	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
@@ -107,6 +120,33 @@ func (hdl *CommentHandler) List(ctx *gin.Context) {
 		"total":    total,
 		"hasMore":  hasMore,
 	})
+}
+
+func (hdl *CommentHandler) ListReplies(ctx *gin.Context) {
+	// 获取参数
+	// 从路由中获取 cid 参数
+	cid, err := strconv.ParseInt(ctx.Param("cid"), 10, 64)
+	if err != nil {
+		// 获取帖子详情请求的参数不合法
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 从路由中获取 pid 参数
+	_, err = strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		// 获取帖子详情请求的参数不合法
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	commentDTOs, err := hdl.CommentService.ListReplies(ctx, cid)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "获取评论回复列表成功", commentDTOs)
 }
 
 func (hdl *CommentHandler) CheckAuth(ctx *gin.Context) {

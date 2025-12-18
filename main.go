@@ -85,7 +85,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
 		AllowOrigins:  []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:  []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:  []string{"Origin", "Content-Type", "Authorization"},
@@ -155,20 +155,25 @@ func main() {
 	// 帖子模块
 	posts := v1.Group("/posts")
 	{
-		posts.GET("", PostHdl.List) // 支持 ?pageNo&pageSize&tagId&uid...
-		posts.GET("/:id", PostHdl.Detail)
-		posts.GET("/:id/comments", CommentHdl.List)
+		posts.GET("", PostHdl.List)                             // POST /api/v1/posts?pageNo=1&pageSize=10				按页获取帖子列表
+		posts.GET("/tags", PostHdl.ListByTagAndPage)            // POST /api/v1/posts/tags?pageNo=1&pageSize=10&tag=go 根据标签按页获取帖子列表
+		posts.GET("/:id", PostHdl.Detail)                       // GET /api/v1/posts/:id								获取帖子详情
+		posts.GET("/:id/comments", CommentHdl.ListByPage)       // GET /api/v1/posts/:id/comments?pageNo=1&pageSize=10	按页获取帖子评论
+		posts.GET("/:id/comments/:cid", CommentHdl.ListReplies) // GET /api/v1/posts/:pid/comments/:cid					按页获取帖子评论
 
+		//todo
 		authedPosts := posts.Group("")
 		authedPosts.Use(AuthRequiredMdl)
-		authedPosts.POST("", PostHdl.Create) // 替代 /me/posts/new
-		authedPosts.POST("/:id", PostHdl.Update)
-		authedPosts.DELETE("/:id", PostHdl.Delete)
+		authedPosts.POST("", PostHdl.Create)       // POST /api/v1/posts 		创建帖子
+		authedPosts.POST("/:id", PostHdl.Update)   // POST /api/v1/posts/:id 	更新帖子
+		authedPosts.DELETE("/:id", PostHdl.Delete) // DELETE /api/v1/posts/:id 	删除帖子
 
-		authedPosts.POST("/:id/comments", CommentHdl.Create)        // 替代 /me/comments/new
-		authedPosts.DELETE("/:id/comments/:cid", CommentHdl.Delete) // 或 DELETE /comments/:cid
-		authedPosts.POST("/:id/likes", PostHdl.Like)                // 幂等点赞
-		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)            // 幂等取消
+		authedPosts.POST("/:id/comments", CommentHdl.Create)        // POST /api/v1/posts/:id/comments 创建评论
+		authedPosts.DELETE("/:id/comments/:cid", CommentHdl.Delete) // DELETE /api/v1/posts/:id/comments/:cid 删除评论
+		authedPosts.GET("/:id/likes", PostHdl.IfLike)               // GET /api/v1/posts/:id/likes	查询是否点赞了帖子
+		authedPosts.POST("/:id/likes", PostHdl.Like)                // POST /api/v1/posts/:id/likes	点赞帖子
+		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)            // DELETE /api/v1/posts/:id/likes 取消点赞帖子
+
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

@@ -33,7 +33,7 @@ type CommentRepository interface {
 	GetByID(ctx context.Context, id int64) (*model.Comment, error)
 	Delete(ctx context.Context, id int64) (int, error)
 	GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
-	GetRepliesByParentIDs(ctx context.Context, ids []int64) ([]*model.Comment, error)
+	GetRepliesByParentID(ctx context.Context, id int64) ([]*model.Comment, error)
 }
 
 type LikeRepository interface {

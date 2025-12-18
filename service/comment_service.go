@@ -19,6 +19,29 @@ type commentService struct {
 	idGen       ports.IDGenerator
 }
 
+func (svc *commentService) ListReplies(ctx context.Context, id int64) ([]commentdto.DTO, error) {
+	var empty []commentdto.DTO
+	comments, err := svc.CommentRepo.GetRepliesByParentID(ctx, id)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrCommentNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	var commentDTOs []commentdto.DTO
+	for _, comment := range comments {
+		user, err := svc.UserRepo.GetByID(ctx, comment.UserID)
+		if err != nil {
+			user = &model.User{}
+		}
+		commentDTO := commentdto.ToDTO(comment, user)
+		commentDTOs = append(commentDTOs, commentDTO)
+	}
+
+	return commentDTOs, nil
+}
+
 func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository, idGen ports.IDGenerator) CommentService {
 	return &commentService{
 		CommentRepo: commentRepo,

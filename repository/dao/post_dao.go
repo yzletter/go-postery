@@ -228,7 +228,7 @@ func (dao *gormPostDAO) GetByPageAndTag(ctx context.Context, tid int64, pageNo, 
 	}
 
 	// 1. 操作数据库
-	base := dao.db.WithContext(ctx).Table("posts p").Select("p.*").
+	base := dao.db.WithContext(ctx).Table("posts p").
 		Joins("JOIN post_tag pt ON p.id = pt.post_id").Where("pt.tag_id = ? AND p.deleted_at IS NULL", tid)
 
 	// 2. 获取总数

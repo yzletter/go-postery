@@ -65,8 +65,8 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	return
 }
 
-// ListByTag 根据标签获取帖子列表
-func (hdl *PostHandler) ListByTag(ctx *gin.Context) {
+// ListByTagAndPage 根据标签获取帖子列表
+func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	// 从 /posts?pageNo=1&pageSize=2&tag= 路由中拿出 pageNo 和 pageSize
 	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
@@ -108,7 +108,7 @@ func (hdl *PostHandler) ListByTag(ctx *gin.Context) {
 // Detail 获取帖子详情
 func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	// 从路由中获取 pid 参数
-	pid, err := strconv.ParseInt(ctx.Param("pid"), 10, 64)
+	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		// 获取帖子详情请求的参数不合法
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -176,7 +176,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 再拿帖子 pid
-	pid, err := strconv.ParseInt(ctx.Param("pid"), 10, 64)
+	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
@@ -201,18 +201,25 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 		return
 	}
 
+	// 拿帖子 id
+	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
 	// 参数绑定
 	var updateRequest post.UpdateRequest
 	err = ctx.ShouldBindJSON(&updateRequest)
 
-	if err != nil || updateRequest.ID == 0 {
+	if err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 修改
-	err = hdl.PostService.Update(ctx, updateRequest.ID, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
+	err = hdl.PostService.Update(ctx, pid, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
 	if err != nil {
 		response.Error(ctx, err)
 		return

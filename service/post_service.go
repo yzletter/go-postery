@@ -295,8 +295,8 @@ func (svc *postService) ListByPageAndTag(ctx context.Context, name string, pageN
 	if err != nil {
 		return 0, empty, errno.ErrPostNotFound
 	}
-	// todo 避免性能问题，优化 SQL
 
+	// todo 避免性能问题，优化 SQL
 	// 获取帖子总数和当前页帖子列表
 	total, posts, err := svc.postRepo.GetByPageAndTag(ctx, tag.ID, pageNo, pageSize)
 	if err != nil {
