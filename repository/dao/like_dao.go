@@ -46,7 +46,7 @@ func (dao *gormLikeDAO) Create(ctx context.Context, like *model.Like) error {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 { // 记录没有被软删且已存在 -> 已经点赞
 			// 幂等
-			return nil
+			return ErrUniqueKey
 		}
 
 		// 系统层面错误
@@ -68,7 +68,7 @@ func (dao *gormLikeDAO) Delete(ctx context.Context, uid, pid int64) error {
 	}
 	if result.RowsAffected == 0 {
 		// 幂等
-		return nil
+		return ErrUniqueKey
 	}
 
 	return nil

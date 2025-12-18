@@ -47,6 +47,8 @@ func (repo *postRepository) UpdateCount(ctx context.Context, id int64, field mod
 		return toRepositoryErr(err)
 	}
 
+	post, _ := repo.dao.GetByID(ctx, id)
+
 	// Cache
 	ok, err := repo.cache.ChangeInteractiveCnt(ctx, id, field, delta)
 	if err != nil || !ok {
@@ -56,6 +58,11 @@ func (repo *postRepository) UpdateCount(ctx context.Context, id int64, field mod
 			col = "invalid"
 		}
 		slog.Error("Cache ChangeInteractiveCnt Failed", "id", id, "field", col, "delta", delta, "error", err)
+		if post != nil {
+			fields := []model.PostCntField{model.PostViewCount, model.PostCommentCount, model.PostLikeCount}
+			vals := []int{post.ViewCount, post.ViewCount, post.LikeCount}
+			repo.cache.SetKey(ctx, id, fields, vals)
+		}
 	}
 
 	return nil

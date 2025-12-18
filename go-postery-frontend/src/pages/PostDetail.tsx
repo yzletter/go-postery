@@ -216,7 +216,7 @@ export default function PostDetail() {
   }, [post])
 
   const fetchLikeStatus = useCallback(async () => {
-    if (!post?.id || !user?.id) {
+    if (!post?.id || !user) {
       setHasLiked(false)
       return
     }
@@ -232,7 +232,7 @@ export default function PostDetail() {
     } finally {
       setIsCheckingLike(false)
     }
-  }, [post, user?.id])
+  }, [post, user])
 
   useEffect(() => {
     void fetchLikeStatus()
@@ -265,6 +265,7 @@ export default function PostDetail() {
       } else {
         await apiDelete(`/posts/${encodeURIComponent(normalizedId)}/likes`)
       }
+      await fetchLikeStatus()
     } catch (error) {
       console.error('点赞操作失败:', error)
       setHasLiked(prevState.liked)

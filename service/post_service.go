@@ -53,6 +53,7 @@ func (svc *postService) Create(ctx context.Context, uid int64, title, content st
 		UserID:  uid,
 		Title:   title,
 		Content: content,
+		Status:  1,
 	}
 	err = svc.postRepo.Create(ctx, post)
 	if err != nil {
