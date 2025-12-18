@@ -39,7 +39,14 @@ export function normalizePost(raw: any): Post {
       id: normalizeId(authorRaw?.id ?? authorRaw?.Id),
       name: authorRaw?.name ?? authorRaw?.Name ?? '匿名用户',
     },
-    createdAt: raw?.createdAt ?? raw?.CreatedAt ?? new Date().toISOString(),
+    createdAt:
+      raw?.createdAt ??
+      raw?.CreatedAt ??
+      raw?.created_at ??
+      raw?.Created_at ??
+      raw?.create_time ??
+      raw?.CreateTime ??
+      new Date().toISOString(),
     views: toOptionalNumber(raw?.views ?? raw?.Views ?? raw?.view_count ?? raw?.ViewCount ?? raw?.viewCount),
     likes: toOptionalNumber(raw?.likes ?? raw?.Likes ?? raw?.like_count ?? raw?.LikeCount ?? raw?.likeCount),
     comments: toOptionalNumber(

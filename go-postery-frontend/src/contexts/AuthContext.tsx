@@ -1,13 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import type { User } from '../types'
 import { md5Hash } from '../utils/crypto'
-import { apiGet, apiPost, AUTH_API_BASE_URL } from '../utils/api'
+import { apiPost, AUTH_API_BASE_URL } from '../utils/api'
 import { normalizeId } from '../utils/id'
 
 interface AuthContextType {
   user: User | null
   login: (username: string, password: string) => Promise<boolean>
-  register: (name: string, password: string) => Promise<boolean>
+  register: (name: string, email: string, password: string) => Promise<boolean>
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const newUser = normalizeUserFromResponse(rawUser, fallbackName)
     setUser(newUser)
     localStorage.setItem('user', JSON.stringify(newUser))
-    localStorage.setItem('token', `cookie-auth-${Date.now()}`)
     return newUser
   }
 
@@ -64,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       const payloadPassword = password.length === 32 ? password : md5Hash(password)
-      const { data } = await apiPost('/login/submit', { name: username, password: payloadPassword }, {
+      const { data } = await apiPost('/auth/login', { name: username, password: payloadPassword }, {
         baseUrl: AUTH_API_BASE_URL,
         skipAuthToken: true,
       })
@@ -79,11 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const register = async (name: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     try {
       const payloadPassword = password.length === 32 ? password : md5Hash(password)
-      const { data } = await apiPost('/register/submit', { name, password: payloadPassword }, {
+      const { data } = await apiPost('/auth/register', { name, email, password: payloadPassword }, {
         baseUrl: AUTH_API_BASE_URL,
         skipAuthToken: true,
       })
@@ -104,9 +103,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const hashedOldPassword = md5Hash(oldPassword)
       const hashedNewPassword = md5Hash(newPassword)
       
-      await apiPost('/modify_pass/submit', { old_pass: hashedOldPassword, new_pass: hashedNewPassword }, {
-        baseUrl: AUTH_API_BASE_URL,
-      })
+      await apiPost(
+        '/users/me/password',
+        { old_password: hashedOldPassword, new_password: hashedNewPassword },
+        { baseUrl: AUTH_API_BASE_URL }
+      )
       return true
     } catch (error) {
       console.error('Change password error:', error)
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await apiGet('/logout', { baseUrl: AUTH_API_BASE_URL })
+      await apiPost('/auth/logout', null, { baseUrl: AUTH_API_BASE_URL })
     } catch (error) {
       console.warn('登出 API 调用失败，但已清除本地状态', error)
     } finally {

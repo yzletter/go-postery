@@ -4,7 +4,7 @@ import { ExternalLink, RefreshCw, Search, Trash2, UserRound } from 'lucide-react
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { Post, UserDetail } from '../../types'
-import { apiGet } from '../../utils/api'
+import { apiDelete, apiGet } from '../../utils/api'
 import { normalizeId } from '../../utils/id'
 import { normalizePost } from '../../utils/post'
 import { normalizeUserDetail } from '../../utils/user'
@@ -33,8 +33,12 @@ export default function AdminUsers() {
     setError(null)
     setPostsError(null)
 
-    const profileTask = apiGet<UserDetail>(`/profile/${encodeURIComponent(normalizedUserId)}`)
-    const postsTask = apiGet<any>(`/posts_uid/${encodeURIComponent(normalizedUserId)}`)
+    const profileTask = apiGet<UserDetail>(`/users/${encodeURIComponent(normalizedUserId)}`)
+    const postsTask = apiGet<{
+      posts: any[]
+      total?: number
+      hasMore?: boolean
+    }>(`/users/${encodeURIComponent(normalizedUserId)}/posts?pageNo=1&pageSize=50`)
 
     const [profileResult, postsResult] = await Promise.allSettled([profileTask, postsTask])
 
@@ -51,11 +55,7 @@ export default function AdminUsers() {
 
     if (postsResult.status === 'fulfilled') {
       const data = postsResult.value.data
-      const rawList = Array.isArray(data)
-        ? data
-        : Array.isArray((data as any)?.posts)
-          ? (data as any).posts
-          : []
+      const rawList = Array.isArray(data?.posts) ? data.posts : []
       const normalized = rawList.map((item: any) => {
         const post = normalizePost(item)
         return {
@@ -89,7 +89,7 @@ export default function AdminUsers() {
 
     setDeletingId(id)
     try {
-      await apiGet(`/posts/delete/${encodeURIComponent(id)}`)
+      await apiDelete(`/posts/${encodeURIComponent(id)}`)
       if (userId) {
         await loadUser(userId)
       }

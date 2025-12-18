@@ -4,7 +4,7 @@ import { RefreshCw, Search, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { Post } from '../../types'
-import { apiGet } from '../../utils/api'
+import { apiDelete } from '../../utils/api'
 import { normalizeId } from '../../utils/id'
 import { fetchPosts } from '../home/fetchPosts'
 
@@ -68,7 +68,7 @@ export default function AdminPosts() {
 
     setDeletingId(id)
     try {
-      await apiGet(`/posts/delete/${encodeURIComponent(id)}`)
+      await apiDelete(`/posts/${encodeURIComponent(id)}`)
       await load()
     } catch (err) {
       const message = err instanceof Error ? err.message : '删除失败'

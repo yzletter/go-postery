@@ -22,7 +22,7 @@ export const fetchPosts = async (
     const tag = categoryKey ? getRequestTag(categoryKey) : ''
     const path = useAllEndpoint
       ? `/posts?pageNo=${page}&pageSize=${pageSize}`
-      : `/posts_tag?pageNo=${page}&pageSize=${pageSize}&tag=${encodeURIComponent(tag)}`
+      : `/posts/tags?pageNo=${page}&pageSize=${pageSize}&tag=${encodeURIComponent(tag)}`
 
     const { data } = await apiGet<{
       posts: any[]
@@ -62,4 +62,3 @@ export const fetchPosts = async (
     clearTimeout(timeoutId)
   }
 }
-

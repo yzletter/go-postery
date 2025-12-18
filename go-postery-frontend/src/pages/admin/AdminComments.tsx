@@ -4,7 +4,7 @@ import { ExternalLink, RefreshCw, Search, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { Comment } from '../../types'
-import { apiGet } from '../../utils/api'
+import { apiDelete, apiGet } from '../../utils/api'
 import { normalizeComment } from '../../utils/comment'
 import { normalizeId } from '../../utils/id'
 import { groupComments } from '../postDetail/commentModel'
@@ -70,16 +70,38 @@ export default function AdminComments() {
     setError(null)
 
     try {
-      const { data } = await apiGet<Comment[] | { comments: Comment[] }>(
-        `/comment/list/${encodeURIComponent(normalizedPostId)}`
+      const { data } = await apiGet<{
+        comments: any[]
+        total?: number
+        hasMore?: boolean
+      }>(`/posts/${encodeURIComponent(normalizedPostId)}/comments?pageNo=1&pageSize=20`)
+
+      const parentRawList = Array.isArray(data?.comments) ? data.comments : []
+      const parents = parentRawList.map((item: any) => normalizeComment(item))
+
+      const replyResults = await Promise.allSettled(
+        parents.map(async (parent) => {
+          const parentId = normalizeId(parent.id)
+          if (!parentId) return [] as Comment[]
+          const { data: repliesData } = await apiGet<any[]>(
+            `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(parentId)}`
+          )
+          const rawReplies = Array.isArray(repliesData) ? repliesData : []
+          return rawReplies.map((reply: any) => normalizeComment(reply))
+        })
       )
-      const rawList = Array.isArray(data)
-        ? data
-        : Array.isArray((data as any)?.comments)
-          ? (data as any).comments
-          : []
-      const normalized = rawList.map((item: any) => normalizeComment(item))
-      setComments(normalized)
+      const replies = replyResults.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+      const merged = [...parents, ...replies]
+      const seen = new Set<string>()
+      const deduped = merged.filter((item) => {
+        const cid = normalizeId(item.id)
+        if (!cid) return false
+        if (seen.has(cid)) return false
+        seen.add(cid)
+        return true
+      })
+
+      setComments(deduped)
       setPostId(normalizedPostId)
     } catch (err) {
       const message = err instanceof Error ? err.message : '加载评论失败'
@@ -109,8 +131,8 @@ export default function AdminComments() {
 
     setDeletingId(normalizedCommentId)
     try {
-      await apiGet(
-        `/comment/delete/${encodeURIComponent(normalizedPostId)}/${encodeURIComponent(normalizedCommentId)}`
+      await apiDelete(
+        `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(normalizedCommentId)}`
       )
       await loadComments(normalizedPostId)
     } catch (err) {

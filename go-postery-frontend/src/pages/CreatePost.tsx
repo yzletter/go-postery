@@ -32,7 +32,7 @@ export default function CreatePost() {
     }
     
     try {
-      const { data } = await apiPost('/posts/new', { title, content, tags: validation.tags })
+      const { data } = await apiPost('/posts', { title, content, tags: validation.tags })
       const createdPost = normalizePost(data || {})
       if (createdPost.id) {
         console.log('帖子创建成功，帖子ID:', createdPost.id)

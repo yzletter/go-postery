@@ -8,7 +8,7 @@ import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
 import { normalizeId } from '../utils/id'
 import { useAuth } from '../contexts/AuthContext'
-import { apiGet, apiPost } from '../utils/api'
+import { apiDelete, apiGet, apiPost } from '../utils/api'
 import { buildCommentAuthorMap, groupComments } from './postDetail/commentModel'
 
 export default function PostDetail() {
@@ -37,13 +37,39 @@ export default function PostDetail() {
     setIsCommentsLoading(true)
     setCommentsError(null)
     try {
-      const { data } = await apiGet<Comment[] | { comments: Comment[] }>(`/comment/list/${id}`)
-      const normalizedList = Array.isArray(data)
-        ? data
-        : Array.isArray((data as any)?.comments)
-          ? (data as any).comments
-          : []
-      setComments(normalizedList.map((c: any) => normalizeComment(c)))
+      const postIdStr = normalizeId(id)
+      const { data } = await apiGet<{
+        comments: any[]
+        total?: number
+        hasMore?: boolean
+      }>(`/posts/${encodeURIComponent(postIdStr)}/comments?pageNo=1&pageSize=20`)
+
+      const parentRawList = Array.isArray(data?.comments) ? data.comments : []
+      const parents = parentRawList.map((c: any) => normalizeComment(c))
+
+      const replyResults = await Promise.allSettled(
+        parents.map(async (parent) => {
+          const parentId = normalizeId(parent.id)
+          if (!parentId) return [] as Comment[]
+          const { data: repliesData } = await apiGet<any[]>(
+            `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(parentId)}`
+          )
+          const rawReplies = Array.isArray(repliesData) ? repliesData : []
+          return rawReplies.map((reply: any) => normalizeComment(reply))
+        })
+      )
+
+      const replies = replyResults.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+      const merged = [...parents, ...replies]
+      const seen = new Set<string>()
+      const deduped = merged.filter((item) => {
+        const cid = normalizeId(item.id)
+        if (!cid) return false
+        if (seen.has(cid)) return false
+        seen.add(cid)
+        return true
+      })
+      setComments(deduped)
     } catch (error) {
       console.error('获取评论失败:', error)
       setComments([])
@@ -68,8 +94,7 @@ export default function PostDetail() {
       const replyIdToSend = replyTarget ? replyTargetId || '0' : '0'
       const postIdToSend = normalizeId(id)
 
-      const { data } = await apiPost('/comment/new', {
-        post_id: postIdToSend,
+      const { data } = await apiPost(`/posts/${encodeURIComponent(postIdToSend)}/comments`, {
         parent_id: parentIdToSend,
         reply_id: replyIdToSend,
         content: commentText.trim(),
@@ -124,16 +149,8 @@ export default function PostDetail() {
       return
     }
 
-    if (!isAuthor) {
-      const belongs = await checkCommentOwnership(commentIdStr)
-      if (!belongs) {
-        alert('只能删除自己的评论')
-        return
-      }
-    }
-
     try {
-      await apiGet(`/comment/delete/${postIdStr}/${commentIdStr}`)
+      await apiDelete(`/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(commentIdStr)}`)
       setComments(prev => prev.filter(c => normalizeId(c.id) !== commentIdStr))
       await fetchComments()
     } catch (error) {
@@ -141,28 +158,6 @@ export default function PostDetail() {
       alert('删除评论失败，请稍后重试')
     }
   }
-
-  const checkCommentOwnership = useCallback(async (commentId: string | number): Promise<boolean> => {
-    try {
-      const commentIdStr = normalizeId(commentId)
-      await apiGet(`/comment/belong?id=${commentIdStr}`)
-      return true
-    } catch (error) {
-      console.error('检查评论所有权失败:', error)
-      return false
-    }
-  }, [])
-
-  const checkPostOwnership = useCallback(async (postId: string): Promise<boolean> => {
-    try {
-      const postIdStr = normalizeId(postId)
-      await apiGet(`/posts/belong?id=${postIdStr}`)
-      return true
-    } catch (error) {
-      console.error('检查帖子所有权失败:', error)
-      return false
-    }
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -181,12 +176,6 @@ export default function PostDetail() {
         if (cancelled) return
 
         setPost(normalizePost(data))
-        
-        // 检查帖子所有权
-        const ownership = await checkPostOwnership(id)
-        if (!cancelled) {
-          setIsAuthor(ownership)
-        }
       } catch (error) {
         console.error('Failed to fetch post:', error)
         if (!cancelled) {
@@ -205,7 +194,13 @@ export default function PostDetail() {
     return () => {
       cancelled = true
     }
-  }, [id, checkPostOwnership])
+  }, [id])
+
+  useEffect(() => {
+    const postAuthorId = normalizeId(post?.author?.id)
+    const userId = normalizeId(user?.id)
+    setIsAuthor(Boolean(postAuthorId && userId && postAuthorId === userId))
+  }, [post?.author?.id, user?.id])
 
   // 加载评论列表
   useEffect(() => {
@@ -221,7 +216,7 @@ export default function PostDetail() {
   }, [post])
 
   const fetchLikeStatus = useCallback(async () => {
-    if (!post?.id) {
+    if (!post?.id || !user?.id) {
       setHasLiked(false)
       return
     }
@@ -229,18 +224,15 @@ export default function PostDetail() {
     const normalizedId = normalizeId(post.id)
     setIsCheckingLike(true)
     try {
-      const { data } = await apiGet(`/posts/iflike/${normalizedId}`)
-      const liked = typeof data === 'boolean'
-        ? data
-        : Boolean((data as any)?.liked ?? (data as any)?.isLiked ?? (data as any)?.data)
-      setHasLiked(liked)
+      const { data } = await apiGet<boolean>(`/posts/${encodeURIComponent(normalizedId)}/likes`)
+      setHasLiked(Boolean(data))
     } catch (error) {
       console.error('检查点赞状态失败:', error)
       setHasLiked(false)
     } finally {
       setIsCheckingLike(false)
     }
-  }, [post])
+  }, [post, user?.id])
 
   useEffect(() => {
     void fetchLikeStatus()
@@ -248,6 +240,11 @@ export default function PostDetail() {
 
   const handleLikePost = async () => {
     if (!post?.id || isLiking || isCheckingLike) {
+      return
+    }
+    if (!user) {
+      alert('请先登录后再点赞')
+      navigate('/login')
       return
     }
 
@@ -263,20 +260,11 @@ export default function PostDetail() {
     setPost(prev => (prev ? { ...prev, likes: optimisticCount } : prev))
 
     try {
-      const endpoint = willLike ? `/posts/like/${normalizedId}` : `/posts/dislike/${normalizedId}`
-      const { data } = await apiGet(endpoint)
-      const serverLikes =
-        (data as any)?.likes ??
-        (data as any)?.Likes ??
-        (data as any)?.likeCount ??
-        (data as any)?.like_count ??
-        (data as any)?.LikeCount
-      const parsedServerLikes = typeof serverLikes === 'number' ? serverLikes : Number(serverLikes)
-      const finalCount = Number.isFinite(parsedServerLikes) ? parsedServerLikes : optimisticCount
-
-      setLikeCount(finalCount)
-    setPost(prev => (prev ? { ...prev, likes: finalCount } : prev))
-
+      if (willLike) {
+        await apiPost(`/posts/${encodeURIComponent(normalizedId)}/likes`, null)
+      } else {
+        await apiDelete(`/posts/${encodeURIComponent(normalizedId)}/likes`)
+      }
     } catch (error) {
       console.error('点赞操作失败:', error)
       setHasLiked(prevState.liked)
@@ -296,8 +284,8 @@ export default function PostDetail() {
     }
     
     try {
-      const { msg } = await apiGet(`/posts/delete/${id}`)
-      alert(msg || '帖子删除成功')
+      await apiDelete(`/posts/${encodeURIComponent(id)}`)
+      alert('帖子删除成功')
       navigate('/')
     } catch (error) {
       // 处理错误情况

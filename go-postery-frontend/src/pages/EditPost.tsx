@@ -71,7 +71,7 @@ export default function EditPost() {
     }
 
     try {
-      await apiPost('/posts/update', { id, title, content, tags: validation.tags })
+      await apiPost(`/posts/${encodeURIComponent(id)}`, { title, content, tags: validation.tags })
 
       alert('帖子修改成功')
       navigate(`/post/${id}`)

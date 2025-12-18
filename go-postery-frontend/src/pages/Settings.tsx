@@ -45,7 +45,6 @@ export default function Settings() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const profilePath = user?.id ? `/users/${user.id}` : '/profile'
-  const profileUpdatePath = '/modify_profile/submit'
 
   const normalizeBirthdayInput = useCallback((value?: string) => {
     if (!value) return ''
@@ -61,7 +60,7 @@ export default function Settings() {
     setIsProfileLoading(true)
     setProfileError('')
     try {
-      const { data } = await apiGet<UserDetail>(`/profile/${user.id}`)
+      const { data } = await apiGet<UserDetail>(`/users/${user.id}`)
       const detail = data ? normalizeUserDetail(data) : null
 
       if (detail) {
@@ -121,7 +120,7 @@ export default function Settings() {
     setIsSavingProfile(true)
 
     try {
-      await apiPost(profileUpdatePath, payload as Record<string, unknown>)
+      await apiPost('/users/me', payload as Record<string, unknown>)
       setProfileSuccess('个人资料已更新')
       await fetchProfile()
     } catch (err) {

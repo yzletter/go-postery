@@ -9,6 +9,7 @@ export default function Login() {
   const { login, register } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -38,6 +39,11 @@ export default function Login() {
           setIsLoading(false)
           return
         }
+        if (!email.trim()) {
+          setError('请输入邮箱')
+          setIsLoading(false)
+          return
+        }
         if (password.length < 6) {
           setError('密码长度至少为 6 位')
           setIsLoading(false)
@@ -50,7 +56,7 @@ export default function Login() {
         }
         // 对密码进行MD5哈希，生成32位哈希值
         const hashedPassword = md5Hash(password)
-        success = await register(username, hashedPassword)
+        success = await register(username, email.trim(), hashedPassword)
       }
 
       if (success) {
@@ -93,6 +99,7 @@ export default function Login() {
               onClick={() => {
                 setIsLogin(true)
                 setError('')
+                setEmail('')
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 isLogin
@@ -165,6 +172,29 @@ export default function Login() {
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="输入用户名"
                     required
+                    className="input pl-10"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 注册时显示邮箱输入框 */}
+            {!isLogin && (
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  邮箱
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="输入邮箱"
+                    required={!isLogin}
                     className="input pl-10"
                   />
                 </div>

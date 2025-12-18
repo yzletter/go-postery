@@ -1,7 +1,12 @@
 import type { ApiResponse } from '../types'
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8765'
-export const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_URL || API_BASE_URL
+const ensureApiPrefix = (rawBaseUrl: string) => {
+  const base = rawBaseUrl.replace(/\/+$/, '')
+  return base.endsWith('/api/v1') ? base : `${base}/api/v1`
+}
+
+export const API_BASE_URL = ensureApiPrefix(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8765')
+export const AUTH_API_BASE_URL = ensureApiPrefix(import.meta.env.VITE_AUTH_API_URL || API_BASE_URL)
 
 export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null
@@ -13,10 +18,25 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('token')
 }
 
+function persistAuthToken(token: string | null) {
+  if (!token) {
+    localStorage.removeItem('token')
+    return
+  }
+
+  const trimmed = token.trim()
+  if (!trimmed) {
+    localStorage.removeItem('token')
+    return
+  }
+
+  localStorage.setItem('token', trimmed)
+}
+
 function buildHeaders(options: ApiRequestOptions, token: string | null, isJsonBody: boolean) {
   const headers: HeadersInit = {
     ...(isJsonBody ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token ? { 'x-jwt-token': token } : {}),
     ...options.headers,
   }
 
@@ -54,6 +74,14 @@ export async function apiRequest<T>(
     body: normalizedBody,
   })
 
+  const nextToken = response.headers.get('x-jwt-token')
+  if (nextToken !== null) {
+    persistAuthToken(nextToken)
+  }
+  if (response.status === 401) {
+    persistAuthToken(null)
+  }
+
   let payload: ApiResponse<T> | null = null
   try {
     payload = await response.json()
@@ -80,4 +108,8 @@ export function apiPost<T>(
   options: ApiRequestOptions = {}
 ) {
   return apiRequest<T>(path, { ...options, method: 'POST', body })
+}
+
+export function apiDelete<T>(path: string, options: ApiRequestOptions = {}) {
+  return apiRequest<T>(path, { ...options, method: 'DELETE' })
 }

@@ -165,7 +165,7 @@ export default function Profile() {
       setError(null)
 
       try {
-        const { data } = await apiGet<UserDetail>(`/profile/${resolvedUserId}`)
+        const { data } = await apiGet<UserDetail>(`/users/${resolvedUserId}`)
         if (!isMounted) return
         setProfileInfo(data ? normalizeUserDetail(data) : null)
       } catch (err) {
@@ -204,14 +204,14 @@ export default function Profile() {
       setRecentError(null)
 
       try {
-        const { data } = await apiGet<any>(`/posts_uid/${resolvedUserId}`, { signal: controller.signal })
+        const { data } = await apiGet<{
+          posts: any[]
+          total?: number
+          hasMore?: boolean
+        }>(`/users/${resolvedUserId}/posts?pageNo=1&pageSize=20`, { signal: controller.signal })
         if (!isMounted) return
 
-        const rawList = Array.isArray(data)
-          ? data
-          : Array.isArray((data as any)?.posts)
-            ? (data as any).posts
-            : []
+        const rawList = Array.isArray(data?.posts) ? data.posts : []
 
         const normalized = rawList.map((item: any) => {
           const post = normalizePost(item)
