@@ -146,9 +146,9 @@ func main() {
 		follow := users.Group("/:id/follow")
 		follow.Use(AuthRequiredMdl)
 		{
-			follow.POST("", FollowHdl.Follow)     // 关注
-			follow.DELETE("", FollowHdl.UnFollow) // 取关
-			follow.GET("", FollowHdl.IfFollow)    // 是否关注
+			follow.POST("", FollowHdl.Follow)     // POST /api/v1/users/:id/follow 		关注
+			follow.DELETE("", FollowHdl.UnFollow) // DELETE /api/v1/users/:id/follow 	取关
+			follow.GET("", FollowHdl.IfFollow)    // GET /api/v1/users/:id/follow 		是否关注
 		}
 	}
 
