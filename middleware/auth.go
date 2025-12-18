@@ -16,7 +16,7 @@ import (
 // AuthRequiredMiddleware 强制登录
 func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.UniversalClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		accessToken := ctx.GetHeader(conf.AccessTokenInHeader)                   // 获取 AccessToken
+		accessToken := handler.ExtractToken(ctx)                                 // 获取 AccessToken
 		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie) // 获取 RefreshToken
 
 		slog.Info("AccessToken", "AccessToken", accessToken)
@@ -94,13 +94,13 @@ func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.Unive
 
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	ctx.Header(conf.AccessTokenInHeader, accessToken)
+	ctx.Header("Authorization", "Bearer "+accessToken)
 	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 }
 
 func unauthorized(ctx *gin.Context) {
 	// 清除 token
-	ctx.Header(conf.AccessTokenInHeader, "")
+	ctx.Header("Authorization", "")
 	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
 	// 退出
 	ctx.AbortWithStatus(http.StatusUnauthorized)

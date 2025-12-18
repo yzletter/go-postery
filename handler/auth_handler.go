@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
@@ -47,7 +48,7 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 	}
 
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	ctx.Header(conf.AccessTokenInHeader, accessToken)
+	ctx.Header("Authorization", "Bearer "+accessToken)
 	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 
 	// 返回成功响应
@@ -81,7 +82,7 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	ctx.Header(conf.AccessTokenInHeader, accessToken)
+	ctx.Header("Authorization", "Bearer "+accessToken)
 	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 
 	// 返回成功响应
@@ -100,7 +101,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	}
 
 	// 从 Header 中获取 AccessToken, 从 Cookie 中获取 RefreshToken
-	accessToken := ctx.GetHeader(conf.AccessTokenInHeader)
+	accessToken := ExtractToken(ctx)
 	refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)
 
 	// 服务端清理双 Token
@@ -110,8 +111,18 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	}
 
 	// 将双 Token 置空
-	ctx.Header(conf.AccessTokenInHeader, "")
+	ctx.Header("Authorization", "")
 	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
 
 	response.Success(ctx, "登出成功", nil)
+}
+
+// ExtractToken 从上下文取出 tokenString
+func ExtractToken(ctx *gin.Context) string {
+	headerString := ctx.GetHeader("Authorization")
+	headerStringSeg := strings.SplitN(headerString, " ", 2)
+	if len(headerStringSeg) != 2 {
+		return ""
+	}
+	return headerStringSeg[1]
 }
