@@ -1,4 +1,7 @@
 # go-postery
+<div align="center">
+  <img src="imgs/logo.png" width="200"  alt=""/>
+</div>
 
 ## 简介
 

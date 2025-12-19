@@ -19,14 +19,14 @@ type commentService struct {
 	idGen       ports.IDGenerator
 }
 
-func (svc *commentService) ListReplies(ctx context.Context, id int64) ([]commentdto.DTO, error) {
+func (svc *commentService) ListReplies(ctx context.Context, id int64, pageNo, pageSize int) (int, []commentdto.DTO, error) {
 	var empty []commentdto.DTO
-	comments, err := svc.CommentRepo.GetRepliesByParentID(ctx, id)
+	total, comments, err := svc.CommentRepo.GetRepliesByParentID(ctx, id, pageNo, pageSize)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrCommentNotFound
+			return 0, empty, errno.ErrCommentNotFound
 		}
-		return empty, errno.ErrServerInternal
+		return 0, empty, errno.ErrServerInternal
 	}
 
 	var commentDTOs []commentdto.DTO
@@ -39,7 +39,7 @@ func (svc *commentService) ListReplies(ctx context.Context, id int64) ([]comment
 		commentDTOs = append(commentDTOs, commentDTO)
 	}
 
-	return commentDTOs, nil
+	return int(total), commentDTOs, nil
 }
 
 func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository, idGen ports.IDGenerator) CommentService {

@@ -140,13 +140,26 @@ func (hdl *CommentHandler) ListReplies(ctx *gin.Context) {
 		return
 	}
 
-	commentDTOs, err := hdl.CommentService.ListReplies(ctx, cid)
+	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
+	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "3"))
+	if err1 != nil || err2 != nil || pageNo < 1 || pageSize > 100 {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	total, commentDTOs, err := hdl.CommentService.ListReplies(ctx, cid, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.Success(ctx, "获取评论回复列表成功", commentDTOs)
+	hasMore := pageNo*pageSize < total
+
+	response.Success(ctx, "获取评论回复列表成功", gin.H{
+		"comments": commentDTOs,
+		"total":    total,
+		"hasMore":  hasMore,
+	})
 }
 
 func (hdl *CommentHandler) CheckAuth(ctx *gin.Context) {

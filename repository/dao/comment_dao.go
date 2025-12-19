@@ -105,14 +105,28 @@ func (dao *gormCommentDAO) GetByPostID(ctx context.Context, id int64, pageNo, pa
 }
 
 // GetRepliesByParentIDs 根据多个 Comment 的 ID 查找 Comment 的子评论
-func (dao *gormCommentDAO) GetRepliesByParentID(ctx context.Context, id int64) ([]*model.Comment, error) {
+func (dao *gormCommentDAO) GetRepliesByParentID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error) {
 	var comments []*model.Comment
-	result := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("parent_id = ? AND deleted_at IS NULL", id).Order("parent_id ASC, created_at ASC").Find(&comments)
+
+	base := dao.db.WithContext(ctx).Model(&model.Comment{}).Where("parent_id = ? AND deleted_at is NULL", id)
+
+	var total int64
+	result := base.Count(&total)
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "parent_ids", id, "error", result.Error)
-		return nil, ErrServerInternal
+		return total, nil, ErrServerInternal
+	} else if total == 0 {
+		return 0, comments, nil
 	}
 
-	return comments, nil
+	offset := (pageNo - 1) * pageSize
+	result = base.Order("parent_id ASC, created_at ASC").Offset(offset).Limit(pageSize).Find(&comments)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(FindFailed, "parent_ids", id, "error", result.Error)
+		return 0, nil, ErrServerInternal
+	}
+
+	return total, comments, nil
 }

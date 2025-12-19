@@ -9,7 +9,7 @@ grant all on go_postery.* to go_postery_tester;
 use go_postery;
 
 # 建表
-# 创建 author 表
+# 创建 user 表
 CREATE TABLE IF NOT EXISTS users
 (
     id            BIGINT                                  NOT NULL COMMENT '用户 ID (雪花算法)',
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS users
   DEFAULT CHARSET = utf8mb4 COMMENT '用户表';
 
 
-# 创建 postDetailDTO 表
+# 创建 post 表
 CREATE TABLE IF NOT EXISTS posts
 (
     id            BIGINT       NOT NULL COMMENT '帖子 ID',
@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS follows
     CHECK (follower_id <> followee_id) # 避免自己关注自己
 ) DEFAULT CHARSET = utf8mb4 COMMENT '关注信息表';
 
+# Comment 表
 CREATE TABLE IF NOT EXISTS comments
 (
     id         BIGINT   NOT NULL COMMENT '评论 id',
@@ -102,7 +103,7 @@ CREATE TABLE IF NOT EXISTS comments
     KEY idx_post_reply_created (post_id, reply_id, created_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '评论信息表';
 
-
+# Like 表
 CREATE TABLE IF NOT EXISTS likes
 (
     id         BIGINT COMMENT '记录 ID',
@@ -120,7 +121,7 @@ CREATE TABLE IF NOT EXISTS likes
     KEY idx_post_deleted (post_id, deleted_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '用户点赞表';
 
-
+# Tag 表
 CREATE TABLE IF NOT EXISTS tags
 (
     id         BIGINT      NOT NULL COMMENT '标签 id',
@@ -136,6 +137,7 @@ CREATE TABLE IF NOT EXISTS tags
     UNIQUE KEY uq_name (slug)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '标签信息表';
 
+# Post_Tag 表
 CREATE TABLE IF NOT EXISTS post_tag
 (
     id      BIGINT NOT NULL COMMENT '记录 id',

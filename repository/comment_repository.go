@@ -53,11 +53,11 @@ func (repo *commentRepository) GetByPostID(ctx context.Context, id int64, pageNo
 	return total, comments, nil
 }
 
-func (repo *commentRepository) GetRepliesByParentID(ctx context.Context, id int64) ([]*model.Comment, error) {
-	comments, err := repo.dao.GetRepliesByParentID(ctx, id)
+func (repo *commentRepository) GetRepliesByParentID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error) {
+	total, comments, err := repo.dao.GetRepliesByParentID(ctx, id, pageNo, pageSize)
 	if err != nil {
-		return nil, toRepositoryErr(err)
+		return 0, nil, toRepositoryErr(err)
 	}
 
-	return comments, nil
+	return total, comments, nil
 }
