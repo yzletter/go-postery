@@ -83,10 +83,14 @@ export default function AdminComments() {
         parents.map(async (parent) => {
           const parentId = normalizeId(parent.id)
           if (!parentId) return [] as Comment[]
-          const { data: repliesData } = await apiGet<any[]>(
-            `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(parentId)}`
+          const { data: repliesData } = await apiGet<{
+            comments: any[]
+            total?: number
+            hasMore?: boolean
+          }>(
+            `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(parentId)}?pageNo=1&pageSize=20`
           )
-          const rawReplies = Array.isArray(repliesData) ? repliesData : []
+          const rawReplies = Array.isArray(repliesData?.comments) ? repliesData.comments : []
           return rawReplies.map((reply: any) => normalizeComment(reply))
         })
       )

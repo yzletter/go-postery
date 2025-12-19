@@ -75,7 +75,7 @@
 | 帖子 | GET | `/api/v1/posts/tags` | 否 | 按标签分页获取帖子 |
 | 帖子 | GET | `/api/v1/posts/:id` | 否 | 获取帖子详情（会 +1 浏览量） |
 | 评论 | GET | `/api/v1/posts/:id/comments` | 否 | 按页获取评论列表 |
-| 评论 | GET | `/api/v1/posts/:id/comments/:cid` | 否 | 获取某评论的回复列表 |
+| 评论 | GET | `/api/v1/posts/:id/comments/:cid` | 否 | 按页获取某评论的回复列表 |
 | 帖子 | POST | `/api/v1/posts` | 是 | 创建帖子 |
 | 帖子 | POST | `/api/v1/posts/:id` | 是 | 更新帖子 |
 | 帖子 | DELETE | `/api/v1/posts/:id` | 是 | 删除帖子 |
@@ -675,30 +675,43 @@ Query 参数：
 
 ### GET `/api/v1/posts/:id/comments/:cid`
 
-获取某条评论的回复列表。
+按页获取某条评论的回复列表。
 
 路径参数：
 
 - `id`：帖子 ID
 - `cid`：评论 ID
 
-响应 `data`：回复数组（结构同 Comment DTO）
+Query 参数：
+
+- `pageNo`：页码（默认 `1`，`>= 1`）
+- `pageSize`：每页大小（默认 `10`，`<= 100`）
+
+响应 `data`：
+
+- `comments`：回复列表（结构同 Comment DTO）
+- `total`：回复总数
+- `hasMore`：是否还有更多回复
 
 ```json
 {
   "code": 0,
   "msg": "获取评论回复列表成功",
-  "data": [
-    {
-      "id": "1999760900969463808",
-      "post_id": "1999760900969463808",
-      "parent_id": "1999760900969463808",
-      "reply_id": "0",
-      "content": "回复内容",
-      "created_at": "2024-01-01T00:00:00Z",
-      "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
-    }
-  ]
+  "data": {
+    "comments": [
+      {
+        "id": "1999760900969463808",
+        "post_id": "1999760900969463808",
+        "parent_id": "1999760900969463808",
+        "reply_id": "0",
+        "content": "回复内容",
+        "created_at": "2024-01-01T00:00:00Z",
+        "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
 }
 ```
 

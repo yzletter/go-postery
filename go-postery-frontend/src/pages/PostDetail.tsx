@@ -2,14 +2,36 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Edit, Trash2, Heart } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { useState, useEffect, FormEvent, useMemo, useCallback } from 'react'
+import { useState, useEffect, FormEvent, useMemo, useCallback, useRef } from 'react'
 import type { Post, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
 import { normalizeId } from '../utils/id'
 import { useAuth } from '../contexts/AuthContext'
 import { apiDelete, apiGet, apiPost } from '../utils/api'
-import { buildCommentAuthorMap, groupComments } from './postDetail/commentModel'
+import { buildCommentAuthorMap } from './postDetail/commentModel'
+
+type ReplyPaginationState = {
+  isExpanded: boolean
+  isLoading: boolean
+  error: string | null
+  pageNo: number
+  hasMore: boolean
+  total?: number
+  replies: Comment[]
+}
+
+const COMMENTS_PAGE_SIZE = 10
+const REPLIES_PAGE_SIZE = 3
+
+const createReplyPaginationState = (): ReplyPaginationState => ({
+  isExpanded: false,
+  isLoading: false,
+  error: null,
+  pageNo: 0,
+  hasMore: true,
+  replies: [],
+})
 
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>() // 获取帖子ID
@@ -25,12 +47,28 @@ export default function PostDetail() {
   const [isCheckingLike, setIsCheckingLike] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<Comment[]>([])
+  const [commentTotal, setCommentTotal] = useState<number | null>(null)
   const [commentsError, setCommentsError] = useState<string | null>(null)
   const [isCommentsLoading, setIsCommentsLoading] = useState(true)
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null)
+  const [replyPaginationByParentId, setReplyPaginationByParentId] = useState<Record<string, ReplyPaginationState>>({})
+  const pendingReplyRequests = useRef<Set<string>>(new Set())
+  const latestPostIdRef = useRef<string>('')
 
-  const commentGroups = useMemo(() => groupComments(comments), [comments])
-  const commentAuthorById = useMemo(() => buildCommentAuthorMap(comments), [comments])
+  const loadedReplies = useMemo(
+    () => Object.values(replyPaginationByParentId).flatMap((state) => state.replies),
+    [replyPaginationByParentId]
+  )
+  const commentAuthorById = useMemo(
+    () => buildCommentAuthorMap([...comments, ...loadedReplies]),
+    [comments, loadedReplies]
+  )
+
+  useEffect(() => {
+    latestPostIdRef.current = normalizeId(id)
+    setReplyPaginationByParentId({})
+    pendingReplyRequests.current.clear()
+  }, [id])
 
   const fetchComments = useCallback(async () => {
     if (!id) return
@@ -42,42 +80,152 @@ export default function PostDetail() {
         comments: any[]
         total?: number
         hasMore?: boolean
-      }>(`/posts/${encodeURIComponent(postIdStr)}/comments?pageNo=1&pageSize=20`)
+      }>(`/posts/${encodeURIComponent(postIdStr)}/comments?pageNo=1&pageSize=${COMMENTS_PAGE_SIZE}`)
 
       const parentRawList = Array.isArray(data?.comments) ? data.comments : []
       const parents = parentRawList.map((c: any) => normalizeComment(c))
+      setComments(parents)
+      setCommentTotal(typeof data?.total === 'number' ? data.total : null)
 
-      const replyResults = await Promise.allSettled(
-        parents.map(async (parent) => {
-          const parentId = normalizeId(parent.id)
-          if (!parentId) return [] as Comment[]
-          const { data: repliesData } = await apiGet<any[]>(
-            `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(parentId)}`
-          )
-          const rawReplies = Array.isArray(repliesData) ? repliesData : []
-          return rawReplies.map((reply: any) => normalizeComment(reply))
+      setReplyPaginationByParentId((prev) => {
+        const parentIdSet = new Set(parents.map((comment) => normalizeId(comment.id)))
+        const next: Record<string, ReplyPaginationState> = {}
+        Object.entries(prev).forEach(([parentId, state]) => {
+          if (parentIdSet.has(parentId)) {
+            next[parentId] = state
+          }
         })
-      )
-
-      const replies = replyResults.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
-      const merged = [...parents, ...replies]
-      const seen = new Set<string>()
-      const deduped = merged.filter((item) => {
-        const cid = normalizeId(item.id)
-        if (!cid) return false
-        if (seen.has(cid)) return false
-        seen.add(cid)
-        return true
+        return next
       })
-      setComments(deduped)
     } catch (error) {
       console.error('获取评论失败:', error)
       setComments([])
+      setCommentTotal(null)
       setCommentsError(error instanceof Error ? error.message : '获取评论失败')
     } finally {
       setIsCommentsLoading(false)
     }
   }, [id])
+
+  const loadNextRepliesPage = useCallback(async (rawParentId: string) => {
+    if (!id) return
+    const postIdStr = normalizeId(id)
+    const parentId = normalizeId(rawParentId)
+    if (!postIdStr || !parentId) return
+
+    const currentState = replyPaginationByParentId[parentId] ?? createReplyPaginationState()
+    if (currentState.isLoading) return
+    if (currentState.pageNo > 0 && !currentState.hasMore) {
+      setReplyPaginationByParentId((prev) => ({
+        ...prev,
+        [parentId]: {
+          ...(prev[parentId] ?? createReplyPaginationState()),
+          isExpanded: true,
+        },
+      }))
+      return
+    }
+    if (pendingReplyRequests.current.has(parentId)) return
+
+    const nextPageNo = currentState.pageNo + 1
+    pendingReplyRequests.current.add(parentId)
+    setReplyPaginationByParentId((prev) => ({
+      ...prev,
+      [parentId]: {
+        ...(prev[parentId] ?? createReplyPaginationState()),
+        isExpanded: true,
+        isLoading: true,
+        error: null,
+      },
+    }))
+
+    try {
+      const { data } = await apiGet<{
+        comments: any[]
+        total?: number
+        hasMore?: boolean
+      }>(
+        `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(parentId)}?pageNo=${nextPageNo}&pageSize=${REPLIES_PAGE_SIZE}`
+      )
+      if (latestPostIdRef.current !== postIdStr) return
+
+      const rawReplies = Array.isArray(data?.comments) ? data.comments : []
+      const incoming = rawReplies.map((reply: any) => normalizeComment(reply))
+
+      setReplyPaginationByParentId((prev) => {
+        const state = prev[parentId] ?? createReplyPaginationState()
+        const merged = [...state.replies, ...incoming]
+        const seen = new Set<string>()
+        const deduped = merged.filter((item) => {
+          const cid = normalizeId(item.id)
+          if (!cid) return false
+          if (seen.has(cid)) return false
+          seen.add(cid)
+          return true
+        })
+
+        return {
+          ...prev,
+          [parentId]: {
+            ...state,
+            isExpanded: state.isExpanded,
+            isLoading: false,
+            error: null,
+            pageNo: nextPageNo,
+            total: data?.total ?? state.total,
+            hasMore: data?.hasMore ?? state.hasMore,
+            replies: deduped,
+          },
+        }
+      })
+    } catch (error) {
+      if (latestPostIdRef.current !== postIdStr) return
+      const message = error instanceof Error ? error.message : '加载回复失败'
+      setReplyPaginationByParentId((prev) => ({
+        ...prev,
+        [parentId]: {
+          ...(prev[parentId] ?? createReplyPaginationState()),
+          isExpanded: prev[parentId]?.isExpanded ?? true,
+          isLoading: false,
+          error: message,
+        },
+      }))
+    } finally {
+      pendingReplyRequests.current.delete(parentId)
+    }
+  }, [id, replyPaginationByParentId])
+
+  const handleToggleReplies = useCallback((rawParentId: string) => {
+    const parentId = normalizeId(rawParentId)
+    if (!parentId) return
+
+    const state = replyPaginationByParentId[parentId] ?? createReplyPaginationState()
+    if (state.isExpanded) {
+      setReplyPaginationByParentId((prev) => ({
+        ...prev,
+        [parentId]: {
+          ...(prev[parentId] ?? createReplyPaginationState()),
+          isExpanded: false,
+          error: null,
+        },
+      }))
+      return
+    }
+
+    if (state.pageNo === 0) {
+      void loadNextRepliesPage(parentId)
+      return
+    }
+
+    setReplyPaginationByParentId((prev) => ({
+      ...prev,
+      [parentId]: {
+        ...(prev[parentId] ?? createReplyPaginationState()),
+        isExpanded: true,
+        error: null,
+      },
+    }))
+  }, [loadNextRepliesPage, replyPaginationByParentId])
 
   const handleSubmitComment = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -103,14 +251,43 @@ export default function PostDetail() {
       const newComment = normalizeComment(
         data || { parent_id: parentIdToSend, reply_id: replyIdToSend, content: commentText.trim() }
       )
-      setComments(prev => [
-        {
-          ...newComment,
-          parentId: newComment.parentId ?? parentIdToSend,
-          replyId: newComment.replyId ?? replyIdToSend,
-        },
-        ...prev,
-      ])
+      const hydrated: Comment = {
+        ...newComment,
+        parentId: newComment.parentId ?? parentIdToSend,
+        replyId: newComment.replyId ?? replyIdToSend,
+      }
+
+      if (parentIdToSend === '0') {
+        setComments(prev => [hydrated, ...prev])
+        setCommentTotal((prev) => (typeof prev === 'number' ? prev + 1 : prev))
+      } else {
+        const parentId = normalizeId(parentIdToSend)
+        if (parentId) {
+          setReplyPaginationByParentId((prev) => {
+            const state = prev[parentId] ?? createReplyPaginationState()
+            const merged = [hydrated, ...state.replies]
+            const seen = new Set<string>()
+            const deduped = merged.filter((item) => {
+              const cid = normalizeId(item.id)
+              if (!cid) return false
+              if (seen.has(cid)) return false
+              seen.add(cid)
+              return true
+            })
+
+            return {
+              ...prev,
+              [parentId]: {
+                ...state,
+                isExpanded: true,
+                error: null,
+                total: typeof state.total === 'number' ? state.total + 1 : state.total,
+                replies: deduped,
+              },
+            }
+          })
+        }
+      }
       setCommentText('')
       setReplyTarget(null)
     } catch (error) {
@@ -128,7 +305,13 @@ export default function PostDetail() {
 
     const commentIdStr = normalizeId(commentId)
     const postIdStr = normalizeId(id)
-    const target = comments.find(c => normalizeId(c.id) === commentIdStr)
+    const targetFromParents = comments.find(c => normalizeId(c.id) === commentIdStr)
+    const targetFromReplies = Object.entries(replyPaginationByParentId).find(([, state]) =>
+      state.replies.some((reply) => normalizeId(reply.id) === commentIdStr)
+    )
+
+    const target = targetFromParents ?? targetFromReplies?.[1].replies.find((reply) => normalizeId(reply.id) === commentIdStr)
+    const parentIdForReply = targetFromParents ? null : targetFromReplies?.[0] ?? null
     if (!target) return
 
     const isCommentOwner =
@@ -151,7 +334,28 @@ export default function PostDetail() {
 
     try {
       await apiDelete(`/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(commentIdStr)}`)
-      setComments(prev => prev.filter(c => normalizeId(c.id) !== commentIdStr))
+      if (parentIdForReply) {
+        setReplyPaginationByParentId((prev) => {
+          const state = prev[parentIdForReply] ?? createReplyPaginationState()
+          const nextReplies = state.replies.filter((reply) => normalizeId(reply.id) !== commentIdStr)
+          return {
+            ...prev,
+            [parentIdForReply]: {
+              ...state,
+              total: typeof state.total === 'number' ? Math.max(0, state.total - 1) : state.total,
+              replies: nextReplies,
+            },
+          }
+        })
+      } else {
+        setComments(prev => prev.filter(c => normalizeId(c.id) !== commentIdStr))
+        setCommentTotal((prev) => (typeof prev === 'number' ? Math.max(0, prev - 1) : prev))
+        setReplyPaginationByParentId((prev) => {
+          const next = { ...prev }
+          delete next[commentIdStr]
+          return next
+        })
+      }
       await fetchComments()
     } catch (error) {
       console.error('删除评论失败:', error)
@@ -443,7 +647,7 @@ export default function PostDetail() {
       {/* 评论区域 */}
       <div className="card">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          评论 ({comments.length})
+          评论 ({commentTotal ?? comments.length})
         </h2>
 
         {/* 评论表单 */}
@@ -489,134 +693,202 @@ export default function PostDetail() {
           <p className="text-gray-500 text-sm">暂时还没有评论，快来抢沙发吧～</p>
         ) : (
           <div className="space-y-8">
-            {commentGroups.map(({ parent, replies }) => (
-              <div key={parent.id} className="space-y-3">
-                <div className="flex space-x-4">
-                  <Link
-                    to={`/users/${parent.author.id}`}
-                    state={{ username: parent.author.name }}
-                    className="flex-shrink-0"
-                  >
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${parent.author.id}`}
-                      alt={parent.author.name}
-                      className="w-10 h-10 rounded-full"
-                    />
-                  </Link>
-                  <div className="flex-1">
-                    <div className="bg-white/70 ring-1 ring-gray-200/60 rounded-xl p-4 mb-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <Link
-                          to={`/users/${parent.author.id}`}
-                          state={{ username: parent.author.name }}
-                          className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
-                        >
-                          {parent.author.name}
-                        </Link>
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(new Date(parent.createdAt), {
-                            addSuffix: true,
-                            locale: zhCN
-                          })}
-                        </span>
+            {comments.map((parent) => {
+              const parentId = normalizeId(parent.id)
+              const replyState = replyPaginationByParentId[parentId] ?? createReplyPaginationState()
+              const replyCountValue =
+                typeof replyState.total === 'number' ? replyState.total : replyState.replies.length
+              const replyCount = replyCountValue > 0 ? replyCountValue : null
+
+              return (
+                <div key={parent.id} className="space-y-3">
+                  <div className="flex space-x-4">
+                    <Link
+                      to={`/users/${parent.author.id}`}
+                      state={{ username: parent.author.name }}
+                      className="flex-shrink-0"
+                    >
+                      <img
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${parent.author.id}`}
+                        alt={parent.author.name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    </Link>
+                    <div className="flex-1">
+                      <div className="bg-white/70 ring-1 ring-gray-200/60 rounded-xl p-4 mb-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <Link
+                            to={`/users/${parent.author.id}`}
+                            state={{ username: parent.author.name }}
+                            className="font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                          >
+                            {parent.author.name}
+                          </Link>
+                          <span className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(parent.createdAt), {
+                              addSuffix: true,
+                              locale: zhCN
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-gray-700">{parent.content}</p>
                       </div>
-                      <p className="text-gray-700">{parent.content}</p>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <button
-                        type="button"
-                        onClick={() => setReplyTarget(parent)}
-                        className="hover:text-primary-600 transition-colors"
-                      >
-                        回复
-                      </button>
-                      {(isAuthor ||
-                        (user && normalizeId(user.id) === normalizeId(parent.author.id))) && (
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <button
-                          onClick={() => handleDeleteComment(parent.id)}
-                          className="hover:text-red-600 transition-colors"
+                          type="button"
+                          onClick={() => setReplyTarget(parent)}
+                          className="hover:text-primary-600 transition-colors"
                         >
-                          删除
+                          回复
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleReplies(parentId)}
+                          className="hover:text-primary-600 transition-colors"
+                        >
+                          {replyState.isExpanded ? '收起回复' : '展开回复'}
+                          {replyCount !== null ? ` (${replyCount})` : ''}
+                        </button>
+                        {(isAuthor ||
+                          (user && normalizeId(user.id) === normalizeId(parent.author.id))) && (
+                          <button
+                            onClick={() => handleDeleteComment(parent.id)}
+                            className="hover:text-red-600 transition-colors"
+                          >
+                            删除
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {replyState.isExpanded && (
+                    <div className="ml-12 border-l border-gray-100 pl-6 space-y-3">
+                      {replyState.replies.length === 0 && replyState.isLoading && (
+                        <div className="flex items-center text-gray-500 text-xs space-x-2">
+                          <div className="w-3 h-3 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+                          <span>回复加载中...</span>
+                        </div>
+                      )}
+
+                      {replyState.error && (
+                        <div className="flex items-center justify-between gap-3 text-xs text-red-600">
+                          <span className="min-w-0 break-words">{replyState.error}</span>
+                          <button
+                            type="button"
+                            onClick={() => void loadNextRepliesPage(parentId)}
+                            className="text-primary-600 hover:text-primary-700 flex-shrink-0"
+                          >
+                            重试
+                          </button>
+                        </div>
+                      )}
+
+                      {replyState.replies.map((reply) => {
+                        const replyTo =
+                          reply.replyId ? commentAuthorById.get(normalizeId(reply.replyId)) : undefined
+
+                        return (
+                          <div key={reply.id} className="flex space-x-3">
+                            <Link
+                              to={`/users/${reply.author.id}`}
+                              state={{ username: reply.author.name }}
+                              className="flex-shrink-0"
+                            >
+                              <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.author.id}`}
+                                alt={reply.author.name}
+                                className="w-9 h-9 rounded-full"
+                              />
+                            </Link>
+                            <div className="flex-1">
+                              <div className="bg-white/70 ring-1 ring-gray-200/60 rounded-xl p-3 mb-2">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center space-x-2">
+                                    <Link
+                                      to={`/users/${reply.author.id}`}
+                                      state={{ username: reply.author.name }}
+                                      className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-sm"
+                                    >
+                                      {reply.author.name}
+                                    </Link>
+                                    {reply.replyId &&
+                                      reply.parentId &&
+                                      reply.replyId !== reply.parentId && (
+                                        <div className="flex items-center text-xs text-gray-500 space-x-1">
+                                          <span>回复</span>
+                                          {replyTo?.id ? (
+                                            <Link
+                                              to={`/users/${replyTo.id}`}
+                                              className="text-primary-600 hover:text-primary-700"
+                                            >
+                                              @{replyTo.name || '用户'}
+                                            </Link>
+                                          ) : (
+                                            <span className="text-gray-500">
+                                              @{replyTo?.name || '用户'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                  </div>
+                                  <span className="text-[11px] text-gray-500">
+                                    {formatDistanceToNow(new Date(reply.createdAt), {
+                                      addSuffix: true,
+                                      locale: zhCN
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 text-sm">{reply.content}</p>
+                              </div>
+                              <div className="flex items-center space-x-3 text-xs text-gray-500">
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyTarget(reply)}
+                                  className="hover:text-primary-600 transition-colors"
+                                >
+                                  回复
+                                </button>
+                                {(isAuthor ||
+                                  (user && normalizeId(user.id) === normalizeId(reply.author.id))) && (
+                                  <button
+                                    onClick={() => handleDeleteComment(reply.id)}
+                                    className="hover:text-red-600 transition-colors"
+                                  >
+                                    删除
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+
+                      {replyState.replies.length > 0 && replyState.isLoading && (
+                        <div className="flex items-center text-gray-500 text-xs space-x-2">
+                          <div className="w-3 h-3 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+                          <span>加载更多回复中...</span>
+                        </div>
+                      )}
+
+                      {!replyState.isLoading && !replyState.error && replyState.pageNo > 0 && replyState.replies.length === 0 && (
+                        <p className="text-gray-400 text-xs">暂无回复</p>
+                      )}
+
+                      {!replyState.isLoading && !replyState.error && replyState.hasMore && (
+                        <button
+                          type="button"
+                          onClick={() => void loadNextRepliesPage(parentId)}
+                          className="text-xs text-primary-600 hover:text-primary-700"
+                        >
+                          展开更多回复
                         </button>
                       )}
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                {replies.length > 0 && (
-                  <div className="ml-12 border-l border-gray-100 pl-6 space-y-3">
-                    {replies.map((reply) => (
-                      <div key={reply.id} className="flex space-x-3">
-                        <Link
-                          to={`/users/${reply.author.id}`}
-                          state={{ username: reply.author.name }}
-                          className="flex-shrink-0"
-                        >
-                          <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.author.id}`}
-                            alt={reply.author.name}
-                            className="w-9 h-9 rounded-full"
-                          />
-                        </Link>
-                        <div className="flex-1">
-                          <div className="bg-white/70 ring-1 ring-gray-200/60 rounded-xl p-3 mb-2">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center space-x-2">
-                                <Link
-                                  to={`/users/${reply.author.id}`}
-                                  state={{ username: reply.author.name }}
-                                  className="font-medium text-gray-900 hover:text-primary-600 transition-colors text-sm"
-                                >
-                                  {reply.author.name}
-                                </Link>
-                                {reply.replyId &&
-                                  reply.parentId &&
-                                  reply.replyId !== reply.parentId && (
-                                    <div className="flex items-center text-xs text-gray-500 space-x-1">
-                                      <span>回复</span>
-                                      <Link
-                                        to={`/users/${commentAuthorById.get(normalizeId(reply.replyId))?.id ?? ''}`}
-                                        className="text-primary-600 hover:text-primary-700"
-                                      >
-                                        @{commentAuthorById.get(normalizeId(reply.replyId))?.name || '用户'}
-                                      </Link>
-                                    </div>
-                                  )}
-                              </div>
-                              <span className="text-[11px] text-gray-500">
-                                {formatDistanceToNow(new Date(reply.createdAt), {
-                                  addSuffix: true,
-                                  locale: zhCN
-                                })}
-                              </span>
-                            </div>
-                            <p className="text-gray-700 text-sm">{reply.content}</p>
-                          </div>
-                          <div className="flex items-center space-x-3 text-xs text-gray-500">
-                            <button
-                              type="button"
-                              onClick={() => setReplyTarget(reply)}
-                              className="hover:text-primary-600 transition-colors"
-                            >
-                              回复
-                            </button>
-                            {(isAuthor ||
-                              (user && normalizeId(user.id) === normalizeId(reply.author.id))) && (
-                              <button
-                                onClick={() => handleDeleteComment(reply.id)}
-                                className="hover:text-red-600 transition-colors"
-                              >
-                                删除
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

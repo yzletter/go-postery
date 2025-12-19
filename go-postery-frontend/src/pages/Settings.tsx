@@ -229,9 +229,6 @@ export default function Settings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">个人信息</h2>
-                    <p className="text-sm text-gray-500">
-                      按 ModifyUserProfileRequest 更新邮箱、头像、个性签名、性别、生日、地区与国家
-                    </p>
                   </div>
                   <span className="text-xs text-gray-500">
                     {isProfileLoading ? '资料加载中...' : '修改后将立即生效'}
