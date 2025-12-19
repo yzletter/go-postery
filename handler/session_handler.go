@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,11 +12,6 @@ import (
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
-)
-
-var (
-	pongWait   = 5 * time.Second // 等待 pong 的超时时间
-	pingPeriod = 3 * time.Second // 发送 ping 的周期，必须短于 pongWait
 )
 
 // HTTP 升级器
@@ -96,12 +91,12 @@ func (hdl *SessionHandler) MessageToUser(ctx *gin.Context) {
 	// 升级 HTTP
 	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("Upgrade HTTP Failed", "error", err)
+		response.Error(ctx, errno.ErrServerInternal)
 		return
 	}
 
-	// 心跳保持
-	go heartBeat(conn)
+	defer conn.Close()
 
 	err = hdl.sessionSvc.Message(ctx, conn, uid, targetID)
 	if err != nil {
@@ -110,28 +105,4 @@ func (hdl *SessionHandler) MessageToUser(ctx *gin.Context) {
 	}
 
 	response.Success(ctx, "", nil)
-}
-
-func heartBeat(conn *websocket.Conn) {
-	conn.SetPongHandler(func(appData string) error {
-		return nil
-	})
-
-	err := conn.WriteMessage(websocket.PingMessage, nil)
-	if err != nil {
-		conn.WriteMessage(websocket.CloseMessage, nil)
-	}
-
-	ticker := time.NewTicker(pingPeriod)
-LOOP:
-	for {
-		<-ticker.C
-		err := conn.WriteMessage(websocket.PingMessage, nil)
-		if err != nil {
-			conn.WriteMessage(websocket.CloseMessage, nil)
-			break LOOP
-		}
-		deadline := time.Now().Add(pongWait) // ping发出去以后，期望5秒之内从conn里能计到数据（至少能读到pong）
-		conn.SetReadDeadline(deadline)
-	}
 }

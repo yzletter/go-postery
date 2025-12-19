@@ -17,7 +17,6 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	"github.com/yzletter/go-postery/middleware"
-	"github.com/yzletter/go-postery/mq"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
@@ -70,8 +69,6 @@ func main() {
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache)
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache)
-	// MQ 层
-	SessionMQ := mq.NewRabbitSessionMQ(RabbitMQ)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
@@ -82,7 +79,7 @@ func main() {
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                          // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, SessionMQ)
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ)
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -96,7 +93,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},

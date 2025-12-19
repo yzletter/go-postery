@@ -4,6 +4,8 @@ import "time"
 
 type Message struct {
 	ID          int64      `gorm:"id,primaryKey"`
+	SessionID   int64      `gorm:"session_id"`
+	SessionType int        `gorm:"session_type"`
 	MessageFrom int64      `gorm:"message_from"`
 	MessageTo   int64      `gorm:"message_to"`
 	Content     string     `gorm:"content"`

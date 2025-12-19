@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
+	"time"
 
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -11,6 +14,12 @@ import (
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/service/ports"
+)
+
+var (
+	pongWait   = 5 * time.Second // 等待 pong 的超时时间
+	pingPeriod = 3 * time.Second // 发送 ping 的周期，必须短于 pongWait
 )
 
 type sessionService struct {
@@ -18,14 +27,17 @@ type sessionService struct {
 	messageRepo repository.MessageRepository
 	userRepo    repository.UserRepository
 	mqConn      *amqp.Connection
+	idGen       ports.IDGenerator
 }
 
-func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository, mq *amqp.Connection) SessionService {
+func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository,
+	mq *amqp.Connection, idGen ports.IDGenerator) SessionService {
 	return &sessionService{
 		sessionRepo: sessionRepo,
 		messageRepo: messageRepo,
 		userRepo:    userRepo,
 		mqConn:      mq,
+		idGen:       idGen,
 	}
 }
 
@@ -55,9 +67,34 @@ func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiond
 	return sessionDTOs, nil
 }
 
-func (svc *sessionService) Message(ctx context.Context, coon *websocket.Conn, uid, targetID int64) error {
-	// todo
-	panic(nil)
+func (svc *sessionService) Message(ctx context.Context, conn *websocket.Conn, uid, targetID int64) error {
+	// SessionID
+
+	// 心跳保持
+	go heartBeat(conn)
+
+	buffer := make(chan model.Message, 100)
+
+	// 从 WS 中读取消息写给 MQ
+	go svc.send(ctx, conn)
+
+	// 消费 MQ 中消息写给 buffer
+	go func() {
+		err := svc.consume(ctx, uid, buffer)
+		if err != nil {
+			slog.Error("Consume Failed", "error", err)
+		}
+	}()
+
+	// 从 buffer 中读取消息写给 WS
+	go func() {
+		err := svc.receive(ctx, conn, uid, targetID, buffer)
+		if err != nil {
+			slog.Error("Consume Failed", "error", err)
+		}
+	}()
+
+	return nil
 }
 
 // Register 注册用户的 Exchange 和 Queue
@@ -117,4 +154,185 @@ func (svc *sessionService) Register(ctx context.Context, uid int64) error {
 	}
 
 	return nil
+}
+
+func (svc *sessionService) send(ctx context.Context, conn *websocket.Conn) {
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			slog.Error("Websocket Connection Close Failed", "error", err)
+		}
+	}()
+
+	for {
+		// 从 Websocket 中读取消息
+		_, body, err := conn.ReadMessage() // 如果对方主动断开连接或超时，该行会报错，for 循环会退出
+		if err != nil {
+			break
+		}
+
+		var message model.Message
+		err = json.Unmarshal(body, &message)
+		if err != nil {
+
+			// BadRequest
+			continue
+		}
+
+		// 过滤
+		ok := intercept(message)
+		if !ok {
+			continue
+		}
+
+		// 落库
+		m := &model.Message{
+			ID:          svc.idGen.NextID(),
+			SessionID:   0,
+			SessionType: 1, // 私聊
+			MessageFrom: message.MessageFrom,
+			MessageTo:   message.MessageTo,
+			Content:     message.Content,
+		}
+
+		err = svc.messageRepo.Create(ctx, m)
+		if err != nil {
+			slog.Error("Message Store Failed", "message", message)
+			continue
+		}
+
+		// 发给 MQ
+		err = produce(ctx, svc.mqConn, message, message.MessageTo)
+		if err != nil {
+			slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
+		}
+
+		err = produce(ctx, svc.mqConn, message, message.MessageFrom)
+		if err != nil {
+			slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
+
+		}
+	}
+}
+
+func (svc *sessionService) consume(ctx context.Context, id int64, buffer chan model.Message) error {
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("Receive Failed", "error", err)
+		}
+	}()
+
+	// 消费的队列名
+	queueName := fmt.Sprintf("%d_computer", id)
+
+	ch, err := svc.mqConn.Channel()
+	if err != nil {
+		return err
+	}
+	// 开始消费队列
+	deliverCh, _ := ch.ConsumeWithContext(ctx, queueName, "", false, false, false, false, nil)
+	go func() {
+
+		for deliver := range deliverCh {
+			var message model.Message
+			_ = json.Unmarshal(deliver.Body, &message)
+
+			if id == message.MessageFrom || id == message.MessageTo { // 该用户是消息的接收方或发送方
+				buffer <- message
+				deliver.Ack(false) // ACK
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (svc *sessionService) receive(ctx context.Context, conn *websocket.Conn, id int64, targetID int64, buffer chan model.Message) error {
+	defer func() {
+		err := conn.Close() // 错误忽略
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}()
+
+	// 加载历史消息
+	msgs, err := svc.messageRepo.GetByID(ctx, id, targetID)
+	if err != nil {
+		return errno.ErrServerInternal
+	}
+
+	// 哈希表
+	Set := make(map[model.Message]struct{})
+	for _, msg := range msgs {
+		Set[msg] = struct{}{}
+		conn.WriteJSON(msg) // 打给前端
+	}
+
+	// 从 buffer 中读取数据
+	for {
+		msg := <-buffer
+
+		// 判断是否加载过
+		if _, exits := Set[msg]; !exits {
+			Set[msg] = struct{}{}
+			conn.WriteJSON(msg) // 打给前端
+		}
+	}
+}
+
+func produce(ctx context.Context, conn *amqp.Connection, message model.Message, id int64) error {
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	msg, _ := json.Marshal(message)
+
+	exchangeName := fmt.Sprintf("%d_exchange", id)
+	err = ch.PublishWithContext(
+		ctx,
+		exchangeName,
+		"",
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json", // MIME content type
+			Body:         msg,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func heartBeat(conn *websocket.Conn) {
+	conn.SetPongHandler(func(appData string) error {
+		return nil
+	})
+
+	err := conn.WriteMessage(websocket.PingMessage, nil)
+	if err != nil {
+		conn.WriteMessage(websocket.CloseMessage, nil)
+	}
+
+	ticker := time.NewTicker(pingPeriod)
+LOOP:
+	for {
+		<-ticker.C
+		err := conn.WriteMessage(websocket.PingMessage, nil)
+		if err != nil {
+			conn.WriteMessage(websocket.CloseMessage, nil)
+			break LOOP
+		}
+		deadline := time.Now().Add(pongWait) // ping发出去以后，期望5秒之内从conn里能计到数据（至少能读到pong）
+		conn.SetReadDeadline(deadline)
+	}
+}
+
+// todo 处理消息内容, 正常应进行对非法内容进行拦截。比如机器人消息（发言频率过快）；包含欺诈、涉政等违规内容；涉嫌私下联系/交易等。
+func intercept(message model.Message) bool {
+	return true
 }
