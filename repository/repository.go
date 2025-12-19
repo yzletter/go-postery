@@ -58,3 +58,10 @@ type FollowRepository interface {
 	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }
+
+type SessionRepository interface {
+	ListByUid(ctx context.Context, uid int64) ([]*model.Session, error)
+}
+
+type MessageRepository interface {
+}

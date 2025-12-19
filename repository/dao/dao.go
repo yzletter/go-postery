@@ -60,3 +60,10 @@ type TagDAO interface {
 	DeleteBind(ctx context.Context, pid, tid int64) error
 	FindTagsByPostID(ctx context.Context, pid int64) ([]string, error)
 }
+
+type MessageDAO interface {
+}
+
+type SessionDAO interface {
+	GetByUid(ctx context.Context, uid int64) ([]*model.Session, error)
+}

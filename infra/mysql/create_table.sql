@@ -140,32 +140,58 @@ CREATE TABLE IF NOT EXISTS tags
 # Post_Tag 表
 CREATE TABLE IF NOT EXISTS post_tag
 (
-    id      BIGINT NOT NULL COMMENT '记录 id',
-    post_id BIGINT NOT NULL COMMENT '帖子 id',
-    tag_id  BIGINT NOT NULL COMMENT '标签 id',
+    id         BIGINT   NOT NULL COMMENT '记录 id',
+    post_id    BIGINT   NOT NULL COMMENT '帖子 id',
+    tag_id     BIGINT   NOT NULL COMMENT '标签 id',
 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted_at DATETIME DEFAULT NULL COMMENT '逻辑删除时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
     PRIMARY KEY (id),
     UNIQUE KEY uq_post_tag (post_id, tag_id),
     KEY idx_tag (tag_id),
     KEY idx_post (post_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签信息表';
 
-# Chat 表
+
+# Message 表
 CREATE TABLE IF NOT EXISTS messages
 (
-    id BIGINT NOT NULL COMMENT 'ID',
+    id           BIGINT   NOT NULL COMMENT 'ID',
+    session_id   BIGINT   NOT NULL COMMENT '会话 ID',
+    session_type TINYINT  NOT NULL COMMENT '会话类型 1 表示 私聊 2 表示 群聊',
 
-    message_from BIGINT NOT NULL COMMENT '发送方',
-    message_to BIGINT NOT NULL COMMENT '接收方',
+    message_from BIGINT   NOT NULL COMMENT '发送方',
+    message_to   BIGINT   NOT NULL COMMENT '接收方',
 
-    content TEXT NOT NULL COMMENT '消息内容',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted_at DATETIME DEFAULT NULL COMMENT '逻辑删除时间',
+    content      TEXT     NOT NULL COMMENT '消息内容',
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at   DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
 
     PRIMARY KEY (id)
-)DEFAULT CHARSET = utf8mb4 COMMENT '消息记录表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '消息记录表';
 
+# Session 表
+CREATE TABLE IF NOT EXISTS sessions
+(
+    id              BIGINT   NOT NULL COMMENT 'ID',
+    session_id      BIGINT   NOT NULL COMMENT '会话 ID',
+    user_id         BIGINT   NOT NULL COMMENT '己方 ID',
+    target_id       BIGINT   NOT NULL COMMENT '对方 ID',
+    target_type     TINYINT  NOT NULL COMMENT '会话类型 1 表示 私聊 2 表示 群聊',
+
+    last_message_id BIGINT COMMENT '最后一条消息 ID',
+    last_message    TEXT COMMENT '最后一条消息摘要',
+    unread_count    INT               DEFAULT 0 COMMENT '未读消息数',
+
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at      DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_user_target_type(user_id, target_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '会话表';
+
+
+# todo 群聊表

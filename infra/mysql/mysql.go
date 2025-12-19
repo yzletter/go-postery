@@ -55,7 +55,7 @@ func Init(confDir, confFileName, confFileType, logDir string) *gorm.DB {
 		SkipDefaultTransaction: true, // 禁止在事务中进行写入操作, 性能提升约 30%
 		// 覆盖默认命名策略
 		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true, // 表名映射不加复数, 仅仅是驼峰转为蛇形
+			SingularTable: false, // 表名映射不加复数, 仅仅是驼峰转为蛇形
 		},
 		Logger: DBlogger, // 日志控制
 	}

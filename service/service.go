@@ -5,6 +5,7 @@ import (
 
 	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/dto/post"
+	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service/ports"
@@ -63,4 +64,8 @@ type FollowService interface {
 	IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error)
 	ListFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
 	ListFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
+}
+
+type SessionService interface {
+	ListByUid(ctx context.Context, uid int64) ([]sessiondto.DTO, error)
 }

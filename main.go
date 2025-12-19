@@ -17,6 +17,7 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	"github.com/yzletter/go-postery/middleware"
+	"github.com/yzletter/go-postery/mq"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
@@ -25,15 +26,18 @@ import (
 
 func main() {
 	// Infra 层
-	slog.InitSlog("./logs/go_postery.log")                          // 初始化 slog
-	crontab.InitCrontab()                                           // 初始化 定时任务
-	smooth.InitSmoothExit()                                         // 初始化 优雅退出
+	slog.InitSlog("./logs/go_postery.log") // 初始化 slog
+	crontab.InitCrontab()                  // 初始化 定时任务
+	smooth.InitSmoothExit()                // 初始化 优雅退出
+
 	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)   // 初始化 Redis
 	RabbitMQ := infraRabbit.Init("./conf", "mq", viper.YAML)        // 初始化 RabbitMQ
-	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)             // 初始化 雪花算法
-	PasswordHasher := security.NewBcryptPasswordHasher(0)           // 初始化 密码哈希器
+
+	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
+	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager("123456")
+
 	// 初始化 gin
 	engine := gin.Default()
 
@@ -44,6 +48,8 @@ func main() {
 	LikeDAO := dao.NewLikeDAO(GormDB)
 	FollowDAO := dao.NewFollowDAO(GormDB)
 	TagDAO := dao.NewTagDAO(GormDB)
+	MessageDAO := dao.NewMessageDAO(GormDB)
+	SessionDAO := dao.NewSessionDAO(GormDB)
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -52,6 +58,8 @@ func main() {
 	LikeCache := cache.NewLikeCache(RedisClient)
 	FollowCache := cache.NewFollowCache(RedisClient)
 	TagCache := cache.NewTagCache(RedisClient)
+	MessageCache := cache.NewMessageCache(RedisClient)
+	SessionCache := cache.NewSessionCache(RedisClient)
 
 	// Repository 层
 	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 userRepo
@@ -60,16 +68,21 @@ func main() {
 	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
 	FollowRepo := repository.NewFollowRepository(FollowDAO, FollowCache)     // 注册 FollowRepository
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
+	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache)
+	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache)
+	// MQ 层
+	SessionMQ := mq.NewRabbitSessionMQ(RabbitMQ)
 
 	// Service 层
+	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, time.Minute, 1000)                       // 注册 RateLimitService
 	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient) // 注册 AuthService
 	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                          // 注册 userSvc
 	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)             // 注册 postSvc
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                          // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
-	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, time.Minute, 1000)                       // 注册 RateLimitService
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, SessionMQ)
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc)                            // 注册 AuthHandler
@@ -77,12 +90,13 @@ func main() {
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
+	SessionHdl := handler.NewSessionHandler(SessionSvc)
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -141,13 +155,6 @@ func main() {
 			follow.DELETE("", FollowHdl.UnFollow) // DELETE /api/v1/users/:id/follow 	取关
 			follow.GET("", FollowHdl.IfFollow)    // GET /api/v1/users/:id/follow 		是否关注
 		}
-
-		// 私信模块
-		messages := users.Group("/:id/messages")
-		messages.Use(AuthRequiredMdl)
-		{
-			messages.GET("") // GET /api/v1/users/:id/messages
-		}
 	}
 
 	// 帖子模块
@@ -171,6 +178,15 @@ func main() {
 		authedPosts.GET("/:id/likes", PostHdl.IfLike)               // GET /api/v1/posts/:id/likes	查询是否点赞了帖子
 		authedPosts.POST("/:id/likes", PostHdl.Like)                // POST /api/v1/posts/:id/likes	点赞帖子
 		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)            // DELETE /api/v1/posts/:id/likes 取消点赞帖子
+	}
+
+	// 私信模块
+	sessions := v1.Group("/sessions")
+	sessions.Use(AuthRequiredMdl)
+	{
+		sessions.GET("", SessionHdl.List) // GET /api/v1/sessions			获取当前登录用户会话列表
+		sessions.GET("/:id")              // GET /api/v1/sessions/:id		打开会话，加载消息，建立连接
+		sessions.DELETE("/:id")           // DELETE /api/v1/sessions/:id		删除当前会话
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

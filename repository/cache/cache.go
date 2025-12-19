@@ -27,3 +27,6 @@ type TagCache interface {
 
 type FollowCache interface {
 }
+
+type MessageCache interface{}
+type SessionCache interface{}
