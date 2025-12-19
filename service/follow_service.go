@@ -18,22 +18,22 @@ var (
 )
 
 type followService struct {
-	FollowRepo repository.FollowRepository
-	UserRepo   repository.UserRepository
+	followRepo repository.FollowRepository
+	userRepo   repository.UserRepository
 	idGen      ports.IDGenerator
 }
 
 func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository, idGen ports.IDGenerator) FollowService {
 	return &followService{
-		FollowRepo: followRepo,
-		UserRepo:   userRepo,
+		followRepo: followRepo,
+		userRepo:   userRepo,
 		idGen:      idGen,
 	}
 }
 
 // Follow 关注
 func (svc *followService) Follow(ctx context.Context, ferId, feeId int64) error {
-	res, err := svc.FollowRepo.Exists(ctx, ferId, feeId)
+	res, err := svc.followRepo.Exists(ctx, ferId, feeId)
 	if err != nil {
 		return errno.ErrServerInternal // 数据库内部错误
 	}
@@ -47,7 +47,7 @@ func (svc *followService) Follow(ctx context.Context, ferId, feeId int64) error 
 		FollowerID: ferId,
 		FolloweeID: feeId,
 	}
-	err = svc.FollowRepo.Create(ctx, follow)
+	err = svc.followRepo.Create(ctx, follow)
 	if err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 检查过仍冲突
@@ -62,7 +62,7 @@ func (svc *followService) Follow(ctx context.Context, ferId, feeId int64) error 
 
 // UnFollow 取消关注
 func (svc *followService) UnFollow(ctx context.Context, ferId, feeId int64) error {
-	res, err := svc.FollowRepo.Exists(ctx, ferId, feeId)
+	res, err := svc.followRepo.Exists(ctx, ferId, feeId)
 	if err != nil {
 		return errno.ErrServerInternal // 数据库内部错误
 	}
@@ -71,7 +71,7 @@ func (svc *followService) UnFollow(ctx context.Context, ferId, feeId int64) erro
 		return errno.ErrDuplicatedUnFollow
 	}
 
-	err = svc.FollowRepo.Delete(ctx, ferId, feeId)
+	err = svc.followRepo.Delete(ctx, ferId, feeId)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("检查过还出错", "error", err)
@@ -85,7 +85,7 @@ func (svc *followService) UnFollow(ctx context.Context, ferId, feeId int64) erro
 
 // IfFollow 判断关注关系
 func (svc *followService) IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error) {
-	res, err := svc.FollowRepo.Exists(ctx, ferId, feeId)
+	res, err := svc.followRepo.Exists(ctx, ferId, feeId)
 	if err != nil {
 		return -1, errno.ErrServerInternal // 数据库内部错误
 	}
@@ -95,14 +95,14 @@ func (svc *followService) IfFollow(ctx context.Context, ferId, feeId int64) (mod
 // GetFollowersByPage 按页查找粉丝
 func (svc *followService) ListFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
 	var empty []dto.BriefDTO
-	total, followersId, err := svc.FollowRepo.GetFollowers(ctx, uid, pageNo, pageSize)
+	total, followersId, err := svc.followRepo.GetFollowers(ctx, uid, pageNo, pageSize)
 	if err != nil {
 		return 0, empty, errno.ErrServerInternal
 	}
 
 	res := make([]dto.BriefDTO, 0)
 	for _, id := range followersId {
-		user, err := svc.UserRepo.GetByID(ctx, id)
+		user, err := svc.userRepo.GetByID(ctx, id)
 		if err != nil {
 			continue
 		}
@@ -116,14 +116,14 @@ func (svc *followService) ListFollowersByPage(ctx context.Context, uid int64, pa
 // GetFolloweesByPage 按页查找关注对象
 func (svc *followService) ListFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []dto.BriefDTO, error) {
 	var empty []dto.BriefDTO
-	total, followeesId, err := svc.FollowRepo.GetFollowees(ctx, uid, pageNo, pageSize)
+	total, followeesId, err := svc.followRepo.GetFollowees(ctx, uid, pageNo, pageSize)
 	if err != nil {
 		return 0, empty, errno.ErrServerInternal
 	}
 
 	res := make([]dto.BriefDTO, 0)
 	for _, id := range followeesId {
-		user, err := svc.UserRepo.GetByID(ctx, id)
+		user, err := svc.userRepo.GetByID(ctx, id)
 		if err != nil {
 
 			continue

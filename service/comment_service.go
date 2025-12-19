@@ -13,15 +13,15 @@ import (
 )
 
 type commentService struct {
-	CommentRepo repository.CommentRepository
-	UserRepo    repository.UserRepository
-	PostRepo    repository.PostRepository
+	commentRepo repository.CommentRepository
+	userRepo    repository.UserRepository
+	postRepo    repository.PostRepository
 	idGen       ports.IDGenerator
 }
 
 func (svc *commentService) ListReplies(ctx context.Context, id int64, pageNo, pageSize int) (int, []commentdto.DTO, error) {
 	var empty []commentdto.DTO
-	total, comments, err := svc.CommentRepo.GetRepliesByParentID(ctx, id, pageNo, pageSize)
+	total, comments, err := svc.commentRepo.GetRepliesByParentID(ctx, id, pageNo, pageSize)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return 0, empty, errno.ErrCommentNotFound
@@ -31,7 +31,7 @@ func (svc *commentService) ListReplies(ctx context.Context, id int64, pageNo, pa
 
 	var commentDTOs []commentdto.DTO
 	for _, comment := range comments {
-		user, err := svc.UserRepo.GetByID(ctx, comment.UserID)
+		user, err := svc.userRepo.GetByID(ctx, comment.UserID)
 		if err != nil {
 			user = &model.User{}
 		}
@@ -44,9 +44,9 @@ func (svc *commentService) ListReplies(ctx context.Context, id int64, pageNo, pa
 
 func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository, idGen ports.IDGenerator) CommentService {
 	return &commentService{
-		CommentRepo: commentRepo,
-		UserRepo:    userRepo,
-		PostRepo:    postRepo,
+		commentRepo: commentRepo,
+		userRepo:    userRepo,
+		postRepo:    postRepo,
 		idGen:       idGen,
 	}
 }
@@ -55,7 +55,7 @@ func (svc *commentService) Create(ctx context.Context, pid int64, uid int64, par
 	var empty commentdto.DTO
 
 	// 查询作者
-	author, err := svc.UserRepo.GetByID(ctx, uid)
+	author, err := svc.userRepo.GetByID(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
@@ -64,7 +64,7 @@ func (svc *commentService) Create(ctx context.Context, pid int64, uid int64, par
 	}
 
 	// 查询帖子
-	_, err = svc.PostRepo.GetByID(ctx, pid)
+	_, err = svc.postRepo.GetByID(ctx, pid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrPostNotFound
@@ -81,7 +81,7 @@ func (svc *commentService) Create(ctx context.Context, pid int64, uid int64, par
 		UserID:   uid,
 		Content:  content,
 	}
-	err = svc.CommentRepo.Create(ctx, comment)
+	err = svc.commentRepo.Create(ctx, comment)
 	if err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 雪花 ID 的评论不会已存在, 需要排查
@@ -92,7 +92,7 @@ func (svc *commentService) Create(ctx context.Context, pid int64, uid int64, par
 
 	// 修改评论数
 	field := model.PostCommentCount
-	err = svc.PostRepo.UpdateCount(ctx, pid, field, 1)
+	err = svc.postRepo.UpdateCount(ctx, pid, field, 1)
 	if err != nil {
 		slog.Error("Update Comment Count Failed", "error", err)
 	}
@@ -107,7 +107,7 @@ func (svc *commentService) Delete(ctx context.Context, uid, cid int64) error {
 		return errno.ErrUnauthorized
 	}
 
-	comment, err := svc.CommentRepo.GetByID(ctx, cid)
+	comment, err := svc.commentRepo.GetByID(ctx, cid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return errno.ErrCommentNotFound
@@ -116,7 +116,7 @@ func (svc *commentService) Delete(ctx context.Context, uid, cid int64) error {
 	}
 
 	// 删除评论
-	cnt, err := svc.CommentRepo.Delete(ctx, cid) // 返回被删除的个数
+	cnt, err := svc.commentRepo.Delete(ctx, cid) // 返回被删除的个数
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return errno.ErrCommentNotFound
@@ -126,7 +126,7 @@ func (svc *commentService) Delete(ctx context.Context, uid, cid int64) error {
 
 	// 改变评论数
 	field := model.PostCommentCount
-	err = svc.PostRepo.UpdateCount(ctx, comment.PostID, field, -cnt)
+	err = svc.postRepo.UpdateCount(ctx, comment.PostID, field, -cnt)
 	if err != nil {
 		slog.Error("Update Comment Failed", "error", err)
 	}
@@ -136,14 +136,14 @@ func (svc *commentService) Delete(ctx context.Context, uid, cid int64) error {
 
 func (svc *commentService) List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []commentdto.DTO, error) {
 	var empty []commentdto.DTO
-	total, comments, err := svc.CommentRepo.GetByPostID(ctx, pid, pageNo, pageSize)
+	total, comments, err := svc.commentRepo.GetByPostID(ctx, pid, pageNo, pageSize)
 	if err != nil {
 		return 0, empty, errno.ErrCommentNotFound
 	}
 
 	var commentDTOs []commentdto.DTO
 	for _, comment := range comments {
-		user, err := svc.UserRepo.GetByID(ctx, comment.UserID)
+		user, err := svc.userRepo.GetByID(ctx, comment.UserID)
 		if err != nil {
 			user = &model.User{}
 		}
@@ -156,12 +156,12 @@ func (svc *commentService) List(ctx context.Context, pid int64, pageNo, pageSize
 
 // CheckAuth 判断是否有删除权限
 func (svc *commentService) CheckAuth(ctx context.Context, cid, uid int64) bool {
-	comment, err := svc.CommentRepo.GetByID(ctx, cid)
+	comment, err := svc.commentRepo.GetByID(ctx, cid)
 	if err != nil {
 		return false
 	}
 
-	post, err := svc.PostRepo.GetByID(ctx, comment.PostID)
+	post, err := svc.postRepo.GetByID(ctx, comment.PostID)
 	if err != nil {
 		return false
 	}
