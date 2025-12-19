@@ -153,3 +153,19 @@ CREATE TABLE IF NOT EXISTS post_tag
     KEY idx_post (post_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签信息表';
 
+# Chat 表
+CREATE TABLE IF NOT EXISTS messages
+(
+    id BIGINT NOT NULL COMMENT 'ID',
+
+    message_from BIGINT NOT NULL COMMENT '发送方',
+    message_to BIGINT NOT NULL COMMENT '接收方',
+
+    content TEXT NOT NULL COMMENT '消息内容',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id)
+)DEFAULT CHARSET = utf8mb4 COMMENT '消息记录表';
+

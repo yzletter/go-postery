@@ -1,4 +1,4 @@
-package ratelimit
+package service
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-//go:embed slide_window_script.lua
+//go:embed lua/slide_window_script.lua
 var luaSlideWindowScript string // luaSlideWindowScript 滑动窗口算法 lua 脚本
 
 type RateLimitService struct {

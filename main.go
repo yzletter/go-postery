@@ -8,6 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
+	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
+	infraRabbit "github.com/yzletter/go-postery/infra/rabbitmq"
+	infraRedis "github.com/yzletter/go-postery/infra/redis"
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
@@ -18,21 +21,16 @@ import (
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
 	"github.com/yzletter/go-postery/service"
-	"github.com/yzletter/go-postery/service/ratelimit"
-
-	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
-	infraRedis "github.com/yzletter/go-postery/infra/redis"
 )
 
 func main() {
 	// Infra 层
-	slog.InitSlog("./logs/go_postery.log") // 初始化 slog
-	crontab.InitCrontab()                  // 初始化 定时任务
-	smooth.InitSmoothExit()                // 初始化 优雅退出
-
-	// Infra 层
+	slog.InitSlog("./logs/go_postery.log")                          // 初始化 slog
+	crontab.InitCrontab()                                           // 初始化 定时任务
+	smooth.InitSmoothExit()                                         // 初始化 优雅退出
 	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
-	RedisClient := infraRedis.Init("./conf", "redis", viper.YAML)   // 初始化 Redis
+	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)   // 初始化 Redis
+	RabbitMQ := infraRabbit.Init("./conf", "mq", viper.YAML)        // 初始化 RabbitMQ
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)             // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0)           // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager("123456")
@@ -71,7 +69,7 @@ func main() {
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 CommentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
 	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
-	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)                     // 注册 RateLimitService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, time.Minute, 1000)                       // 注册 RateLimitService
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc)                            // 注册 AuthHandler
@@ -84,7 +82,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -142,6 +140,13 @@ func main() {
 			follow.POST("", FollowHdl.Follow)     // POST /api/v1/users/:id/follow 		关注
 			follow.DELETE("", FollowHdl.UnFollow) // DELETE /api/v1/users/:id/follow 	取关
 			follow.GET("", FollowHdl.IfFollow)    // GET /api/v1/users/:id/follow 		是否关注
+		}
+
+		// 私信模块
+		messages := users.Group("/:id/messages")
+		messages.Use(AuthRequiredMdl)
+		{
+			messages.GET("") // GET /api/v1/users/:id/messages
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
+	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 )
 
@@ -21,8 +22,9 @@ func InitSmoothExit() {
 		slog.Info("signal " + s.String() + " has come, start exiting ...")
 
 		// 退出前具体要做的工作
-		infraMySQL.Close() // 这里以关闭数据库连接为例
+		infraMySQL.Close()
 		infraRedis.Close()
+		infraRabbitMQ.Close()
 
 		slog.Info("all task has finished")
 

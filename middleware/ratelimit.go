@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/service/ratelimit"
+	"github.com/yzletter/go-postery/service"
 )
 
 const RateLimitPrefix = "ip-limit"
 
-func RateLimitMiddleware(rateLimitService *ratelimit.RateLimitService) gin.HandlerFunc {
+func RateLimitMiddleware(rateLimitService *service.RateLimitService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 传入 Redis 的前缀和当前 IP
 		limited, err := rateLimitService.Limit(ctx, RateLimitPrefix, ctx.ClientIP())
