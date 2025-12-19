@@ -14,16 +14,16 @@ import (
 )
 
 type PostHandler struct {
-	PostService service.PostService
-	UserService service.UserService
-	TagSvc      service.TagService
+	postSvc service.PostService
+	userSvc service.UserService
+	tagSvc  service.TagService
 }
 
 func NewPostHandler(postService service.PostService, userService service.UserService, tagSvc service.TagService) *PostHandler {
 	return &PostHandler{
-		PostService: postService,
-		UserService: userService,
-		TagSvc:      tagSvc,
+		postSvc: postService,
+		userSvc: userService,
+		tagSvc:  tagSvc,
 	}
 }
 
@@ -39,14 +39,14 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs, err := hdl.PostService.ListByPage(ctx, pageNo, pageSize)
+	total, postDTOs, err := hdl.postSvc.ListByPage(ctx, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	for k := range postDTOs {
-		res, err := hdl.TagSvc.FindTagsByPostID(ctx, postDTOs[k].ID)
+		res, err := hdl.tagSvc.FindTagsByPostID(ctx, postDTOs[k].ID)
 		if err != nil {
 			continue
 		}
@@ -79,14 +79,14 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs, err := hdl.PostService.ListByPageAndTag(ctx, name, pageNo, pageSize)
+	total, postDTOs, err := hdl.postSvc.ListByPageAndTag(ctx, name, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	for k := range postDTOs {
-		res, err := hdl.TagSvc.FindTagsByPostID(ctx, postDTOs[k].ID)
+		res, err := hdl.tagSvc.FindTagsByPostID(ctx, postDTOs[k].ID)
 		if err != nil {
 			continue
 		}
@@ -116,13 +116,13 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	postDTO, err := hdl.PostService.GetDetailById(ctx, pid, true)
+	postDTO, err := hdl.postSvc.GetDetailById(ctx, pid, true)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	postDTO.Tags, err = hdl.TagSvc.FindTagsByPostID(ctx, postDTO.ID)
+	postDTO.Tags, err = hdl.tagSvc.FindTagsByPostID(ctx, postDTO.ID)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -150,14 +150,14 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.PostService.Create(ctx, uid, createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.postSvc.Create(ctx, uid, createRequest.Title, createRequest.Content)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	// 建立标签
-	err = hdl.TagSvc.Bind(ctx, postDTO.ID, createRequest.Tags)
+	err = hdl.tagSvc.Bind(ctx, postDTO.ID, createRequest.Tags)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -183,7 +183,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 进行删除
-	err = hdl.PostService.Delete(ctx, pid, uid)
+	err = hdl.postSvc.Delete(ctx, pid, uid)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -219,7 +219,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 修改
-	err = hdl.PostService.Update(ctx, pid, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
+	err = hdl.postSvc.Update(ctx, pid, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -246,7 +246,7 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	ok := hdl.PostService.Belong(ctx, pid, uid)
+	ok := hdl.postSvc.Belong(ctx, pid, uid)
 	if !ok {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
@@ -273,7 +273,7 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 		return
 	}
 
-	total, postDTOs, err := hdl.PostService.ListByPageAndUid(ctx, uid, pageNo, pageSize)
+	total, postDTOs, err := hdl.postSvc.ListByPageAndUid(ctx, uid, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -304,7 +304,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.PostService.Like(ctx, pid, uid)
+	err = hdl.postSvc.Like(ctx, pid, uid)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -328,7 +328,7 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.PostService.Unlike(ctx, pid, uid)
+	err = hdl.postSvc.Unlike(ctx, pid, uid)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -352,7 +352,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 		return
 	}
 
-	ok, err := hdl.PostService.IfLike(ctx, pid, uid)
+	ok, err := hdl.postSvc.IfLike(ctx, pid, uid)
 	if err != nil {
 		response.Error(ctx, err)
 		return

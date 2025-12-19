@@ -14,11 +14,11 @@ import (
 )
 
 type AuthHandler struct {
-	AuthSvc service.AuthService
+	authSvc service.AuthService
 }
 
 func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
-	return &AuthHandler{AuthSvc: authSvc}
+	return &AuthHandler{authSvc: authSvc}
 }
 
 // Register 用户注册 Handler
@@ -34,14 +34,14 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 	}
 
 	// 注册用户
-	userBriefDTO, err := hdl.AuthSvc.Register(ctx, registerReq.Name, registerReq.Email, registerReq.PassWord)
+	userBriefDTO, err := hdl.authSvc.Register(ctx, registerReq.Name, registerReq.Email, registerReq.PassWord)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	// 根据 UserID 签发双 Token
-	accessToken, refreshToken, err := hdl.AuthSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -68,14 +68,14 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	userBriefDTO, err := hdl.AuthSvc.Login(ctx, loginReq.Name, loginReq.PassWord)
+	userBriefDTO, err := hdl.authSvc.Login(ctx, loginReq.Name, loginReq.PassWord)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	// 根据 UserID 签发双 Token
-	accessToken, refreshToken, err := hdl.AuthSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -105,7 +105,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)
 
 	// 服务端清理双 Token
-	if err := hdl.AuthSvc.ClearTokens(ctx, accessToken, refreshToken); err != nil {
+	if err := hdl.authSvc.ClearTokens(ctx, accessToken, refreshToken); err != nil {
 		response.Error(ctx, err)
 		return
 	}

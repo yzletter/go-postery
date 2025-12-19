@@ -63,10 +63,10 @@ func main() {
 
 	// Service 层
 	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient) // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                          // 注册 UserService
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)             // 注册 PostService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                          // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)             // 注册 postSvc
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                          // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 CommentService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
 	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, time.Minute, 1000)                       // 注册 RateLimitService

@@ -14,13 +14,13 @@ import (
 )
 
 type UserHandler struct {
-	UserService service.UserService
+	userSvc service.UserService
 }
 
 // NewUserHandler 构造函数
 func NewUserHandler(userService service.UserService) *UserHandler {
 	return &UserHandler{
-		UserService: userService,
+		userSvc: userService,
 	}
 }
 
@@ -43,7 +43,7 @@ func (hdl *UserHandler) ModifyPass(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.UserService.UpdatePassword(ctx, uid, modifyPassReq.OldPass, modifyPassReq.NewPass)
+	err = hdl.userSvc.UpdatePassword(ctx, uid, modifyPassReq.OldPass, modifyPassReq.NewPass)
 	if err != nil {
 		// 密码更改失败
 		response.Error(ctx, err)
@@ -61,7 +61,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 		return
 	}
 
-	userDetailDTO, err := hdl.UserService.GetDetailById(ctx, uid)
+	userDetailDTO, err := hdl.userSvc.GetDetailById(ctx, uid)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -88,7 +88,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.UserService.UpdateProfile(ctx, uid, modifyProfileReq)
+	err = hdl.userSvc.UpdateProfile(ctx, uid, modifyProfileReq)
 	if err != nil {
 		response.Error(ctx, err)
 		return

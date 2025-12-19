@@ -11,14 +11,14 @@ import (
 )
 
 type FollowHandler struct {
-	FollowSvc service.FollowService
-	UserSvc   service.UserService
+	followSvc service.FollowService
+	userSvc   service.UserService
 }
 
 func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService) *FollowHandler {
 	return &FollowHandler{
-		FollowSvc: followSvc,
-		UserSvc:   userSvc,
+		followSvc: followSvc,
+		userSvc:   userSvc,
 	}
 }
 
@@ -38,7 +38,7 @@ func (hdl *FollowHandler) Follow(ctx *gin.Context) {
 	}
 
 	// 关注
-	err = hdl.FollowSvc.Follow(ctx, uid, id)
+	err = hdl.followSvc.Follow(ctx, uid, id)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -63,7 +63,7 @@ func (hdl *FollowHandler) UnFollow(ctx *gin.Context) {
 	}
 
 	// 取消关注
-	err = hdl.FollowSvc.UnFollow(ctx, uid, id)
+	err = hdl.followSvc.UnFollow(ctx, uid, id)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -87,7 +87,7 @@ func (hdl *FollowHandler) IfFollow(ctx *gin.Context) {
 		return
 	}
 
-	res, err := hdl.FollowSvc.IfFollow(ctx, uid, id)
+	res, err := hdl.followSvc.IfFollow(ctx, uid, id)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -112,7 +112,7 @@ func (hdl *FollowHandler) ListFollowers(ctx *gin.Context) {
 		return
 	}
 
-	total, followerDTOs, err := hdl.FollowSvc.ListFollowersByPage(ctx, uid, pageNo, pageSize)
+	total, followerDTOs, err := hdl.followSvc.ListFollowersByPage(ctx, uid, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -143,7 +143,7 @@ func (hdl *FollowHandler) ListFollowees(ctx *gin.Context) {
 		return
 	}
 
-	total, followerDTOs, err := hdl.FollowSvc.ListFolloweesByPage(ctx, uid, pageNo, pageSize)
+	total, followerDTOs, err := hdl.followSvc.ListFolloweesByPage(ctx, uid, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return

@@ -13,16 +13,16 @@ import (
 )
 
 type CommentHandler struct {
-	CommentService service.CommentService
-	UserService    service.UserService
-	PostService    service.PostService
+	commentSvc service.CommentService
+	userSvc    service.UserService
+	postSvc    service.PostService
 }
 
 func NewCommentHandler(commentService service.CommentService, userService service.UserService, postService service.PostService) *CommentHandler {
 	return &CommentHandler{
-		CommentService: commentService,
-		UserService:    userService,
-		PostService:    postService,
+		commentSvc: commentService,
+		userSvc:    userService,
+		postSvc:    postService,
 	}
 }
 
@@ -51,7 +51,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	}
 
 	// 调用 service 层创建评论
-	commentDTO, err := hdl.CommentService.Create(ctx, pid, uid, createReq.ParentID, createReq.ReplyID, createReq.Content)
+	commentDTO, err := hdl.commentSvc.Create(ctx, pid, uid, createReq.ParentID, createReq.ReplyID, createReq.Content)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -83,7 +83,7 @@ func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 调用 Service 层
-	err = hdl.CommentService.Delete(ctx, uid, cid)
+	err = hdl.commentSvc.Delete(ctx, uid, cid)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -107,7 +107,7 @@ func (hdl *CommentHandler) ListByPage(ctx *gin.Context) {
 		return
 	}
 
-	total, commentDTOs, err := hdl.CommentService.List(ctx, pid, pageNo, pageSize)
+	total, commentDTOs, err := hdl.commentSvc.List(ctx, pid, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -147,7 +147,7 @@ func (hdl *CommentHandler) ListReplies(ctx *gin.Context) {
 		return
 	}
 
-	total, commentDTOs, err := hdl.CommentService.ListReplies(ctx, cid, pageNo, pageSize)
+	total, commentDTOs, err := hdl.commentSvc.ListReplies(ctx, cid, pageNo, pageSize)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -178,7 +178,7 @@ func (hdl *CommentHandler) CheckAuth(ctx *gin.Context) {
 	}
 
 	// 查询是否属于
-	ok := hdl.CommentService.CheckAuth(ctx, cid, uid)
+	ok := hdl.commentSvc.CheckAuth(ctx, cid, uid)
 	if !ok {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
