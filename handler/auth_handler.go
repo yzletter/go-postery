@@ -14,11 +14,15 @@ import (
 )
 
 type AuthHandler struct {
-	authSvc service.AuthService
+	authSvc    service.AuthService
+	sessionSvc service.SessionService
 }
 
-func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
-	return &AuthHandler{authSvc: authSvc}
+func NewAuthHandler(authSvc service.AuthService, sessionSvc service.SessionService) *AuthHandler {
+	return &AuthHandler{
+		authSvc:    authSvc,
+		sessionSvc: sessionSvc,
+	}
 }
 
 // Register 用户注册 Handler
@@ -37,6 +41,13 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 	userBriefDTO, err := hdl.authSvc.Register(ctx, registerReq.Name, registerReq.Email, registerReq.PassWord)
 	if err != nil {
 		response.Error(ctx, err)
+		return
+	}
+
+	// 注册私信功能
+	err = hdl.sessionSvc.Register(ctx, userBriefDTO.ID)
+	if err != nil {
+		response.Error(ctx, errno.ErrServerInternal)
 		return
 	}
 
