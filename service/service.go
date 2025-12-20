@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/gorilla/websocket"
+	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/dto/post"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
@@ -71,5 +71,6 @@ type SessionService interface {
 	ListByUid(ctx context.Context, uid int64) ([]sessiondto.DTO, error)
 	GetSession(ctx context.Context, uid, targetID int64) (sessiondto.DTO, error)
 	Register(ctx context.Context, uid int64) error
-	Message(ctx context.Context, conn *websocket.Conn, uid, targetID int64) error
+	//Message(ctx context.Context, conn *websocket.Conn, uid, targetID int64) error
+	Message(ctx *gin.Context, uid, targetID int64) error
 }

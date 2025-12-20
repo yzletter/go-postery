@@ -7,7 +7,8 @@ import (
 )
 
 type DTO struct {
-	ID              int64  `json:"id,string"`
+	//ID              int64  `json:"id,string"`
+	SessionID       int64  `json:"session_id,string"`
 	TargetID        int64  `json:"target_id"`
 	TargetName      string `json:"target_name"`
 	TargetAvatar    string `json:"target_avatar"`
@@ -19,7 +20,8 @@ type DTO struct {
 
 func ToDTO(session *model.Session, user *model.User) DTO {
 	return DTO{
-		ID:              session.SessionID,
+		//ID:              session.ID,
+		SessionID:       session.SessionID,
 		TargetID:        session.TargetID,
 		TargetName:      user.Username,
 		TargetAvatar:    user.Avatar,

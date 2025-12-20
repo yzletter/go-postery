@@ -25,9 +25,9 @@ func (repo *messageRepository) Create(ctx context.Context, message *model.Messag
 	return nil
 }
 
-func (repo *messageRepository) GetByID(ctx context.Context, id, targetID int64) ([]*model.Message, error) {
+func (repo *messageRepository) GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error) {
 	var empty []*model.Message
-	messages, err := repo.dao.GetByID(ctx, id, targetID)
+	messages, err := repo.dao.GetByIDAndTargetID(ctx, id, targetID)
 	if err != nil {
 		return empty, toRepositoryErr(err)
 	}

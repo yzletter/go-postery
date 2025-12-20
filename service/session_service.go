@@ -6,21 +6,35 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
+	messagedto "github.com/yzletter/go-postery/dto/message"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/utils/response"
 )
 
 var (
 	pongWait   = 5 * time.Second // 等待 pong 的超时时间
 	pingPeriod = 3 * time.Second // 发送 ping 的周期，必须短于 pongWait
 )
+
+// HTTP 升级器
+var upgrader = websocket.Upgrader{
+	HandshakeTimeout: 10 * time.Second,
+	ReadBufferSize:   10000,
+	WriteBufferSize:  10000,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 type sessionService struct {
 	sessionRepo repository.SessionRepository
@@ -115,11 +129,21 @@ func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiond
 	return sessionDTOs, nil
 }
 
-func (svc *sessionService) Message(ctx context.Context, conn *websocket.Conn, uid, targetID int64) error {
-	buffer := make(chan model.Message, 100)
+func (svc *sessionService) Message(ctx *gin.Context, uid, targetID int64) error {
+	// 升级 HTTP
+	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		slog.Error("Upgrade HTTP Failed", "error", err)
+		response.Error(ctx, errno.ErrServerInternal)
+		return err
+	}
 
-	// 从 WS 中读取消息写给 MQ
-	go svc.send(ctx, conn)
+	// 心跳保持
+	go heartBeat(conn)
+
+	defer conn.Close()
+
+	buffer := make(chan model.Message, 100)
 
 	// 消费 MQ 中消息写给 buffer
 	go func() {
@@ -133,9 +157,53 @@ func (svc *sessionService) Message(ctx context.Context, conn *websocket.Conn, ui
 	go func() {
 		err := svc.receive(ctx, conn, uid, targetID, buffer)
 		if err != nil {
-			slog.Error("Receive Failed", "error", err)
+			slog.Error("Consume Failed", "error", err)
 		}
 	}()
+
+	// 从 WS 中读取消息写给 MQ
+	for {
+		// 从 Websocket 中读取消息
+		_, body, err := conn.ReadMessage() // 如果对方主动断开连接或超时，该行会报错，for 循环会退出
+		if err != nil {
+			break
+		}
+
+		var message model.Message
+		err = json.Unmarshal(body, &message)
+		if err != nil {
+
+			// BadRequest
+			continue
+		}
+
+		// 过滤
+		ok := intercept(message)
+		if !ok {
+			continue
+		}
+
+		// 落库
+		message.ID = svc.idGen.NextID() // 	补全 ID
+
+		err = svc.messageRepo.Create(ctx, &message)
+		if err != nil {
+			slog.Error("Message Store Failed", "message", message)
+			continue
+		}
+
+		// 发给 MQ
+		err = produce(ctx, svc.mqConn, message, message.MessageTo)
+		if err != nil {
+			slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
+		}
+
+		err = produce(ctx, svc.mqConn, message, message.MessageFrom)
+		if err != nil {
+			slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
+
+		}
+	}
 
 	return nil
 }
@@ -199,62 +267,7 @@ func (svc *sessionService) Register(ctx context.Context, uid int64) error {
 	return nil
 }
 
-func (svc *sessionService) send(ctx context.Context, conn *websocket.Conn) {
-	defer func() {
-		err := conn.Close()
-		if err != nil {
-			slog.Error("Websocket Connection Close Failed", "error", err)
-		}
-	}()
-
-	for {
-		// 从 Websocket 中读取消息
-		_, body, err := conn.ReadMessage() // 如果对方主动断开连接或超时，该行会报错，for 循环会退出
-		if err != nil {
-			break
-		}
-
-		var message model.Message
-		err = json.Unmarshal(body, &message)
-		if err != nil {
-
-			// BadRequest
-			continue
-		}
-
-		// 过滤
-		ok := intercept(message)
-		if !ok {
-			continue
-		}
-
-		// 落库
-		message.ID = svc.idGen.NextID() // 	补全 ID
-
-		err = svc.messageRepo.Create(ctx, &message)
-		if err != nil {
-			slog.Error("Message Store Failed", "message", message)
-			continue
-		}
-
-		// 发给 MQ
-		err = produce(ctx, svc.mqConn, message, message.MessageTo)
-		if err != nil {
-			slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
-		}
-
-		err = produce(ctx, svc.mqConn, message, message.MessageFrom)
-		if err != nil {
-			slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
-
-		}
-	}
-}
-
 func (svc *sessionService) receive(ctx context.Context, conn *websocket.Conn, id int64, targetID int64, buffer chan model.Message) error {
-	// 心跳保持
-	go heartBeat(conn)
-
 	defer func() {
 		err := conn.Close() // 错误忽略
 		if err != nil {
@@ -264,26 +277,27 @@ func (svc *sessionService) receive(ctx context.Context, conn *websocket.Conn, id
 	}()
 
 	// 加载历史消息
-	msgs, err := svc.messageRepo.GetByID(ctx, id, targetID)
+	msgs, err := svc.messageRepo.GetByIDAndTargetID(ctx, id, targetID)
 	if err != nil {
 		return errno.ErrServerInternal
 	}
 
 	// 哈希表
-	Set := make(map[model.Message]struct{})
+	Set := make(map[messagedto.DTO]struct{})
 	for _, msg := range msgs {
-		Set[*msg] = struct{}{}
-		conn.WriteJSON(msg) // 打给前端
+		msgDTO := messagedto.ToDTO(msg)
+		Set[msgDTO] = struct{}{}
+		conn.WriteJSON(msgDTO) // 打给前端
 	}
 
 	// 从 buffer 中读取数据
 	for {
 		msg := <-buffer
-
+		msgDTO := messagedto.ToDTO(&msg)
 		// 判断是否加载过
-		if _, exits := Set[msg]; !exits {
-			Set[msg] = struct{}{}
-			conn.WriteJSON(msg) // 打给前端
+		if _, exits := Set[msgDTO]; !exits {
+			Set[msgDTO] = struct{}{}
+			conn.WriteJSON(msgDTO) // 打给前端
 		}
 	}
 }
@@ -307,7 +321,6 @@ func consume(ctx context.Context, conn *amqp.Connection, id int64, targetID int6
 	// 开始消费队列
 	deliverCh, _ := ch.ConsumeWithContext(ctx, queueName, "", false, false, false, false, nil)
 	go func() {
-
 		for deliver := range deliverCh {
 			var message model.Message
 			_ = json.Unmarshal(deliver.Body, &message)
@@ -328,6 +341,7 @@ func produce(ctx context.Context, conn *amqp.Connection, message model.Message, 
 	if err != nil {
 		return err
 	}
+
 	msg, _ := json.Marshal(message)
 
 	exchangeName := fmt.Sprintf("%d_exchange", id)

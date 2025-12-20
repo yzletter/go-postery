@@ -130,10 +130,17 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 
 // ExtractToken 从上下文取出 tokenString
 func ExtractToken(ctx *gin.Context) string {
+	//	HTTP 从 Header 中拿 token
 	headerString := ctx.GetHeader("Authorization")
 	headerStringSeg := strings.SplitN(headerString, " ", 2)
-	if len(headerStringSeg) != 2 {
-		return ""
+	if len(headerStringSeg) == 2 {
+		return headerStringSeg[1]
 	}
-	return headerStringSeg[1]
+
+	// HTTP 从 Cookie 中拿 token
+	if token, err := ctx.Cookie(conf.AccessTokenInCookie); err == nil {
+		return token
+	}
+
+	return ""
 }

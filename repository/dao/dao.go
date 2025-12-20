@@ -63,7 +63,7 @@ type TagDAO interface {
 
 type MessageDAO interface {
 	Create(ctx context.Context, message *model.Message) error
-	GetByID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
+	GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
 }
 
 type SessionDAO interface {

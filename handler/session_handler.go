@@ -1,28 +1,14 @@
 package handler
 
 import (
-	"log/slog"
-	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
 )
-
-// HTTP 升级器
-var upgrader = websocket.Upgrader{
-	HandshakeTimeout: 10 * time.Second,
-	ReadBufferSize:   10000,
-	WriteBufferSize:  10000,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
 
 type SessionHandler struct {
 	sessionSvc service.SessionService
@@ -114,21 +100,9 @@ func (hdl *SessionHandler) MessageToUser(ctx *gin.Context) {
 		return
 	}
 
-	// 升级 HTTP
-	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	if err != nil {
-		slog.Error("Upgrade HTTP Failed", "error", err)
-		response.Error(ctx, errno.ErrServerInternal)
-		return
-	}
+	hdl.sessionSvc.Message(ctx, uid, targetID)
+}
 
-	defer conn.Close()
-
-	err = hdl.sessionSvc.Message(ctx, conn, uid, targetID)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	response.Success(ctx, "", nil)
+// 获取历史消息
+func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 }

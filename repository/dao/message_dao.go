@@ -24,12 +24,12 @@ func (dao *gormMessageDAO) Create(ctx context.Context, message *model.Message) e
 	return nil
 }
 
-func (dao *gormMessageDAO) GetByID(ctx context.Context, id, targetID int64) ([]*model.Message, error) {
+func (dao *gormMessageDAO) GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error) {
 	var messages []*model.Message
 
 	result := dao.db.WithContext(ctx).Model(&model.Message{}).
 		Where("message_from = ? AND message_to = ? AND deleted_at IS NULL", id, targetID).
-		Or("message_from = ? AND message_to = ? AND deleted_at IS NULL", targetID, id).Order("created_at ASEC").Find(&messages)
+		Or("message_from = ? AND message_to = ? AND deleted_at IS NULL", targetID, id).Order("created_at DESC").Find(&messages)
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(FindFailed, "id", id, "target_id", targetID, "error", result.Error)
