@@ -60,8 +60,12 @@ type FollowRepository interface {
 }
 
 type SessionRepository interface {
+	Create(ctx context.Context, session *model.Session) error
 	ListByUid(ctx context.Context, uid int64) ([]*model.Session, error)
+	GetByUidAndTargetID(ctx context.Context, uid, targetID int64) (*model.Session, error)
 }
 
 type MessageRepository interface {
+	Create(ctx context.Context, message *model.Message) error
+	GetByID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
 }

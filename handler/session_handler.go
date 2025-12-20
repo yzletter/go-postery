@@ -54,6 +54,32 @@ func (hdl *SessionHandler) List(ctx *gin.Context) {
 	response.Success(ctx, "获取会话列表成功", sessionDTOs)
 }
 
+func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
+	// 取当前登录用户 uid
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+	// 取对方 target_id
+	targetID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 获取会话
+	sessionDTO, err := hdl.sessionSvc.GetSession(ctx, uid, targetID)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 返回
+	response.Success(ctx, "获取会话成功", sessionDTO)
+}
+
 func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 	// 取当前登录用户 uid
 	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)

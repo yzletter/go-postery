@@ -173,10 +173,11 @@ CREATE TABLE IF NOT EXISTS messages
 ) DEFAULT CHARSET = utf8mb4 COMMENT '消息记录表';
 
 # Session 表
-CREATE TABLE IF NOT EXISTS sessions
+CREATE TABLE IF NOT EXISTS session
 (
     id              BIGINT   NOT NULL COMMENT 'ID',
     session_id      BIGINT   NOT NULL COMMENT '会话 ID',
+
     user_id         BIGINT   NOT NULL COMMENT '己方 ID',
     target_id       BIGINT   NOT NULL COMMENT '对方 ID',
     target_type     TINYINT  NOT NULL COMMENT '会话类型 1 表示 私聊 2 表示 群聊',

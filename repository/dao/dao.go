@@ -62,8 +62,12 @@ type TagDAO interface {
 }
 
 type MessageDAO interface {
+	Create(ctx context.Context, message *model.Message) error
+	GetByID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
 }
 
 type SessionDAO interface {
+	Create(ctx context.Context, session *model.Session) error
 	GetByUid(ctx context.Context, uid int64) ([]*model.Session, error)
+	GetByUidAndTargetID(ctx context.Context, uid, targetID int64) (*model.Session, error)
 }

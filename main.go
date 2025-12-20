@@ -79,7 +79,7 @@ func main() {
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                          // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ)
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -93,7 +93,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -152,12 +152,6 @@ func main() {
 			follow.DELETE("", FollowHdl.UnFollow) // DELETE /api/v1/users/:id/follow 	取关
 			follow.GET("", FollowHdl.IfFollow)    // GET /api/v1/users/:id/follow 		是否关注
 		}
-
-		sessions := users.Group("/:id/sessions")
-		sessions.Use(AuthRequiredMdl)
-		{
-			sessions.GET("", SessionHdl.MessageToUser) // GET /api/v1/users/:id/message 		私信
-		}
 	}
 
 	// 帖子模块
@@ -187,9 +181,15 @@ func main() {
 	sessions := v1.Group("/sessions")
 	sessions.Use(AuthRequiredMdl)
 	{
-		sessions.GET("", SessionHdl.List)          // GET /api/v1/sessions			获取当前登录用户会话列表
-		sessions.GET("/:id")                       // GET /api/v1/sessions/:id		打开会话，加载消息，建立连接
-		sessions.DELETE("/:id", SessionHdl.Delete) // DELETE /api/v1/sessions/:id		删除当前会话
+		sessions.GET("", SessionHdl.List)           // GET /api/v1/sessions			获取当前登录用户会话列表
+		sessions.GET("/:id", SessionHdl.GetSession) // GET /api/v1/sessions/:id		获取会话
+		//sessions.GET("/:id/messages", SessionHdl.GetSession) // GET /api/v1/sessions/:id		获取历史记录
+		//sessions.DELETE("/:id", SessionHdl.Delete)           // DELETE /api/v1/sessions/:id	删除当前会话
+
+		//sessions.GET("ws", SessionHdl.MessageToUser) // GET /api/v1/sessions/ws		建立 WS 连接
+
+		sessions.GET("/:id/ws", SessionHdl.MessageToUser) // GET /api/v1/sessions/:id/ws		获取历史消息
+
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"time"
 
@@ -28,6 +28,54 @@ type sessionService struct {
 	userRepo    repository.UserRepository
 	mqConn      *amqp.Connection
 	idGen       ports.IDGenerator
+}
+
+func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) (sessiondto.DTO, error) {
+	var empty sessiondto.DTO
+	user, err := svc.userRepo.GetByID(ctx, targetID)
+	if err != nil {
+		user = &model.User{}
+	}
+
+	session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, uid, targetID)
+	if err != nil {
+		// 系统层面错误
+		if !errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrServerInternal
+		}
+
+		// 没找到，新建会话
+		ssid := svc.idGen.NextID()
+		newSession1 := &model.Session{
+			ID:         svc.idGen.NextID(),
+			SessionID:  ssid,
+			UserID:     uid,
+			TargetID:   targetID,
+			TargetType: 1,
+		}
+
+		newSession2 := &model.Session{
+			ID:         svc.idGen.NextID(),
+			SessionID:  ssid,
+			UserID:     targetID,
+			TargetID:   uid,
+			TargetType: 1,
+		}
+
+		err = svc.sessionRepo.Create(ctx, newSession1)
+		if err != nil {
+			return empty, errno.ErrServerInternal
+		}
+
+		err = svc.sessionRepo.Create(ctx, newSession2)
+		if err != nil {
+			return empty, errno.ErrServerInternal
+		}
+
+		return sessiondto.ToDTO(newSession1, user), nil
+	}
+
+	return sessiondto.ToDTO(session, user), nil
 }
 
 func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository,
@@ -68,11 +116,6 @@ func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiond
 }
 
 func (svc *sessionService) Message(ctx context.Context, conn *websocket.Conn, uid, targetID int64) error {
-	// SessionID
-
-	// 心跳保持
-	go heartBeat(conn)
-
 	buffer := make(chan model.Message, 100)
 
 	// 从 WS 中读取消息写给 MQ
@@ -80,7 +123,7 @@ func (svc *sessionService) Message(ctx context.Context, conn *websocket.Conn, ui
 
 	// 消费 MQ 中消息写给 buffer
 	go func() {
-		err := svc.consume(ctx, uid, buffer)
+		err := consume(ctx, svc.mqConn, uid, targetID, buffer)
 		if err != nil {
 			slog.Error("Consume Failed", "error", err)
 		}
@@ -90,7 +133,7 @@ func (svc *sessionService) Message(ctx context.Context, conn *websocket.Conn, ui
 	go func() {
 		err := svc.receive(ctx, conn, uid, targetID, buffer)
 		if err != nil {
-			slog.Error("Consume Failed", "error", err)
+			slog.Error("Receive Failed", "error", err)
 		}
 	}()
 
@@ -186,16 +229,9 @@ func (svc *sessionService) send(ctx context.Context, conn *websocket.Conn) {
 		}
 
 		// 落库
-		m := &model.Message{
-			ID:          svc.idGen.NextID(),
-			SessionID:   0,
-			SessionType: 1, // 私聊
-			MessageFrom: message.MessageFrom,
-			MessageTo:   message.MessageTo,
-			Content:     message.Content,
-		}
+		message.ID = svc.idGen.NextID() // 	补全 ID
 
-		err = svc.messageRepo.Create(ctx, m)
+		err = svc.messageRepo.Create(ctx, &message)
 		if err != nil {
 			slog.Error("Message Store Failed", "message", message)
 			continue
@@ -215,39 +251,10 @@ func (svc *sessionService) send(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (svc *sessionService) consume(ctx context.Context, id int64, buffer chan model.Message) error {
-	defer func() {
-		if err := recover(); err != nil {
-			slog.Error("Receive Failed", "error", err)
-		}
-	}()
-
-	// 消费的队列名
-	queueName := fmt.Sprintf("%d_computer", id)
-
-	ch, err := svc.mqConn.Channel()
-	if err != nil {
-		return err
-	}
-	// 开始消费队列
-	deliverCh, _ := ch.ConsumeWithContext(ctx, queueName, "", false, false, false, false, nil)
-	go func() {
-
-		for deliver := range deliverCh {
-			var message model.Message
-			_ = json.Unmarshal(deliver.Body, &message)
-
-			if id == message.MessageFrom || id == message.MessageTo { // 该用户是消息的接收方或发送方
-				buffer <- message
-				deliver.Ack(false) // ACK
-			}
-		}
-	}()
-
-	return nil
-}
-
 func (svc *sessionService) receive(ctx context.Context, conn *websocket.Conn, id int64, targetID int64, buffer chan model.Message) error {
+	// 心跳保持
+	go heartBeat(conn)
+
 	defer func() {
 		err := conn.Close() // 错误忽略
 		if err != nil {
@@ -265,7 +272,7 @@ func (svc *sessionService) receive(ctx context.Context, conn *websocket.Conn, id
 	// 哈希表
 	Set := make(map[model.Message]struct{})
 	for _, msg := range msgs {
-		Set[msg] = struct{}{}
+		Set[*msg] = struct{}{}
 		conn.WriteJSON(msg) // 打给前端
 	}
 
@@ -281,6 +288,41 @@ func (svc *sessionService) receive(ctx context.Context, conn *websocket.Conn, id
 	}
 }
 
+// 消费对应 MQ 的 Queue
+func consume(ctx context.Context, conn *amqp.Connection, id int64, targetID int64, buffer chan model.Message) error {
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("Receive Failed", "error", err)
+		}
+	}()
+
+	// 消费的队列名
+	queueName := fmt.Sprintf("%d_computer", id)
+
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+
+	// 开始消费队列
+	deliverCh, _ := ch.ConsumeWithContext(ctx, queueName, "", false, false, false, false, nil)
+	go func() {
+
+		for deliver := range deliverCh {
+			var message model.Message
+			_ = json.Unmarshal(deliver.Body, &message)
+
+			if targetID == message.MessageFrom || targetID == message.MessageTo {
+				buffer <- message
+				deliver.Ack(false) // ACK
+			}
+		}
+	}()
+
+	return nil
+}
+
+// 将消息发给 MQ 的 Exchange
 func produce(ctx context.Context, conn *amqp.Connection, message model.Message, id int64) error {
 	ch, err := conn.Channel()
 	if err != nil {

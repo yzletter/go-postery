@@ -69,6 +69,7 @@ type FollowService interface {
 
 type SessionService interface {
 	ListByUid(ctx context.Context, uid int64) ([]sessiondto.DTO, error)
+	GetSession(ctx context.Context, uid, targetID int64) (sessiondto.DTO, error)
 	Register(ctx context.Context, uid int64) error
 	Message(ctx context.Context, conn *websocket.Conn, uid, targetID int64) error
 }
