@@ -359,3 +359,13 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 	}
 	response.Success(ctx, "", ok)
 }
+
+func (hdl *PostHandler) Top(ctx *gin.Context) {
+	postDTOs, err := hdl.postSvc.Top(ctx)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "获取热门帖子榜单成功", postDTOs)
+}

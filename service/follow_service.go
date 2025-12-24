@@ -12,11 +12,6 @@ import (
 	"github.com/yzletter/go-postery/service/ports"
 )
 
-var (
-	ErrDuplicatedFollow    = errors.New("重复关注")
-	ErrDuplicatedDisFollow = errors.New("重复取消关注")
-)
-
 type followService struct {
 	followRepo repository.FollowRepository
 	userRepo   repository.UserRepository

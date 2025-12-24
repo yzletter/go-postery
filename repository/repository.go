@@ -26,6 +26,8 @@ type PostRepository interface {
 	GetByUid(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Post, error)
 	GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []*model.Post, error)
 	GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []*model.Post, error)
+	ChangeScore(ctx context.Context, pid int64, delta int)
+	Top(ctx context.Context) ([]*model.Post, []float64, error)
 }
 
 type CommentRepository interface {

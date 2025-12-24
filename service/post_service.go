@@ -21,8 +21,7 @@ type postService struct {
 	idGen    ports.IDGenerator // 用于生成 ID
 }
 
-func NewPostService(
-	postRepo repository.PostRepository, userRepo repository.UserRepository,
+func NewPostService(postRepo repository.PostRepository, userRepo repository.UserRepository,
 	likeRepo repository.LikeRepository, tagRepo repository.TagRepository,
 	idGen ports.IDGenerator) PostService {
 	return &postService{
@@ -337,6 +336,7 @@ func (svc *postService) Like(ctx context.Context, pid, uid int64) error {
 		UserID: uid,
 		PostID: pid,
 	}
+
 	err = svc.likeRepo.Like(ctx, like)
 	if err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
@@ -346,6 +346,9 @@ func (svc *postService) Like(ctx context.Context, pid, uid int64) error {
 		// 系统内部错误
 		return errno.ErrServerInternal
 	}
+
+	// 修改分数
+	svc.postRepo.ChangeScore(ctx, pid, 432)
 
 	field := model.PostLikeCount
 	if err := svc.postRepo.UpdateCount(ctx, pid, field, 1); err != nil {
@@ -377,6 +380,9 @@ func (svc *postService) Unlike(ctx context.Context, pid, uid int64) error {
 		return errno.ErrServerInternal
 	}
 
+	// 修改分数
+	svc.postRepo.ChangeScore(ctx, pid, -432)
+
 	field := model.PostLikeCount
 	if err := svc.postRepo.UpdateCount(ctx, pid, field, -1); err != nil {
 		slog.Error("Update Like Count Failed", "error", err)
@@ -392,4 +398,21 @@ func (svc *postService) IfLike(ctx context.Context, pid, uid int64) (bool, error
 		return false, errno.ErrServerInternal
 	}
 	return ok, nil
+}
+
+func (svc *postService) Top(ctx context.Context) ([]postdto.TopDTO, error) {
+	var empty []postdto.TopDTO
+
+	posts, scores, err := svc.postRepo.Top(ctx)
+	if err != nil {
+		return empty, errno.ErrPostNotFound
+	}
+
+	var postDTOs []postdto.TopDTO
+	for k, post := range posts {
+		postDTO := postdto.ToTopDTO(post, scores[k])
+		postDTOs = append(postDTOs, postDTO)
+	}
+
+	return postDTOs, nil
 }

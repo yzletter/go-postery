@@ -46,3 +46,9 @@ func (f PostCntField) Column() (string, error) {
 		return "", errors.New("参数有误")
 	}
 }
+
+// Redis Key
+const (
+	KeyPostScore = "post:score"
+	KeyPostTime  = "post:time"
+)

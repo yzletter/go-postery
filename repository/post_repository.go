@@ -3,11 +3,14 @@ package repository
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
 )
+
+const OneWeekTimeSecs = 60 * 60 * 24 * 7
 
 type postRepository struct {
 	dao   dao.PostDAO
@@ -19,6 +22,7 @@ func NewPostRepository(postDao dao.PostDAO, postCache cache.PostCache) PostRepos
 }
 
 func (repo *postRepository) Create(ctx context.Context, post *model.Post) error {
+	// 创建文章
 	err := repo.dao.Create(ctx, post)
 	if err != nil {
 		return toRepositoryErr(err)
@@ -26,6 +30,11 @@ func (repo *postRepository) Create(ctx context.Context, post *model.Post) error 
 
 	// todo 写 Cache
 
+	// 初始化文章分数
+	err = repo.cache.SetScore(ctx, post.ID)
+	if err != nil {
+		return ErrServerInternal
+	}
 	return nil
 }
 
@@ -61,7 +70,7 @@ func (repo *postRepository) UpdateCount(ctx context.Context, id int64, field mod
 		if post != nil {
 			fields := []model.PostCntField{model.PostViewCount, model.PostCommentCount, model.PostLikeCount}
 			vals := []int{post.ViewCount, post.ViewCount, post.LikeCount}
-			repo.cache.SetKey(ctx, id, fields, vals)
+			repo.cache.SetInteractiveKey(ctx, id, fields, vals)
 		}
 	}
 
@@ -121,4 +130,46 @@ func (repo *postRepository) GetByPageAndTag(ctx context.Context, tid int64, page
 	}
 
 	return total, posts, nil
+}
+
+// ChangeScore 修改帖子分数
+func (repo *postRepository) ChangeScore(ctx context.Context, pid int64, delta int) {
+	// 查询是否在热度期内
+	value, err := repo.cache.CheckPostLikeTime(ctx, pid)
+	if err != nil {
+		slog.Error("Check Post Like Time Failed", "error", err)
+		return
+	}
+
+	// 过了热度期，热度不再波动
+	if float64(time.Now().Unix())-value > OneWeekTimeSecs {
+		return
+	}
+
+	err = repo.cache.ChangeScore(ctx, pid, delta)
+	if err != nil {
+		slog.Error("Change Post Score Failed", "error", err)
+		return
+	}
+}
+
+func (repo *postRepository) Top(ctx context.Context) ([]*model.Post, []float64, error) {
+	ids, scores, err := repo.cache.Top(ctx)
+	if err != nil {
+		return nil, nil, ErrServerInternal
+	}
+
+	var posts []*model.Post
+	for _, id := range ids {
+		post, err := repo.dao.GetByID(ctx, id)
+		if err != nil {
+			post = &model.Post{
+				ID:    0,
+				Title: "未知文章",
+			}
+		}
+		posts = append(posts, post)
+	}
+
+	return posts, scores, nil
 }

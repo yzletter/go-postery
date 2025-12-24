@@ -26,6 +26,12 @@ type BriefDTO struct {
 	Author    userdto.BriefDTO `json:"author"`
 }
 
+type TopDTO struct {
+	ID    int64   `json:"id,string"`
+	Title string  `json:"title"`
+	Score float64 `json:"score"`
+}
+
 func ToDetailDTO(post *model.Post, user *model.User) DetailDTO {
 	return DetailDTO{
 		ID:           post.ID,
@@ -46,5 +52,13 @@ func ToBriefDTO(post *model.Post, user *model.User) BriefDTO {
 		Title:     post.Title,
 		CreatedAt: post.CreatedAt.Format(time.RFC3339),
 		Author:    userdto.ToBriefDTO(user),
+	}
+}
+
+func ToTopDTO(post *model.Post, score float64) TopDTO {
+	return TopDTO{
+		ID:    post.ID,
+		Title: post.Title,
+		Score: score,
 	}
 }

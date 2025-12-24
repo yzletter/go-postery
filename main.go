@@ -98,7 +98,7 @@ func main() {
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true, // 是否允许携带 cookie 之类的用户认证信息
-		ExposeHeaders:    []string{"Content-Length", "Authorization", "x-jwt-token"},
+		ExposeHeaders:    []string{"Content-Length", "Authorization"},
 		MaxAge:           12 * time.Hour,
 	})
 
@@ -158,6 +158,7 @@ func main() {
 	posts := v1.Group("/posts")
 	{
 		posts.GET("", PostHdl.List)                             // POST /api/v1/posts?pageNo=1&pageSize=10				按页获取帖子列表
+		posts.GET("/top", PostHdl.Top)                          // POST /api/v1/posts/top								获取热门帖子榜单
 		posts.GET("/tags", PostHdl.ListByTagAndPage)            // POST /api/v1/posts/tags?pageNo=1&pageSize=10&tag=go 根据标签按页获取帖子列表
 		posts.GET("/:id", PostHdl.Detail)                       // GET /api/v1/posts/:id								获取帖子详情
 		posts.GET("/:id/comments", CommentHdl.ListByPage)       // GET /api/v1/posts/:id/comments?pageNo=1&pageSize=10	按页获取帖子评论
@@ -187,7 +188,6 @@ func main() {
 		//sessions.DELETE("/:id", SessionHdl.Delete)           // DELETE /api/v1/sessions/:id	删除当前会话
 
 		//sessions.GET("ws", SessionHdl.MessageToUser) // GET /api/v1/sessions/ws		建立 WS 连接
-
 		sessions.GET("/:id/ws", SessionHdl.MessageToUser) // GET /api/v1/sessions/:id/ws
 	}
 
