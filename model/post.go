@@ -1,8 +1,9 @@
 package model
 
 import (
-	"errors"
 	"time"
+
+	"github.com/yzletter/go-postery/errno"
 )
 
 // Post 定义数据库模型
@@ -43,7 +44,7 @@ func (f PostCntField) Column() (string, error) {
 	case PostLikeCount:
 		return "like_count", nil
 	default:
-		return "", errors.New("参数有误")
+		return "", errno.ErrInvalidParam
 	}
 }
 

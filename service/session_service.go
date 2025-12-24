@@ -390,3 +390,18 @@ func (svc *sessionService) Register(ctx context.Context, uid int64) error {
 
 	return nil
 }
+
+func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, uid int64, targetID int64, pageNo, pageSize int) (int, []messagedto.DTO, error) {
+	var empty []messagedto.DTO
+	total, messages, err := svc.messageRepo.GetByPage(ctx, uid, targetID, pageNo, pageSize)
+	if err != nil {
+		return 0, empty, errno.ErrServerInternal
+	}
+
+	var messageDTOs []messagedto.DTO
+	for _, message := range messages {
+		messageDTOs = append(messageDTOs, messagedto.ToDTO(message))
+	}
+
+	return total, messageDTOs, nil
+}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	commentdto "github.com/yzletter/go-postery/dto/comment"
+	messagedto "github.com/yzletter/go-postery/dto/message"
 	postdto "github.com/yzletter/go-postery/dto/post"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
@@ -73,4 +74,5 @@ type SessionService interface {
 	GetSession(ctx context.Context, uid, targetID int64) (sessiondto.DTO, error)
 	Register(ctx context.Context, uid int64) error
 	Message(ctx *gin.Context, uid, targetID int64) error
+	GetHistoryMessagesByPage(ctx context.Context, uid int64, targetID int64, pageNo, pageSize int) (int, []messagedto.DTO, error)
 }

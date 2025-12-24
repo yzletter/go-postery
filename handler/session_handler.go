@@ -105,4 +105,43 @@ func (hdl *SessionHandler) MessageToUser(ctx *gin.Context) {
 
 // 获取历史消息
 func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
+	// 取当前登录用户 uid
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+	// 取对方 target_id
+	targetID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 取 pageNo 和 pageSize
+	pageNo, err := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+	pageSize, err := strconv.Atoi(ctx.DefaultQuery("pageSize", "5"))
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	total, messageDTOs, err := hdl.sessionSvc.GetHistoryMessagesByPage(ctx, uid, targetID, pageNo, pageSize)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	hasMore := (pageNo-1)*pageSize < total
+
+	response.Success(ctx, "获取聊天记录成功", gin.H{
+		"total":    total,
+		"has_more": hasMore,
+		"messages": messageDTOs,
+	})
 }

@@ -70,4 +70,5 @@ type SessionRepository interface {
 type MessageRepository interface {
 	Create(ctx context.Context, message *model.Message) error
 	GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
+	GetByPage(ctx context.Context, id int64, targetID int64, pageNo, pageSize int) (int, []*model.Message, error)
 }

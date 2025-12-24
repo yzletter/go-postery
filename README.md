@@ -1,22 +1,22 @@
 # go-postery
-<div align="center">
-  <img src="imgs/logo.png" width="200"  alt=""/>
-</div>
+
+<p align="center">
+  <a href="https://github.com/w8t-io/WatchAlert"> 
+    <img src="imgs/logo.png" alt="cloud native monitoring" width="150" height="auto" /></a>
+</p>
+
+<p align="center">
+  <b>📖 Go-Postery —— 现代化论坛 Web 项目</b>
+</p>
+
 
 ## 简介
 
 用 Go 实现一个现代化论坛
 
-| ![首页.png](imgs/%E9%A6%96%E9%A1%B5.png) | ![帖子详情.png](imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)|
-|:--------------------------:|------------------------------|
-|    ![评论区.png](imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)    | ![发布帖子.png](imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png) |
-|   ![关注页面.png](imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)   | ![修改个人资料.png](imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png)         |
-| ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png) | ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)|
-
-
 ## 项目进度
 
-Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
+**Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua**
 
 - **功能：**通过**雪花算法**生成分布式ID；
   - **用户模块：** 注册、登录、个人主页、修改密码、修改个人资料；
@@ -33,6 +33,7 @@ Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
 
 ## 待开发
 
+- **用户头像**
 - **点赞：** 当前版本通过 Kafka 进行改造
 - **搜索：** 集成 Go-Searchery 手写分布式搜索引擎；
 - **私信：** 集成 Go-Chatery 即时通讯系统，利用 RabbitMQ；
@@ -41,5 +42,14 @@ Gin + Gorm + Mysql + Redis + Viper + Slog + Promethus + Grafana + Crontab + Lua
 - **微服务部署与上线**
 - **管理员后台**
 - **拉黑功能**
+- **判断在线状态，自动下线重登陆**
+
+## 项目演示
+
+| ![首页.png](imgs/%E9%A6%96%E9%A1%B5.png) | ![帖子详情.png](imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)|
+|:--------------------------:|------------------------------|
+|    ![评论区.png](imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)    | ![发布帖子.png](imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png) |
+|   ![关注页面.png](imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)   | ![修改个人资料.png](imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png)         |
+| ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png) | ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)|
 
 ## 设计文档
