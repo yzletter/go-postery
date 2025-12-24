@@ -72,51 +72,68 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			break
 		}
 
-		var message model.Message
-		err = json.Unmarshal(messageBody, &message)
+		var messageReq messagedto.Request
+		err = json.Unmarshal(messageBody, &messageReq)
 		if err != nil {
 			// BadRequest
 			continue
 		}
+		
+		if messageReq.Type == "read_ack" {
+			// 是 read_ack
+			uid := messageReq.UserID
+			sid := messageReq.SessionID
+			svc.sessionRepo.ClearUnread(ctx, uid, sid)
+		} else if messageReq.Type == "message" {
+			// 是消息
+			message := model.Message{
+				ID:          svc.idGen.NextID(),
+				SessionID:   messageReq.SessionID,
+				SessionType: messageReq.SessionType,
+				MessageFrom: messageReq.MessageFrom,
+				MessageTo:   messageReq.MessageTo,
+				Content:     messageReq.Content,
+			}
 
-		// 过滤消息
-		ok := intercept(message)
-		if !ok {
-			continue
-		}
+			// 过滤消息
+			ok := intercept(message)
+			if !ok {
+				continue
+			}
 
-		// 落库
-		message.ID = svc.idGen.NextID() // 	补全 ID
+			// 落库
+			message.ID = svc.idGen.NextID() // 	补全 ID
 
-		err = svc.messageRepo.Create(ctx, &message)
-		if err != nil {
-			slog.Error("Connect Store Failed", "message", message)
-			continue
-		}
+			err = svc.messageRepo.Create(ctx, &message)
+			if err != nil {
+				slog.Error("Connect Store Failed", "message", message)
+				continue
+			}
 
-		// 更新对方的会话信息
-		contentBrief := []rune(message.Content) // 最后一条消息的摘要
-		if len(contentBrief) > 5 {
-			contentBrief = contentBrief[:5]
-		}
-		updates := sessiondto.UpdateUnreadRequest{
-			LastMessageID:   message.ID,
-			LastMessage:     string(contentBrief),
-			LastMessageTime: message.CreatedAt,
-		}
-		err = svc.sessionRepo.UpdateUnread(ctx, message.MessageTo, message.SessionID, updates)
-		if err != nil {
-			slog.Error("Update Unread Failed", "user_id", message.MessageTo, "error", err)
-		}
+			// 更新对方的会话信息
+			contentBrief := []rune(message.Content) // 最后一条消息的摘要
+			if len(contentBrief) > 5 {
+				contentBrief = contentBrief[:5]
+			}
+			updates := sessiondto.UpdateUnreadRequest{
+				LastMessageID:   message.ID,
+				LastMessage:     string(contentBrief),
+				LastMessageTime: message.CreatedAt,
+			}
+			err = svc.sessionRepo.UpdateUnread(ctx, message.MessageTo, message.SessionID, updates)
+			if err != nil {
+				slog.Error("Update Unread Failed", "user_id", message.MessageTo, "error", err)
+			}
 
-		// 发给 MQ
-		err = produceMQ(ctx, svc.mqConn, message, message.MessageTo)
-		if err != nil {
-			slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
-		}
-		err = produceMQ(ctx, svc.mqConn, message, message.MessageFrom)
-		if err != nil {
-			slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
+			// 发给 MQ
+			err = produceMQ(ctx, svc.mqConn, message, message.MessageTo)
+			if err != nil {
+				slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
+			}
+			err = produceMQ(ctx, svc.mqConn, message, message.MessageFrom)
+			if err != nil {
+				slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
+			}
 		}
 	}
 

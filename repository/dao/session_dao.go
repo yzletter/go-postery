@@ -105,3 +105,16 @@ func (dao *gormSessionDAO) UpdateUnread(ctx context.Context, uid int64, sid int6
 
 	return nil
 }
+
+func (dao *gormSessionDAO) ClearUnread(ctx context.Context, uid int64, sid int64) error {
+	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).
+		Update("unread_count", 0)
+	if result.Error != nil {
+		slog.Error(UpdateFailed, "error", result.Error)
+		return ErrServerInternal
+	} else if result.RowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
+	return nil
+}

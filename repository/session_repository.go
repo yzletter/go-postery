@@ -74,3 +74,11 @@ func (repo *sessionRepository) UpdateUnread(ctx context.Context, uid int64, sid 
 	}
 	return nil
 }
+
+func (repo *sessionRepository) ClearUnread(ctx context.Context, uid int64, sid int64) error {
+	err := repo.dao.ClearUnread(ctx, uid, sid)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
