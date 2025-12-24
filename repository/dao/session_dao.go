@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/model"
@@ -54,4 +55,33 @@ func (dao *gormSessionDAO) GetByUid(ctx context.Context, uid int64) ([]*model.Se
 	}
 
 	return sessions, nil
+}
+
+func (dao *gormSessionDAO) GetByID(ctx context.Context, uid, sid int64) (*model.Session, error) {
+	var session *model.Session
+	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).First(&session)
+	if result.Error != nil {
+		// 业务层面错误
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+		// 系统层面错误
+		slog.Error(FindFailed, "user_id", uid, "session_id", sid, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	return session, nil
+}
+
+func (dao *gormSessionDAO) Delete(ctx context.Context, uid, sid int64) error {
+	now := time.Now()
+	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).Update("deleted_at", &now)
+	if result.Error != nil {
+		// 系统层面错误
+		slog.Error(DeleteFailed, "user_id", uid, "session_id", sid, "error", result.Error)
+		return ErrServerInternal
+	} else if result.RowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+	return nil
 }

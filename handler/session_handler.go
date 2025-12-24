@@ -68,16 +68,23 @@ func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 
 func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
 	// 从 URL 中获取 SessionID
-	_, err = strconv.ParseInt(ctx.Param("sid"), 10, 64)
+	sid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 删除会话
+	err = hdl.sessionSvc.Delete(ctx, uid, sid)
+	if err != nil {
+		response.Error(ctx, err)
 		return
 	}
 

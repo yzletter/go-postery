@@ -49,3 +49,19 @@ func (repo *sessionRepository) ListByUid(ctx context.Context, uid int64) ([]*mod
 
 	return sessions, nil
 }
+
+func (repo *sessionRepository) GetByID(ctx context.Context, uid, sid int64) (*model.Session, error) {
+	session, err := repo.dao.GetByID(ctx, uid, sid)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return session, nil
+}
+
+func (repo *sessionRepository) Delete(ctx context.Context, uid, sid int64) error {
+	err := repo.dao.Delete(ctx, uid, sid)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}

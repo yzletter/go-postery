@@ -75,4 +75,5 @@ type SessionService interface {
 	Register(ctx context.Context, uid int64) error
 	Message(ctx *gin.Context, uid, targetID int64) error
 	GetHistoryMessagesByPage(ctx context.Context, uid int64, targetID int64, pageNo, pageSize int) (int, []messagedto.DTO, error)
+	Delete(ctx context.Context, uid, sid int64) error
 }

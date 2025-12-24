@@ -405,3 +405,33 @@ func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, uid int
 
 	return total, messageDTOs, nil
 }
+
+func (svc *sessionService) Delete(ctx context.Context, uid, sid int64) error {
+	// 查当前用户这边的会话
+	session, err := svc.sessionRepo.GetByID(ctx, uid, sid)
+	if err != nil {
+		// 幂等
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil
+		}
+		// 系统层面错误
+		return errno.ErrServerInternal
+	}
+
+	if session.UserID != uid {
+		return errno.ErrUnauthorized
+	}
+
+	// 删除当前用户这边的会话, 要传 uid
+	err = svc.sessionRepo.Delete(ctx, uid, sid)
+	if err != nil {
+		// 幂等
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil
+		}
+		// 系统层面错误
+		return errno.ErrServerInternal
+	}
+
+	return nil
+}
