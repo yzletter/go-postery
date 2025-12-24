@@ -185,7 +185,7 @@ func main() {
 		sessions.GET("", SessionHdl.List)                    // GET /api/v1/sessions			获取当前登录用户会话列表
 		sessions.GET("/:id", SessionHdl.GetSession)          // GET /api/v1/sessions/:id		获取会话
 		sessions.GET("/:id/messages", SessionHdl.GetSession) // GET /api/v1/sessions/:id		获取历史记录
-		//sessions.DELETE("/:id", SessionHdl.Delete)           // DELETE /api/v1/sessions/:id	删除当前会话
+		//sessions.DELETE("/:id", SessionHdl.DeleteScore)           // DELETE /api/v1/sessions/:id	删除当前会话
 
 		//sessions.GET("ws", SessionHdl.MessageToUser) // GET /api/v1/sessions/ws		建立 WS 连接
 		sessions.GET("/:id/ws", SessionHdl.MessageToUser) // GET /api/v1/sessions/:id/ws

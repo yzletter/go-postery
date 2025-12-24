@@ -18,6 +18,7 @@ type PostCache interface {
 	CheckPostLikeTime(ctx context.Context, pid int64) (float64, error)
 	ChangeScore(ctx context.Context, pid int64, delta int) error
 	Top(ctx context.Context) ([]int64, []float64, error)
+	DeleteScore(ctx context.Context, id int64) error
 }
 
 type CommentCache interface {

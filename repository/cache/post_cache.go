@@ -23,6 +23,18 @@ type redisPostCache struct {
 	client redis.UniversalClient
 }
 
+func (cache *redisPostCache) DeleteScore(ctx context.Context, id int64) error {
+	_, err := cache.client.ZRem(ctx, model.KeyPostScore, id).Result()
+	if err != nil {
+		return err
+	}
+	_, err = cache.client.ZRem(ctx, model.KeyPostTime, id).Result()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func (cache *redisPostCache) Top(ctx context.Context) ([]int64, []float64, error) {
 	pairs, err := cache.client.ZRevRangeWithScores(ctx, model.KeyPostScore, 0, 9).Result()
 	if err != nil {

@@ -189,7 +189,7 @@ func (svc *postService) Update(ctx context.Context, pid int64, uid int64, title,
 
 			// 解绑
 			if err = svc.tagRepo.DeleteBind(ctx, pid, tag.ID); err != nil {
-				slog.Error("Delete Bind Failed", "error", err)
+				slog.Error("DeleteScore Bind Failed", "error", err)
 			}
 		}
 	}

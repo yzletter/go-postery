@@ -45,7 +45,10 @@ func (repo *postRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	// todo 删 Cache
-
+	err = repo.cache.DeleteScore(ctx, id)
+	if err != nil {
+		return ErrServerInternal
+	}
 	return nil
 }
 
