@@ -5,8 +5,9 @@ import type { Post } from '../types'
 import { buildIdSeed } from '../utils/id'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories, mockHotPosts, mockRecommendUsers } from './home/constants'
+import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories, mockRecommendUsers } from './home/constants'
 import { fetchPosts } from './home/fetchPosts'
+import { fetchTopPosts, type TopPost } from './home/fetchTopPosts'
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -16,6 +17,9 @@ export default function Home() {
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [hotPosts, setHotPosts] = useState<TopPost[]>([])
+  const [isHotLoading, setIsHotLoading] = useState(false)
+  const [hotError, setHotError] = useState<string | null>(null)
   const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
@@ -98,10 +102,29 @@ export default function Home() {
     }
   }, [decoratePosts, getPageSizeForCategory, selectedCategory])
 
+  const loadHotPosts = useCallback(async () => {
+    setIsHotLoading(true)
+    setHotError(null)
+
+    try {
+      const topPosts = await fetchTopPosts()
+      setHotPosts(topPosts)
+    } catch (error) {
+      console.error('Failed to load top posts:', error)
+      setHotError(error instanceof Error ? error.message : '加载热门帖子失败')
+    } finally {
+      setIsHotLoading(false)
+    }
+  }, [fetchTopPosts])
+
   // 初始加载帖子
   useEffect(() => {
     loadPosts(1, true, selectedCategory)
   }, [loadPosts, selectedCategory])
+
+  useEffect(() => {
+    void loadHotPosts()
+  }, [loadHotPosts])
 
   // 无限滚动：监听滚动到底部
   useEffect(() => {
@@ -382,17 +405,44 @@ export default function Home() {
               </div>
             </div>
             <ol className="space-y-3">
-              {mockHotPosts.map((hot, index) => (
-                <li key={hot.id} className="flex items-start space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 font-semibold flex items-center justify-center">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors line-clamp-2">
-                      {hot.title}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">热度 {hot.heat}</p>
-                  </div>
+              {isHotLoading && hotPosts.length === 0 && (
+                <li className="text-sm text-gray-500 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>加载中...</span>
+                </li>
+              )}
+              {!isHotLoading && hotError && hotPosts.length === 0 && (
+                <li className="text-sm text-red-600 flex items-center justify-between gap-2">
+                  <span className="flex-1 break-words">{hotError}</span>
+                  <button
+                    type="button"
+                    onClick={loadHotPosts}
+                    className="text-xs text-primary-600 hover:text-primary-700"
+                  >
+                    重试
+                  </button>
+                </li>
+              )}
+              {!isHotLoading && !hotError && hotPosts.length === 0 && (
+                <li className="text-sm text-gray-500">暂无热门文章</li>
+              )}
+              {hotPosts.map((hot, index) => (
+                <li key={hot.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/post/${hot.id}`)}
+                    className="group flex items-start space-x-3 w-full text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-200"
+                  >
+                    <div className="w-7 h-7 rounded-md bg-primary-50 text-primary-700 text-xs font-semibold flex items-center justify-center">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-2">
+                        {hot.title}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">热度 {hot.score}</p>
+                    </div>
+                  </button>
                 </li>
               ))}
             </ol>
