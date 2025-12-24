@@ -13,7 +13,7 @@ import (
 
 const (
 	postInteractiveKeyPrefix = "post:interactive"
-	POST_EXPIRE_TIME         = time.Minute * 15
+	PostExpireTime           = time.Minute * 15
 )
 
 //go:embed lua/change_cnt_script.lua
@@ -92,7 +92,7 @@ func (cache *redisPostCache) SetInteractiveKey(ctx context.Context, pid int64, f
 	cache.client.HSet(ctx, redisKey, mp)
 
 	// 设置过期时间
-	cache.client.Expire(ctx, redisKey, POST_EXPIRE_TIME)
+	cache.client.Expire(ctx, redisKey, PostExpireTime)
 }
 
 // SetScore 设置初始分数
