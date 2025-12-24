@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
@@ -60,6 +61,14 @@ func (repo *sessionRepository) GetByID(ctx context.Context, uid, sid int64) (*mo
 
 func (repo *sessionRepository) Delete(ctx context.Context, uid, sid int64) error {
 	err := repo.dao.Delete(ctx, uid, sid)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *sessionRepository) UpdateUnread(ctx context.Context, uid int64, sid int64, updates session.UpdateUnreadRequest) error {
+	err := repo.dao.UpdateUnread(ctx, uid, sid, updates)
 	if err != nil {
 		return toRepositoryErr(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -83,5 +84,24 @@ func (dao *gormSessionDAO) Delete(ctx context.Context, uid, sid int64) error {
 	} else if result.RowsAffected == 0 {
 		return ErrRecordNotFound
 	}
+	return nil
+}
+
+func (dao *gormSessionDAO) UpdateUnread(ctx context.Context, uid int64, sid int64, updates session.UpdateUnreadRequest) error {
+	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).
+		Updates(updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", 1))
+	if result.Error != nil {
+		slog.Error(UpdateFailed, "error", result.Error)
+		return ErrServerInternal
+	} else if result.RowsAffected == 0 {
+		// 对方的会话已删除，进行恢复
+		result2 := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NOT NULL", uid, sid).
+			Update("deleted_at", nil).Updates(updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", 1))
+		if result2.Error != nil {
+			slog.Error(UpdateFailed, "error", result2.Error)
+			return ErrServerInternal
+		}
+	}
+
 	return nil
 }

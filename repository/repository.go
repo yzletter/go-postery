@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/model"
 )
 
@@ -67,6 +68,7 @@ type SessionRepository interface {
 	GetByUidAndTargetID(ctx context.Context, uid, targetID int64) (*model.Session, error)
 	GetByID(ctx context.Context, uid, sid int64) (*model.Session, error)
 	Delete(ctx context.Context, uid, sid int64) error
+	UpdateUnread(ctx context.Context, uid int64, sid int64, updates session.UpdateUnreadRequest) error
 }
 
 type MessageRepository interface {

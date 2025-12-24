@@ -80,6 +80,7 @@ func main() {
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
+	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -87,13 +88,14 @@ func main() {
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
-	SessionHdl := handler.NewSessionHandler(SessionSvc)
+	SessionHdl := handler.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
+	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -186,7 +188,12 @@ func main() {
 		sessions.GET("/:id", SessionHdl.GetSession)                 // GET /api/v1/sessions/:id							获取会话
 		sessions.GET("/:id/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/sessions/:id?pageNo=1&pageSize=5		按页获取历史记录
 		sessions.DELETE("/:id", SessionHdl.Delete)                  // DELETE /api/v1/sessions/:id						删除当前会话
-		sessions.GET("/:id/ws", SessionHdl.MessageToUser)           // GET /api/v1/sessions/:id/ws
+	}
+
+	im := v1.Group("/ws")
+	im.Use(AuthRequiredMdl)
+	{
+		im.GET("/:id", WebsocketHdl.Connect) // GET /api/v1/ws/:id
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

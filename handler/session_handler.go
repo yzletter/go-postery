@@ -92,24 +92,6 @@ func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 	return
 }
 
-func (hdl *SessionHandler) MessageToUser(ctx *gin.Context) {
-	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
-	if err != nil {
-		response.Error(ctx, errno.ErrUserNotLogin)
-		return
-	}
-
-	// 取对方 target_id
-	targetID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		response.Error(ctx, errno.ErrInvalidParam)
-		return
-	}
-
-	hdl.sessionSvc.Message(ctx, uid, targetID)
-}
-
 // 获取历史消息
 func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 	// 取当前登录用户 uid
