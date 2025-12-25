@@ -130,6 +130,8 @@ func main() {
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
 		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout	登出
+		authedAuth.GET("/status", AuthHdl.Status)  // GET /api/v1/auth/status	检查状态
+
 	}
 
 	// 用户模块
@@ -156,11 +158,11 @@ func main() {
 		}
 
 		// 私信模块
-		sessions := users.Group("/:id/sessions")
-		sessions.Use(AuthRequiredMdl)
+		chat := users.Group("/:id/sessions")
+		chat.Use(AuthRequiredMdl)
 		{
-			sessions.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
-			sessions.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
+			chat.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
+			chat.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
 		}
 	}
 

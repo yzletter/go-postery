@@ -102,7 +102,7 @@ func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 	}
 
 	// 取对方 target_id
-	targetID, err := strconv.ParseInt(ctx.Param("tid"), 10, 64)
+	targetID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return

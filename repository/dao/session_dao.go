@@ -89,14 +89,16 @@ func (dao *gormSessionDAO) Delete(ctx context.Context, uid, sid int64) error {
 
 func (dao *gormSessionDAO) UpdateUnread(ctx context.Context, uid int64, sid int64, updates session.UpdateUnreadRequest) error {
 	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).
-		Updates(updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", 1))
+		Updates(updates.Updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", updates.Delta))
 	if result.Error != nil {
 		slog.Error(UpdateFailed, "error", result.Error)
 		return ErrServerInternal
-	} else if result.RowsAffected == 0 {
-		// 对方的会话已删除，进行恢复
+	}
+
+	if result.RowsAffected == 0 {
+		// 会话已删除，进行恢复 todo 考虑
 		result2 := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NOT NULL", uid, sid).
-			Update("deleted_at", nil).Updates(updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", 1))
+			Update("deleted_at", nil).Updates(updates.Updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", updates.Delta))
 		if result2.Error != nil {
 			slog.Error(UpdateFailed, "error", result2.Error)
 			return ErrServerInternal
