@@ -72,6 +72,7 @@
 | 关注 | DELETE | `/api/v1/users/:id/follow` | 是 | 取关用户 |
 | 关注 | GET | `/api/v1/users/:id/follow` | 是 | 查询关注关系 |
 | 帖子 | GET | `/api/v1/posts` | 否 | 按页获取帖子列表 |
+| 帖子 | GET | `/api/v1/posts/top` | 否 | 获取热门帖子榜单 |
 | 帖子 | GET | `/api/v1/posts/tags` | 否 | 按标签分页获取帖子 |
 | 帖子 | GET | `/api/v1/posts/:id` | 否 | 获取帖子详情（会 +1 浏览量） |
 | 评论 | GET | `/api/v1/posts/:id/comments` | 否 | 按页获取评论列表 |
@@ -84,6 +85,7 @@
 | 点赞 | GET | `/api/v1/posts/:id/likes` | 是 | 是否点赞该帖子 |
 | 点赞 | POST | `/api/v1/posts/:id/likes` | 是 | 点赞帖子 |
 | 点赞 | DELETE | `/api/v1/posts/:id/likes` | 是 | 取消点赞 |
+| 私信 | GET | `/api/v1/ws` | 是 | WebSocket 连接（实时私信） |
 
 ---
 
@@ -507,6 +509,30 @@ Query 参数：
 
 响应结构同 `GET /api/v1/posts`。
 
+### GET `/api/v1/posts/top`
+
+获取热门帖子榜单（默认取前 10 条）。
+
+响应 `data`：排行榜列表
+
+```json
+{
+  "code": 0,
+  "msg": "获取热门帖子榜单成功",
+  "data": [
+    {
+      "id": "1999760900969463808",
+      "title": "标题",
+      "score": 1700000000.123
+    }
+  ]
+}
+```
+
+说明：
+
+- `score` 为内部热度值，值越大排序越靠前。
+
 ### GET `/api/v1/posts/:id`
 
 获取帖子详情（后端会对该帖 `view_count + 1`）。
@@ -861,6 +887,83 @@ Query 参数：
 
 - `30001` 帖子不存在（HTTP 404）
 - `30003` 尚未点赞，无法取消（HTTP 409）
+
+## 私信（WebSocket）
+
+### GET `/api/v1/ws`（需要登录）
+
+建立 WebSocket 长连接，用于实时私信收发。
+
+连接地址：
+
+- `ws://localhost:8765/api/v1/ws`（本地）
+- 线上使用 `wss://<host>/api/v1/ws`
+
+请求头/认证：
+
+- `Authorization: Bearer <access_token>`（非浏览器客户端可用）
+- 或 Cookie `x-jwt-token=<access_token>`（用于浏览器 WebSocket）
+- `refresh-token` Cookie 有效时，服务端会自动续期并允许连接
+
+心跳：
+
+- 服务端每 `3s` 发送 `ping`，客户端需在 `5s` 内回复 `pong`（大多数 WS 客户端自动处理）。
+- 超时会断开连接。
+
+#### 客户端 -> 服务端消息
+
+`type` 区分消息类型：
+
+1) 发送消息：
+
+```json
+{
+  "type": "message",
+  "session_id": "123",
+  "session_type": 1,
+  "message_from": "1001",
+  "message_to": "1002",
+  "content": "你好"
+}
+```
+
+字段说明：
+
+- `session_type`：会话类型，`1` 私聊，`2` 群聊（预留）
+- `message_from`/`message_to`：发送者/接收者用户 ID
+- `session_id`：会话 ID
+
+2) 已读确认（清空未读数）：
+
+```json
+{
+  "type": "read_ack",
+  "user_id": "1001",
+  "session_id": "123"
+}
+```
+
+说明：
+
+- 服务端不会回包，仅用于更新未读数。
+
+#### 服务端 -> 客户端消息
+
+```json
+{
+  "id": "100000",
+  "session_id": "123",
+  "session_type": 1,
+  "message_from": "1001",
+  "message_to": "1002",
+  "content": "你好",
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
+
+说明：
+
+- 服务端会把消息推送给发送者和接收者。
 
 ---
 

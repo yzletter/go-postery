@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -78,31 +79,51 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			// BadRequest
 			continue
 		}
-		
+
 		if messageReq.Type == "read_ack" {
 			// 是 read_ack
-			uid := messageReq.UserID
-			sid := messageReq.SessionID
-			svc.sessionRepo.ClearUnread(ctx, uid, sid)
+			ssid, err := strconv.ParseInt(messageReq.SessionID, 10, 64)
+			if err != nil {
+				continue
+			}
+			svc.sessionRepo.ClearUnread(ctx, uid, ssid)
 		} else if messageReq.Type == "message" {
 			// 是消息
+			ssid, err := strconv.ParseInt(messageReq.SessionID, 10, 64)
+			if err != nil {
+				continue
+			}
+			messageFrom, err := strconv.ParseInt(messageReq.MessageFrom, 10, 64)
+			if err != nil {
+				continue
+			}
+
+			messageTo, err := strconv.ParseInt(messageReq.MessageTo, 10, 64)
+			if err != nil {
+				continue
+			}
+
 			message := model.Message{
 				ID:          svc.idGen.NextID(),
-				SessionID:   messageReq.SessionID,
+				SessionID:   ssid,
 				SessionType: messageReq.SessionType,
-				MessageFrom: messageReq.MessageFrom,
-				MessageTo:   messageReq.MessageTo,
+				MessageFrom: messageFrom,
+				MessageTo:   messageTo,
 				Content:     messageReq.Content,
 			}
 
 			// 过滤消息
-			ok := intercept(message)
+			ok := intercept(message, uid)
 			if !ok {
 				continue
 			}
 
 			// 落库
-			message.ID = svc.idGen.NextID() // 	补全 ID
+			message.ID = svc.idGen.NextID()                                          // 补全 ID
+			session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, uid, messageTo) // 查找 session
+			if err != nil || session.SessionID != ssid {
+				continue
+			}
 
 			err = svc.messageRepo.Create(ctx, &message)
 			if err != nil {
@@ -166,7 +187,10 @@ LOOP:
 }
 
 // todo 处理消息内容, 正常应进行对非法内容进行拦截。比如机器人消息（发言频率过快）；包含欺诈、涉政等违规内容；涉嫌私下联系/交易等。
-func intercept(message model.Message) bool {
+func intercept(message model.Message, uid int64) bool {
+	if message.MessageFrom != uid {
+		return false
+	}
 	return true
 }
 

@@ -154,13 +154,21 @@ func main() {
 			follow.DELETE("", FollowHdl.UnFollow) // DELETE /api/v1/users/:id/follow 	取关
 			follow.GET("", FollowHdl.IfFollow)    // GET /api/v1/users/:id/follow 		是否关注
 		}
+
+		// 私信模块
+		sessions := users.Group("/:id/sessions")
+		sessions.Use(AuthRequiredMdl)
+		{
+			sessions.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
+			sessions.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
+		}
 	}
 
 	// 帖子模块
 	posts := v1.Group("/posts")
 	{
 		posts.GET("", PostHdl.List)                             // POST /api/v1/posts?pageNo=1&pageSize=10				按页获取帖子列表
-		posts.GET("/top", PostHdl.Top)                          // POST /api/v1/posts/top								获取热门帖子榜单
+		posts.GET("/top", PostHdl.Top)                          // GET /api/v1/posts/top								获取热门帖子榜单
 		posts.GET("/tags", PostHdl.ListByTagAndPage)            // POST /api/v1/posts/tags?pageNo=1&pageSize=10&tag=go 根据标签按页获取帖子列表
 		posts.GET("/:id", PostHdl.Detail)                       // GET /api/v1/posts/:id								获取帖子详情
 		posts.GET("/:id/comments", CommentHdl.ListByPage)       // GET /api/v1/posts/:id/comments?pageNo=1&pageSize=10	按页获取帖子评论
@@ -184,10 +192,8 @@ func main() {
 	sessions := v1.Group("/sessions")
 	sessions.Use(AuthRequiredMdl)
 	{
-		sessions.GET("", SessionHdl.List)                           // GET /api/v1/sessions								获取当前登录用户会话列表
-		sessions.GET("/:id", SessionHdl.GetSession)                 // GET /api/v1/sessions/:id							获取会话
-		sessions.GET("/:id/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/sessions/:id?pageNo=1&pageSize=5		按页获取历史记录
-		sessions.DELETE("/:id", SessionHdl.Delete)                  // DELETE /api/v1/sessions/:id						删除当前会话
+		sessions.GET("", SessionHdl.List)          // GET /api/v1/sessions								获取当前登录用户会话列表
+		sessions.DELETE("/:id", SessionHdl.Delete) // DELETE /api/v1/sessions/:id						删除当前会话
 	}
 
 	im := v1.Group("/ws")

@@ -43,35 +43,59 @@ func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) 
 			return empty, errno.ErrServerInternal
 		}
 
-		// 没找到，新建会话
-		ssid := svc.idGen.NextID()
-		newSession1 := &model.Session{
-			ID:         svc.idGen.NextID(),
-			SessionID:  ssid,
-			UserID:     uid,
-			TargetID:   targetID,
-			TargetType: 1,
-		}
-
-		newSession2 := &model.Session{
-			ID:         svc.idGen.NextID(),
-			SessionID:  ssid,
-			UserID:     targetID,
-			TargetID:   uid,
-			TargetType: 1,
-		}
-
-		err = svc.sessionRepo.Create(ctx, newSession1)
+		// 查找对方 session
+		session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, targetID, uid)
 		if err != nil {
-			return empty, errno.ErrServerInternal
-		}
+			// 系统层面错误
+			if !errors.Is(err, repository.ErrRecordNotFound) {
+				return empty, errno.ErrServerInternal
+			}
 
-		err = svc.sessionRepo.Create(ctx, newSession2)
-		if err != nil {
-			return empty, errno.ErrServerInternal
-		}
+			// 双边都没找到，新建会话
+			ssid := svc.idGen.NextID()
+			newSession1 := &model.Session{
+				ID:         svc.idGen.NextID(),
+				SessionID:  ssid,
+				UserID:     uid,
+				TargetID:   targetID,
+				TargetType: 1,
+			}
 
-		return sessiondto.ToDTO(newSession1, user), nil
+			newSession2 := &model.Session{
+				ID:         svc.idGen.NextID(),
+				SessionID:  ssid,
+				UserID:     targetID,
+				TargetID:   uid,
+				TargetType: 1,
+			}
+
+			err = svc.sessionRepo.Create(ctx, newSession1)
+			if err != nil {
+				return empty, errno.ErrServerInternal
+			}
+
+			err = svc.sessionRepo.Create(ctx, newSession2)
+			if err != nil {
+				return empty, errno.ErrServerInternal
+			}
+			return sessiondto.ToDTO(newSession1, user), nil
+		} else {
+			// 对方的会话有，说明只有我单边删除，同一个 sessionID 单边新建
+			ssid := session.SessionID
+			newSession1 := &model.Session{
+				ID:         svc.idGen.NextID(),
+				SessionID:  ssid,
+				UserID:     uid,
+				TargetID:   targetID,
+				TargetType: 1,
+			}
+
+			err = svc.sessionRepo.Create(ctx, newSession1)
+			if err != nil {
+				return empty, errno.ErrServerInternal
+			}
+			return sessiondto.ToDTO(newSession1, user), nil
+		}
 	}
 
 	return sessiondto.ToDTO(session, user), nil

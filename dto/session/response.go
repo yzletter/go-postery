@@ -9,13 +9,13 @@ import (
 type DTO struct {
 	//ID              int64  `json:"id,string"`
 	SessionID       int64  `json:"session_id,string"`
-	TargetID        int64  `json:"target_id"`
+	TargetID        int64  `json:"target_id,string"`
 	TargetName      string `json:"target_name"`
 	TargetAvatar    string `json:"target_avatar"`
-	LastMessageID   int64  `json:"last_message_id"`   // 最后一条消息的 ID
-	LastMessage     string `json:"last_message"`      // 最后一条消息的摘要
-	LastMessageTime string `json:"last_message_time"` // 最后一条消息的时间
-	UnreadCount     int    `json:"unread_count"`      // 未读消息数
+	LastMessageID   int64  `json:"last_message_id,string"` // 最后一条消息的 ID
+	LastMessage     string `json:"last_message"`           // 最后一条消息的摘要
+	LastMessageTime string `json:"last_message_time"`      // 最后一条消息的时间
+	UnreadCount     int    `json:"unread_count"`           // 未读消息数
 }
 
 func ToDTO(session *model.Session, user *model.User) DTO {
