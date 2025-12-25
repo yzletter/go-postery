@@ -1,15 +1,47 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Gift, Sparkles } from 'lucide-react'
-import type { Post } from '../types'
+import type { Post, FollowRelation } from '../types'
 import { useAuth } from '../contexts/AuthContext'
-import { buildIdSeed } from '../utils/id'
+import { buildIdSeed, normalizeId } from '../utils/id'
+import { followUser, getFollowRelation, isFollowing, unfollowUser } from '../utils/follow'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories, mockRecommendUsers } from './home/constants'
+import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories } from './home/constants'
 import { fetchPosts } from './home/fetchPosts'
 import { fetchTopPosts, type TopPost } from './home/fetchTopPosts'
 import { apiGet, AUTH_API_BASE_URL, ApiError } from '../utils/api'
+
+type RecommendUser = {
+  id: string
+  name: string
+  bio: string
+  avatar: string
+  score: number
+}
+
+const normalizeRecommendUser = (raw: any): RecommendUser | null => {
+  if (!raw) return null
+  const id = normalizeId(raw.id ?? raw.Id)
+  const name = typeof raw.name === 'string' ? raw.name.trim() : ''
+  if (!id || !name) return null
+  const bio = typeof raw.bio === 'string' ? raw.bio.trim() : ''
+  const avatar = typeof raw.avatar === 'string' ? raw.avatar.trim() : ''
+  const score = Number.isFinite(Number(raw.score)) ? Number(raw.score) : 0
+  return { id, name, bio, avatar, score }
+}
+
+const formatCompactScore = (value?: number) => {
+  if (!Number.isFinite(Number(value))) return ''
+  const numeric = Number(value)
+  if (numeric >= 1_000_000) {
+    return `${(numeric / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`
+  }
+  if (numeric >= 1_000) {
+    return `${(numeric / 1_000).toFixed(1).replace(/\.0$/, '')}k`
+  }
+  return String(numeric)
+}
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -22,10 +54,16 @@ export default function Home() {
   const [hotPosts, setHotPosts] = useState<TopPost[]>([])
   const [isHotLoading, setIsHotLoading] = useState(false)
   const [hotError, setHotError] = useState<string | null>(null)
+  const [recommendUsers, setRecommendUsers] = useState<RecommendUser[]>([])
+  const [recommendLoading, setRecommendLoading] = useState(false)
+  const [recommendError, setRecommendError] = useState<string | null>(null)
+  const [recommendRelationById, setRecommendRelationById] = useState<Record<string, FollowRelation | undefined>>({})
+  const [recommendActingId, setRecommendActingId] = useState<string | null>(null)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
+  const currentUserId = useMemo(() => normalizeId(user?.id), [user?.id])
 
   // 确保进入首页时回到顶部
   useEffect(() => {
@@ -147,6 +185,98 @@ export default function Home() {
     }
   }, [fetchTopPosts])
 
+  const loadRecommendUsers = useCallback(async () => {
+    setRecommendLoading(true)
+    setRecommendError(null)
+    try {
+      const { data } = await apiGet<RecommendUser[]>('/users/top')
+      const rawList = Array.isArray(data) ? data : []
+      const normalized = rawList
+        .map((item) => normalizeRecommendUser(item))
+        .filter((item): item is RecommendUser => Boolean(item))
+      setRecommendUsers(normalized)
+    } catch (error) {
+      console.error('Failed to load recommend users:', error)
+      setRecommendUsers([])
+      setRecommendError(error instanceof Error ? error.message : '加载推荐关注失败')
+    } finally {
+      setRecommendLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!user || recommendUsers.length === 0) {
+      setRecommendRelationById({})
+      return
+    }
+
+    let cancelled = false
+    setRecommendRelationById({})
+
+    Promise.all(
+      recommendUsers.map(async (item) => {
+        const targetId = normalizeId(item.id)
+        if (!targetId) return null
+        if (currentUserId && targetId === currentUserId) {
+          return null
+        }
+        try {
+          const relation = await getFollowRelation(targetId)
+          return [targetId, relation] as const
+        } catch {
+          return [targetId, 0 as FollowRelation] as const
+        }
+      })
+    )
+      .then((entries) => {
+        if (cancelled) return
+        const filtered = entries.filter(
+          (entry): entry is [string, FollowRelation] => Boolean(entry)
+        )
+        setRecommendRelationById(Object.fromEntries(filtered))
+      })
+      .catch((error) => {
+        console.warn('Failed to load follow relations:', error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, recommendUsers, user])
+
+  const handleFollowRecommend = useCallback(
+    async (target: RecommendUser) => {
+      if (recommendActingId) return
+      const targetId = normalizeId(target.id)
+      if (!targetId) return
+      if (currentUserId && targetId === currentUserId) return
+      if (!user) {
+        navigate('/login')
+        return
+      }
+
+      const relation = recommendRelationById[targetId] ?? 0
+      const shouldUnfollow = isFollowing(relation)
+
+      setRecommendActingId(targetId)
+      try {
+        if (shouldUnfollow) {
+          await unfollowUser(targetId)
+        } else {
+          await followUser(targetId)
+        }
+        const nextRelation = await getFollowRelation(targetId)
+        setRecommendRelationById((prev) => ({ ...prev, [targetId]: nextRelation }))
+      } catch (error) {
+        console.error(shouldUnfollow ? '取消关注失败:' : '关注失败:', error)
+        alert(error instanceof Error ? error.message : shouldUnfollow ? '取消关注失败，请稍后重试' : '关注失败，请稍后重试')
+      } finally {
+        setRecommendActingId(null)
+      }
+    },
+    [currentUserId, navigate, recommendActingId, recommendRelationById, user]
+  )
+
   // 初始加载帖子
   useEffect(() => {
     loadPosts(1, true, selectedCategory)
@@ -155,6 +285,10 @@ export default function Home() {
   useEffect(() => {
     void loadHotPosts()
   }, [loadHotPosts])
+
+  useEffect(() => {
+    void loadRecommendUsers()
+  }, [loadRecommendUsers])
 
   // 无限滚动：监听滚动到底部
   useEffect(() => {
@@ -486,39 +620,94 @@ export default function Home() {
               </div>
             </div>
             <div className="space-y-3">
-              {mockRecommendUsers.map((user) => (
-                <div key={user.id} className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Link
-                    to={`/users/${user.id}`}
-                    state={{ username: user.name }}
-                    className="flex-shrink-0"
+              {recommendLoading && (
+                <div className="text-sm text-gray-500">加载中...</div>
+              )}
+              {!recommendLoading && recommendError && recommendUsers.length === 0 && (
+                <div className="text-sm text-red-600 flex items-center justify-between gap-2">
+                  <span className="flex-1 break-words">{recommendError}</span>
+                  <button
+                    type="button"
+                    onClick={loadRecommendUsers}
+                    className="text-xs text-primary-600 hover:text-primary-700"
                   >
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=recommend-${user.id}`}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full"
-                    />
-                  </Link>
-                  <div className="flex-1 min-w-0 flex items-center">
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to={`/users/${user.id}`}
-                        state={{ username: user.name }}
-                        className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors line-clamp-1"
-                      >
-                        {user.name}
-                      </Link>
-                      <p className="text-xs text-gray-500 line-clamp-1">{user.title}</p>
-                    </div>
-                    <span className="text-xs text-primary-600 ml-3 w-12 text-right flex-shrink-0">
-                      {user.followers}k
-                    </span>
-                  </div>
-                  <button className="text-xs text-primary-600 font-medium hover:text-primary-700 flex-shrink-0">
-                    关注
+                    重试
                   </button>
                 </div>
-              ))}
+              )}
+              {!recommendLoading && !recommendError && recommendUsers.length === 0 && (
+                <div className="text-sm text-gray-500">暂无推荐</div>
+              )}
+              {recommendUsers.map((item) => {
+                const isSelf = currentUserId && normalizeId(item.id) === currentUserId
+                const relation = isSelf ? undefined : recommendRelationById[item.id]
+                const isRelationReady = !user || isSelf || relation !== undefined
+                const isFollowed = !isSelf && isFollowing(relation ?? 0)
+                const isActing = recommendActingId === item.id
+                const scoreLabel = item.score > 0 ? formatCompactScore(item.score) : ''
+                const buttonLabel = isActing
+                  ? '处理中...'
+                  : isFollowed
+                    ? '已关注'
+                    : user && !isRelationReady
+                      ? '...'
+                      : '关注'
+                const isDisabled = (user && !isRelationReady) || isActing
+
+                return (
+                  <div key={item.id} className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Link
+                      to={`/users/${item.id}`}
+                      state={{ username: item.name }}
+                      className="flex-shrink-0"
+                    >
+                      <img
+                        src={
+                          item.avatar ||
+                          `https://api.dicebear.com/7.x/avataaars/svg?seed=recommend-${item.id}`
+                        }
+                        alt={item.name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                    </Link>
+                    <div className="flex-1 min-w-0 flex items-center">
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          to={`/users/${item.id}`}
+                          state={{ username: item.name }}
+                          className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors line-clamp-1"
+                        >
+                          {item.name}
+                        </Link>
+                        <p className="text-xs text-gray-500 line-clamp-1">{item.bio || '暂无简介'}</p>
+                      </div>
+                      {scoreLabel ? (
+                        <span className="text-xs text-primary-600 ml-3 w-12 text-right flex-shrink-0">
+                          {scoreLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                    {isSelf ? (
+                      <span className="text-xs font-medium text-gray-400 flex-shrink-0">自己</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleFollowRecommend(item)}
+                        disabled={isDisabled}
+                        className={`text-xs font-medium flex-shrink-0 ${
+                          isDisabled
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : isFollowed
+                              ? 'text-gray-500 hover:text-gray-600'
+                              : 'text-primary-600 hover:text-primary-700'
+                        }`}
+                      >
+                        {buttonLabel}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
 

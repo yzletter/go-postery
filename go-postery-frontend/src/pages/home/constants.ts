@@ -33,16 +33,6 @@ export const mockHotPosts = [
   { id: 10, title: '设计师和工程师协作的 7 个技巧', heat: 702 },
 ]
 
-export const mockRecommendUsers = [
-  { id: 101, name: '前端小能手', title: '分享 React / TS 实战', followers: 12.4 },
-  { id: 102, name: 'Go 语言爱好者', title: 'Go / 微服务 / 云原生', followers: 8.6 },
-  { id: 103, name: '设计灵感库', title: 'UI/UX 灵感与案例', followers: 15.2 },
-  { id: 104, name: '后端老王', title: '性能调优与架构实践', followers: 6.8 },
-  { id: 105, name: '产品拆解手册', title: '产品思考与需求分析', followers: 9.1 },
-  { id: 106, name: '测试小白进阶', title: '自动化测试 / 质量保障', followers: 5.4 },
-]
-
 export const FETCH_TIMEOUT_MS = 8000
 export const DEFAULT_PAGE_SIZE = 10
 export const CATEGORY_PAGE_SIZE = 10
-
