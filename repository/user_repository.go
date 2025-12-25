@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository/cache"
@@ -97,4 +98,34 @@ func (repo *userRepository) UpdateProfile(ctx context.Context, id int64, updates
 	// todo 更新 Cache
 
 	return nil
+}
+
+func (repo *userRepository) Top(ctx context.Context) ([]*model.User, []float64, error) {
+	ids, scores, err := repo.cache.Top(ctx)
+	if err != nil {
+		return nil, nil, toRepositoryErr(err)
+	}
+
+	var users []*model.User
+	for _, id := range ids {
+		user, err := repo.dao.GetByID(ctx, id)
+		if err != nil {
+			user = &model.User{
+				ID:       0,
+				Username: "未知用户",
+			}
+		}
+		users = append(users, user)
+	}
+
+	return users, scores, nil
+}
+
+// ChangeScore 修改用户分数
+func (repo *userRepository) ChangeScore(ctx context.Context, uid int64, delta int) {
+	err := repo.cache.ChangeScore(ctx, uid, delta)
+	if err != nil {
+		slog.Error("Change User Score Failed", "error", err)
+		return
+	}
 }

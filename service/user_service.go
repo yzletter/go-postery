@@ -166,3 +166,18 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto
 	}
 	return nil
 }
+
+func (svc *userService) Top(ctx context.Context) ([]userdto.TopDTO, error) {
+	var empty []userdto.TopDTO
+	users, scores, err := svc.userRepo.Top(ctx)
+	if err != nil {
+		return empty, errno.ErrServerInternal
+	}
+
+	var userDTOs []userdto.TopDTO
+	for idx, user := range users {
+		userDTOs = append(userDTOs, userdto.ToTopDTO(user, scores[idx]))
+	}
+
+	return userDTOs, nil
+}

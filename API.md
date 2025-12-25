@@ -686,7 +686,7 @@ curl "http://localhost:8765/api/v1/posts?pageNo=1&pageSize=10"
         "like_count": 2,
         "comment_count": 1,
         "title": "hello world",
-        "content": "first post",
+        "content": "first user",
         "created_at": "2024-01-02T15:04:05Z",
         "author": {
           "id": "1001",
@@ -762,7 +762,7 @@ curl "http://localhost:8765/api/v1/posts/tags?tag=go&pageNo=1&pageSize=10"
         "like_count": 2,
         "comment_count": 1,
         "title": "hello world",
-        "content": "first post",
+        "content": "first user",
         "created_at": "2024-01-02T15:04:05Z",
         "author": {
           "id": "1001",
@@ -802,7 +802,7 @@ curl "http://localhost:8765/api/v1/posts/2001"
     "like_count": 2,
     "comment_count": 1,
     "title": "hello world",
-    "content": "first post",
+    "content": "first user",
     "created_at": "2024-01-02T15:04:05Z",
     "author": {
       "id": "1001",
@@ -924,7 +924,7 @@ curl -X POST "http://localhost:8765/api/v1/posts" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "hello world",
-    "content": "first post",
+    "content": "first user",
     "tags": ["go", "gin"]
   }'
 ```
@@ -941,7 +941,7 @@ curl -X POST "http://localhost:8765/api/v1/posts" \
     "like_count": 0,
     "comment_count": 0,
     "title": "hello world",
-    "content": "first post",
+    "content": "first user",
     "created_at": "2024-01-02T15:04:05Z",
     "author": {
       "id": "1001",

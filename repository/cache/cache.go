@@ -9,6 +9,8 @@ import (
 // 定义 Cache 层所有接口
 
 type UserCache interface {
+	ChangeScore(ctx context.Context, uid int64, delta int) error
+	Top(ctx context.Context) ([]int64, []float64, error)
 }
 
 type PostCache interface {
@@ -31,8 +33,6 @@ type TagCache interface {
 }
 
 type FollowCache interface {
-	ChangeScore(ctx context.Context, pid int64, delta int) error
-	Top(ctx context.Context) ([]int64, []float64, error)
 }
 
 type MessageCache interface{}

@@ -405,7 +405,7 @@ func (svc *postService) Top(ctx context.Context) ([]postdto.TopDTO, error) {
 
 	posts, scores, err := svc.postRepo.Top(ctx)
 	if err != nil {
-		return empty, errno.ErrPostNotFound
+		return empty, errno.ErrServerInternal
 	}
 
 	var postDTOs []postdto.TopDTO

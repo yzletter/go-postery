@@ -8,6 +8,16 @@ const ensureApiPrefix = (rawBaseUrl: string) => {
 export const API_BASE_URL = ensureApiPrefix(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8765')
 export const AUTH_API_BASE_URL = ensureApiPrefix(import.meta.env.VITE_AUTH_API_URL || API_BASE_URL)
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   body?: BodyInit | Record<string, unknown> | null
   baseUrl?: string
@@ -122,7 +132,7 @@ export async function apiRequest<T>(
   const isSuccess = response.ok && payload && (payload.code === 0 || payload.code === undefined)
   if (!isSuccess || !payload) {
     const message = payload?.msg || `请求失败: ${response.status} ${response.statusText}`
-    throw new Error(message)
+    throw new ApiError(message, response.status)
   }
 
   return payload

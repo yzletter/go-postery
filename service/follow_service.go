@@ -51,7 +51,7 @@ func (svc *followService) Follow(ctx context.Context, ferId, feeId int64) error 
 		}
 		return errno.ErrServerInternal
 	}
-
+	svc.userRepo.ChangeScore(ctx, feeId, 1)
 	return nil
 }
 
@@ -74,6 +74,8 @@ func (svc *followService) UnFollow(ctx context.Context, ferId, feeId int64) erro
 		}
 		return errno.ErrServerInternal
 	}
+
+	svc.userRepo.ChangeScore(ctx, feeId, -1)
 
 	return nil
 }

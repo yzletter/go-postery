@@ -139,7 +139,7 @@ func main() {
 	{
 		users.GET("/:id", UserHdl.Profile)                // GET /api/v1/users/:id									获取个人资料
 		users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
-
+		users.GET("/top", UserHdl.Top)                    // GET /api/v1/users/top 									获取推荐关注
 		// 个人模块
 		me := users.Group("/me")
 		me.Use(AuthRequiredMdl)

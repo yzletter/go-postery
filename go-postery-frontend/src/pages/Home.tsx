@@ -2,12 +2,14 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Gift, Sparkles } from 'lucide-react'
 import type { Post } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 import { buildIdSeed } from '../utils/id'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories, mockRecommendUsers } from './home/constants'
 import { fetchPosts } from './home/fetchPosts'
 import { fetchTopPosts, type TopPost } from './home/fetchTopPosts'
+import { apiGet, AUTH_API_BASE_URL, ApiError } from '../utils/api'
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -20,6 +22,7 @@ export default function Home() {
   const [hotPosts, setHotPosts] = useState<TopPost[]>([])
   const [isHotLoading, setIsHotLoading] = useState(false)
   const [hotError, setHotError] = useState<string | null>(null)
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
@@ -28,6 +31,33 @@ export default function Home() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+
+    let isActive = true
+    const checkAuthStatus = async () => {
+      try {
+        await apiGet('/auth/status', { baseUrl: AUTH_API_BASE_URL })
+      } catch (error) {
+        if (!isActive) return
+        if (error instanceof ApiError && error.status === 401) {
+          await logout()
+          if (isActive) {
+            navigate('/login', { replace: true })
+          }
+          return
+        }
+        console.warn('Failed to verify auth status on home:', error)
+      }
+    }
+
+    void checkAuthStatus()
+
+    return () => {
+      isActive = false
+    }
+  }, [user, logout, navigate])
 
   const categoryPool = useMemo(() => categories.filter(c => c.key !== 'all'), [])
 

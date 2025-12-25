@@ -97,3 +97,13 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	// 默认情况下也返回200
 	response.Success(ctx, "修改个人资料成功", nil)
 }
+
+func (hdl *UserHandler) Top(ctx *gin.Context) {
+	userDTOs, err := hdl.userSvc.Top(ctx)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "获取推荐关注成功", userDTOs)
+}

@@ -29,6 +29,7 @@ type UserService interface {
 	GetBriefByName(ctx context.Context, username string) (userdto.BriefDTO, error)
 	UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error
 	UpdateProfile(ctx context.Context, id int64, req userdto.ModifyProfileRequest) error
+	Top(ctx context.Context) ([]userdto.TopDTO, error)
 }
 
 type PostService interface {

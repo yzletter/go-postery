@@ -28,7 +28,26 @@ type DetailDTO struct {
 	LastLoginIP string `json:"last_login_ip"` // 最近一次登录 IP
 }
 
-// ToBriefDTO model.User 转 UserDTO
+type TopDTO struct {
+	ID     int64   `json:"id,string"`
+	Name   string  `json:"name"`   // 用户名
+	Bio    string  `json:"bio"`    // 个性签名
+	Avatar string  `json:"avatar"` // 头像 URL
+	Score  float64 `json:"score"`
+}
+
+// ToTopDTO model.User 转 ToTopDTO
+func ToTopDTO(user *model.User, score float64) TopDTO {
+	return TopDTO{
+		ID:     user.ID,
+		Name:   user.Username,
+		Bio:    user.Bio,
+		Avatar: "",
+		Score:  score,
+	}
+}
+
+// ToBriefDTO model.User 转 BriefDTO
 func ToBriefDTO(user *model.User) BriefDTO {
 	return BriefDTO{
 		ID:     user.ID,

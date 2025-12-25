@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS users
   DEFAULT CHARSET = utf8mb4 COMMENT '用户表';
 
 
-# 创建 post 表
+# 创建 user 表
 CREATE TABLE IF NOT EXISTS posts
 (
     id            BIGINT       NOT NULL COMMENT '帖子 ID',

@@ -8,13 +8,14 @@ import {
   type UIEvent,
   type WheelEvent,
   type TouchEvent,
+  type MouseEvent,
 } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowLeft, Send, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Send, MessageCircle, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useAuth } from '../contexts/AuthContext'
-import { apiGet, API_BASE_URL } from '../utils/api'
+import { apiGet, apiDelete, API_BASE_URL } from '../utils/api'
 import { normalizeId } from '../utils/id'
 
 const MESSAGE_PAGE_SIZE = 8
@@ -241,6 +242,7 @@ export default function Messages() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
+  const [deletingSessionIds, setDeletingSessionIds] = useState<Record<string, boolean>>({})
   const [refreshKey, setRefreshKey] = useState(0)
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -858,6 +860,47 @@ export default function Messages() {
     setInput('')
   }
 
+  const handleDeleteSession = useCallback(
+    async (session: Conversation, event?: MouseEvent<HTMLButtonElement>) => {
+      event?.stopPropagation()
+      if (!session.id || deletingSessionIds[session.id]) return
+      const displayName = session.name || '该用户'
+      const confirmed = window.confirm(`确定删除与 ${displayName} 的会话吗？`)
+      if (!confirmed) return
+
+      setDeletingSessionIds((prev) => ({ ...prev, [session.id]: true }))
+      setError(null)
+
+      try {
+        await apiDelete(`/sessions/${encodeURIComponent(session.id)}`)
+        setSessions((prev) => prev.filter((item) => item.id !== session.id))
+        setMessagesBySession((prev) => {
+          if (!(session.id in prev)) return prev
+          const next = { ...prev }
+          delete next[session.id]
+          return next
+        })
+        setMessagePageBySession((prev) => {
+          if (!(session.id in prev)) return prev
+          const next = { ...prev }
+          delete next[session.id]
+          return next
+        })
+        setActiveId((prev) => (prev === session.id ? '' : prev))
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '删除会话失败'
+        setError(message)
+      } finally {
+        setDeletingSessionIds((prev) => {
+          const next = { ...prev }
+          delete next[session.id]
+          return next
+        })
+      }
+    },
+    [deletingSessionIds]
+  )
+
   let lastShownTimestamp = 0
 
   return (
@@ -913,45 +956,65 @@ export default function Messages() {
             !error &&
             sessions.map((session) => {
               const isActive = session.id === activeId
+              const isDeleting = Boolean(deletingSessionIds[session.id])
               const avatarUrl =
                 session.avatar ||
                 `https://api.dicebear.com/7.x/avataaars/svg?seed=msg-${session.targetId || session.name || session.id}`
               return (
-                <button
+                <div
                   key={session.id}
-                  onClick={() => handleSelectSession(session.id)}
-                  className={`w-full flex items-center space-x-3 rounded-lg px-3 py-2 text-left transition-colors ${
+                  className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
                     isActive ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'
                   }`}
                 >
-                  <img
-                    src={avatarUrl}
-                    alt={session.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSession(session.id)}
+                    className="flex flex-1 min-w-0 items-center space-x-3 text-left"
+                  >
+                    <img
+                      src={avatarUrl}
+                      alt={session.name}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div className="flex-1 min-w-0">
+                    <div className="flex items-center">
                       <p className="font-medium text-sm line-clamp-1">{session.name}</p>
-                      {session.lastMessageTime && (
-                        <span className="text-[10px] text-gray-400 shrink-0">
-                          {formatRelativeTime(session.lastMessageTime)}
-                        </span>
-                      )}
                     </div>
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <p className="text-xs text-gray-500 line-clamp-1 flex-1">
                         {session.lastMessage || '暂无消息'}
                       </p>
-                      {session.unread > 0 ? (
-                        <span
-                          className="w-2 h-2 rounded-full bg-red-500 shrink-0"
-                          aria-label="未读"
-                          title="未读"
-                        />
-                      ) : null}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {session.lastMessageTime && (
+                          <span className="text-[10px] text-gray-400">
+                            {formatRelativeTime(session.lastMessageTime)}
+                          </span>
+                        )}
+                        {session.unread > 0 ? (
+                          <span
+                            className="w-2 h-2 rounded-full bg-red-500"
+                            aria-label="未读"
+                            title="未读"
+                          />
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </button>
+                  <button
+                    type="button"
+                    onClick={(event) => handleDeleteSession(session, event)}
+                    disabled={isDeleting}
+                    aria-label={`删除与 ${session.name || '该用户'} 的会话`}
+                    title="删除会话"
+                    className={`shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:text-red-500 ${
+                      isDeleting ? 'cursor-not-allowed opacity-50' : ''
+                    }`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               )
             })}
         </div>

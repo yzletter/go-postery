@@ -330,8 +330,6 @@ func consumeMQ(ctx context.Context, mqConn *amqp.Connection, id int64, send func
 			}
 		}
 	}
-
-	return nil
 }
 
 // 将消息发给 MQ 的 Exchange

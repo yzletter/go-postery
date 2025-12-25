@@ -16,6 +16,8 @@ type UserRepository interface {
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
 	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error
+	Top(ctx context.Context) ([]*model.User, []float64, error)
+	ChangeScore(ctx context.Context, uid int64, delta int)
 }
 
 type PostRepository interface {
