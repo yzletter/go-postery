@@ -1,11 +1,24 @@
-# Go Postery API 文档（基于 `main.go` 路由）
+# API 文档
 
 ## 基础信息
 
-- 服务监听：`http://localhost:8765`
-- API 前缀：`/api/v1`
-- 数据格式：请求/响应均为 `application/json`
-- 统一响应结构：
+- Base URL: http://localhost:8765
+- API 前缀: /api/v1
+- Content-Type: application/json
+- 时间格式: RFC3339
+- ID 字段：JSON 输出为 string（字段 tag 为 `json:",string"`）
+
+## 认证
+
+- AccessToken: `Authorization: Bearer <token>`
+- AccessToken 也可放在 Cookie `x-jwt-token`（主要用于 WS/HTTP 读取）
+- RefreshToken: Cookie `refresh-token`
+- 注册/登录成功会返回 `Authorization` Header 并设置 `refresh-token` Cookie
+- Auth 中间件失败时直接返回 HTTP 401（无统一响应体），并清空 token
+
+## 统一响应
+
+成功:
 
 ```json
 {
@@ -15,165 +28,244 @@
 }
 ```
 
-- `code`：业务状态码（`0` 表示成功，非 `0` 表示失败）
-- `msg`：提示信息
-- `data`：响应数据（失败时通常为 `null` 或缺省）
-
-## 认证说明
-
-- AccessToken：请求头/响应头 `Authorization: Bearer <access_token>`
-- RefreshToken：Cookie `refresh-token`（HTTPOnly）
-- 自动续期：访问需要登录接口时，若 AccessToken 无效但 RefreshToken 有效，中间件会重新签发并在响应头写回 `Authorization: Bearer <access_token>`，同时更新 `refresh-token` Cookie。
-- 前端读取响应头：如需在浏览器跨域环境读取响应头里的 `Authorization`，服务端 CORS 需要配置 `ExposeHeaders: Authorization`。
-- 需要登录的接口：
-  - 请求时携带 `Authorization: Bearer <access_token>`
-  - RefreshToken 由浏览器 Cookie 自动携带（如使用跨域 Cookie，请确保前后端允许携带凭证）
-
-## 全局中间件行为（需要注意）
-
-- 鉴权失败（需要登录接口）：直接返回 HTTP `401`，响应体可能为空，并清空 `Authorization` / 删除 `refresh-token` Cookie。
-- 触发限流：直接返回 HTTP `429`，响应体为空。
-- 限流组件异常：直接返回 HTTP `500`，响应体为空。
-
-## ID 类型说明
-
-后端部分字段使用 `json:",string"`：
-
-- **响应中** `id`/`post_id`/`parent_id`/`reply_id` 等会以 **字符串** 形式返回（避免前端数值精度丢失）。
-- **请求中**如需传递 `parent_id`/`reply_id` 等字段，建议同样以 **字符串** 传递（例如：`"0"`、`"123"`）。
-
-## 分页参数
-
-带分页的接口通常支持：
-
-- `pageNo`：页码（默认 `1`）
-- `pageSize`：每页大小（默认 `10`，部分接口限制 `<= 100`）
-
-响应通常包含：
-
-- `total`：总数
-- `hasMore`：是否还有下一页（后端按 `pageNo * pageSize < total` 计算）
-
-## 接口总览
-
-| 模块 | 方法 | 路径 | 登录 | 说明 |
-|---|---|---|---|---|
-| 运维 | GET | `/metrics` | 否 | Prometheus 指标 |
-| 认证 | POST | `/api/v1/auth/register` | 否 | 注册 |
-| 认证 | POST | `/api/v1/auth/login` | 否 | 登录 |
-| 认证 | POST | `/api/v1/auth/logout` | 是 | 登出 |
-| 用户 | GET | `/api/v1/users/:id` | 否 | 获取用户资料 |
-| 用户 | GET | `/api/v1/users/:id/posts` | 否 | 按页获取用户帖子 |
-| 用户 | POST | `/api/v1/users/me` | 是 | 修改个人资料 |
-| 用户 | POST | `/api/v1/users/me/password` | 是 | 修改密码 |
-| 关注 | GET | `/api/v1/users/me/followers` | 是 | 按页获取粉丝 |
-| 关注 | GET | `/api/v1/users/me/followees` | 是 | 按页获取关注列表 |
-| 关注 | POST | `/api/v1/users/:id/follow` | 是 | 关注用户 |
-| 关注 | DELETE | `/api/v1/users/:id/follow` | 是 | 取关用户 |
-| 关注 | GET | `/api/v1/users/:id/follow` | 是 | 查询关注关系 |
-| 帖子 | GET | `/api/v1/posts` | 否 | 按页获取帖子列表 |
-| 帖子 | GET | `/api/v1/posts/tags` | 否 | 按标签分页获取帖子 |
-| 帖子 | GET | `/api/v1/posts/:id` | 否 | 获取帖子详情（会 +1 浏览量） |
-| 评论 | GET | `/api/v1/posts/:id/comments` | 否 | 按页获取评论列表 |
-| 评论 | GET | `/api/v1/posts/:id/comments/:cid` | 否 | 按页获取某评论的回复列表 |
-| 帖子 | POST | `/api/v1/posts` | 是 | 创建帖子 |
-| 帖子 | POST | `/api/v1/posts/:id` | 是 | 更新帖子 |
-| 帖子 | DELETE | `/api/v1/posts/:id` | 是 | 删除帖子 |
-| 评论 | POST | `/api/v1/posts/:id/comments` | 是 | 创建评论/回复 |
-| 评论 | DELETE | `/api/v1/posts/:id/comments/:cid` | 是 | 删除评论 |
-| 点赞 | GET | `/api/v1/posts/:id/likes` | 是 | 是否点赞该帖子 |
-| 点赞 | POST | `/api/v1/posts/:id/likes` | 是 | 点赞帖子 |
-| 点赞 | DELETE | `/api/v1/posts/:id/likes` | 是 | 取消点赞 |
-
----
-
-## 运维接口
-
-### GET `/metrics`
-
-Prometheus 拉取指标使用（返回文本格式，非 JSON）。
-
-## 认证模块
-
-### POST `/api/v1/auth/register`
-
-注册用户；成功后：
-
-- 响应头写入 `Authorization: Bearer <access_token>`
-- 下发 Cookie：`refresh-token=<refresh_token>`
-
-请求体：
+失败:
 
 ```json
 {
-  "email": "user@example.com",
-  "name": "alice",
-  "password": "32位字符串（例如前端MD5后传输）"
+  "code": 10002,
+  "msg": "参数错误"
 }
 ```
 
-响应 `data`：用户简要信息
+说明:
 
-```json
+- data 字段为空时可能被省略
+
+## 错误码
+
+| Code  | HTTP | 说明 |
+| ----- | ---- | ---- |
+| 0     | 200  | 成功 |
+| 10001 | 500  | 系统繁忙，请稍后重试 |
+| 10002 | 400  | 参数错误 |
+| 20001 | 404  | 用户不存在 |
+| 20002 | 409  | 用户名或邮箱已存在 |
+| 20003 | 400  | 密码强度过低 |
+| 20004 | 401  | 账号或密码错误 |
+| 20005 | 401  | 用户未登录 |
+| 20006 | 403  | 没有权限 |
+| 20007 | 500  | 登出失败 |
+| 20008 | 401  | 旧密码错误 |
+| 30001 | 404  | 帖子不存在 |
+| 30002 | 409  | 已经点赞过该帖子 |
+| 30003 | 409  | 尚未点赞，无法取消 |
+| 40001 | 404  | 评论不存在 |
+| 50001 | 409  | 标签重复绑定 |
+| 60001 | 409  | 已经关注过该用户 |
+| 60002 | 409  | 尚未关注，无法取消 |
+
+## 数据模型
+
+### UserBrief
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 用户 ID |
+| email | string | 邮箱 |
+| name | string | 用户名 |
+| avatar | string | 头像 URL |
+
+### UserDetail
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 用户 ID |
+| name | string | 用户名 |
+| email | string | 邮箱 |
+| avatar | string | 头像 URL |
+| bio | string | 个性签名 |
+| gender | int | 0=空，1=男，2=女，3=其它 |
+| birthday | string | 生日（RFC3339，可能为空） |
+| location | string | 地区 |
+| country | string | 国家 |
+| last_login_ip | string | 最近登录 IP |
+
+### PostDetail
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 帖子 ID |
+| view_count | int | 浏览数 |
+| like_count | int | 点赞数 |
+| comment_count | int | 评论数 |
+| title | string | 标题 |
+| content | string | 内容 |
+| created_at | string | 创建时间（RFC3339） |
+| author | UserBrief | 作者 |
+| tags | string[] | 标签 |
+
+### PostBrief
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 帖子 ID |
+| title | string | 标题 |
+| created_at | string | 创建时间（RFC3339） |
+| author | UserBrief | 作者 |
+
+### PostTop
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 帖子 ID |
+| title | string | 标题 |
+| score | float | 热度得分 |
+
+### Comment
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 评论 ID |
+| post_id | string | 帖子 ID |
+| parent_id | string | 父评论 ID |
+| reply_id | string | 回复目标评论 ID |
+| content | string | 内容 |
+| created_at | string | 创建时间（RFC3339） |
+| author | UserBrief | 作者 |
+
+### Session
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| session_id | string | 会话 ID |
+| target_id | string | 对方用户 ID |
+| target_name | string | 对方用户名 |
+| target_avatar | string | 对方头像 |
+| last_message_id | string | 最后一条消息 ID |
+| last_message | string | 最后一条消息摘要 |
+| last_message_time | string | 最后一条消息时间（RFC3339） |
+| unread_count | int | 未读数 |
+
+### Message
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| content | string | 消息内容 |
+| message_from | string | 发送方 ID |
+| message_to | string | 接收方 ID |
+| id | string | 消息 ID |
+| session_id | string | 会话 ID |
+| session_type | int | 会话类型 |
+| created_at | string | 创建时间（RFC3339） |
+
+### FollowType
+
+| 值 | 说明 |
+| --- | ---- |
+| 0 | 互不关注 |
+| 1 | 我关注对方 |
+| 2 | 对方关注我 |
+| 3 | 互相关注 |
+
+## 接口
+
+### 认证 Auth
+
+#### POST /api/v1/auth/register
+
+- Auth: 否
+- Body:
+  - email (string, 可选)
+  - name (string, 必填, 长度 >= 2)
+  - password (string, 必填, 长度 = 32)
+- Response: UserBrief
+- Notes: 返回 `Authorization` Header 并设置 `refresh-token` Cookie
+
+示例请求:
+
+```bash
+curl -i -X POST "http://localhost:8765/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "alice@example.com",
+    "name": "alice",
+    "password": "0123456789abcdef0123456789abcdef"
+  }'
+```
+
+示例响应:
+
+```http
+HTTP/1.1 200 OK
+Authorization: Bearer <access_token>
+Set-Cookie: refresh-token=<refresh_token>; Path=/; HttpOnly
+Content-Type: application/json
+
 {
   "code": 0,
   "msg": "注册成功",
   "data": {
-    "id": "1999760900969463808",
-    "email": "user@example.com",
+    "id": "1001",
+    "email": "alice@example.com",
     "name": "alice",
     "avatar": ""
   }
 }
 ```
 
-常见错误：
+#### POST /api/v1/auth/login
 
-- `10002` 参数错误（HTTP 400）
-- `20002` 用户名或邮箱已存在（HTTP 409）
+- Auth: 否
+- Body:
+  - name (string, 必填, 长度 >= 2)
+  - password (string, 必填, 长度 = 32)
+- Response: UserBrief
+- Notes: 返回 `Authorization` Header 并设置 `refresh-token` Cookie
 
-### POST `/api/v1/auth/login`
+示例请求:
 
-登录；成功后同样会在响应头返回 `Authorization: Bearer <access_token>`，并下发 `refresh-token` Cookie。
-
-请求体：
-
-```json
-{
-  "name": "alice",
-  "password": "32位字符串（例如前端MD5后传输）"
-}
+```bash
+curl -i -X POST "http://localhost:8765/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "alice",
+    "password": "0123456789abcdef0123456789abcdef"
+  }'
 ```
 
-响应 `data`：用户简要信息
+示例响应:
 
-```json
+```http
+HTTP/1.1 200 OK
+Authorization: Bearer <access_token>
+Set-Cookie: refresh-token=<refresh_token>; Path=/; HttpOnly
+Content-Type: application/json
+
 {
   "code": 0,
   "msg": "登录成功",
   "data": {
-    "id": "1999760900969463808",
-    "email": "user@example.com",
+    "id": "1001",
+    "email": "alice@example.com",
     "name": "alice",
     "avatar": ""
   }
 }
 ```
 
-常见错误：
+#### POST /api/v1/auth/logout
 
-- `10002` 参数错误（HTTP 400）
-- `20004` 账号或密码错误（HTTP 401）
+- Auth: 是
+- Response: null
 
-### POST `/api/v1/auth/logout`（需要登录）
+示例请求:
 
-请求头：
+```bash
+curl -X POST "http://localhost:8765/api/v1/auth/logout" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-- `Authorization: Bearer <access_token>`
-
-请求体：无
-
-响应：
+示例响应:
 
 ```json
 {
@@ -182,60 +274,58 @@ Prometheus 拉取指标使用（返回文本格式，非 JSON）。
 }
 ```
 
-说明：
+### 用户 Users
 
-- 服务端会清理 token，并将 `Authorization` 置空、`refresh-token` Cookie 置为过期。
+#### GET /api/v1/users/:id
 
-## 用户模块
+- Auth: 否
+- Response: UserDetail
 
-### GET `/api/v1/users/:id`
+示例请求:
 
-获取用户资料。
+```bash
+curl "http://localhost:8765/api/v1/users/1001"
+```
 
-路径参数：
-
-- `id`：用户 ID
-
-响应 `data`：用户详情
+示例响应:
 
 ```json
 {
   "code": 0,
   "msg": "获取个人资料成功",
   "data": {
-    "id": "1999760900969463808",
+    "id": "1001",
     "name": "alice",
-    "email": "user@example.com",
+    "email": "alice@example.com",
     "avatar": "https://example.com/avatar.png",
-    "bio": "个人简介",
+    "bio": "hello",
     "gender": 1,
     "birthday": "2024-01-01T00:00:00Z",
-    "location": "Shanghai",
-    "country": "China",
+    "location": "shanghai",
+    "country": "cn",
     "last_login_ip": "127.0.0.1"
   }
 }
 ```
 
-常见错误：
+#### GET /api/v1/users/:id/posts
 
-- `10002` 参数错误（HTTP 400）
-- `20001` 用户不存在（HTTP 404）
+- Auth: 否
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 10, 最大 100)
+- Response:
+  - posts: PostBrief[]
+  - total: int
+  - hasMore: bool
 
-### GET `/api/v1/users/:id/posts`
+示例请求:
 
-按页获取某个用户发布的帖子（简要信息）。
+```bash
+curl "http://localhost:8765/api/v1/users/1001/posts?pageNo=1&pageSize=10"
+```
 
-路径参数：
-
-- `id`：用户 ID
-
-Query 参数：
-
-- `pageNo`（默认 `1`）
-- `pageSize`（默认 `10`，限制 `<= 100`）
-
-响应 `data`：
+示例响应:
 
 ```json
 {
@@ -244,469 +334,15 @@ Query 参数：
   "data": {
     "posts": [
       {
-        "id": "1999760900969463808",
-        "title": "标题",
-        "created_at": "2024-01-01T00:00:00Z",
-        "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
-      }
-    ],
-    "total": 100,
-    "hasMore": true
-  }
-}
-```
-
-### POST `/api/v1/users/me`（需要登录）
-
-修改个人资料。
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-请求体（字段均可选）：
-
-```json
-{
-  "email": "user@example.com",
-  "avatar": "https://example.com/avatar.png",
-  "bio": "个人简介",
-  "gender": 1,
-  "birthday": "2006-01-02",
-  "location": "Shanghai",
-  "country": "China"
-}
-```
-
-响应：
-
-```json
-{
-  "code": 0,
-  "msg": "修改个人资料成功"
-}
-```
-
-说明：
-
-- `birthday` 入参格式为 `YYYY-MM-DD`（后端按 `2006-01-02` 解析）。
-
-### POST `/api/v1/users/me/password`（需要登录）
-
-修改密码。
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-请求体：
-
-```json
-{
-  "old_password": "32位字符串",
-  "new_password": "32位字符串"
-}
-```
-
-响应：
-
-```json
-{
-  "code": 0,
-  "msg": "密码修改成功"
-}
-```
-
-常见错误：
-
-- `20008` 旧密码错误（HTTP 401）
-
-## 关注模块
-
-### GET `/api/v1/users/me/followers`（需要登录）
-
-按页获取“关注我的人”。
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-Query 参数：
-
-- `pageNo`（默认 `1`）
-- `pageSize`（默认 `10`，限制 `<= 100`）
-
-响应 `data`：
-
-```json
-{
-  "code": 0,
-  "msg": "获取粉丝列表成功",
-  "data": {
-    "followers": [
-      { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
-    ],
-    "total": 10,
-    "hasMore": false
-  }
-}
-```
-
-### GET `/api/v1/users/me/followees`（需要登录）
-
-按页获取“我关注的人”。
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-Query 参数：
-
-- `pageNo`（默认 `1`）
-- `pageSize`（默认 `10`，限制 `<= 100`）
-
-响应 `data`：
-
-```json
-{
-  "code": 0,
-  "msg": "获取关注列表成功",
-  "data": {
-    "followees": [
-      { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
-    ],
-    "total": 10,
-    "hasMore": false
-  }
-}
-```
-
-### POST `/api/v1/users/:id/follow`（需要登录）
-
-关注某个用户。
-
-路径参数：
-
-- `id`：对方用户 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应：
-
-```json
-{
-  "code": 0,
-  "msg": "关注成功"
-}
-```
-
-常见错误：
-
-- `60001` 已经关注过该用户（HTTP 409）
-
-### DELETE `/api/v1/users/:id/follow`（需要登录）
-
-取消关注。
-
-路径参数：
-
-- `id`：对方用户 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应：
-
-```json
-{
-  "code": 0,
-  "msg": "取消关注成功"
-}
-```
-
-常见错误：
-
-- `60002` 尚未关注，无法取消（HTTP 409）
-
-### GET `/api/v1/users/:id/follow`（需要登录）
-
-查询关注关系。
-
-路径参数：
-
-- `id`：对方用户 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应 `data`：关注关系（数字枚举）
-
-- `0`：互不关注
-- `1`：我关注了对方
-- `2`：对方关注了我
-- `3`：互相关注
-
-```json
-{
-  "code": 0,
-  "msg": "获取关注关系成功",
-  "data": 3
-}
-```
-
-## 帖子模块
-
-### GET `/api/v1/posts`
-
-按页获取帖子列表（包含正文、浏览/点赞/评论计数等）。
-
-Query 参数：
-
-- `pageNo`（默认 `1`）
-- `pageSize`（默认 `10`）
-
-响应 `data`：
-
-```json
-{
-  "code": 0,
-  "msg": "获取帖子列表成功",
-  "data": {
-    "posts": [
-      {
-        "id": "1999760900969463808",
-        "view_count": 10,
-        "like_count": 3,
-        "comment_count": 2,
-        "title": "标题",
-        "content": "正文",
-        "created_at": "2024-01-01T00:00:00Z",
-        "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" },
-        "tags": ["go", "gin"]
-      }
-    ],
-    "total": 100,
-    "hasMore": true
-  }
-}
-```
-
-### GET `/api/v1/posts/tags`
-
-按标签分页获取帖子列表。
-
-Query 参数：
-
-- `tag`：标签名
-- `pageNo`（默认 `1`）
-- `pageSize`（默认 `10`）
-
-响应结构同 `GET /api/v1/posts`。
-
-### GET `/api/v1/posts/:id`
-
-获取帖子详情（后端会对该帖 `view_count + 1`）。
-
-路径参数：
-
-- `id`：帖子 ID
-
-响应 `data`：帖子详情（结构同上单个 `post`）
-
-```json
-{
-  "code": 0,
-  "msg": "获取帖子详情成功",
-  "data": {
-    "id": "1999760900969463808",
-    "view_count": 11,
-    "like_count": 3,
-    "comment_count": 2,
-    "title": "标题",
-    "content": "正文",
-    "created_at": "2024-01-01T00:00:00Z",
-    "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" },
-    "tags": ["go", "gin"]
-  }
-}
-```
-
-### POST `/api/v1/posts`（需要登录）
-
-创建帖子。
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-请求体：
-
-```json
-{
-  "title": "标题",
-  "content": "正文",
-  "tags": ["go", "gin"]
-}
-```
-
-响应 `data`：新建帖子详情（注意：当前实现可能不会在该响应里回填 `tags` 字段）
-
-```json
-{
-  "code": 0,
-  "msg": "帖子创建成功",
-  "data": {
-    "id": "1999760900969463808",
-    "view_count": 0,
-    "like_count": 0,
-    "comment_count": 0,
-    "title": "标题",
-    "content": "正文",
-    "created_at": "2024-01-01T00:00:00Z",
-    "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" },
-    "tags": null
-  }
-}
-```
-
-### POST `/api/v1/posts/:id`（需要登录）
-
-更新帖子（同时会进行标签绑定/解绑差异更新）。
-
-路径参数：
-
-- `id`：帖子 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-请求体：
-
-```json
-{
-  "title": "新标题",
-  "content": "新正文",
-  "tags": ["go", "gin"]
-}
-```
-
-响应：
-
-```json
-{
-  "code": 0,
-  "msg": "帖子更新成功"
-}
-```
-
-常见错误：
-
-- `20006` 没有权限（HTTP 403）
-- `30001` 帖子不存在（HTTP 404）
-
-### DELETE `/api/v1/posts/:id`（需要登录）
-
-删除帖子。
-
-路径参数：
-
-- `id`：帖子 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应：
-
-```json
-{
-  "code": 0,
-  "msg": "帖子删除成功"
-}
-```
-
-常见错误：
-
-- `20006` 没有权限（HTTP 403）
-
-## 评论模块
-
-### GET `/api/v1/posts/:id/comments`
-
-按页获取帖子评论列表。
-
-路径参数：
-
-- `id`：帖子 ID
-
-Query 参数：
-
-- `pageNo`（默认 `1`）
-- `pageSize`（默认 `10`，限制 `<= 100`）
-
-响应 `data`：
-
-```json
-{
-  "code": 0,
-  "msg": "获取评论列表成功",
-  "data": {
-    "comments": [
-      {
-        "id": "1999760900969463808",
-        "post_id": "1999760900969463808",
-        "parent_id": "0",
-        "reply_id": "0",
-        "content": "评论内容",
-        "created_at": "2024-01-01T00:00:00Z",
-        "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
-      }
-    ],
-    "total": 10,
-    "hasMore": false
-  }
-}
-```
-
-### GET `/api/v1/posts/:id/comments/:cid`
-
-按页获取某条评论的回复列表。
-
-路径参数：
-
-- `id`：帖子 ID
-- `cid`：评论 ID
-
-Query 参数：
-
-- `pageNo`：页码（默认 `1`，`>= 1`）
-- `pageSize`：每页大小（默认 `10`，`<= 100`）
-
-响应 `data`：
-
-- `comments`：回复列表（结构同 Comment DTO）
-- `total`：回复总数
-- `hasMore`：是否还有更多回复
-
-```json
-{
-  "code": 0,
-  "msg": "获取评论回复列表成功",
-  "data": {
-    "comments": [
-      {
-        "id": "1999760900969463808",
-        "post_id": "1999760900969463808",
-        "parent_id": "1999760900969463808",
-        "reply_id": "0",
-        "content": "回复内容",
-        "created_at": "2024-01-01T00:00:00Z",
-        "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
+        "id": "2001",
+        "title": "hello world",
+        "created_at": "2024-01-02T15:04:05Z",
+        "author": {
+          "id": "1001",
+          "email": "alice@example.com",
+          "name": "alice",
+          "avatar": ""
+        }
       }
     ],
     "total": 1,
@@ -715,64 +351,698 @@ Query 参数：
 }
 ```
 
-### POST `/api/v1/posts/:id/comments`（需要登录）
+#### POST /api/v1/users/me
 
-创建评论/回复。
+- Auth: 是
+- Body: ModifyProfileRequest
+  - email (string, 可选)
+  - avatar (string, 可选)
+  - bio (string, 可选)
+  - gender (int, 可选)
+  - birthday (string, 可选, 格式 yyyy-mm-dd)
+  - location (string, 可选)
+  - country (string, 可选)
+- Response: null
 
-路径参数：
+示例请求:
 
-- `id`：帖子 ID
+```bash
+curl -X POST "http://localhost:8765/api/v1/users/me" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bio": "hello",
+    "gender": 1,
+    "birthday": "2024-01-01",
+    "location": "shanghai",
+    "country": "cn"
+  }'
+```
 
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-请求体：
+示例响应:
 
 ```json
 {
-  "parent_id": "0",
-  "reply_id": "0",
-  "content": "评论内容"
+  "code": 0,
+  "msg": "修改个人资料成功"
 }
 ```
 
-说明：
+#### POST /api/v1/users/me/password
 
-- `parent_id=0` 表示一级评论；`parent_id!=0` 表示对某条评论的回复（回复列表通过 `GET /api/v1/posts/:id/comments/:cid` 获取）。
+- Auth: 是
+- Body:
+  - old_password (string, 必填, 长度 = 32)
+  - new_password (string, 必填, 长度 = 32)
+- Response: null
 
-响应 `data`：新建评论
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/users/me/password" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "old_password": "0123456789abcdef0123456789abcdef",
+    "new_password": "abcdef0123456789abcdef0123456789"
+  }'
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "密码修改成功"
+}
+```
+
+#### GET /api/v1/users/me/followers
+
+- Auth: 是
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 10, 最大 100)
+- Response:
+  - followers: UserBrief[]
+  - total: int
+  - hasMore: bool
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/users/me/followers?pageNo=1&pageSize=10" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取粉丝列表成功",
+  "data": {
+    "followers": [
+      {
+        "id": "1002",
+        "email": "bob@example.com",
+        "name": "bob",
+        "avatar": ""
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
+}
+```
+
+#### GET /api/v1/users/me/followees
+
+- Auth: 是
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 10, 最大 100)
+- Response:
+  - followees: UserBrief[]
+  - total: int
+  - hasMore: bool
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/users/me/followees?pageNo=1&pageSize=10" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取关注列表成功",
+  "data": {
+    "followees": [
+      {
+        "id": "1002",
+        "email": "bob@example.com",
+        "name": "bob",
+        "avatar": ""
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
+}
+```
+
+#### POST /api/v1/users/:id/follow
+
+- Auth: 是
+- Response: null
+
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/users/1002/follow" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "关注成功"
+}
+```
+
+#### DELETE /api/v1/users/:id/follow
+
+- Auth: 是
+- Response: null
+
+示例请求:
+
+```bash
+curl -X DELETE "http://localhost:8765/api/v1/users/1002/follow" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "取消关注成功"
+}
+```
+
+#### GET /api/v1/users/:id/follow
+
+- Auth: 是
+- Response: FollowType
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/users/1002/follow" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取关注关系成功",
+  "data": 1
+}
+```
+
+#### GET /api/v1/users/:id/sessions
+
+- Auth: 是
+- Response: Session
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/users/1002/sessions" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取会话成功",
+  "data": {
+    "session_id": "4001",
+    "target_id": "1002",
+    "target_name": "bob",
+    "target_avatar": "",
+    "last_message_id": "5001",
+    "last_message": "hello",
+    "last_message_time": "2024-01-02T15:04:05Z",
+    "unread_count": 2
+  }
+}
+```
+
+#### GET /api/v1/users/:id/sessions/messages
+
+- Auth: 是
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 5)
+- Response:
+  - total: int
+  - has_more: bool
+  - messages: Message[]
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/users/1002/sessions/messages?pageNo=1&pageSize=5" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取聊天记录成功",
+  "data": {
+    "total": 1,
+    "has_more": false,
+    "messages": [
+      {
+        "content": "hello",
+        "message_from": "1001",
+        "message_to": "1002",
+        "id": "5001",
+        "session_id": "4001",
+        "session_type": 1,
+        "created_at": "2024-01-02T15:04:05Z"
+      }
+    ]
+  }
+}
+```
+
+### 帖子 Posts
+
+#### GET /api/v1/posts
+
+- Auth: 否
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 10)
+- Response:
+  - posts: PostDetail[]
+  - total: int
+  - hasMore: bool
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/posts?pageNo=1&pageSize=10"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取帖子列表成功",
+  "data": {
+    "posts": [
+      {
+        "id": "2001",
+        "view_count": 10,
+        "like_count": 2,
+        "comment_count": 1,
+        "title": "hello world",
+        "content": "first post",
+        "created_at": "2024-01-02T15:04:05Z",
+        "author": {
+          "id": "1001",
+          "email": "alice@example.com",
+          "name": "alice",
+          "avatar": ""
+        },
+        "tags": ["go", "gin"]
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
+}
+```
+
+#### GET /api/v1/posts/top
+
+- Auth: 否
+- Response: PostTop[]
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/posts/top"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取热门帖子榜单成功",
+  "data": [
+    {
+      "id": "2001",
+      "title": "hello world",
+      "score": 12.3
+    }
+  ]
+}
+```
+
+#### GET /api/v1/posts/tags
+
+- Auth: 否
+- Query:
+  - tag (string, 必填)
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 10)
+- Response:
+  - posts: PostDetail[]
+  - total: int
+  - hasMore: bool
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/posts/tags?tag=go&pageNo=1&pageSize=10"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取帖子列表成功",
+  "data": {
+    "posts": [
+      {
+        "id": "2001",
+        "view_count": 10,
+        "like_count": 2,
+        "comment_count": 1,
+        "title": "hello world",
+        "content": "first post",
+        "created_at": "2024-01-02T15:04:05Z",
+        "author": {
+          "id": "1001",
+          "email": "alice@example.com",
+          "name": "alice",
+          "avatar": ""
+        },
+        "tags": ["go"]
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
+}
+```
+
+#### GET /api/v1/posts/:id
+
+- Auth: 否
+- Response: PostDetail
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/posts/2001"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取帖子详情成功",
+  "data": {
+    "id": "2001",
+    "view_count": 11,
+    "like_count": 2,
+    "comment_count": 1,
+    "title": "hello world",
+    "content": "first post",
+    "created_at": "2024-01-02T15:04:05Z",
+    "author": {
+      "id": "1001",
+      "email": "alice@example.com",
+      "name": "alice",
+      "avatar": ""
+    },
+    "tags": ["go", "gin"]
+  }
+}
+```
+
+#### GET /api/v1/posts/:id/comments
+
+- Auth: 否
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 10, 最大 100)
+- Response:
+  - comments: Comment[]
+  - total: int
+  - hasMore: bool
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/posts/2001/comments?pageNo=1&pageSize=10"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取评论列表成功",
+  "data": {
+    "comments": [
+      {
+        "id": "3001",
+        "post_id": "2001",
+        "parent_id": "0",
+        "reply_id": "0",
+        "content": "nice",
+        "created_at": "2024-01-02T15:04:05Z",
+        "author": {
+          "id": "1002",
+          "email": "bob@example.com",
+          "name": "bob",
+          "avatar": ""
+        }
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
+}
+```
+
+#### GET /api/v1/posts/:id/comments/:cid
+
+- Auth: 否
+- Query:
+  - pageNo (int, 默认 1)
+  - pageSize (int, 默认 3, 最大 100)
+- Response:
+  - comments: Comment[]
+  - total: int
+  - hasMore: bool
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/posts/2001/comments/3001?pageNo=1&pageSize=3"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取评论回复列表成功",
+  "data": {
+    "comments": [
+      {
+        "id": "3002",
+        "post_id": "2001",
+        "parent_id": "3001",
+        "reply_id": "3001",
+        "content": "reply",
+        "created_at": "2024-01-02T15:04:05Z",
+        "author": {
+          "id": "1001",
+          "email": "alice@example.com",
+          "name": "alice",
+          "avatar": ""
+        }
+      }
+    ],
+    "total": 1,
+    "hasMore": false
+  }
+}
+```
+
+#### POST /api/v1/posts
+
+- Auth: 是
+- Body:
+  - title (string, 必填, 长度 >= 1)
+  - content (string, 必填, 长度 >= 1)
+  - tags (string[], 可选)
+- Response: PostDetail
+
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/posts" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "hello world",
+    "content": "first post",
+    "tags": ["go", "gin"]
+  }'
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "帖子创建成功",
+  "data": {
+    "id": "2001",
+    "view_count": 0,
+    "like_count": 0,
+    "comment_count": 0,
+    "title": "hello world",
+    "content": "first post",
+    "created_at": "2024-01-02T15:04:05Z",
+    "author": {
+      "id": "1001",
+      "email": "alice@example.com",
+      "name": "alice",
+      "avatar": ""
+    },
+    "tags": ["go", "gin"]
+  }
+}
+```
+
+#### POST /api/v1/posts/:id
+
+- Auth: 是
+- Body:
+  - title (string, 必填, 长度 >= 1)
+  - content (string, 必填, 长度 >= 1)
+  - tags (string[], 可选)
+- Response: null
+
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/posts/2001" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "hello world v2",
+    "content": "updated",
+    "tags": ["go"]
+  }'
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "帖子更新成功"
+}
+```
+
+#### DELETE /api/v1/posts/:id
+
+- Auth: 是
+- Response: null
+
+示例请求:
+
+```bash
+curl -X DELETE "http://localhost:8765/api/v1/posts/2001" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "帖子删除成功"
+}
+```
+
+#### POST /api/v1/posts/:id/comments
+
+- Auth: 是
+- Body:
+  - parent_id (string, 可选)
+  - reply_id (string, 可选)
+  - content (string, 必填, 长度 >= 1)
+- Response: Comment
+
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/posts/2001/comments" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "parent_id": "0",
+    "reply_id": "0",
+    "content": "nice"
+  }'
+```
+
+示例响应:
 
 ```json
 {
   "code": 0,
   "msg": "评论成功",
   "data": {
-    "id": "1999760900969463808",
-    "post_id": "1999760900969463808",
+    "id": "3001",
+    "post_id": "2001",
     "parent_id": "0",
     "reply_id": "0",
-    "content": "评论内容",
-    "created_at": "2024-01-01T00:00:00Z",
-    "author": { "id": "1999760900969463808", "email": "user@example.com", "name": "alice", "avatar": "" }
+    "content": "nice",
+    "created_at": "2024-01-02T15:04:05Z",
+    "author": {
+      "id": "1001",
+      "email": "alice@example.com",
+      "name": "alice",
+      "avatar": ""
+    }
   }
 }
 ```
 
-### DELETE `/api/v1/posts/:id/comments/:cid`（需要登录）
+#### DELETE /api/v1/posts/:id/comments/:cid
 
-删除评论（帖子作者可删除该帖下任意评论；评论作者可删除自己的评论）。
+- Auth: 是
+- Response: null
 
-路径参数：
+示例请求:
 
-- `id`：帖子 ID
-- `cid`：评论 ID
+```bash
+curl -X DELETE "http://localhost:8765/api/v1/posts/2001/comments/3001" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应：
+示例响应:
 
 ```json
 {
@@ -781,26 +1051,19 @@ Query 参数：
 }
 ```
 
-常见错误：
+#### GET /api/v1/posts/:id/likes
 
-- `20006` 没有权限（HTTP 403）
-- `40001` 评论不存在（HTTP 404）
+- Auth: 是
+- Response: bool
 
-## 点赞模块
+示例请求:
 
-### GET `/api/v1/posts/:id/likes`（需要登录）
+```bash
+curl "http://localhost:8765/api/v1/posts/2001/likes" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-查询是否点赞了该帖子。
-
-路径参数：
-
-- `id`：帖子 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应 `data`：`true/false`
+示例响应:
 
 ```json
 {
@@ -810,19 +1073,19 @@ Query 参数：
 }
 ```
 
-### POST `/api/v1/posts/:id/likes`（需要登录）
+#### POST /api/v1/posts/:id/likes
 
-点赞帖子。
+- Auth: 是
+- Response: null
 
-路径参数：
+示例请求:
 
-- `id`：帖子 ID
+```bash
+curl -X POST "http://localhost:8765/api/v1/posts/2001/likes" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应：
+示例响应:
 
 ```json
 {
@@ -831,24 +1094,19 @@ Query 参数：
 }
 ```
 
-常见错误：
+#### DELETE /api/v1/posts/:id/likes
 
-- `30001` 帖子不存在（HTTP 404）
-- `30002` 已经点赞过该帖子（HTTP 409）
+- Auth: 是
+- Response: null
 
-### DELETE `/api/v1/posts/:id/likes`（需要登录）
+示例请求:
 
-取消点赞。
+```bash
+curl -X DELETE "http://localhost:8765/api/v1/posts/2001/likes" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-路径参数：
-
-- `id`：帖子 ID
-
-请求头：
-
-- `Authorization: Bearer <access_token>`
-
-响应：
+示例响应:
 
 ```json
 {
@@ -857,40 +1115,138 @@ Query 参数：
 }
 ```
 
-常见错误：
+### 会话 Sessions
 
-- `30001` 帖子不存在（HTTP 404）
-- `30003` 尚未点赞，无法取消（HTTP 409）
+#### GET /api/v1/sessions 获取当前用户会话列表
 
----
+- Auth: 是
+- Response: Session[]
 
-## 统一错误码（`errno/errors.go`）
+示例请求:
 
-通用：
+```bash
+curl "http://localhost:8765/api/v1/sessions" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-- `10001` 系统繁忙，请稍后重试（HTTP 500）
-- `10002` 参数错误（HTTP 400）
+示例响应:
 
-用户：
+```json
+{
+  "code": 0,
+  "msg": "获取会话列表成功",
+  "data": [
+    {
+      "session_id": "4001",
+      "target_id": "1002",
+      "target_name": "bob",
+      "target_avatar": "",
+      "last_message_id": "5001",
+      "last_message": "hello",
+      "last_message_time": "2024-01-02T15:04:05Z",
+      "unread_count": 2
+    }
+  ]
+}
+```
 
-- `20001` 用户不存在（HTTP 404）
-- `20002` 用户名或邮箱已存在（HTTP 409）
-- `20004` 账号或密码错误（HTTP 401）
-- `20005` 用户未登录（HTTP 401）
-- `20006` 没有权限（HTTP 403）
-- `20008` 旧密码错误（HTTP 401）
+#### DELETE /api/v1/sessions/:id
 
-帖子：
+- Auth: 是
+- Response: null
 
-- `30001` 帖子不存在（HTTP 404）
-- `30002` 已经点赞过该帖子（HTTP 409）
-- `30003` 尚未点赞，无法取消（HTTP 409）
+示例请求:
 
-评论：
+```bash
+curl -X DELETE "http://localhost:8765/api/v1/sessions/4001" \
+  -H "Authorization: Bearer <access_token>"
+```
 
-- `40001` 评论不存在（HTTP 404）
+示例响应:
 
-关注：
+```json
+{
+  "code": 0,
+  "msg": "删除会话成功"
+}
+```
 
-- `60001` 已经关注过该用户（HTTP 409）
-- `60002` 尚未关注，无法取消（HTTP 409）
+### WebSocket
+
+#### GET /api/v1/ws
+
+- Auth: 是
+- 协议: ws://localhost:8765/api/v1/ws
+- Client -> Server (JSON):
+  - type = "message"
+    - session_id (string)
+    - session_type (int)
+    - message_from (string)
+    - message_to (string)
+    - content (string)
+  - type = "read_ack"
+    - session_id (string)
+    - user_id (string, 可选)
+- Server -> Client:
+  - Message DTO（见「数据模型」）
+
+示例请求:
+
+```bash
+wscat -c "ws://localhost:8765/api/v1/ws" -H "Authorization: Bearer <access_token>"
+```
+
+发送消息示例:
+
+```json
+{
+  "type": "message",
+  "session_id": "4001",
+  "session_type": 1,
+  "message_from": "1001",
+  "message_to": "1002",
+  "content": "hello"
+}
+```
+```json
+{
+  "type": "read_ack",
+  "session_id": "4001",
+  "user_id": "100323132",
+}
+```
+
+服务端推送示例:
+
+```json
+{
+  "content": "hello",
+  "message_from": "1001",
+  "message_to": "1002",
+  "id": "5001",
+  "session_id": "4001",
+  "session_type": 1,
+  "created_at": "2024-01-02T15:04:05Z"
+}
+```
+
+### 运维
+
+#### GET /metrics
+
+- Auth: 否
+- Description: Prometheus metrics
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/metrics"
+```
+
+示例响应:
+
+```text
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 0
+```

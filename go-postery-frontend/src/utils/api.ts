@@ -14,8 +14,26 @@ export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   skipAuthToken?: boolean
 }
 
+const AUTH_COOKIE_KEY = 'x-jwt-token'
+
+const syncAuthCookie = (token: string | null) => {
+  if (typeof document === 'undefined') return
+  if (!token) {
+    document.cookie = `${AUTH_COOKIE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+    return
+  }
+  const encoded = encodeURIComponent(token)
+  document.cookie = `${AUTH_COOKIE_KEY}=${encoded}; path=/; SameSite=Lax`
+}
+
 export function getAuthToken(): string | null {
-  return localStorage.getItem('token')
+  const token = localStorage.getItem('token')
+  if (!token) {
+    syncAuthCookie(null)
+    return null
+  }
+  syncAuthCookie(token)
+  return token
 }
 
 function normalizeBearerToken(value: string): string {
@@ -27,16 +45,19 @@ function normalizeBearerToken(value: string): string {
 function persistAuthToken(token: string | null) {
   if (!token) {
     localStorage.removeItem('token')
+    syncAuthCookie(null)
     return
   }
 
   const normalized = normalizeBearerToken(token)
   if (!normalized) {
     localStorage.removeItem('token')
+    syncAuthCookie(null)
     return
   }
 
   localStorage.setItem('token', normalized)
+  syncAuthCookie(normalized)
 }
 
 function buildHeaders(options: ApiRequestOptions, token: string | null, isJsonBody: boolean) {
