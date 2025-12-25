@@ -24,5 +24,8 @@ func (hdl *WebsocketHandler) Connect(ctx *gin.Context) {
 		return
 	}
 
-	hdl.websocketSvc.Connect(ctx, ctx.Writer, ctx.Request, uid)
+	if err := hdl.websocketSvc.Connect(ctx, ctx.Writer, ctx.Request, uid); err != nil {
+		response.Error(ctx, err)
+		return
+	}
 }
