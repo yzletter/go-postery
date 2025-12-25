@@ -1,12 +1,11 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Edit, Trash2, Heart } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import { useState, useEffect, FormEvent, useMemo, useCallback, useRef } from 'react'
 import type { Post, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
 import { normalizeId } from '../utils/id'
+import { formatRelativeTime } from '../utils/date'
 import { useAuth } from '../contexts/AuthContext'
 import { apiDelete, apiGet, apiPost } from '../utils/api'
 import { buildCommentAuthorMap } from './postDetail/commentModel'
@@ -584,10 +583,7 @@ export default function PostDetail() {
               <div className="text-sm text-gray-500 flex items-center space-x-1">
                 <Clock className="h-3 w-3" />
                 <span>
-                  {formatDistanceToNow(new Date(post.createdAt), {
-                    addSuffix: true,
-                    locale: zhCN
-                  })}
+                  {formatRelativeTime(post.createdAt)}
                 </span>
               </div>
             </div>
@@ -725,10 +721,7 @@ export default function PostDetail() {
                             {parent.author.name}
                           </Link>
                           <span className="text-xs text-gray-500">
-                            {formatDistanceToNow(new Date(parent.createdAt), {
-                              addSuffix: true,
-                              locale: zhCN
-                            })}
+                            {formatRelativeTime(parent.createdAt)}
                           </span>
                         </div>
                         <p className="text-gray-700">{parent.content}</p>
@@ -833,10 +826,7 @@ export default function PostDetail() {
                                       )}
                                   </div>
                                   <span className="text-[11px] text-gray-500">
-                                    {formatDistanceToNow(new Date(reply.createdAt), {
-                                      addSuffix: true,
-                                      locale: zhCN
-                                    })}
+                                    {formatRelativeTime(reply.createdAt)}
                                   </span>
                                 </div>
                                 <p className="text-gray-700 text-sm">{reply.content}</p>

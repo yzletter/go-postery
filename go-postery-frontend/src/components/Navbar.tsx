@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send, Sparkles, Shield } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -12,6 +12,26 @@ export default function Navbar() {
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const profileLink = user?.id ? `/users/${user.id}` : '/profile'
   const showAdmin = isAdminUser(user)
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = searchTerm.trim()
+    setShowMobileSearch(false)
+    navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+  }
+
+  const SearchInput = () => (
+    <div className="relative">
+      <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="搜索帖子标题、内容或作者..."
+        className="input w-full pl-10 pr-4 h-11"
+      />
+    </div>
+  )
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/70 backdrop-blur-md">
@@ -30,23 +50,9 @@ export default function Navbar() {
 
           <form
             className="hidden md:block flex-1 max-w-xl lg:ml-20"
-            onSubmit={(e) => {
-              e.preventDefault()
-              const query = searchTerm.trim()
-              setShowMobileSearch(false)
-              navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
-            }}
+            onSubmit={handleSearchSubmit}
           >
-            <div className="relative">
-              <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="搜索帖子标题、内容或作者..."
-                className="input w-full pl-10 pr-4 h-11"
-              />
-            </div>
+            <SearchInput />
           </form>
           
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
@@ -176,24 +182,8 @@ export default function Navbar() {
 
         {showMobileSearch && (
           <div className="md:hidden pb-4">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                const query = searchTerm.trim()
-                setShowMobileSearch(false)
-                navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
-              }}
-            >
-              <div className="relative">
-                <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="搜索帖子标题、内容或作者..."
-                  className="input w-full pl-10 pr-4 h-11"
-                />
-              </div>
+            <form onSubmit={handleSearchSubmit}>
+              <SearchInput />
             </form>
           </div>
         )}

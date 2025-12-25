@@ -5,8 +5,7 @@ import type { Post, FollowRelation } from '../types'
 import { useAuth } from '../contexts/AuthContext'
 import { buildIdSeed, normalizeId } from '../utils/id'
 import { followUser, getFollowRelation, isFollowing, unfollowUser } from '../utils/follow'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { formatRelativeTime } from '../utils/date'
 import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories } from './home/constants'
 import { fetchPosts } from './home/fetchPosts'
 import { fetchTopPosts, type TopPost } from './home/fetchTopPosts'
@@ -318,7 +317,6 @@ export default function Home() {
     return posts.filter(post => post.category === selectedCategory)
   }, [posts, selectedCategory])
 
-  // 1111
   return (
     <div className="grid lg:grid-cols-[60px_minmax(0,9fr)_300px] gap-3 items-start">
       <aside className="hidden lg:block w-[140px] lg:sticky lg:top-20 self-start lg:-ml-20">
@@ -472,10 +470,7 @@ export default function Home() {
                           <span className="flex items-center space-x-1">
                             <Clock className="h-4 w-4" />
                             <span>
-                              {formatDistanceToNow(new Date(post.createdAt), {
-                                addSuffix: true,
-                                locale: zhCN
-                              })}
+                              {formatRelativeTime(post.createdAt)}
                             </span>
                           </span>
                         </div>

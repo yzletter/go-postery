@@ -1,19 +1,12 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink, RefreshCw, Search, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import type { Comment } from '../../types'
 import { apiDelete, apiGet } from '../../utils/api'
 import { normalizeComment } from '../../utils/comment'
+import { formatRelativeTime } from '../../utils/date'
 import { normalizeId } from '../../utils/id'
 import { groupComments } from '../postDetail/commentModel'
-
-const formatRelativeTime = (value: string) => {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return formatDistanceToNow(date, { addSuffix: true, locale: zhCN })
-}
 
 function CommentItem({
   comment,

@@ -20,44 +20,36 @@ export default function Login() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
-    setIsLoading(true)
 
-    try {
-      let success = false
-      if (isLogin) {
-        if (!username.trim()) {
-          setError('请输入用户名')
-          setIsLoading(false)
-          return
-        }
-        // 对密码进行MD5哈希，生成32位哈希值
-        const hashedPassword = md5Hash(password)
-        success = await login(username, hashedPassword)
-      } else {
-        if (!username.trim()) {
-          setError('请输入用户名')
-          setIsLoading(false)
-          return
-        }
-        if (!email.trim()) {
-          setError('请输入邮箱')
-          setIsLoading(false)
-          return
-        }
-        if (password.length < 6) {
-          setError('密码长度至少为 6 位')
-          setIsLoading(false)
-          return
-        }
-        if (password !== confirmPassword) {
-          setError('两次输入的密码不一致')
-          setIsLoading(false)
-          return
-        }
-        // 对密码进行MD5哈希，生成32位哈希值
-        const hashedPassword = md5Hash(password)
-        success = await register(username, email.trim(), hashedPassword)
+    const trimmedUsername = username.trim()
+    const trimmedEmail = email.trim()
+
+    if (!trimmedUsername) {
+      setError('请输入用户名')
+      return
+    }
+
+    if (!isLogin) {
+      if (!trimmedEmail) {
+        setError('请输入邮箱')
+        return
       }
+      if (password.length < 6) {
+        setError('密码长度至少为 6 位')
+        return
+      }
+      if (password !== confirmPassword) {
+        setError('两次输入的密码不一致')
+        return
+      }
+    }
+
+    setIsLoading(true)
+    try {
+      const hashedPassword = md5Hash(password)
+      const success = isLogin
+        ? await login(username, hashedPassword)
+        : await register(username, trimmedEmail, hashedPassword)
 
       if (success) {
         navigate('/')
@@ -132,51 +124,25 @@ export default function Login() {
               </div>
             )}
 
-            {/* 登录时显示用户名输入框 */}
-            {isLogin && (
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                  用户名
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="输入用户名"
-                    required
-                    className="input pl-10"
-                  />
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                用户名
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
                 </div>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="输入用户名"
+                  required
+                  className="input pl-10"
+                />
               </div>
-            )}
-
-            {/* 注册时显示用户名输入框 */}
-            {!isLogin && (
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                  用户名
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="输入用户名"
-                    required
-                    className="input pl-10"
-                  />
-                </div>
-              </div>
-            )}
+            </div>
 
             {/* 注册时显示邮箱输入框 */}
             {!isLogin && (

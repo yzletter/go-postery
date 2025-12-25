@@ -12,10 +12,9 @@ import {
 } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Send, MessageCircle, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiDelete, API_BASE_URL } from '../utils/api'
+import { formatRelativeTime } from '../utils/date'
 import { normalizeId } from '../utils/id'
 
 const MESSAGE_PAGE_SIZE = 8
@@ -96,13 +95,6 @@ const toTimestamp = (value?: string) => {
   if (!value) return 0
   const parsed = new Date(value).getTime()
   return Number.isNaN(parsed) ? 0 : parsed
-}
-
-const formatRelativeTime = (value?: string) => {
-  if (!value) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-  return formatDistanceToNow(date, { addSuffix: true, locale: zhCN })
 }
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -988,7 +980,7 @@ export default function Messages() {
                       <div className="flex items-center gap-2 shrink-0">
                         {session.lastMessageTime && (
                           <span className="text-[10px] text-gray-400">
-                            {formatRelativeTime(session.lastMessageTime)}
+                            {formatRelativeTime(session.lastMessageTime, '')}
                           </span>
                         )}
                         {session.unread > 0 ? (
@@ -1100,7 +1092,7 @@ export default function Messages() {
                 if (shouldShowTime) {
                   lastShownTimestamp = messageTimestamp
                 }
-                const messageTime = shouldShowTime ? formatRelativeTime(msg.createdAt) : ''
+                const messageTime = shouldShowTime ? formatRelativeTime(msg.createdAt, '') : ''
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     {!isMe && (

@@ -1,18 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RefreshCw, Search, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import type { Post } from '../../types'
 import { apiDelete } from '../../utils/api'
+import { formatRelativeTime } from '../../utils/date'
 import { normalizeId } from '../../utils/id'
 import { fetchPosts } from '../home/fetchPosts'
-
-const formatRelativeTime = (value: string) => {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return formatDistanceToNow(date, { addSuffix: true, locale: zhCN })
-}
 
 export default function AdminPosts() {
   const pageSize = 20

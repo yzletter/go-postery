@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, Flame, Filter, Clock, Sparkles, Tag, ArrowUpRight, LayoutGrid, BarChart3 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { formatRelativeTime } from '../utils/date'
 import { Post } from '../types'
 
 type SearchResultItem = Post & {
@@ -451,7 +450,7 @@ export default function SearchPage() {
                       </Link>
                       <span className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: zhCN })}
+                        {formatRelativeTime(post.createdAt)}
                       </span>
                       <span className="flex items-center gap-1">
                         <Flame className="h-4 w-4" />

@@ -10,10 +10,9 @@ import {
   HeartHandshake,
   Send,
 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet } from '../utils/api'
+import { formatRelativeTime } from '../utils/date'
 import { normalizeUserDetail } from '../utils/user'
 import { normalizePost } from '../utils/post'
 import type { Post, UserDetail } from '../types'
@@ -67,12 +66,6 @@ export default function Profile() {
         return '保密'
     }
   })()
-  const formatRelativeTime = (value?: string) => {
-    if (!value) return '刚刚'
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return '刚刚'
-    return formatDistanceToNow(date, { addSuffix: true, locale: zhCN })
-  }
   const summaryStats = [
     { key: 'posts', label: '帖子', value: '12', icon: <PenSquare className="h-4 w-4 text-primary-600" /> },
     { key: 'followers', label: '关注者', value: '89', icon: <Users className="h-4 w-4 text-primary-600" /> },
@@ -413,7 +406,7 @@ export default function Profile() {
                   <div>
                     <p className="text-gray-900 font-medium line-clamp-1">{post.title}</p>
                     <p className="text-xs text-gray-500">
-                      更新于 {formatRelativeTime(post.createdAt)}
+                      更新于 {formatRelativeTime(post.createdAt, '刚刚')}
                     </p>
                   </div>
                 </div>

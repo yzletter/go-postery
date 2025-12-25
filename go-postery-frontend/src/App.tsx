@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import PostDetail from './pages/PostDetail'
@@ -13,45 +13,49 @@ import Follows from './pages/Follows'
 import Messages from './pages/Messages'
 import Search from './pages/Search'
 import Lottery from './pages/Lottery'
-import { useAuth } from './contexts/AuthContext'
 import Admin from './pages/admin/Admin'
 import AdminForbidden from './pages/admin/AdminForbidden'
 import { isAdminUser } from './utils/admin'
 
-// 保护需要登录的路由
-function ProtectedRoute({ children }: { children: React.ReactElement }) {
-  const { user, isLoading } = useAuth()
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-  
-  return user ? children : <Navigate to="/login" replace />
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+)
+
+type AuthRouteProps = {
+  children: React.ReactElement
+  requireAdmin?: boolean
 }
 
-function AdminRoute({ children }: { children: React.ReactElement }) {
+// 保护需要登录的路由
+function AuthRoute({ children, requireAdmin }: AuthRouteProps) {
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (!user) {
     return <Navigate to="/login" replace />
   }
 
-  return isAdminUser(user) ? children : <AdminForbidden />
+  if (requireAdmin && !isAdminUser(user)) {
+    return <AdminForbidden />
+  }
+
+  return children
 }
 
 function AppRoutes() {
+  const protectedRoutes = [
+    { path: '/follows', element: <Follows /> },
+    { path: '/messages', element: <Messages /> },
+    { path: '/create', element: <CreatePost /> },
+    { path: '/profile', element: <Profile /> },
+    { path: '/settings', element: <Settings /> },
+  ]
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -65,52 +69,19 @@ function AppRoutes() {
       <Route
         path="/admin/*"
         element={
-          <AdminRoute>
+          <AuthRoute requireAdmin>
             <Admin />
-          </AdminRoute>
+          </AuthRoute>
         }
       />
-      <Route
-        path="/follows"
-        element={
-          <ProtectedRoute>
-            <Follows />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/messages"
-        element={
-          <ProtectedRoute>
-            <Messages />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/create"
-        element={
-          <ProtectedRoute>
-            <CreatePost />
-          </ProtectedRoute>
-        }
-      />
+      {protectedRoutes.map(({ path, element }) => (
+        <Route
+          key={path}
+          path={path}
+          element={<AuthRoute>{element}</AuthRoute>}
+        />
+      ))}
       <Route path="/users/:userId" element={<Profile />} />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
     </Routes>
   )
 }
