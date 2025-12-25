@@ -128,6 +128,18 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	response.Success(ctx, "登出成功", nil)
 }
 
+// Status 检查登录状态
+func (hdl *AuthHandler) Status(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+	response.Success(ctx, "登录状态检查成功", nil)
+}
+
 // ExtractToken 从上下文取出 tokenString
 func ExtractToken(ctx *gin.Context) string {
 	//	HTTP 从 Header 中拿 token
