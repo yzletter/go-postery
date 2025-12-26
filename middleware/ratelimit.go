@@ -8,7 +8,7 @@ import (
 	"github.com/yzletter/go-postery/service"
 )
 
-const RateLimitPrefix = "ip-limit"
+const RateLimitPrefix = "ip:limit"
 
 func RateLimitMiddleware(rateLimitService *service.RateLimitService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

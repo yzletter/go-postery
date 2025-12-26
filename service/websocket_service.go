@@ -321,7 +321,6 @@ func consumeMQ(ctx context.Context, mqConn *amqp.Connection, id int64, send func
 			}
 
 			msgDTO := messagedto.ToDTO(&message)
-			fmt.Println("打给前端：", msgDTO)
 			if !send(wsWriteRequest{isJSON: true, jsonPayload: msgDTO}) {
 				return ctx.Err()
 			}

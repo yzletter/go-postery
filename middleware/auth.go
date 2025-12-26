@@ -16,8 +16,7 @@ import (
 // AuthRequiredMiddleware 强制登录
 func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.UniversalClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		accessToken := handler.ExtractToken(ctx) // 获取 AccessToken
-
+		accessToken := handler.ExtractToken(ctx)                                 // 获取 AccessToken
 		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie) // 获取 RefreshToken
 
 		slog.Info("AccessToken", "AccessToken", accessToken)
