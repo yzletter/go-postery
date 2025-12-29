@@ -135,7 +135,7 @@ func main() {
 		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register 	注册
 		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login 		登录
 
-		auth.POST("/sms", SmsHdl.Send)                        // POST /api/v1/auth/sms			发送短信
+		auth.POST("/sms", SmsHdl.Send)                        // POST /api/v1/auth/sms			发送短信验证码
 		auth.POST("/login/phone", AuthHdl.LoginByPhoneNumber) // POST /api/v1/auth/login 		手机号登录
 
 		authedAuth := auth.Group("")
