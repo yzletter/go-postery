@@ -77,3 +77,6 @@ type SessionDAO interface {
 	UpdateUnread(ctx context.Context, uid int64, sid int64, updates session.UpdateUnreadRequest) error
 	ClearUnread(ctx context.Context, uid int64, sid int64) error
 }
+
+type SmsDAO interface {
+}

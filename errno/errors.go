@@ -50,3 +50,7 @@ var (
 	ErrDuplicatedFollow   = &Error{60001, 409, "已经关注过该用户"}
 	ErrDuplicatedUnFollow = &Error{60002, 409, "尚未关注，无法取消"}
 )
+
+var (
+	ErrInvalidSMSCode = &Error{70001, 401, "验证码验证失败"}
+)

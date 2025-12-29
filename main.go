@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -14,6 +15,7 @@ import (
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/smooth"
+	"github.com/yzletter/go-postery/infra/sms"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	"github.com/yzletter/go-postery/middleware"
@@ -36,6 +38,7 @@ func main() {
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager("123456")
+	SmsClient := sms.NewAliyunSmsClient(os.Getenv("ALIYUN_AKID"), os.Getenv("ALIYUN_AKS")) // 初始化 短信服务商
 
 	// 初始化 gin
 	engine := gin.Default()
@@ -59,6 +62,7 @@ func main() {
 	TagCache := cache.NewTagCache(RedisClient)
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
+	SmsCache := cache.NewSmsCache(RedisClient)
 
 	// Repository 层
 	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 userRepo
@@ -69,6 +73,7 @@ func main() {
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache)
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache)
+	SmsRepo := repository.NewSmsRepository(SmsCache)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
@@ -81,6 +86,7 @@ func main() {
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
+	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -90,6 +96,7 @@ func main() {
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
 	SessionHdl := handler.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
+	SmsHdl := handler.NewSmsHandler(SmsSvc)
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
@@ -128,11 +135,13 @@ func main() {
 		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register 	注册
 		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login 		登录
 
+		auth.POST("/sms", SmsHdl.Send)                        // POST /api/v1/auth/sms			发送短信
+		auth.POST("/login/phone", AuthHdl.LoginByPhoneNumber) // POST /api/v1/auth/login 		手机号登录
+
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
 		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout	登出
 		authedAuth.GET("/status", AuthHdl.Status)  // GET /api/v1/auth/status	检查状态
-
 	}
 
 	// 用户模块

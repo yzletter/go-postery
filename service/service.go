@@ -81,3 +81,8 @@ type SessionService interface {
 type WebsocketService interface {
 	Connect(ctx context.Context, w http.ResponseWriter, r *http.Request, uid int64) error
 }
+
+type SmsService interface {
+	SendSMS(ctx context.Context, phoneNumber string) error
+	CheckSMS(ctx context.Context, phoneNumber string, code string) error
+}

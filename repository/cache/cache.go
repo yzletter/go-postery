@@ -25,15 +25,12 @@ type PostCache interface {
 
 type CommentCache interface {
 }
-
 type LikeCache interface {
 }
-
 type TagCache interface {
 }
-
 type FollowCache interface {
 }
-
 type MessageCache interface{}
 type SessionCache interface{}
+type SmsCache interface{}

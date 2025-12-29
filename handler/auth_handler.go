@@ -16,6 +16,7 @@ import (
 type AuthHandler struct {
 	authSvc    service.AuthService
 	sessionSvc service.SessionService
+	smsSvc     service.SmsService
 }
 
 func NewAuthHandler(authSvc service.AuthService, sessionSvc service.SessionService) *AuthHandler {
@@ -99,6 +100,10 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	// 返回成功响应
 	response.Success(ctx, "登录成功", userBriefDTO)
 	return
+}
+
+func (hdl *AuthHandler) LoginByPhoneNumber(ctx *gin.Context) {
+
 }
 
 // Logout 登出 Handler
