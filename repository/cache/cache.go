@@ -33,4 +33,7 @@ type FollowCache interface {
 }
 type MessageCache interface{}
 type SessionCache interface{}
-type SmsCache interface{}
+
+type SmsCache interface {
+	CheckCode(ctx context.Context, phoneNumber string, code string) (int, error)
+}

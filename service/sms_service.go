@@ -29,8 +29,19 @@ func (svc *smsService) SendSMS(ctx context.Context, phoneNumber string) error {
 	// 生成验证码
 	code := svc.generateCode()
 
+	// 写缓存
+	err := svc.smsRepository.CheckCode(ctx, phoneNumber, code)
+	if err != nil {
+		// 业务层面错误
+		if errors.Is(err, repository.ErrResourceConflict) {
+			return errno.ErrSendToFrequent
+		}
+		// 系统层面错误
+		return errno.ErrServerInternal
+	}
+
 	// 发送短信
-	err := svc.smsClient.SendSms(ctx, phoneNumber, code)
+	err = svc.smsClient.SendSms(ctx, phoneNumber, code)
 	if err != nil {
 		// 系统层面错误
 		return errno.ErrServerInternal

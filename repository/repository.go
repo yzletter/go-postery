@@ -81,4 +81,5 @@ type MessageRepository interface {
 }
 
 type SmsRepository interface {
+	CheckCode(ctx context.Context, phoneNumber string, code string) error
 }

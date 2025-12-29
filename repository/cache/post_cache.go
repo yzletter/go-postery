@@ -23,6 +23,10 @@ type redisPostCache struct {
 	client redis.UniversalClient
 }
 
+func NewPostCache(client redis.UniversalClient) PostCache {
+	return &redisPostCache{client: client}
+}
+
 func (cache *redisPostCache) DeleteScore(ctx context.Context, id int64) error {
 	_, err := cache.client.ZRem(ctx, model.KeyPostScore, id).Result()
 	if err != nil {
@@ -62,10 +66,6 @@ func (cache *redisPostCache) ChangeScore(ctx context.Context, pid int64, delta i
 
 func (cache *redisPostCache) CheckPostLikeTime(ctx context.Context, pid int64) (float64, error) {
 	return cache.client.ZScore(ctx, model.KeyPostTime, strconv.Itoa(int(pid))).Result()
-}
-
-func NewPostCache(client redis.UniversalClient) PostCache {
-	return &redisPostCache{client: client}
 }
 
 // ChangeInteractiveCnt HIncrBy KEY 对应 Field 的值, 值为 Delta

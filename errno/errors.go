@@ -53,4 +53,5 @@ var (
 
 var (
 	ErrInvalidSMSCode = &Error{70001, 401, "验证码验证失败"}
+	ErrSendToFrequent = &Error{70002, 401, "验证码发送过于频繁"}
 )

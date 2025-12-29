@@ -10,6 +10,7 @@ import (
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
 	credential "github.com/aliyun/credentials-go/credentials"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/service/ports"
 )
 
@@ -44,11 +45,11 @@ func (client *AliyunSmsClient) SendSms(ctx context.Context, phoneNumber string, 
 		SignName:         tea.String("速通互联验证码"),
 		TemplateCode:     tea.String("100001"),
 		TemplateParam:    tea.String(fmt.Sprintf("{\"code\":\"%s\",\"min\":\"5\"}", code)),
-		CodeLength:       tea.Int64(6),   // 验证码长度支持 4～8 位长度，默认是 4 位。
-		ValidTime:        tea.Int64(300), // 验证码有效时长，单位秒，默认为 300 秒。
-		DuplicatePolicy:  tea.Int64(1),   // 核验规则，当有效时间内对同场景内的同号码重复发送验证码时，旧验证码如何处理。 1 表示覆盖 2 表示都有效
-		Interval:         tea.Int64(60),  // 时间间隔，单位：秒。即多久间隔可以发送一次验证码，用于频控，默认 60 秒。
-		ReturnVerifyCode: tea.Bool(true), // 是否返回验证码
+		CodeLength:       tea.Int64(6),                           // 验证码长度支持 4～8 位长度，默认是 4 位。
+		ValidTime:        tea.Int64(int64(conf.SMSValidTime)),    // 验证码有效时长，单位秒，默认为 300 秒。
+		Interval:         tea.Int64(int64(conf.SendSMSInterval)), // 时间间隔，单位：秒。即多久间隔可以发送一次验证码，用于频控，默认 60 秒。
+		DuplicatePolicy:  tea.Int64(1),                           // 核验规则，当有效时间内对同场景内的同号码重复发送验证码时，旧验证码如何处理。 1 表示覆盖 2 表示都有效
+		ReturnVerifyCode: tea.Bool(true),                         // 是否返回验证码
 	}
 
 	resp, err := client.internalClient.SendSmsVerifyCodeWithContext(ctx, req, runtime)
