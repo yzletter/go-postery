@@ -86,6 +86,6 @@ type OrderDAO interface {
 }
 
 type GiftDAO interface {
-	GetAll(ctx context.Context)
+	GetAll(ctx context.Context) ([]*model.Gift, error)
 	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
 }

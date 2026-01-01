@@ -40,13 +40,13 @@ type SmsCache interface {
 
 type OrderCache interface {
 	CreateTempOrder(ctx context.Context, uid, gid int64) error
-	DeleteTempOrder(ctx context.Context, uid int64) int
-	GetTempOrderID(ctx context.Context, uid int64) int
+	DeleteTempOrder(ctx context.Context, uid int64) error
+	GetTempOrderID(ctx context.Context, uid int64) (int64, error)
 }
 
 type GiftCache interface {
-	InitInventory(ctx context.Context)
-	GetInventory(ctx context.Context, gid int64)
-	ReduceInventory(ctx context.Context, gid int64)
-	IncreaseInventory(ctx context.Context, gid int64)
+	InitInventory(ctx context.Context) (int, error)
+	GetInventory(ctx context.Context, gid int64) (int, error)
+	ReduceInventory(ctx context.Context, gid int64) error
+	IncreaseInventory(ctx context.Context, gid int64) error
 }
