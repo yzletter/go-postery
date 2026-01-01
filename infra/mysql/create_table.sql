@@ -196,3 +196,19 @@ CREATE TABLE IF NOT EXISTS session
 
 
 # todo 群聊表
+
+# Order 表
+CREATE TABLE IF NOT EXISTS orders
+(
+    id         BIGINT   NOT NULL COMMENT 'ID',
+    user_id    BIGINT   NOT NULL COMMENT '用户 ID',
+    gift_id    BIGINT   NOT NULL COMMENT '商品 ID',
+    count      INT      NOT NULL DEFAULT 1 COMMENT '购买数量',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_user_id (user_id, id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '订单表';

@@ -82,7 +82,10 @@ type SmsDAO interface {
 }
 
 type OrderDAO interface {
+	Create(ctx context.Context, order *model.Order) error
 }
 
 type GiftDAO interface {
+	GetAll(ctx context.Context)
+	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
 }

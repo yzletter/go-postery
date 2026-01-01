@@ -1,17 +1,17 @@
 package service
 
 import (
+	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
 	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/service/ports"
 )
 
 type lotteryService struct {
 	giftRepo  repository.GiftRepository
 	orderRepo repository.OrderRepository
-	mq        ports.LotteryMQ
+	mq        *infraRocketMQ.RocketMQ
 }
 
-func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, mq ports.LotteryMQ) LotteryService {
+func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, mq *infraRocketMQ.RocketMQ) LotteryService {
 	return &lotteryService{
 		orderRepo: orderRepo,
 		giftRepo:  giftRepo,
