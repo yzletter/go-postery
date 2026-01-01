@@ -40,6 +40,7 @@ func (cache *redisGiftCache) GetAllInventory(ctx context.Context) ([]*model.Gift
 			continue
 		}
 
+		// 从 lottery:gift: 中获取 gid
 		gid, err := strconv.ParseInt(key[len(lotteryGiftPrefix):], 10, 64)
 		gift := &model.Gift{
 			ID:    gid,
@@ -59,7 +60,6 @@ func (cache *redisGiftCache) ReduceInventory(ctx context.Context, gid int64) err
 	} else if count < 0 {
 		return ErrReduceInventory
 	}
-
 	return nil
 }
 
