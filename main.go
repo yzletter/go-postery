@@ -16,6 +16,7 @@ import (
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
+	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/sms"
@@ -41,12 +42,13 @@ func main() {
 	// 初始化 GracefulStop
 	graceful_stop.NewGracefulStopBuilder().
 		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).
+		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).
 		Build()
 
 	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 初始化 MySQL
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)   // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)      // 初始化 RabbitMQ
+	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)        // 初始化 RocketMQ
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -103,7 +105,7 @@ func main() {
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)     // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator) // 注册 WebsocketService
 	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)                                                    // 注册 SmsService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo)                                           // 注册 LotteryService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ)                                 // 注册 LotteryService
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -122,7 +124,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl :=                                                                 // CorsMdl 跨域中间件
+	CorsMdl := // CorsMdl 跨域中间件
 		cors.New(cors.Config{
 			AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 			AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
