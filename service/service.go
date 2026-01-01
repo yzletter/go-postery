@@ -86,3 +86,6 @@ type SmsService interface {
 	SendSMS(ctx context.Context, phoneNumber string) error
 	CheckSMS(ctx context.Context, phoneNumber string, code string) error
 }
+
+type LotteryService interface {
+}

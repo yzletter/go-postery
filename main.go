@@ -102,7 +102,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := // CorsMdl 跨域中间件
+	CorsMdl :=                                                                 // CorsMdl 跨域中间件
 		cors.New(cors.Config{
 			AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 			AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},

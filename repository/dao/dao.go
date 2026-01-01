@@ -80,3 +80,6 @@ type SessionDAO interface {
 
 type SmsDAO interface {
 }
+
+type LotteryDAO interface {
+}

@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users
     username      VARCHAR(32) COLLATE utf8mb4_unicode_ci  NOT NULL COMMENT '用户名',
     email         VARCHAR(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
     password_hash VARCHAR(255)                            NOT NULL COMMENT '密码哈希',
-
+    phone         VARCHAR(255)                                     DEFAULT NULL COMMENT '手机号码',
     avatar        VARCHAR(255)                                     DEFAULT NULL COMMENT '头像 URL',
     bio           VARCHAR(255)                                     DEFAULT NULL COMMENT '个性签名',
     gender        TINYINT                                 NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS session
     deleted_at      DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
 
     PRIMARY KEY (id),
-    UNIQUE KEY uq_user_target_type(user_id, target_id)
+    UNIQUE KEY uq_user_target_type (user_id, target_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '会话表';
 
 
