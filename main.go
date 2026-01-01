@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"syscall"
 	"time"
@@ -43,7 +44,7 @@ func main() {
 		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).
 		Build()
 
-	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
+	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 初始化 MySQL
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)   // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)      // 初始化 RabbitMQ
 
@@ -61,6 +62,8 @@ func main() {
 	TagDAO := dao.NewTagDAO(GormDB)
 	MessageDAO := dao.NewMessageDAO(GormDB)
 	SessionDAO := dao.NewSessionDAO(GormDB)
+	OrderDAO := dao.NewOrderDAO(GormDB)
+	GiftDAO := dao.NewGiftDAO(GormDB)
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -72,6 +75,8 @@ func main() {
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
 	SmsCache := cache.NewSmsCache(RedisClient)
+	OrderCache := cache.NewOrderCache(RedisClient)
+	GiftCache := cache.NewGiftCache(RedisClient)
 
 	// Repository 层
 	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 userRepo
@@ -80,22 +85,25 @@ func main() {
 	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
 	FollowRepo := repository.NewFollowRepository(FollowDAO, FollowCache)     // 注册 FollowRepository
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
-	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache)
-	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache)
-	SmsRepo := repository.NewSmsRepository(SmsCache)
+	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
+	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
+	SmsRepo := repository.NewSmsRepository(SmsCache)                         // 注册 SmsRepository
+	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
+	GiftRepo := repository.NewOrderRepository(GiftDAO, GiftCache)            // 注册 GiftRepository
 
 	// Service 层
-	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient)    // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                             // 注册 userSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                             // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
-	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
-	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)
+	MetricSvc := service.NewMetricService()                                                                // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)   // 注册 RateLimitService
+	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient)      // 注册 AuthService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                               // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                  // 注册 postSvc
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                               // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                  // 注册 commentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                  // 注册 TagService
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)     // 注册 SessionService
+	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator) // 注册 WebsocketService
+	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)                                                    // 注册 SmsService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo)                                           // 注册 LotteryService
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -105,15 +113,18 @@ func main() {
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
 	SessionHdl := handler.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
-	SmsHdl := handler.NewSmsHandler(SmsSvc)
+	SmsHdl := handler.NewSmsHandler(SmsSvc)                               // 注册 SmsHandler
+	LotteryHdl := handler.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
+
+	fmt.Println(LotteryHdl)
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := // CorsMdl 跨域中间件
+	CorsMdl :=                                                                 // CorsMdl 跨域中间件
 		cors.New(cors.Config{
-			AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
+			AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 			AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 			AllowCredentials: true, // 是否允许携带 cookie 之类的用户认证信息
@@ -220,10 +231,22 @@ func main() {
 		sessions.DELETE("/:id", SessionHdl.Delete) // DELETE /api/v1/sessions/:id						删除当前会话
 	}
 
+	// 即时聊天模块
 	im := v1.Group("/ws")
 	im.Use(AuthRequiredMdl)
 	{
 		im.GET("", WebsocketHdl.Connect) // GET /api/v1/ws
+	}
+
+	// 抽奖模块
+	lottery := v1.Group("/lottery")
+	lottery.Use(AuthRequiredMdl)
+	{
+		lottery.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/lottery/gifts 获取所有奖品信息
+		lottery.GET("/lucky", LotteryHdl.Lottery)     // GET /api/v1/lottery/lucky 抽奖
+		lottery.POST("/giveup", LotteryHdl.GiveUp)    // POST /api/v1/lottery/giveup 放弃
+		lottery.POST("/pay", LotteryHdl.Pay)          // POST /api/v1/lottery/pay 支付
+		lottery.GET("/result", LotteryHdl.Result)     // GET /api/v1/lottery/result 查询结果
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {
