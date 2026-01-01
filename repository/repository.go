@@ -84,5 +84,8 @@ type SmsRepository interface {
 	CheckCode(ctx context.Context, phoneNumber string, code string) error
 }
 
-type LotteryRepository interface {
+type OrderRepository interface {
+}
+
+type GiftRepository interface {
 }

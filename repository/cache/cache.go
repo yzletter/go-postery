@@ -38,5 +38,8 @@ type SmsCache interface {
 	CheckCode(ctx context.Context, phoneNumber string, code string) (int, error)
 }
 
-type LotteryCache interface {
+type OrderCache interface {
+}
+
+type GiftCache interface {
 }

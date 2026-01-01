@@ -81,5 +81,8 @@ type SessionDAO interface {
 type SmsDAO interface {
 }
 
-type LotteryDAO interface {
+type OrderDAO interface {
+}
+
+type GiftDAO interface {
 }
