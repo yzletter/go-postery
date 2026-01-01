@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -9,12 +10,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
+	"github.com/yzletter/go-postery/infra/graceful_stop"
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
-	infraRabbit "github.com/yzletter/go-postery/infra/rabbitmq"
+	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
-	"github.com/yzletter/go-postery/infra/smooth"
 	"github.com/yzletter/go-postery/infra/sms"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
@@ -29,11 +30,16 @@ func main() {
 	// Infra 层
 	slog.InitSlog("./logs/go_postery.log") // 初始化 slog
 	crontab.InitCrontab()                  // 初始化 定时任务
-	smooth.InitSmoothExit()                // 初始化 优雅退出
+
+	// 初始化 GracefulStop
+	graceful_stop.NewGracefulStopBuilder().
+		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
+		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).
+		Build()
 
 	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 注册 MySQL
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)   // 初始化 Redis
-	RabbitMQ := infraRabbit.Init("./conf", "mq", viper.YAML)        // 初始化 RabbitMQ
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)      // 初始化 RabbitMQ
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -102,7 +108,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl :=                                                                 // CorsMdl 跨域中间件
+	CorsMdl := // CorsMdl 跨域中间件
 		cors.New(cors.Config{
 			AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 			AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
