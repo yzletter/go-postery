@@ -4,22 +4,41 @@ import (
 	"log/slog"
 
 	"github.com/robfig/cron/v3"
-	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
-	infraRedis "github.com/yzletter/go-postery/infra/redis"
 )
 
-func InitCrontab() {
+type CrontabBuilder struct {
+	crontab *cron.Cron
+	funcs   []func()
+	specs   []string
+}
+
+func NewCrontabBuilder() *CrontabBuilder {
 	crontab := cron.New()
+	funcs := make([]func(), 0)
+	specs := make([]string, 0)
+	return &CrontabBuilder{
+		crontab: crontab,
+		funcs:   funcs,
+		specs:   specs,
+	}
+}
 
-	_, err := crontab.AddFunc("*/10 * * * *", infraMySQL.Ping) // 分别代表 分 时 周 月 星期, 每十分钟 ping 一次 MySQL
-	if err != nil {
-		slog.Error("crontab add func failed", "error", err)
+func (builder *CrontabBuilder) AddFuncWithSpec(spec string, f func()) *CrontabBuilder {
+	builder.funcs = append(builder.funcs, f)
+	builder.specs = append(builder.specs, spec)
+	return builder
+}
+
+func (builder *CrontabBuilder) Build() {
+	length := len(builder.funcs)
+
+	for i := 0; i < length; i++ {
+		_, err := builder.crontab.AddFunc(builder.specs[i], builder.funcs[i])
+		if err != nil {
+			slog.Error("crontab add func failed", "error", err)
+		}
 	}
 
-	_, err = crontab.AddFunc("*/10 * * * *", infraRedis.Ping) // 分别代表 分 时 周 月 星期, 每十分钟 ping 一次 Redis
-	if err != nil {
-		slog.Error("crontab add func failed", "error", err)
-	}
-
-	crontab.Start()
+	// 启动 Crontab
+	builder.crontab.Start()
 }
