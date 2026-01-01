@@ -8,3 +8,7 @@ const (
 	RefreshTokenPrefix     = "auth:refresh:"
 	ClearTokenPrefix       = "auth:clear:"
 )
+
+const (
+	JwtTokenKey = "123456"
+)

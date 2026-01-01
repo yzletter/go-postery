@@ -8,6 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
 	"github.com/yzletter/go-postery/infra/graceful_stop"
@@ -28,8 +29,8 @@ import (
 
 func main() {
 	// Infra 层
-	slog.InitSlog("./logs/go_postery.log") // 初始化 slog
-	crontab.InitCrontab()                  // 初始化 定时任务
+	slog.InitSlog(conf.LogFilePath) // 初始化 slog
+	crontab.InitCrontab()           // 初始化 定时任务
 
 	// 初始化 GracefulStop
 	graceful_stop.NewGracefulStopBuilder().
@@ -43,11 +44,8 @@ func main() {
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
-	JwtManager := security.NewJwtManager("123456")
-	SmsClient := sms.NewAliyunSmsClient(os.Getenv("ALIYUN_AKID"), os.Getenv("ALIYUN_AKS")) // 初始化 短信服务商
-
-	// 初始化 gin
-	engine := gin.Default()
+	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
+	SmsClient := sms.NewAliyunSmsClient(os.Getenv(conf.AliyunAccessTokenKeyID), os.Getenv(conf.AliyunAccessTokenKeySecret)) // 初始化 短信服务商
 
 	// DAO 层
 	UserDAO := dao.NewUserDAO(GormDB)
@@ -82,14 +80,14 @@ func main() {
 	SmsRepo := repository.NewSmsRepository(SmsCache)
 
 	// Service 层
-	MetricSvc := service.NewMetricService()                                                           // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, time.Minute, 1000)                       // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient) // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                          // 注册 userSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)             // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                          // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)             // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                             // 注册 TagService
+	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
+	AuthSvc := service.NewAuthService(UserRepo, JwtManager, PasswordHasher, IDGenerator, RedisClient)    // 注册 AuthService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                             // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                // 注册 postSvc
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                             // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                // 注册 commentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                // 注册 TagService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)
 	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)
@@ -108,7 +106,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := // CorsMdl 跨域中间件
+	CorsMdl :=                                                                 // CorsMdl 跨域中间件
 		cors.New(cors.Config{
 			AllowOrigins:     []string{"http://localhost:5173"}, // 允许域名跨域
 			AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
@@ -117,6 +115,9 @@ func main() {
 			ExposeHeaders:    []string{"Content-Length", "Authorization"},
 			MaxAge:           12 * time.Hour,
 		})
+
+	// 初始化 gin
+	engine := gin.Default()
 
 	// 注册全局中间件
 	engine.Use(
