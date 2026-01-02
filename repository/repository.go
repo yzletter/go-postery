@@ -88,4 +88,5 @@ type OrderRepository interface {
 }
 
 type GiftRepository interface {
+	GetAllGifts(ctx context.Context) ([]*model.Gift, error)
 }

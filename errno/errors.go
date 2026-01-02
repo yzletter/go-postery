@@ -55,3 +55,7 @@ var (
 	ErrInvalidSMSCode = &Error{70001, 401, "验证码验证失败"}
 	ErrSendToFrequent = &Error{70002, 401, "验证码发送过于频繁"}
 )
+
+var (
+	ErrGiftNotFound = &Error{80001, 404, "奖品不存在"}
+)

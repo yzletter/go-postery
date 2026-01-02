@@ -91,7 +91,7 @@ func main() {
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
 	SmsRepo := repository.NewSmsRepository(SmsCache)                         // 注册 SmsRepository
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
-	GiftRepo := repository.NewOrderRepository(GiftDAO, GiftCache)            // 注册 GiftRepository
+	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)             // 注册 GiftRepository
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                                // 注册 MetricService
@@ -124,7 +124,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
