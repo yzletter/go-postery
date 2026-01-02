@@ -91,7 +91,7 @@ type SmsService interface {
 
 type LotteryService interface {
 	GetAllGifts(ctx context.Context) ([]giftdto.DTO, error)
-	Lottery(ctx context.Context) (giftdto.DTO, error)
+	Lottery(ctx context.Context, uid int64) (giftdto.DTO, error)
 	GiveUp(ctx context.Context) error
 	Pay(ctx context.Context) error
 	Result(ctx context.Context) ([]orderdto.DTO, error)

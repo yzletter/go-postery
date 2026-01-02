@@ -18,8 +18,8 @@ var (
 )
 
 type RocketMQ struct {
-	rocketProducer rmq_client.Producer
-	rocketConsumer rmq_client.SimpleConsumer
+	RocketProducer rmq_client.Producer
+	RocketConsumer rmq_client.SimpleConsumer
 }
 
 func Init(proxyEndpoint string) *RocketMQ {
@@ -31,8 +31,8 @@ func Init(proxyEndpoint string) *RocketMQ {
 	rocketProducer := newProducer(proxyEndpoint)
 	rocketConsumer := newConsumer(proxyEndpoint)
 	return &RocketMQ{
-		rocketProducer: rocketProducer,
-		rocketConsumer: rocketConsumer,
+		RocketProducer: rocketProducer,
+		RocketConsumer: rocketConsumer,
 	}
 }
 

@@ -85,8 +85,14 @@ type SmsRepository interface {
 }
 
 type OrderRepository interface {
+	CreateTempOrder(ctx context.Context, uid, gid int64) error
+	DeleteTempOrder(ctx context.Context, uid int64) error
 }
 
 type GiftRepository interface {
 	GetAllGifts(ctx context.Context) ([]*model.Gift, error)
+	GetCacheInventory(ctx context.Context) ([]*model.Gift, error)
+	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
+	ReduceCacheInventory(ctx context.Context, gid int64) error
+	IncreaseCacheInventory(ctx context.Context, gid int64) error
 }
