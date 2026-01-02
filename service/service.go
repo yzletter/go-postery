@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	commentdto "github.com/yzletter/go-postery/dto/comment"
+	giftdto "github.com/yzletter/go-postery/dto/gift"
 	messagedto "github.com/yzletter/go-postery/dto/message"
+	orderdto "github.com/yzletter/go-postery/dto/order"
 	postdto "github.com/yzletter/go-postery/dto/post"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
@@ -88,4 +90,9 @@ type SmsService interface {
 }
 
 type LotteryService interface {
+	GetAllGifts(ctx context.Context) ([]giftdto.DTO, error)
+	Lottery(ctx context.Context) (giftdto.DTO, error)
+	GiveUp(ctx context.Context) error
+	Pay(ctx context.Context) error
+	Result(ctx context.Context) ([]orderdto.DTO, error)
 }

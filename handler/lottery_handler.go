@@ -18,6 +18,7 @@ func NewLotteryHandler(lotterySvc service.LotteryService) *LotteryHandler {
 func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 
 }
+
 func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 
 }
