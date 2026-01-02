@@ -42,8 +42,7 @@ CREATE TABLE IF NOT EXISTS users
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT '用户表';
 
-
-# 创建 user 表
+# 创建 post 表
 CREATE TABLE IF NOT EXISTS posts
 (
     id            BIGINT       NOT NULL COMMENT '帖子 ID',
@@ -212,3 +211,21 @@ CREATE TABLE IF NOT EXISTS orders
     PRIMARY KEY (id),
     UNIQUE KEY uq_user_id (user_id, id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '订单表';
+
+
+CREATE TABLE IF NOT EXISTS gifts
+(
+    id          BIGINT      NOT NULL COMMENT 'ID',
+    name        VARCHAR(64) NOT NULL COMMENT '商品名',
+    avatar      VARCHAR(255)         DEFAULT NULL COMMENT '商品图片 URL',
+    description VARCHAR(255)         DEFAULT NULL COMMENT '商品描述',
+    prize       INT                  DEFAULT 0 COMMENT '价格',
+    count       INT                  DEFAULT 0 COMMENT '库存',
+
+    created_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at  DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_id_name (id, name)
+) DEFAULT CHARSET = utf8mb4 COMMENT '奖品表';

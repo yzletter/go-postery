@@ -124,7 +124,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc, RedisClient) // AuthRequiredMdl 强制登录
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                        // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)               // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                           // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -241,13 +241,13 @@ func main() {
 
 	// 抽奖模块
 	lottery := v1.Group("/lottery")
+	lottery.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/lottery/gifts 获取所有奖品信息
 	lottery.Use(AuthRequiredMdl)
 	{
-		lottery.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/lottery/gifts 获取所有奖品信息
-		lottery.GET("/lucky", LotteryHdl.Lottery)     // GET /api/v1/lottery/lucky 抽奖
-		lottery.POST("/giveup", LotteryHdl.GiveUp)    // POST /api/v1/lottery/giveup 放弃
-		lottery.POST("/pay", LotteryHdl.Pay)          // POST /api/v1/lottery/pay 支付
-		lottery.GET("/result", LotteryHdl.Result)     // GET /api/v1/lottery/result 查询结果
+		lottery.GET("/lucky", LotteryHdl.Lottery)  // GET /api/v1/lottery/lucky 抽奖
+		lottery.POST("/giveup", LotteryHdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
+		lottery.POST("/pay", LotteryHdl.Pay)       // POST /api/v1/lottery/pay 支付
+		lottery.GET("/result", LotteryHdl.Result)  // GET /api/v1/lottery/result 查询结果
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

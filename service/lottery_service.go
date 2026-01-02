@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
 	"github.com/yzletter/go-postery/repository"
 )
@@ -17,4 +19,8 @@ func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository
 		giftRepo:  giftRepo,
 		mq:        mq,
 	}
+}
+
+func (svc *lotteryService) GetAllGifts(ctx context.Context) {
+
 }
