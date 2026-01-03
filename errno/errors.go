@@ -57,6 +57,8 @@ var (
 )
 
 var (
-	ErrGiftNotFound = &Error{80001, 404, "奖品不存在"}
-	ErrNotLottery   = &Error{80002, 404, "没有抢到该商品，或支付时限已过"}
+	ErrGiftNotFound  = &Error{80001, 404, "奖品不存在"}
+	ErrNotLottery    = &Error{80002, 404, "没有抢到该商品，或支付时限已过"}
+	ErrOrderNotFound = &Error{80003, 404, "订单不存在"}
+	ErrLotteryNoting = &Error{80004, 404, "没有抽到奖品"}
 )

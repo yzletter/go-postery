@@ -2,7 +2,10 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	orderdto "github.com/yzletter/go-postery/dto/order"
+	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
+	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
 )
 
@@ -27,14 +30,93 @@ func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUnauthorized)
+		return
+	}
 
+	giftDTO, err := hdl.lotterySvc.Lottery(ctx, uid)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "抽奖成功", giftDTO)
 }
+
 func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUnauthorized)
+		return
+	}
 
+	var giveReq orderdto.GiveUpRequest
+	err = ctx.ShouldBindJSON(&giveReq)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 登录用户与放弃用户不一致
+	if uid != giveReq.UserID {
+		response.Error(ctx, errno.ErrUnauthorized)
+		return
+	}
+
+	err = hdl.lotterySvc.GiveUp(ctx, giveReq.UserID, giveReq.GiftID)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "放弃支付成功", nil)
 }
+
 func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUnauthorized)
+		return
+	}
 
+	var payReq orderdto.PayRequest
+	err = ctx.ShouldBindJSON(&payReq)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 登录用户与支付用户不一致
+	if uid != payReq.UserID {
+		response.Error(ctx, errno.ErrUnauthorized)
+		return
+	}
+
+	// 进行支付
+	err = hdl.lotterySvc.Pay(ctx, payReq.UserID, payReq.GiftID)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "支付成功", nil)
 }
-func (hdl *LotteryHandler) Result(ctx *gin.Context) {
 
+func (hdl *LotteryHandler) Result(ctx *gin.Context) {
+	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUnauthorized)
+		return
+	}
+
+	// 获取结果
+	orderDTO, err := hdl.lotterySvc.Result(ctx, uid)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "获取结果成功", orderDTO)
 }

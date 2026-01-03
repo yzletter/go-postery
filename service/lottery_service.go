@@ -123,7 +123,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 		ID:   1,
 		Name: "谢谢参与",
 	}
-	return giftdto.ToDTO(empty), nil
+	return giftdto.ToDTO(empty), errno.ErrLotteryNoting
 }
 
 func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {
@@ -190,7 +190,7 @@ func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO,
 	var empty orderdto.DTO
 	order, err := svc.orderRepo.GetOrder(ctx, uid)
 	if err != nil {
-		return empty, nil
+		return empty, errno.ErrOrderNotFound
 	}
 
 	return orderdto.ToDTO(order), nil
