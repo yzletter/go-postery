@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"math/rand/v2"
 	"time"
 
@@ -15,19 +16,22 @@ import (
 	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
+	"github.com/yzletter/go-postery/service/ports"
 )
 
 type lotteryService struct {
 	giftRepo  repository.GiftRepository
 	orderRepo repository.OrderRepository
 	mq        *infraRocketMQ.RocketMQ
+	idGen     ports.IDGenerator
 }
 
-func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, mq *infraRocketMQ.RocketMQ) LotteryService {
+func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, mq *infraRocketMQ.RocketMQ, idGen ports.IDGenerator) LotteryService {
 	return &lotteryService{
 		orderRepo: orderRepo,
 		giftRepo:  giftRepo,
 		mq:        mq,
+		idGen:     idGen,
 	}
 }
 
@@ -150,9 +154,35 @@ func (svc *lotteryService) GiveUp(ctx context.Context) error {
 	panic("implement me")
 }
 
-func (svc *lotteryService) Pay(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+func (svc *lotteryService) Pay(ctx context.Context, uid, gid int64) error {
+	// 获取临时订单
+	tempID, err := svc.orderRepo.GetTempOrder(ctx, uid)
+	if err != nil || tempID != gid {
+		_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+		return errno.ErrNotLottery
+	}
+
+	// 正式订单落库
+	order := &model.Order{
+		ID:     svc.idGen.NextID(),
+		UserID: uid,
+		GiftID: gid,
+		Count:  1,
+	}
+
+	err = svc.orderRepo.CreateOrder(ctx, order)
+	if err != nil {
+		_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+		if errors.Is(err, repository.ErrUniqueKey) {
+			slog.Error("Create Order Failed", "error", err)
+			return errno.ErrServerInternal
+		}
+		return errno.ErrServerInternal
+	}
+
+	// 删除临时订单
+	_ = svc.orderRepo.DeleteTempOrder(ctx, uid)
+	return nil
 }
 
 func (svc *lotteryService) Result(ctx context.Context) ([]orderdto.DTO, error) {

@@ -105,7 +105,7 @@ func main() {
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)     // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator) // 注册 WebsocketService
 	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)                                                    // 注册 SmsService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ)                                 // 注册 LotteryService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ, IDGenerator)                    // 注册 LotteryService
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler

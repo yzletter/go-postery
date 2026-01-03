@@ -87,6 +87,8 @@ type SmsRepository interface {
 type OrderRepository interface {
 	CreateTempOrder(ctx context.Context, uid, gid int64) error
 	DeleteTempOrder(ctx context.Context, uid int64) error
+	GetTempOrder(ctx context.Context, uid int64) (int64, error)
+	CreateOrder(ctx context.Context, order *model.Order) error
 }
 
 type GiftRepository interface {
