@@ -98,4 +98,5 @@ type GiftRepository interface {
 	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
 	ReduceCacheInventory(ctx context.Context, gid int64) error
 	IncreaseCacheInventory(ctx context.Context, gid int64) error
+	InitCacheInventory(ctx context.Context)
 }

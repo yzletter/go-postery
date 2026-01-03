@@ -95,4 +95,6 @@ type LotteryService interface {
 	Pay(ctx context.Context, uid, gid int64) error
 	GiveUp(ctx context.Context, uid, gid int64) error
 	Result(ctx context.Context, uid int64) (orderdto.DTO, error)
+	Consume(ctx context.Context)
+	InitCacheInventory(ctx context.Context)
 }

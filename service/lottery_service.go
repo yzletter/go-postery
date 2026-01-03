@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"log/slog"
 	"math/rand/v2"
 	"time"
@@ -194,6 +195,40 @@ func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO,
 	}
 
 	return orderdto.ToDTO(order), nil
+}
+
+func (svc *lotteryService) Consume(ctx context.Context) {
+	consumer := svc.mq.RocketConsumer
+	for {
+		messages, err := consumer.Receive(ctx, 1, conf.RocketLotteryInvisibleDuration) // 一批一条
+		if err != nil {
+			// 判断是否 broker 里暂时没有数据, 40401
+			var e *rmq_client.ErrRpcStatus
+			if errors.As(err, &e) && e.Code != 40401 {
+				log.Printf("Receive Message Failed, Code %d, Error %s\n", e.Code, e.Message)
+			}
+			continue
+		}
+
+		for _, message := range messages {
+			var order model.Order
+			err := sonic.Unmarshal(message.GetBody(), &order)
+			if err != nil {
+				continue
+			}
+			gid, _ := svc.orderRepo.GetTempOrder(ctx, order.UserID)
+			if gid == order.GiftID {
+				// 支付超时，删除临时订单，增加库存
+				_ = svc.orderRepo.DeleteTempOrder(ctx, order.UserID)
+				_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+			}
+			consumer.Ack(ctx, message)
+		}
+	}
+}
+
+func (svc *lotteryService) InitCacheInventory(ctx context.Context) {
+	svc.giftRepo.InitCacheInventory(ctx)
 }
 
 // 抽奖算法

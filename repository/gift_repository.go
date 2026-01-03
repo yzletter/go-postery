@@ -59,3 +59,11 @@ func (repo *giftRepository) IncreaseCacheInventory(ctx context.Context, gid int6
 	}
 	return nil
 }
+
+func (repo *giftRepository) InitCacheInventory(ctx context.Context) {
+	gifts, err := repo.dao.GetAll(ctx)
+	if err != nil {
+		return
+	}
+	repo.cache.InitInventory(ctx, gifts)
+}

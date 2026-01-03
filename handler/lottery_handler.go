@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	orderdto "github.com/yzletter/go-postery/dto/order"
 	"github.com/yzletter/go-postery/errno"
@@ -14,6 +16,14 @@ type LotteryHandler struct {
 }
 
 func NewLotteryHandler(lotterySvc service.LotteryService) *LotteryHandler {
+	ctx := context.Background()
+
+	// 开启消费协程
+	go lotterySvc.Consume(ctx)
+
+	// 初始化缓存库存
+	lotterySvc.InitCacheInventory(ctx)
+
 	return &LotteryHandler{
 		lotterySvc: lotterySvc,
 	}

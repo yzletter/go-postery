@@ -45,7 +45,7 @@ type OrderCache interface {
 }
 
 type GiftCache interface {
-	InitInventory(ctx context.Context) (int, error)
+	InitInventory(ctx context.Context, gifts []*model.Gift)
 	GetAllInventory(ctx context.Context) ([]*model.Gift, error)
 	ReduceInventory(ctx context.Context, gid int64) error
 	IncreaseInventory(ctx context.Context, gid int64) error

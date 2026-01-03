@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
@@ -20,9 +21,19 @@ func NewGiftCache(client redis.UniversalClient) GiftCache {
 	return &redisGiftCache{client: client}
 }
 
-func (cache *redisGiftCache) InitInventory(ctx context.Context) (int, error) {
-	//TODO implement me
-	panic("implement me")
+func (cache *redisGiftCache) InitInventory(ctx context.Context, gifts []*model.Gift) {
+	for _, gift := range gifts {
+		if gift.Count <= 0 {
+			slog.Error("Gift Count Invaild", "gift", gift)
+			continue
+		}
+
+		// 初始化
+		err := cache.client.Set(ctx, lotteryGiftPrefix+strconv.FormatInt(gift.ID, 64), gift.Count, 0).Err()
+		if err != nil {
+			slog.Error("Set Failed", "error", err)
+		}
+	}
 }
 
 // GetAllInventory 获取缓存中所有奖品的库存量
