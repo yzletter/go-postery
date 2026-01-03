@@ -53,3 +53,11 @@ func (repo *orderRepository) CreateOrder(ctx context.Context, order *model.Order
 	}
 	return nil
 }
+
+func (repo *orderRepository) GetOrder(ctx context.Context, uid int64) (*model.Order, error) {
+	order, err := repo.dao.Get(ctx, uid)
+	if err != nil {
+		return nil, ErrRecordNotFound
+	}
+	return order, nil
+}

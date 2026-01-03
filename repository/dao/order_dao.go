@@ -29,3 +29,15 @@ func (dao *gormOrderDAO) Create(ctx context.Context, order *model.Order) error {
 	}
 	return nil
 }
+
+func (dao *gormOrderDAO) Get(ctx context.Context, uid int64) (*model.Order, error) {
+	var order *model.Order
+	result := dao.db.WithContext(ctx).Model(&model.Order{}).Where("user_id = ? AND deleted_at IS NULL", uid).Order("created_at DESC").First(&order)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, ErrServerInternal
+	}
+	return order, nil
+}

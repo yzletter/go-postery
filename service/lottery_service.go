@@ -149,9 +149,10 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 	return nil
 }
 
-func (svc *lotteryService) GiveUp(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+func (svc *lotteryService) GiveUp(ctx context.Context, uid, gid int64) error {
+	_ = svc.orderRepo.DeleteTempOrder(ctx, uid)
+	_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+	return nil
 }
 
 func (svc *lotteryService) Pay(ctx context.Context, uid, gid int64) error {
@@ -185,9 +186,14 @@ func (svc *lotteryService) Pay(ctx context.Context, uid, gid int64) error {
 	return nil
 }
 
-func (svc *lotteryService) Result(ctx context.Context) ([]orderdto.DTO, error) {
-	//TODO implement me
-	panic("implement me")
+func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO, error) {
+	var empty orderdto.DTO
+	order, err := svc.orderRepo.GetOrder(ctx, uid)
+	if err != nil {
+		return empty, nil
+	}
+
+	return orderdto.ToDTO(order), nil
 }
 
 // 抽奖算法
