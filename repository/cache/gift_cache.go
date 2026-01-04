@@ -72,6 +72,7 @@ func (cache *redisGiftCache) ReduceInventory(ctx context.Context, gid int64) err
 		return ErrReduceInventory
 	}
 	return nil
+
 }
 
 func (cache *redisGiftCache) IncreaseInventory(ctx context.Context, gid int64) error {

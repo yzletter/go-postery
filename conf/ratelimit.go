@@ -4,5 +4,5 @@ import "time"
 
 const (
 	RateLimitInterval = time.Minute
-	RateLimitRate     = 1000
+	RateLimitRate     = 10000000000000
 )

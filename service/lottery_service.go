@@ -62,20 +62,24 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 			continue
 		}
 
+		ids := make([]int64, 0, len(gifts))
+		probs := make([]float64, 0, len(gifts))
+
+		// 只保留 > 0 的部分
+		for _, gift := range gifts {
+			if gift.Count > 0 {
+				ids = append(ids, gift.ID)
+				probs = append(probs, float64(gift.Count))
+			}
+		}
+
 		// 所有奖品已抽完
-		if len(gifts) == 0 {
+		if len(probs) == 0 {
 			empty := &model.Gift{
 				ID:   0,
 				Name: "奖品已抽完",
 			}
 			return giftdto.ToDTO(empty), nil
-		}
-
-		ids := make([]int64, len(gifts))
-		probs := make([]float64, len(gifts))
-		for i, gift := range gifts {
-			ids[i] = gift.ID
-			probs[i] = float64(gift.Count)
 		}
 
 		// 进行抽奖
@@ -99,6 +103,9 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 			// 获取不到详情
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 			continue
+		} else if gift.Name == "谢谢参与" {
+			// 不用创建临时订单
+			return giftdto.ToDTO(gift), nil
 		}
 
 		// 创建临时订单
@@ -124,7 +131,8 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 		ID:   1,
 		Name: "谢谢参与",
 	}
-	return giftdto.ToDTO(empty), errno.ErrLotteryNoting
+	slog.Error("Lottery Nothing")
+	return giftdto.ToDTO(empty), nil
 }
 
 func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {
