@@ -23,14 +23,16 @@ import (
 type lotteryService struct {
 	giftRepo  repository.GiftRepository
 	orderRepo repository.OrderRepository
+	userRepo  repository.UserRepository
 	mq        *infraRocketMQ.RocketMQ
 	idGen     ports.IDGenerator
 }
 
-func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, mq *infraRocketMQ.RocketMQ, idGen ports.IDGenerator) LotteryService {
+func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, userRepo repository.UserRepository, mq *infraRocketMQ.RocketMQ, idGen ports.IDGenerator) LotteryService {
 	return &lotteryService{
 		orderRepo: orderRepo,
 		giftRepo:  giftRepo,
+		userRepo:  userRepo,
 		mq:        mq,
 		idGen:     idGen,
 	}
@@ -207,7 +209,16 @@ func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO,
 		return empty, errno.ErrOrderNotFound
 	}
 
-	return orderdto.ToDTO(order), nil
+	gift, err := svc.giftRepo.GetByID(ctx, order.GiftID)
+	if err != nil {
+		gift = &model.Gift{}
+	}
+	user, err := svc.userRepo.GetByID(ctx, uid)
+	if err != nil {
+		user = &model.User{}
+	}
+
+	return orderdto.ToDTO(order, user, gift), nil
 }
 
 func (svc *lotteryService) Consume(ctx context.Context) {
