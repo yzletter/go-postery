@@ -240,8 +240,9 @@ func main() {
 	}
 
 	// 抽奖模块
+	v1.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/gifts 获取所有奖品信息
+	
 	lottery := v1.Group("/lottery")
-	lottery.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/lottery/gifts 获取所有奖品信息
 	lottery.Use(AuthRequiredMdl)
 	{
 		lottery.GET("/lucky", LotteryHdl.Lottery)  // GET /api/v1/lottery/lucky 抽奖

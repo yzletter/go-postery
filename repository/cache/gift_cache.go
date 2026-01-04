@@ -29,7 +29,7 @@ func (cache *redisGiftCache) InitInventory(ctx context.Context, gifts []*model.G
 		}
 
 		// 初始化
-		err := cache.client.Set(ctx, lotteryGiftPrefix+strconv.FormatInt(gift.ID, 64), gift.Count, 0).Err()
+		err := cache.client.Set(ctx, lotteryGiftPrefix+strconv.FormatInt(gift.ID, 10), gift.Count, 0).Err()
 		if err != nil {
 			slog.Error("Set Failed", "error", err)
 		}

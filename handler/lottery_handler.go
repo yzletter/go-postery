@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 
 	"github.com/gin-gonic/gin"
 	orderdto "github.com/yzletter/go-postery/dto/order"
@@ -94,9 +96,13 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 	var payReq orderdto.PayRequest
 	err = ctx.ShouldBindJSON(&payReq)
 	if err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
+
+	fmt.Println(payReq)
 
 	// 登录用户与支付用户不一致
 	if uid != payReq.UserID {

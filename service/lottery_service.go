@@ -140,7 +140,7 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 		Topic: conf.RocketLotteryTopic,
 		Body:  body,
 	}
-	message.SetDelayTimestamp(time.Now().Add(time.Duration(delay)))
+	message.SetDelayTimestamp(time.Now().Add(time.Duration(delay) * time.Second))
 
 	// 发送消息
 	_, err = svc.mq.RocketProducer.Send(ctx, message)
