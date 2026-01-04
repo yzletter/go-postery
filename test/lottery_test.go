@@ -107,5 +107,18 @@ func TestLottery(t *testing.T) {
 	}
 }
 
-// QPS 2850, avg time 79ms
 // go test -v ./test -run=^TestLottery$ -count=1
+/*
+	QPS 2850, avg time 79ms
+	论坛定制马克杯  500
+	咖啡兑换券      500
+	机械键盘        400
+	谢谢参与        5000
+	VIP 月度会员    600
+	论坛纪念徽章    500
+	技术书籍兑换券  2000
+	积分翻倍卡      1000
+	无线鼠标        200
+	论坛周边T恤     500
+	共计11200件商品
+*/

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
@@ -101,8 +100,6 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
-
-	fmt.Println(payReq)
 
 	// 登录用户与支付用户不一致
 	if uid != payReq.UserID {

@@ -159,6 +159,12 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 }
 
 func (svc *lotteryService) GiveUp(ctx context.Context, uid, gid int64) error {
+	// 获取临时订单
+	tempID, err := svc.orderRepo.GetTempOrder(ctx, uid)
+	if err != nil || tempID != gid {
+		return errno.ErrNotLottery
+	}
+
 	_ = svc.orderRepo.DeleteTempOrder(ctx, uid)
 	_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 	return nil
@@ -168,7 +174,6 @@ func (svc *lotteryService) Pay(ctx context.Context, uid, gid int64) error {
 	// 获取临时订单
 	tempID, err := svc.orderRepo.GetTempOrder(ctx, uid)
 	if err != nil || tempID != gid {
-		_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 		return errno.ErrNotLottery
 	}
 
