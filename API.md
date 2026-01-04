@@ -63,6 +63,10 @@
 | 50001 | 409  | 标签重复绑定 |
 | 60001 | 409  | 已经关注过该用户 |
 | 60002 | 409  | 尚未关注，无法取消 |
+| 80001 | 404  | 奖品不存在 |
+| 80002 | 404  | 没有抢到该商品，或支付时限已过 |
+| 80003 | 404  | 订单不存在 |
+| 80004 | 404  | 没有抽到奖品 |
 
 ## 数据模型
 
@@ -156,6 +160,26 @@
 | id | string | 消息 ID |
 | session_id | string | 会话 ID |
 | session_type | int | 会话类型 |
+| created_at | string | 创建时间（RFC3339） |
+
+### Gift
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 奖品 ID |
+| name | string | 奖品名称 |
+| avatar | string | 奖品图片 |
+| description | string | 奖品描述 |
+| prize | string | 奖品说明 |
+
+### LotteryOrder
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| id | string | 订单 ID |
+| user | UserBrief | 用户信息 |
+| gift | Gift | 奖品信息 |
+| count | int | 购买数量 |
 | created_at | string | 创建时间（RFC3339） |
 
 ### FollowType
@@ -1133,6 +1157,176 @@ curl -X DELETE "http://localhost:8765/api/v1/posts/2001/likes" \
 {
   "code": 0,
   "msg": "success"
+}
+```
+
+### 抽奖 Lottery
+
+#### GET /api/v1/gifts
+
+- Auth: 否
+- Response: Gift[]
+- Notes: 仅返回奖品基础信息，不包含库存或概率
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/gifts"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取全部奖品成功",
+  "data": [
+    {
+    "id": "3",
+    "name": "论坛定制书",
+    "avatar": "https://example.com/gifts/mug.png",
+    "description": "限量 500 份的定制书",
+    "prize": 200
+    },
+    {
+    "id": "3",
+    "name": "论坛定制书",
+    "avatar": "https://example.com/gifts/mug.png",
+    "description": "限量 500 份的定制书",
+    "prize": 200
+    }
+  ]
+}
+```
+
+#### GET /api/v1/lottery/lucky
+
+- Auth: 是
+- Response: Gift
+- Notes:
+  - `name` 为 `谢谢参与` 或 `id` 为 `0` 时表示未中奖/奖品已抽完，不生成临时订单
+  - 中奖后需在支付时限内调用 `/api/v1/lottery/pay` 或 `/api/v1/lottery/giveup`（默认 600 秒）
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/lottery/lucky" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "抽奖成功",
+  "data": {
+    "id": "3",
+    "name": "论坛定制书",
+    "avatar": "https://example.com/gifts/mug.png",
+    "description": "限量 500 份的定制书",
+    "prize": 200
+  }
+}
+```
+
+#### POST /api/v1/lottery/pay
+
+- Auth: 是
+- Body: PayRequest
+  - user_id (string, 必填)
+  - gift_id (string, 必填)
+- Response: null
+- Notes: user_id 必须与当前登录用户一致，且需命中临时订单，否则返回 80002
+
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/lottery/pay" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "1001",
+    "gift_id": "3"
+  }'
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "支付成功"
+}
+```
+
+#### POST /api/v1/lottery/giveup
+
+- Auth: 是
+- Body: GiveUpRequest
+  - user_id (string, 必填)
+  - gift_id (string, 必填)
+- Response: null
+- Notes: user_id 必须与当前登录用户一致，且需命中临时订单，否则返回 80002
+
+示例请求:
+
+```bash
+curl -X POST "http://localhost:8765/api/v1/lottery/giveup" \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "1001",
+    "gift_id": "3"
+  }'
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "放弃支付成功"
+}
+```
+
+#### GET /api/v1/lottery/result
+
+- Auth: 是
+- Response: LotteryOrder
+- Notes: 返回当前用户最近一次支付成功的订单，若不存在返回 80003
+
+示例请求:
+
+```bash
+curl "http://localhost:8765/api/v1/lottery/result" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+示例响应:
+
+```json
+{
+  "code": 0,
+  "msg": "获取结果成功",
+  "data": {
+    "id": "9001",
+    "user": {
+      "id": "1001",
+      "email": "alice@example.com",
+      "name": "alice",
+      "avatar": ""
+    },
+    "gift": {
+    "id": "3",
+    "name": "论坛定制书",
+    "avatar": "https://example.com/gifts/mug.png",
+    "description": "限量 500 份的定制书",
+    "prize": 200
+    },
+    "count": 1,
+    "created_at": "2024-01-02T15:04:05Z"
+  }
 }
 ```
 

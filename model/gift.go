@@ -7,7 +7,7 @@ type Gift struct {
 	Name        string     `gorm:"name"`
 	Avatar      string     `gorm:"avatar"`
 	Description string     `gorm:"description"`
-	Prize       string     `gorm:"prize"`
+	Prize       int        `gorm:"prize"`
 	Count       int        `gorm:"count"`
 	CreatedAt   time.Time  `gorm:"column:created_at"`
 	UpdatedAt   time.Time  `gorm:"column:updated_at"`

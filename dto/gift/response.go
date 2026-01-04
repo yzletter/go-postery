@@ -7,7 +7,7 @@ type DTO struct {
 	Name        string `json:"name"`
 	Avatar      string `json:"avatar"`
 	Description string `json:"description"`
-	Prize       string `json:"prize"`
+	Prize       int    `json:"prize"`
 }
 
 func ToDTO(gift *model.Gift) DTO {
