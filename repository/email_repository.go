@@ -17,5 +17,12 @@ func NewEmailRepository(cache cache.EmailCache) EmailRepository {
 }
 
 func (repo *emailRepository) CheckCode(ctx context.Context, emailAddress string, code string) error {
-	panic("todo")
+	result, err := repo.cache.CheckCode(ctx, emailAddress, code)
+	if err != nil || result == -1 {
+		return ErrServerInternal
+	} else if result == 0 {
+		return ErrResourceConflict
+	}
+
+	return nil
 }

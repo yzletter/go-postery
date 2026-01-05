@@ -17,7 +17,7 @@ type redisSmsCache struct {
 }
 
 //go:embed lua/check_sms_code.lua
-var checkCodeScript string
+var checkPhoneCodeScript string
 
 func NewSmsCache(client redis.UniversalClient) SmsCache {
 	return &redisSmsCache{client: client}
@@ -25,6 +25,6 @@ func NewSmsCache(client redis.UniversalClient) SmsCache {
 
 func (cache *redisSmsCache) CheckCode(ctx context.Context, phoneNumber string, code string) (int, error) {
 	key := phoneCodePrefix + phoneNumber
-	result, err := cache.client.Eval(ctx, checkCodeScript, []string{key}, code, conf.SendSMSInterval, conf.SMSValidTime).Int()
+	result, err := cache.client.Eval(ctx, checkPhoneCodeScript, []string{key}, code, conf.SendSMSInterval, conf.SMSValidTime).Int()
 	return result, err
 }

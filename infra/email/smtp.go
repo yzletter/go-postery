@@ -3,6 +3,7 @@ package email
 import (
 	"bytes"
 	"html/template"
+	"log/slog"
 
 	"github.com/yzletter/go-postery/service/ports"
 	"gopkg.in/gomail.v2"
@@ -41,6 +42,7 @@ func (m *QQEmailSMTPManager) Send(to string, code string) error {
 	}
 	htmlBody, err := renderVerifyEmailHTML(data)
 	if err != nil {
+		slog.Error("Render Email HTML Failed", "error", err)
 		return ports.ErrRenderEmailHTMLFailed
 	}
 
@@ -54,6 +56,7 @@ func (m *QQEmailSMTPManager) Send(to string, code string) error {
 	// d.TLSConfig = &tls.Config{ServerName: "smtp.qq.com"} // 如有需要可加
 
 	if err := d.DialAndSend(message); err != nil {
+		slog.Error("Send Email Failed", "error", err)
 		return ports.ErrSendEmailFailed
 	}
 	return nil

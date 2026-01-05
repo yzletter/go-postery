@@ -8,4 +8,7 @@ const (
 	AppName        = "Go Postery"
 	EmailYear      = 2026
 	Address        = "Hangzhou, China"
+
+	SendEmailInterval = 60
+	EmailValidTime    = 600
 )
