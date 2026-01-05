@@ -50,3 +50,7 @@ type GiftCache interface {
 	ReduceInventory(ctx context.Context, gid int64) error
 	IncreaseInventory(ctx context.Context, gid int64) error
 }
+
+type EmailCache interface {
+	CheckCode(ctx context.Context, emailAddress string, code string) (int, error)
+}

@@ -20,21 +20,23 @@ import (
 )
 
 type authService struct {
-	userRepo   repository.UserRepository
-	jwtManager ports.JwtManager
-	passHasher ports.PasswordHasher
-	idGen      ports.IDGenerator
-	client     redis.UniversalClient
+	userRepo     repository.UserRepository
+	jwtManager   ports.JwtManager
+	emailManager ports.EmailManager
+	passHasher   ports.PasswordHasher
+	idGen        ports.IDGenerator
+	client       redis.UniversalClient
 }
 
 // NewAuthService 构造函数
-func NewAuthService(userRepo repository.UserRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator, client redis.UniversalClient) AuthService {
+func NewAuthService(userRepo repository.UserRepository, jwtManager ports.JwtManager, emailManager ports.EmailManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator, client redis.UniversalClient) AuthService {
 	return &authService{
-		userRepo:   userRepo,
-		jwtManager: jwtManager,
-		passHasher: passHasher,
-		idGen:      idGen,
-		client:     client,
+		userRepo:     userRepo,
+		jwtManager:   jwtManager,
+		emailManager: emailManager,
+		passHasher:   passHasher,
+		idGen:        idGen,
+		client:       client,
 	}
 }
 

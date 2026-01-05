@@ -100,3 +100,7 @@ type GiftRepository interface {
 	IncreaseCacheInventory(ctx context.Context, gid int64) error
 	InitCacheInventory(ctx context.Context)
 }
+
+type EmailRepository interface {
+	CheckCode(ctx context.Context, emailAddress string, code string) error
+}

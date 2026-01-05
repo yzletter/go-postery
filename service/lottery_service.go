@@ -142,7 +142,6 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 	body, err := sonic.Marshal(order)
 	if err != nil {
 		return errno.ErrServerInternal
-
 	}
 
 	// 构造 Message
@@ -260,12 +259,12 @@ func lottery(probs []float64) int {
 	if len(probs) == 0 {
 		return -1
 	}
-	sum := 0.0
 
-	acc := make([]float64, 0, len(probs))
-	for _, prob := range probs {
+	sum := 0.0
+	acc := make([]float64, len(probs))
+	for i, prob := range probs {
 		sum += prob
-		acc = append(acc, sum)
+		acc[i] = sum
 	}
 
 	// 获取 [0, sum) 的随机数

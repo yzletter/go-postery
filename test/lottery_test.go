@@ -1,7 +1,6 @@
 package test
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bytedance/sonic"
 	giftdto "github.com/yzletter/go-postery/dto/gift"
 )
 
 const url = "http://localhost:8765/api/v1/lottery/lucky" // 压测接口
-const P = 200                                            // 模拟 200 个用户，在疯狂抽奖
+const P = 200                                            // 模拟 200 个用户在疯狂抽奖
 
 type Response struct {
 	Code int         `json:"code"`           // 业务状态码，0 表示成功，非 0 表示失败
@@ -52,7 +52,7 @@ func TestLottery(t *testing.T) {
 					panic(err)
 				}
 				// 添加 Header
-				req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJVaWQiOjIwMDIwMTE2Njg4MTIzOTg1OTIsIlNTaWQiOiI5OTY4MDdjMi05ZmY4LTQzNmQtODE0MS1hZTdhYjRiZDJjN2QiLCJSb2xlIjowLCJVc2VyQWdlbnQiOiJBcGlmb3gvMS4wLjAgKGh0dHBzOi8vYXBpZm94LmNvbSkiLCJpc3MiOiJnby1wb3N0ZXJ5IiwiZXhwIjoxNzY3NTA4NDM1fQ.MlzRmf33sr91PUkdfU9nw8fuM_0hvBJz3A82pIY69UbvQzi0cXu7lcRRZ1oHYG2jFiK2QxY0d5uqN0p15lTlBQ")
+				req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJVaWQiOjIwMDIwMTE2Njg4MTIzOTg1OTIsIlNTaWQiOiI1N2UwM2FjMy05OTIyLTQ2M2ItYmQxNy02MGE5YTZlNGMyMjciLCJSb2xlIjowLCJVc2VyQWdlbnQiOiJBcGlmb3gvMS4wLjAgKGh0dHBzOi8vYXBpZm94LmNvbSkiLCJpc3MiOiJnby1wb3N0ZXJ5IiwiZXhwIjoxNzY3NTMwNjkwfQ.0A9BH6Fb1LcsD5FODH2wcDJSAnafF_sr1XytwsdnbJ8-XO7kUFT9QfGWmd7UwyQaiF2KFEEx9itypas9LnHQxg")
 				req.Header.Set("Content-Type", "application/json")
 				req.Header.Set("User-Agent", "Go-http-client/1.1")
 
@@ -74,7 +74,7 @@ func TestLottery(t *testing.T) {
 				}
 				resp.Body.Close()
 				var v Response
-				json.Unmarshal(bs, &v)
+				sonic.Unmarshal(bs, &v)
 
 				fmt.Println(v)
 

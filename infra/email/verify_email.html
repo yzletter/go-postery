@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>Go Postery - 验证您的邮箱</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f7fb;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+    <div style="padding:24px 28px;border-bottom:1px solid #eee;">
+        <div style="font-size:18px;font-weight:700;">{{.AppName}}</div>
+    </div>
+
+    <div style="padding:28px;">
+        <h2 style="margin:0 0 12px 0;font-size:20px;">验证您的邮箱</h2>
+        <p style="margin:0 0 18px 0;color:#444;line-height:1.6;">
+            我们收到一次请求，需要验证此邮箱地址的所有权：<b> {{.Email}}</b>
+        </p>
+
+        <div style="text-align:center;margin:22px 0;">
+            <div style="display:inline-block;padding:14px 18px;border-radius:10px;background:#f1f5ff;font-size:28px;letter-spacing:4px;font-weight:700;">
+                {{.Code}}
+            </div>
+        </div>
+
+        <p style="margin:0;color:#444;line-height:1.6;">
+            验证码在 <b>{{.ExpireMin}}</b> 分钟内有效。请勿将验证码透露给任何人。
+        </p>
+
+        <p style="margin:16px 0 0 0;color:#666;line-height:1.6;">
+            如果这不是您本人操作，请忽略此邮件。
+        </p>
+    </div>
+
+    <div style="padding:18px 28px;background:#fafafa;color:#888;font-size:12px;line-height:1.5;">
+        此邮件由系统自动发送，请勿直接回复。<br/>
+        © {{.Year}} · {{.AppName}} · {{.Address}}
+    </div>
+</div>
+</body>
+</html>
