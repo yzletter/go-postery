@@ -3,10 +3,8 @@ package middleware
 import (
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/service"
@@ -14,13 +12,12 @@ import (
 )
 
 // AuthRequiredMiddleware 强制登录
-func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.UniversalClient) gin.HandlerFunc {
+func AuthRequiredMiddleware(authSvc service.AuthService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		accessToken := handler.ExtractToken(ctx)                                 // 获取 AccessToken
 		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie) // 获取 RefreshToken
 
-		slog.Info("AccessToken", "AccessToken", accessToken)
-		slog.Info("RefreshToken", "RefreshToken", refreshToken)
+		slog.Info("获取当前用户的 Token", "AccessToken", accessToken, "RefreshToken", refreshToken)
 
 		// 尝试直接通过 AccessToken 认证
 		claim, err := authSvc.VerifyAccessToken(accessToken)
@@ -31,52 +28,47 @@ func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.Unive
 				unauthorized(ctx)
 				return
 			}
-			ok, err := redisClient.Exists(ctx, conf.ClearTokenPrefix+ssid).Result()
-			if err != nil || ok > 0 {
+
+			exist, err := authSvc.CheckBlackList(ctx, ssid) // 判断在黑名单中是否存在
+			if err != nil || exist {
 				unauthorized(ctx)
 				return
 			}
 
 			// AccessToken 认证通过
 			slog.Info("AuthMiddleware 认证 AccessToken 成功 ...", "user_id", claim.Uid)
-			ctx.Set(handler.UserIDInContext, claim.Uid) // 把用户 ID 放入上下文, 以便后续中间件直接使用
+
+			// 把用户 ID 放入上下文, 以便后续中间件直接使用
+			ctx.Set(handler.UserIDInContext, claim.Uid)
 			ctx.Next()
 			return
 		}
 
-		if refreshToken == "" { // RefreshToken 不存在
+		// RefreshToken 不存在
+		if refreshToken == "" {
 			unauthorized(ctx)
 			return
 		}
 
-		// 从缓存中获取信息
-		mp, err := redisClient.HGetAll(ctx, conf.RefreshTokenPrefix+refreshToken).Result()
-		if err != nil || len(mp) == 0 {
-			// RefreshToken 已经过期
-			unauthorized(ctx)
-			return
-		}
-
-		id, err1 := strconv.ParseInt(mp["user_id"], 10, 64)
-		role, err2 := strconv.Atoi(mp["role"])
-		ssid := mp["ssid"]
-		if ssid == "" || err1 != nil || err2 != nil {
+		// RefreshToken 存在, 根据 RefreshToken 从缓存中获取信息
+		uid, role, ssid, err := authSvc.GetInfoByRefreshToken(ctx, refreshToken)
+		if err != nil {
 			unauthorized(ctx)
 			return
 		}
 
 		// 黑名单检查
-		ok, err := redisClient.Exists(ctx, conf.ClearTokenPrefix+ssid).Result()
-		if err != nil || ok > 1 {
+		exist, err := authSvc.CheckBlackList(ctx, ssid) // 判断在黑名单中是否存在
+		if err != nil || exist {
 			unauthorized(ctx)
 			return
 		}
 
-		// redis 中清除旧 token
+		// 删除旧 Tokens
 		_ = authSvc.ClearTokens(ctx, accessToken, refreshToken)
 
 		// 重新签发 新token
-		newAccessToken, newRefreshToken, err := authSvc.IssueTokens(ctx, id, role, ctx.Request.UserAgent())
+		newAccessToken, newRefreshToken, err := authSvc.IssueTokens(ctx, uid, role, ctx.Request.UserAgent())
 		if err != nil {
 			unauthorized(ctx)
 			return
@@ -85,8 +77,10 @@ func AuthRequiredMiddleware(authSvc service.AuthService, redisClient redis.Unive
 		// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
 		setTokens(ctx, newAccessToken, newRefreshToken)
 
-		slog.Info("AuthMiddleware 认证 RefreshToken 成功 ...", "user_id", id)
-		ctx.Set(handler.UserIDInContext, id) // 把用户 ID 放入上下文, 以便后续中间件直接使用
+		slog.Info("AuthMiddleware 认证 RefreshToken 成功 ...", "user_id", uid)
+
+		// 把用户 ID 放入上下文, 以便后续中间件直接使用
+		ctx.Set(handler.UserIDInContext, uid)
 		ctx.Next()
 		return
 	}
@@ -102,6 +96,7 @@ func unauthorized(ctx *gin.Context) {
 	// 清除 token
 	ctx.Header("Authorization", "")
 	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
+
 	// 退出
 	ctx.AbortWithStatus(http.StatusUnauthorized)
 }

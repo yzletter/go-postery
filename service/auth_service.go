@@ -13,30 +13,29 @@ import (
 
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/repository"
 )
 
 type authService struct {
+	authRepo     repository.AuthRepository
 	userRepo     repository.UserRepository
 	jwtManager   ports.JwtManager
 	emailManager ports.EmailManager
 	passHasher   ports.PasswordHasher
 	idGen        ports.IDGenerator
-	client       redis.UniversalClient
 }
 
 // NewAuthService 构造函数
-func NewAuthService(userRepo repository.UserRepository, jwtManager ports.JwtManager, emailManager ports.EmailManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator, client redis.UniversalClient) AuthService {
+func NewAuthService(authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, emailManager ports.EmailManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
 	return &authService{
+		authRepo:     authRepo,
 		userRepo:     userRepo,
 		jwtManager:   jwtManager,
 		emailManager: emailManager,
 		passHasher:   passHasher,
 		idGen:        idGen,
-		client:       client,
 	}
 }
 
@@ -116,7 +115,7 @@ func (svc *authService) Login(ctx context.Context, username, pass string) (userd
 func (svc *authService) ClearTokens(ctx context.Context, accessToken, refreshToken string) error {
 	// 删除 refreshToken
 	if refreshToken != "" {
-		if err := svc.client.Del(ctx, conf.RefreshTokenPrefix+refreshToken).Err(); err != nil {
+		if err := svc.authRepo.DelRefreshToken(ctx, refreshToken); err != nil {
 			return errno.ErrLogoutFailed
 		}
 	}
@@ -124,16 +123,15 @@ func (svc *authService) ClearTokens(ctx context.Context, accessToken, refreshTok
 	// 拉黑 ssid
 	if accessToken != "" {
 		if claim, err := svc.VerifyAccessToken(accessToken); err == nil && claim != nil && claim.SSid != "" {
-			ttl := time.Duration(conf.RefreshTokenMaxAgeSecs) * time.Second
-			// accessToken 解析失败就跳过，不影响 logout 成功
-			_ = svc.client.Set(ctx, conf.ClearTokenPrefix+claim.SSid, "", ttl).Err()
+			_ = svc.authRepo.SetBlackList(ctx, claim.SSid) // 拉黑 ssid
 		}
+		// accessToken 解析失败就跳过，不影响 logout 成功
 	}
 
 	return nil
 }
 
-// IssueTokens 签发 Token
+// IssueTokens 签发 Tokens
 func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error) {
 	// 参数校验
 	if role > 1 || role < 0 {
@@ -158,7 +156,7 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 		return "", "", errno.ErrServerInternal
 	}
 
-	// 生成 RefreshTokenMaxAgeSecs
+	// 生成 RefreshToken
 	refreshToken := xid.New().String()
 
 	// 将 < auth:refresh:xxxxxx, ssid > 存入
@@ -167,23 +165,37 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 		"ssid":    ssid,
 		"role":    role,
 	}
-
-	// 避免返回了 Token 但服务端没存的不一致
-	pipe := svc.client.Pipeline()
-	ttl := time.Duration(conf.RefreshTokenMaxAgeSecs) * time.Second
-	pipe.HSet(ctx, conf.RefreshTokenPrefix+refreshToken, mp)
-	pipe.Expire(ctx, conf.RefreshTokenPrefix+refreshToken, ttl)
-	if _, err := pipe.Exec(ctx); err != nil {
+	err = svc.authRepo.SetInfo(ctx, refreshToken, mp)
+	if err != nil {
 		return "", "", errno.ErrServerInternal
 	}
 
 	return accessToken, refreshToken, nil
 }
 
+// VerifyAccessToken 校验 AccessToken
 func (svc *authService) VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error) {
 	claim, err := svc.jwtManager.VerifyToken(tokenString)
 	if err != nil {
 		return nil, errno.ErrUnauthorized
 	}
 	return claim, nil
+}
+
+// CheckBlackList 检查黑名单
+func (svc *authService) CheckBlackList(ctx context.Context, ssid string) (bool, error) {
+	exist, err := svc.authRepo.CheckBlackList(ctx, ssid)
+	if err != nil {
+		return false, errno.ErrServerInternal
+	}
+	return exist, nil
+}
+
+// GetInfoByRefreshToken 根据 RefreshToken 获取用户信息
+func (svc *authService) GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) {
+	uid, role, ssid, err := svc.authRepo.GetInfoByRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return 0, 0, "", errno.ErrServerInternal
+	}
+	return uid, role, ssid, nil
 }

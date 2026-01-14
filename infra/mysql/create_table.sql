@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users
 
     UNIQUE KEY uk_user_username (username),
     UNIQUE KEY uk_user_email (email),
+    UNIQUE KEY uk_user_phone (phone),
 
     KEY idx_user_status_deleted (status, deleted_at),
 

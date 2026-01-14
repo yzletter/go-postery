@@ -23,6 +23,8 @@ type AuthService interface {
 	ClearTokens(ctx context.Context, accessToken, refreshToken string) error
 	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)
 	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)
+	CheckBlackList(ctx context.Context, ssid string) (bool, error)
+	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
 }
 
 type UserService interface {
