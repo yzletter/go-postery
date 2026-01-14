@@ -106,6 +106,10 @@ func (hdl *AuthHandler) LoginByPhoneNumber(ctx *gin.Context) {
 
 }
 
+func (hdl *AuthHandler) LoginByEmail(ctx *gin.Context) {
+
+}
+
 // Logout 登出 Handler
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可

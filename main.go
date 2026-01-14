@@ -168,9 +168,9 @@ func main() {
 		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login 		登录
 
 		auth.POST("/login/phone", AuthHdl.LoginByPhoneNumber) // 手机号 验证码登录
-		//auth.POST("/login/pass", AuthHdl.LoginByEmail)        // 邮箱 账号密码登录
-		auth.POST("/sms", SmsHdl.Send)     // POST /api/v1/auth/sms		发送短信验证码
-		auth.POST("/email", EmailHdl.Send) // POST /api/v1/auth/email		发送邮箱验证码
+		auth.POST("/login/pass", AuthHdl.LoginByEmail)        // 邮箱 账号密码登录
+		auth.POST("/sms", SmsHdl.Send)                        // POST /api/v1/auth/sms		发送短信验证码
+		auth.POST("/email", EmailHdl.Send)                    // POST /api/v1/auth/email		发送邮箱验证码
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)

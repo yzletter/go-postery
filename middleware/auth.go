@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -11,87 +12,111 @@ import (
 	"github.com/yzletter/go-postery/utils"
 )
 
-// AuthRequiredMiddleware 强制登录
+// AuthRequiredMiddleware 强制登录中间件
 func AuthRequiredMiddleware(authSvc service.AuthService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		accessToken := handler.ExtractToken(ctx)                                 // 获取 AccessToken
-		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie) // 获取 RefreshToken
+		// 获取 AccessToken 和  RefreshToken
+		accessToken := handler.ExtractToken(ctx)
+		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)
 
 		slog.Info("获取当前用户的 Token", "AccessToken", accessToken, "RefreshToken", refreshToken)
 
-		// 尝试直接通过 AccessToken 认证
-		claim, err := authSvc.VerifyAccessToken(accessToken)
-		if err == nil && claim != nil {
-			// 黑名单检查
-			ssid := claim.SSid
-			if ssid == "" {
-				unauthorized(ctx)
-				return
-			}
-
-			exist, err := authSvc.CheckBlackList(ctx, ssid) // 判断在黑名单中是否存在
-			if err != nil || exist {
-				unauthorized(ctx)
-				return
-			}
-
-			// AccessToken 认证通过
-			slog.Info("AuthMiddleware 认证 AccessToken 成功 ...", "user_id", claim.Uid)
-
-			// 把用户 ID 放入上下文, 以便后续中间件直接使用
-			ctx.Set(handler.UserIDInContext, claim.Uid)
-			ctx.Next()
+		// 先尝试通过 AccessToken 认证
+		if uid, ok := tryAuthByAccessToken(ctx, authSvc, accessToken); ok {
+			accept(ctx, uid)
 			return
 		}
 
-		// RefreshToken 不存在
-		if refreshToken == "" {
-			unauthorized(ctx)
+		// 再尝试通过 RefreshToken 认证
+		if uid, ok := tryAuthByRefreshToken(ctx, authSvc, accessToken, refreshToken); ok {
+			accept(ctx, uid)
 			return
 		}
 
-		// RefreshToken 存在, 根据 RefreshToken 从缓存中获取信息
-		uid, role, ssid, err := authSvc.GetInfoByRefreshToken(ctx, refreshToken)
-		if err != nil {
-			unauthorized(ctx)
-			return
-		}
-
-		// 黑名单检查
-		exist, err := authSvc.CheckBlackList(ctx, ssid) // 判断在黑名单中是否存在
-		if err != nil || exist {
-			unauthorized(ctx)
-			return
-		}
-
-		// 删除旧 Tokens
-		_ = authSvc.ClearTokens(ctx, accessToken, refreshToken)
-
-		// 重新签发 新token
-		newAccessToken, newRefreshToken, err := authSvc.IssueTokens(ctx, uid, role, ctx.Request.UserAgent())
-		if err != nil {
-			unauthorized(ctx)
-			return
-		}
-
-		// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-		setTokens(ctx, newAccessToken, newRefreshToken)
-
-		slog.Info("AuthMiddleware 认证 RefreshToken 成功 ...", "user_id", uid)
-
-		// 把用户 ID 放入上下文, 以便后续中间件直接使用
-		ctx.Set(handler.UserIDInContext, uid)
-		ctx.Next()
+		// 校验失败
+		unauthorized(ctx)
 		return
 	}
 }
 
-func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
+// 尝试通过 AccessToken 认证, 认证成功返回 uid 和 True
+func tryAuthByAccessToken(ctx *gin.Context, authSvc service.AuthService, accessToken string) (int64, bool) {
+	if accessToken == "" {
+		return 0, false
+	}
+
+	claim, err := authSvc.VerifyAccessToken(accessToken)
+	if err != nil || claim == nil || claim.SSid == "" {
+		return 0, false
+	}
+
+	// 黑名单检查
+	if ok := isBlacklisted(ctx, authSvc, claim.SSid); ok {
+		// 不用再走其他认证了
+		unauthorized(ctx)
+		return 0, false
+	}
+
+	// AccessToken 认证通过
+	slog.Info("AuthMiddleware 认证 AccessToken 成功 ...", "user_id", claim.Uid)
+
+	return claim.Uid, true
+}
+
+// 尝试通过 RefreshToken 认证, 认证成功返回 uid 和 True
+func tryAuthByRefreshToken(ctx *gin.Context, authSvc service.AuthService, accessToken, refreshToken string) (int64, bool) {
+	// RefreshToken 不存在
+	if refreshToken == "" {
+		return 0, false
+	}
+
+	// RefreshToken 存在
+	uid, role, ssid, err := authSvc.GetInfoByRefreshToken(ctx, refreshToken) // 根据 RefreshToken 从缓存中获取信息
+	if err != nil || ssid == "" {
+		return 0, false
+	}
+
+	// 黑名单检查
+	if ok := isBlacklisted(ctx, authSvc, ssid); ok {
+		// 不用再走其他认证了
+		unauthorized(ctx)
+		return 0, false
+	}
+
+	// 删除旧 Token
+	_ = authSvc.ClearTokens(ctx, accessToken, refreshToken)
+
+	// 重新签发 Token
+	newAccessToken, newRefreshToken, err := authSvc.IssueTokens(ctx, uid, role, ctx.Request.UserAgent())
+	if err != nil {
+		return 0, false
+	}
+
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+	setTokens(ctx, newAccessToken, newRefreshToken)
+
+	// RefreshToken 认证通过
+	slog.Info("AuthMiddleware 认证 RefreshToken 成功 ...", "user_id", uid)
+
+	return uid, true
+}
+
+// 判断是否被拉黑
+func isBlacklisted(ctx context.Context, authSvc service.AuthService, ssid string) bool {
+	if ssid == "" {
+		return true
+	}
+	exist, err := authSvc.CheckBlackList(ctx, ssid)
+	return err != nil || exist // 有错误或者黑名单中存在, 都视为已被拉黑
+}
+
+// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	ctx.Header("Authorization", "Bearer "+accessToken)
 	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 }
 
+// 返回没有权限的响应
 func unauthorized(ctx *gin.Context) {
 	// 清除 token
 	ctx.Header("Authorization", "")
@@ -99,4 +124,9 @@ func unauthorized(ctx *gin.Context) {
 
 	// 退出
 	ctx.AbortWithStatus(http.StatusUnauthorized)
+}
+
+func accept(ctx *gin.Context, uid int64) {
+	ctx.Set(handler.UserIDInContext, uid)
+	ctx.Next()
 }
