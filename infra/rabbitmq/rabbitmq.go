@@ -24,6 +24,7 @@ func Init(confDir, confFileName, confFileType string) *amqp.Connection {
 		slog.Error("初始化 RabbitMQ Connection 失败 ...", "error", err)
 	}
 
+	slog.Info("初始化 RabbitMQ Connection 成功 ...")
 	globalConn = conn
 	return globalConn
 }

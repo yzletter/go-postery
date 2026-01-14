@@ -75,7 +75,6 @@ func Init(confDir, confFileName, confFileType, logDir string) *gorm.DB {
 		ConnMaxLifetime: time.Hour,
 	}
 	configureDBPool(db, poolConfig)
-	slog.Info("配置 MySQL 连接池成功 ...")
 
 	// 赋给全局变量 globalDB
 	globalDB = db
@@ -127,7 +126,6 @@ func initDBLogger(logDir string, logFileName string, loggerConfig logger.Config)
 	// 打开 logger 文件
 	logFile, err := os.OpenFile(path.Join(logDir, logFileName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
-		slog.Info("打开 MySQL logger 文件失败 ...")
 		panic(err)
 	}
 

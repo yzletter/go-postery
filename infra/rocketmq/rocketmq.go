@@ -57,16 +57,16 @@ func newProducer(proxyEndpoint string) rmq_client.Producer {
 			),
 		)
 		if err != nil {
-			slog.Error("RocketMQ Producer New Failed", "error", err)
+			slog.Error("初始化 RocketMQ Producer 失败", "error", err)
 		}
 
 		err = producer.Start()
 		if err != nil {
-			slog.Error("RocketMQ Producer Start Failed", "error", err)
+			slog.Error("启动 RocketMQ Producer 失败", "error", err)
 		}
 	})
 
-	slog.Info("RocketMQ Producer Init Succeed")
+	slog.Info("初始化 RocketMQ Producer 成功")
 	return producer
 }
 
@@ -93,16 +93,16 @@ func newConsumer(proxyEndpoint string) rmq_client.SimpleConsumer {
 				}),
 		)
 		if err != nil {
-			slog.Error("RocketMQ Consumer New Failed", "error", err)
+			slog.Error("初始化 RocketMQ Consumer 失败", "error", err)
 		}
 
 		err = consumer.Start()
 		if err != nil {
-			slog.Error("RocketMQ Consumer Start Failed", "error", err)
+			slog.Error("启动 RocketMQ Consumer 失败", "error", err)
 		}
 	})
 
-	slog.Info("RocketMQ Consumer Init Succeed")
+	slog.Info("初始化 RocketMQ Consumer 成功")
 	return consumer
 }
 

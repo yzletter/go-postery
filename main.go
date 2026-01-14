@@ -100,21 +100,19 @@ func main() {
 	AuthRepo := repository.NewAuthRepository(AuthCache)
 
 	// Service 层
-	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
-
+	MetricSvc := service.NewMetricService()                                                                      // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)         // 注册 RateLimitService
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, EmailManager, PasswordHasher, IDGenerator) // 注册 AuthService
-
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                               // 注册 userSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                  // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                               // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                  // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                  // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)     // 注册 SessionService
-	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator) // 注册 WebsocketService
-	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)                                                    // 注册 SmsService
-	EmailSvc := service.NewEmailService(EmailRepo, EmailManager)                                           // 注册 EmailService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)          // 注册 LotteryService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                     // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                        // 注册 postSvc
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                     // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                        // 注册 commentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                        // 注册 TagService
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)           // 注册 SessionService
+	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)       // 注册 WebsocketService
+	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)                                                          // 注册 SmsService
+	EmailSvc := service.NewEmailService(EmailRepo, EmailManager)                                                 // 注册 EmailService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                // 注册 LotteryService
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -125,8 +123,8 @@ func main() {
 	SessionHdl := handler.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
 	SmsHdl := handler.NewSmsHandler(SmsSvc)                               // 注册 SmsHandler
-	EmailHdl := handler.NewEmailHandler(EmailSvc)
-	LotteryHdl := handler.NewLotteryHandler(LotterySvc) // 注册 LotteryHandler
+	EmailHdl := handler.NewEmailHandler(EmailSvc)                         // 注册 EmailHandler
+	LotteryHdl := handler.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
 
 	fmt.Println(LotteryHdl)
 

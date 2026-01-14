@@ -35,10 +35,10 @@ func Init(confDir, confFileName, confFileType string) redis.UniversalClient {
 
 	// 尝试 ping 通
 	if err := globalRedisClient.Ping(context.Background()).Err(); err != nil { // 须加上.Err(), 否则会报 ping 通错
-		slog.Error("connect to Redis failed", "error", err)
+		slog.Error("初始化 Redis 失败 ...", "error", err)
 		panic(err)
 	} else {
-		slog.Info("connect to Redis succeed")
+		slog.Info("初始化 Redis 成功 ...")
 	}
 
 	return globalRedisClient
@@ -49,10 +49,10 @@ func Ping() {
 	if globalRedisClient != nil {
 		err := globalRedisClient.Ping(context.Background()).Err()
 		if err != nil {
-			slog.Info("ping globalRedisClient failed")
+			slog.Info("Ping Redis 失败 ...")
 			return
 		}
-		slog.Info("ping globalRedisClient succeed")
+		slog.Info("Ping Redis 成功 ...")
 		return
 	}
 }
@@ -61,10 +61,10 @@ func Close() {
 	if globalRedisClient != nil {
 		err := globalRedisClient.Close()
 		if err != nil {
-			slog.Info("close globalRedisClient failed")
+			slog.Info("关闭 Redis 失败 ...")
 			return
 		}
-		slog.Info("close globalRedisClient succeed")
+		slog.Info("关闭 Redis 成功 ...")
 		return
 	}
 }
