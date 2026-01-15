@@ -25,6 +25,10 @@ type AuthService interface {
 	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)
 	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
+	// LoginByPhone 根据手机号码进行登录, 未注册的手机号码自动进行注册
+	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)
+	// LoginByEmail 根据邮箱进行登录, 未注册的邮箱不自动进行注册
+	LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error)
 }
 
 type UserService interface {

@@ -27,6 +27,11 @@ type authService struct {
 	idGen        ports.IDGenerator
 }
 
+func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewAuthService 构造函数
 func NewAuthService(authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, emailManager ports.EmailManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
 	return &authService{

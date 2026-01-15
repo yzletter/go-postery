@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/dto/auth"
 	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
@@ -60,8 +61,7 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 	}
 
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	ctx.Header("Authorization", "Bearer "+accessToken)
-	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+	setTokens(ctx, accessToken, refreshToken)
 
 	// 返回成功响应
 	response.Success(ctx, "注册成功", userBriefDTO)
@@ -94,20 +94,73 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	ctx.Header("Authorization", "Bearer "+accessToken)
-	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+	setTokens(ctx, accessToken, refreshToken)
 
 	// 返回成功响应
 	response.Success(ctx, "登录成功", userBriefDTO)
 	return
 }
 
-func (hdl *AuthHandler) LoginByPhoneNumber(ctx *gin.Context) {
+// LoginByPhone 根据手机号码进行登录, 未注册的手机号码自动进行注册
+func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.LoginByPhone
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
 
+	// 进行登录
+	userBriefDTO, err := hdl.authSvc.LoginByPhone(ctx, req.Phone, req.Code)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 根据 UID 签发双 Token
+	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+	setTokens(ctx, accessToken, refreshToken)
+
+	// 返回成功响应
+	response.Success(ctx, "根据手机号登录成功", userBriefDTO)
+	return
 }
 
+// LoginByEmail 根据邮箱进行登录
 func (hdl *AuthHandler) LoginByEmail(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.LoginByEmail
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
 
+	// 进行登录
+	userBriefDTO, err := hdl.authSvc.LoginByEmail(ctx, req.Email, req.Code)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 根据 UID 签发双 Token
+	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+	setTokens(ctx, accessToken, refreshToken)
+
+	// 返回成功响应
+	response.Success(ctx, "根据邮箱登录成功", userBriefDTO)
+	return
 }
 
 // Logout 登出 Handler
@@ -140,8 +193,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 // Status 检查登录状态
 func (hdl *AuthHandler) Status(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)
-	if err != nil {
+	if _, err := utils.GetUidFromCTX(ctx, UserIDInContext); err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -163,5 +215,12 @@ func ExtractToken(ctx *gin.Context) string {
 	if token, err := ctx.Cookie(conf.AccessTokenInCookie); err == nil {
 		return token
 	}
+
 	return ""
+}
+
+// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
+	ctx.Header("Authorization", "Bearer "+accessToken)
+	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 }

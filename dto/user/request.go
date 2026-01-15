@@ -6,13 +6,6 @@ import (
 	"github.com/yzletter/go-postery/model"
 )
 
-// JWTInfo 用于存放进 JWT 自定义字段和放入 ctx 的用户信息
-type JWTInfo struct {
-	Id   string `json:"user_id"`
-	Name string `json:"user_name"`
-	Role string `json:"role"`
-}
-
 // RegisterRequest 定义前端提交注册表单信息的模型映射
 type RegisterRequest struct {
 	Email    string `json:"email"`

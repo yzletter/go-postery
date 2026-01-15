@@ -126,6 +126,7 @@ func unauthorized(ctx *gin.Context) {
 	ctx.AbortWithStatus(http.StatusUnauthorized)
 }
 
+// 把用户 ID 放入上下文, 以便后续中间件直接使用
 func accept(ctx *gin.Context, uid int64) {
 	ctx.Set(handler.UserIDInContext, uid)
 	ctx.Next()

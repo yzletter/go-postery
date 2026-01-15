@@ -129,7 +129,7 @@ func main() {
 	fmt.Println(LotteryHdl)
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
 	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
@@ -167,10 +167,10 @@ func main() {
 		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register 	注册
 		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login 		登录
 
-		auth.POST("/login/phone", AuthHdl.LoginByPhoneNumber) // 手机号 验证码登录
-		auth.POST("/login/pass", AuthHdl.LoginByEmail)        // 邮箱 账号密码登录
-		auth.POST("/sms", SmsHdl.Send)                        // POST /api/v1/auth/sms		发送短信验证码
-		auth.POST("/email", EmailHdl.Send)                    // POST /api/v1/auth/email		发送邮箱验证码
+		auth.POST("/login/phone", AuthHdl.LoginByPhone) // 手机号 验证码登录
+		auth.POST("/login/pass", AuthHdl.LoginByEmail)  // 邮箱 账号密码登录
+		auth.POST("/sms", SmsHdl.Send)                  // POST /api/v1/auth/sms		发送短信验证码
+		auth.POST("/email", EmailHdl.Send)              // POST /api/v1/auth/email		发送邮箱验证码
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
