@@ -27,11 +27,6 @@ type authService struct {
 	idGen        ports.IDGenerator
 }
 
-func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewAuthService 构造函数
 func NewAuthService(authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, emailManager ports.EmailManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
 	return &authService{
@@ -203,4 +198,76 @@ func (svc *authService) GetInfoByRefreshToken(ctx context.Context, refreshToken 
 		return 0, 0, "", errno.ErrServerInternal
 	}
 	return uid, role, ssid, nil
+}
+
+func (svc *authService) LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
+	// 获取邮箱验证码
+	authCode, err := svc.authRepo.GetEmailCode(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			// 验证码不存在
+			return empty, errno.ErrEmailCodeInvalid
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 校验验证码是否正确
+	if authCode != code {
+		return empty, errno.ErrEmailCodeInvalid
+	}
+
+	// 根据邮箱查找用户
+	user, err := svc.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	return userdto.ToBriefDTO(user), nil
+}
+
+func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
+	// 获取手机验证码
+	authCode, err := svc.authRepo.GetPhoneCode(ctx, phone)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			// 验证码不存在
+			return empty, errno.ErrPhoneCodeInvalid
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 校验验证码是否正确
+	if authCode != code {
+		return empty, errno.ErrEmailCodeInvalid
+	}
+
+	// 根据手机号查找用户
+	user, err := svc.userRepo.GetByPhone(ctx, phone)
+	if err == nil {
+		return userdto.ToBriefDTO(user), nil
+	} else if errors.Is(err, repository.ErrRecordNotFound) {
+		// 用户不存在, 需要新建用户
+		user := &model.User{
+			ID:           svc.idGen.NextID(),
+			Username:     "用户_" + xid.New().String(),
+			Email:        xid.New().String(),
+			PasswordHash: xid.New().String(),
+			Phone:        phone,
+		}
+		if err := svc.userRepo.Create(ctx, user); err != nil {
+			if errors.Is(err, repository.ErrUniqueKey) {
+				return empty, errno.ErrUserDuplicated
+			}
+			return empty, errno.ErrServerInternal
+		}
+		return userdto.ToBriefDTO(user), nil
+	}
+
+	// 系统错误
+	return empty, errno.ErrServerInternal
 }

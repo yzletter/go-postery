@@ -14,6 +14,8 @@ type UserRepository interface {
 	GetStatus(ctx context.Context, id int64) (int, error)
 	GetByID(ctx context.Context, id int64) (*model.User, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
+	GetByPhone(ctx context.Context, phone string) (*model.User, error)
 	UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
 	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error
 	Top(ctx context.Context) ([]*model.User, []float64, error)
@@ -111,4 +113,6 @@ type AuthRepository interface {
 	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
 	SetBlackList(ctx context.Context, ssid string) error
 	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error
+	GetPhoneCode(ctx context.Context, phone string) (string, error)
+	GetEmailCode(ctx context.Context, email string) (string, error)
 }

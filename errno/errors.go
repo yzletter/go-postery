@@ -17,13 +17,15 @@ var (
 // User 错误 Code 2000X
 var (
 	ErrUserNotFound       = &Error{20001, 404, "用户不存在"}
-	ErrUserDuplicated     = &Error{20002, 409, "用户名或邮箱已存在"}
+	ErrUserDuplicated     = &Error{20002, 409, "用户已存在"}
 	ErrPasswordWeak       = &Error{20003, 400, "密码强度过低"}
 	ErrInvalidCredential  = &Error{20004, 401, "账号或密码错误"}
 	ErrUserNotLogin       = &Error{20005, 401, "用户未登录"}
 	ErrUnauthorized       = &Error{20006, 403, "没有权限"}
 	ErrLogoutFailed       = &Error{20007, 500, "登出失败"}
 	ErrOldPasswordInvalid = &Error{20008, 401, "旧密码错误"}
+	ErrEmailCodeInvalid   = &Error{20009, 401, "邮箱或验证码错误"}
+	ErrPhoneCodeInvalid   = &Error{20009, 401, "手机号或验证码错误"}
 )
 
 // Post 错误 Code 3000X
@@ -54,6 +56,7 @@ var (
 var (
 	ErrInvalidSMSCode = &Error{70001, 401, "验证码验证失败"}
 	ErrSendToFrequent = &Error{70002, 401, "验证码发送过于频繁"}
+	ErrCodeNotFound   = &Error{70003, 401, "验证码不存在"}
 )
 
 var (
