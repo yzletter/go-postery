@@ -34,10 +34,6 @@ type FollowCache interface {
 type MessageCache interface{}
 type SessionCache interface{}
 
-type SmsCache interface {
-	CheckCode(ctx context.Context, phoneNumber string, code string) (int, error)
-}
-
 type OrderCache interface {
 	CreateTempOrder(ctx context.Context, uid, gid int64) error
 	DeleteTempOrder(ctx context.Context, uid int64) error
@@ -51,8 +47,9 @@ type GiftCache interface {
 	IncreaseInventory(ctx context.Context, gid int64) error
 }
 
-type EmailCache interface {
-	CheckCode(ctx context.Context, emailAddress string, code string) (int, error)
+type CodeCache interface {
+	Allow(ctx context.Context, biz model.CodeBiz, field string, code string) (int, error)
+	CheckCode(ctx context.Context, biz model.CodeBiz, field string, code string) (bool, error)
 }
 
 type AuthCache interface {

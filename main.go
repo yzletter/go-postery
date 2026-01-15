@@ -78,8 +78,7 @@ func main() {
 	TagCache := cache.NewTagCache(RedisClient)
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
-	SmsCache := cache.NewSmsCache(RedisClient)
-	EmailCache := cache.NewEmailCache(RedisClient)
+	CodeCache := cache.NewCodeCache(RedisClient)
 	OrderCache := cache.NewOrderCache(RedisClient)
 	GiftCache := cache.NewGiftCache(RedisClient)
 	AuthCache := cache.NewAuthCache(RedisClient)
@@ -93,26 +92,24 @@ func main() {
 	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
-	SmsRepo := repository.NewSmsRepository(SmsCache)                         // 注册 SmsRepository
-	EmailRepo := repository.NewEmailRepository(EmailCache)                   // 注册 EmailRepository
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
 	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)             // 注册 GiftRepository
 	AuthRepo := repository.NewAuthRepository(AuthCache)
+	CodeRepo := repository.NewCodeRepository(CodeCache)
 
 	// Service 层
-	MetricSvc := service.NewMetricService()                                                                      // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)         // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, EmailManager, PasswordHasher, IDGenerator) // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                     // 注册 userSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                        // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                     // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                        // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                        // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)           // 注册 SessionService
-	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)       // 注册 WebsocketService
-	SmsSvc := service.NewSmsService(SmsClient, SmsRepo)                                                          // 注册 SmsService
-	EmailSvc := service.NewEmailService(EmailRepo, EmailManager)                                                 // 注册 EmailService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                // 注册 LotteryService
+	CodeSvc := service.NewCodeService(CodeRepo, EmailManager, SmsClient)
+	MetricSvc := service.NewMetricService()                                                                               // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                  // 注册 RateLimitService
+	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, EmailManager, PasswordHasher, IDGenerator) // 注册 AuthService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                              // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                                 // 注册 postSvc
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                              // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                 // 注册 commentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                                 // 注册 TagService
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                    // 注册 SessionService
+	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                // 注册 WebsocketService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                         // 注册 LotteryService
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
@@ -122,8 +119,6 @@ func main() {
 	FollowHdl := handler.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
 	SessionHdl := handler.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
-	SmsHdl := handler.NewSmsHandler(SmsSvc)                               // 注册 SmsHandler
-	EmailHdl := handler.NewEmailHandler(EmailSvc)                         // 注册 EmailHandler
 	LotteryHdl := handler.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
 
 	fmt.Println(LotteryHdl)
@@ -132,7 +127,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -169,8 +164,8 @@ func main() {
 
 		auth.POST("/login/phone", AuthHdl.LoginByPhone) // 手机号 验证码登录
 		auth.POST("/login/pass", AuthHdl.LoginByEmail)  // 邮箱 账号密码登录
-		auth.POST("/sms", SmsHdl.Send)                  // POST /api/v1/auth/sms		发送短信验证码
-		auth.POST("/email", EmailHdl.Send)              // POST /api/v1/auth/email		发送邮箱验证码
+		auth.POST("/sms", AuthHdl.SendSMSCode)          // POST /api/v1/auth/sms		发送短信验证码
+		auth.POST("/email", AuthHdl.SendEmailCode)      // POST /api/v1/auth/email		发送邮箱验证码
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)

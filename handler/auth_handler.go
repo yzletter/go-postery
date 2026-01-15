@@ -7,8 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/auth"
+	"github.com/yzletter/go-postery/dto/email"
 	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -17,7 +19,7 @@ import (
 type AuthHandler struct {
 	authSvc    service.AuthService
 	sessionSvc service.SessionService
-	smsSvc     service.SmsService
+	codeSvc    service.CodeService
 }
 
 func NewAuthHandler(authSvc service.AuthService, sessionSvc service.SessionService) *AuthHandler {
@@ -168,6 +170,40 @@ func (hdl *AuthHandler) LoginByEmail(ctx *gin.Context) {
 	// 返回成功响应
 	response.Success(ctx, "根据邮箱登录成功", userBriefDTO)
 	return
+}
+
+func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.SendEmailCodeRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 发送邮件
+	if err := hdl.codeSvc.SendCode(ctx, model.EmailCode, req.Email); err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "发送邮箱验证码成功", nil)
+}
+
+func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.SendSMSCodeRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 发送短信
+	if err := hdl.codeSvc.SendCode(ctx, model.SMSCode, req.Phone); err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "发送短信验证码成功", nil)
 }
 
 // Logout 登出 Handler

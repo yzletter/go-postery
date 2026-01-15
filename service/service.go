@@ -25,10 +25,8 @@ type AuthService interface {
 	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)
 	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
-	// LoginByPhone 根据手机号码进行登录, 未注册的手机号码自动进行注册
-	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)
-	// LoginByEmail 根据邮箱进行登录, 未注册的邮箱不自动进行注册
-	LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error)
+	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) // LoginByPhone 根据手机号码进行登录, 未注册的手机号码自动进行注册
+	LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error) // LoginByEmail 根据邮箱进行登录, 未注册的邮箱不自动进行注册
 }
 
 type UserService interface {
@@ -90,11 +88,6 @@ type WebsocketService interface {
 	Connect(ctx context.Context, w http.ResponseWriter, r *http.Request, uid int64) error
 }
 
-type SmsService interface {
-	SendSMS(ctx context.Context, phoneNumber string) error
-	CheckSMS(ctx context.Context, phoneNumber string, code string) error
-}
-
 type LotteryService interface {
 	GetAllGifts(ctx context.Context) ([]giftdto.DTO, error)
 	Lottery(ctx context.Context, uid int64) (giftdto.DTO, error)
@@ -105,10 +98,10 @@ type LotteryService interface {
 	InitCacheInventory(ctx context.Context)
 }
 
-type EmailService interface {
-	SendSMS(ctx context.Context, emailAddress string) error
-	CheckSMS(ctx context.Context, emailAddress string, code string) error
+type AgentService interface {
 }
 
-type AgentService interface {
+type CodeService interface {
+	SendCode(ctx context.Context, biz model.CodeBiz, field string) error                       // SendCode 发送验证码
+	CheckCode(ctx context.Context, biz model.CodeBiz, field string, code string) (bool, error) // CheckCode 校验验证码
 }
