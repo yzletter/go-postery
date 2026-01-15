@@ -3,6 +3,7 @@ package conf
 const (
 	SendSMSInterval = 60
 	SMSValidTime    = 300
+	PhoneCodePrefix = "phone:code:"
 )
 
 const (

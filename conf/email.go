@@ -11,4 +11,6 @@ const (
 
 	SendEmailInterval = 60
 	EmailValidTime    = 600
+
+	EmailCodePrefix = "email:code:"
 )

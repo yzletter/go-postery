@@ -10,6 +10,22 @@ type authRepository struct {
 	cache cache.AuthCache
 }
 
+func (repo *authRepository) GetPhoneCode(ctx context.Context, phone string) (string, error) {
+	code, err := repo.cache.GetPhoneCode(ctx, phone)
+	if err != nil {
+		return "", err
+	}
+	return code, nil
+}
+
+func (repo *authRepository) GetEmailCode(ctx context.Context, email string) (string, error) {
+	code, err := repo.cache.GetEmailCode(ctx, email)
+	if err != nil {
+		return "", err
+	}
+	return code, nil
+}
+
 func NewAuthRepository(authCache cache.AuthCache) AuthRepository {
 	return &authRepository{
 		cache: authCache,

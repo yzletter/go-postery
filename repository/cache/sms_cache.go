@@ -8,9 +8,7 @@ import (
 	"github.com/yzletter/go-postery/conf"
 )
 
-const (
-	phoneCodePrefix = "phone:code:"
-)
+const ()
 
 type redisSmsCache struct {
 	client redis.UniversalClient
@@ -24,7 +22,7 @@ func NewSmsCache(client redis.UniversalClient) SmsCache {
 }
 
 func (cache *redisSmsCache) CheckCode(ctx context.Context, phoneNumber string, code string) (int, error) {
-	key := phoneCodePrefix + phoneNumber
+	key := conf.PhoneCodePrefix + phoneNumber
 	result, err := cache.client.Eval(ctx, checkPhoneCodeScript, []string{key}, code, conf.SendSMSInterval, conf.SMSValidTime).Int()
 	return result, err
 }

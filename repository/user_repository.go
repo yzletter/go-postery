@@ -16,6 +16,22 @@ type userRepository struct {
 	cache cache.UserCache
 }
 
+func (repo *userRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	user, err := repo.dao.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return user, nil
+}
+
+func (repo *userRepository) GetByPhone(ctx context.Context, phone string) (*model.User, error) {
+	user, err := repo.dao.GetByPhone(ctx, phone)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return user, nil
+}
+
 func NewUserRepository(userDAO dao.UserDAO, userCache cache.UserCache) UserRepository {
 	return &userRepository{dao: userDAO, cache: userCache}
 }

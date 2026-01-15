@@ -16,6 +16,40 @@ type gormUserDAO struct {
 	db *gorm.DB
 }
 
+func (dao *gormUserDAO) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	user := &model.User{}
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("email = ? AND deleted_at IS NULL", email).First(user)
+	if result.Error != nil {
+		// 业务层面错误
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+		// 系统层面错误
+		slog.Error(FindFailed, "email", email, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	// 3. 返回结果
+	return user, nil
+}
+
+func (dao *gormUserDAO) GetByPhone(ctx context.Context, phone string) (*model.User, error) {
+	user := &model.User{}
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("phone = ? AND deleted_at IS NULL", phone).First(user)
+	if result.Error != nil {
+		// 业务层面错误
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+		// 系统层面错误
+		slog.Error(FindFailed, "phone", phone, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	// 3. 返回结果
+	return user, nil
+}
+
 // NewUserDAO 构造函数
 func NewUserDAO(db *gorm.DB) UserDAO {
 	return &gormUserDAO{

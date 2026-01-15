@@ -13,6 +13,14 @@ type redisAuthCache struct {
 	client redis.UniversalClient
 }
 
+func (cache *redisAuthCache) GetPhoneCode(ctx context.Context, phone string) (string, error) {
+	return cache.client.Get(ctx, conf.PhoneCodePrefix+phone).Result()
+}
+
+func (cache *redisAuthCache) GetEmailCode(ctx context.Context, email string) (string, error) {
+	return cache.client.Get(ctx, conf.EmailCodePrefix+email).Result()
+}
+
 func (cache *redisAuthCache) DelRefreshToken(ctx context.Context, refreshToken string) error {
 	return cache.client.Del(ctx, conf.RefreshTokenPrefix+refreshToken).Err()
 }

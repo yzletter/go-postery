@@ -18,6 +18,8 @@ type UserDAO interface {
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
 	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
+	GetByPhone(ctx context.Context, phone string) (*model.User, error)
 }
 
 type PostDAO interface {

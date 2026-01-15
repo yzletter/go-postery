@@ -61,4 +61,6 @@ type AuthCache interface {
 	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
 	SetBlackList(ctx context.Context, ssid string) error
 	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error
+	GetPhoneCode(ctx context.Context, phone string) (string, error)
+	GetEmailCode(ctx context.Context, phone string) (string, error)
 }
