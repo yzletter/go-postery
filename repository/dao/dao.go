@@ -92,3 +92,6 @@ type GiftDAO interface {
 	GetAll(ctx context.Context) ([]*model.Gift, error)
 	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
 }
+
+type AgentDAO interface {
+}

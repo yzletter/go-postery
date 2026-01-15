@@ -117,6 +117,13 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 		return
 	}
 
+	// 注册私信功能
+	err = hdl.sessionSvc.Register(ctx, userBriefDTO.ID)
+	if err != nil {
+		response.Error(ctx, errno.ErrServerInternal)
+		return
+	}
+
 	// 根据 UID 签发双 Token
 	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
 	if err != nil {

@@ -116,3 +116,6 @@ type AuthRepository interface {
 	GetPhoneCode(ctx context.Context, phone string) (string, error)
 	GetEmailCode(ctx context.Context, email string) (string, error)
 }
+
+type AgentRepository interface {
+}

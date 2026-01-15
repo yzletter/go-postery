@@ -64,3 +64,6 @@ type AuthCache interface {
 	GetPhoneCode(ctx context.Context, phone string) (string, error)
 	GetEmailCode(ctx context.Context, phone string) (string, error)
 }
+
+type AgentCache interface {
+}

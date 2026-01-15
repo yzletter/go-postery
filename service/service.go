@@ -109,3 +109,6 @@ type EmailService interface {
 	SendSMS(ctx context.Context, emailAddress string) error
 	CheckSMS(ctx context.Context, emailAddress string, code string) error
 }
+
+type AgentService interface {
+}
