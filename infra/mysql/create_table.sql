@@ -12,36 +12,81 @@ use go_postery;
 # 创建 user 表
 CREATE TABLE IF NOT EXISTS users
 (
-    id            BIGINT       NOT NULL COMMENT '用户 ID (雪花算法)',
-    username      VARCHAR(32)  NOT NULL COMMENT '用户名',
-    password_hash VARCHAR(255) NOT NULL COMMENT '密码哈希',
-    email         VARCHAR(128)          DEFAULT NULL COMMENT '邮箱',
-    phone         VARCHAR(255)          DEFAULT NULL COMMENT '手机号码',
-    avatar        VARCHAR(255)          DEFAULT NULL COMMENT '头像 URL',
-    bio           VARCHAR(255)          DEFAULT NULL COMMENT '个性签名',
-    gender        TINYINT      NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
-    birthday      DATE                  DEFAULT NULL COMMENT '生日',
-    location      VARCHAR(64)           DEFAULT NULL COMMENT '地区',
-    country       VARCHAR(64)           DEFAULT NULL COMMENT '国家',
-    status        TINYINT      NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
-    last_login_ip VARCHAR(45)           DEFAULT NULL COMMENT '最后登录 IP',
-    last_login_at DATETIME              DEFAULT NULL COMMENT '最后登录时间',
-    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted_at    DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
+    id         BIGINT   NOT NULL COMMENT '用户 ID (雪花算法)',
+    status     TINYINT  NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    KEY idx_user_status_deleted (status, deleted_at),
+    KEY idx_users_deleted_at (deleted_at),
+
+    CHECK (status IN (1, 2, 3))
+) DEFAULT CHARSET = utf8mb4 COMMENT '最小用户表';
+
+CREATE TABLE IF NOT EXISTS profiles
+(
+    user_id       BIGINT      NOT NULL COMMENT 'ID',
+
+    nickname      VARCHAR(32) NOT NULL COMMENT '昵称',
+    avatar        VARCHAR(255)         DEFAULT NULL COMMENT '头像 URL',
+    bio           VARCHAR(255)         DEFAULT NULL COMMENT '个性签名',
+    gender        TINYINT     NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
+    birthday      DATE                 DEFAULT NULL COMMENT '生日',
+    location      VARCHAR(64)          DEFAULT NULL COMMENT '地区',
+    country       VARCHAR(64)          DEFAULT NULL COMMENT '国家',
+    last_login_ip VARCHAR(45)          DEFAULT NULL COMMENT '最后登录 IP',
+    last_login_at DATETIME             DEFAULT NULL COMMENT '最后登录时间',
+
+    created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at    DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (user_id),
+    KEY idx_profiles_nickname (nickname),
+    KEY idx_profiles_deleted_at (deleted_at),
+    UNIQUE KEY uk_nickname_deleted (nickname, deleted_at), # 已删除用户的昵称可以复用
+
+    CHECK (gender IN (0, 1, 2, 3))
+) DEFAULT CHARSET = utf8mb4 COMMENT '个人资料';
+
+CREATE TABLE IF NOT EXISTS identities
+(
+    id          BIGINT       NOT NULL COMMENT 'ID',
+    user_id     BIGINT       NOT NULL COMMENT '用户 ID',
+
+    auth_type   TINYINT      NOT NULL COMMENT '校验方式: phone / email  ... 1 = email 2 = phone',
+    identifier  VARCHAR(128) NOT NULL COMMENT '凭证: 手机号 / 邮箱 ...',   # 用户注销时对 identifier 进行迁移
+    is_verified TINYINT      NOT NULL DEFAULT 0 COMMENT '是否已验证',
+
+    verified_at DATETIME              DEFAULT NULL COMMENT '身份验证时间',
+
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    # 不进行软删, 如果软删一条手机号 identity，未来再绑定同手机号会违反唯一键
 
     PRIMARY KEY (id),
 
-    UNIQUE KEY uk_user_username (username),
-    UNIQUE KEY uk_user_email (email),
-    UNIQUE KEY uk_user_phone (phone),
+    UNIQUE KEY uk_user_auth_type (user_id, auth_type), # 一个用户只能绑定一个手机号一个邮箱
+    UNIQUE KEY uk_type_identifier (auth_type, identifier),
 
-    KEY idx_user_status_deleted (status, deleted_at),
+    CHECK (auth_type IN (1, 2))
 
-    CHECK (gender IN (0, 1, 2, 3)),
-    CHECK (status IN (1, 2, 3))
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT '用户表';
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户登录认证';
+
+CREATE TABLE user_passwords
+(
+    user_id       BIGINT       NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    PRIMARY KEY (user_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户密码表';
 
 # 创建 post 表
 CREATE TABLE IF NOT EXISTS posts
