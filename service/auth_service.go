@@ -41,68 +41,82 @@ func NewAuthService(codeSvc CodeService, authRepo repository.AuthRepository, use
 	}
 }
 
-// Register 注册
-func (svc *authService) Register(ctx context.Context, username, email, password string) (userdto.BriefDTO, error) {
+// Register 手机号码/邮箱 + 验证码 + 密码注册
+func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identifier, code, password string) (userdto.BriefDTO, error) {
 	var empty userdto.BriefDTO
-	// 参数校验
-	if username == "" || password == "" || email == "" {
-		return empty, errno.ErrInvalidParam
-	}
-	if len(password) < 8 {
-		return empty, errno.ErrPasswordWeak
+
+	// 校验验证码并消费
+	ok, err := svc.codeSvc.CheckCode(ctx, biz, identifier, code)
+	if err != nil {
+		slog.Error("Check Code Failed", "biz", biz)
+		return empty, errno.ErrServerInternal
+	} else if !ok {
+		return empty, errno.ErrInvalidCode
 	}
 
-	// 对密码进行加密
-	passwordHash, err := svc.passHasher.Hash(password)
+	// 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
+	uid := svc.idGen.NextID()
+	verifiedAt := time.Now()
+	passwordHash, err := svc.passHasher.Hash(password) // 对密码进行加密
 	if err != nil {
 		slog.Error("PasswordHasher Hash Failed", "error", err)
 		return empty, errno.ErrServerInternal
 	}
-
-	// 构造指针
-	u := &model.User{
-		ID:           svc.idGen.NextID(),
-		Username:     username,
-		Email:        email,
-		PasswordHash: passwordHash,
-		Status:       1,
+	authType := model.AuthTypeFromBiz(biz)
+	authIdentity := model.AuthIdentity{ // 登录认证方式
+		ID:         svc.idGen.NextID(),
+		UserID:     uid,
+		AuthType:   authType,
+		Identifier: identifier,
+		IsVerified: 1,
+		VerifiedAt: &verifiedAt,
 	}
-
-	// 创建记录
-	err = svc.userRepo.Create(ctx, u)
-	if err != nil {
+	if err := svc.authRepo.CreateUser(ctx, &authIdentity, &passwordHash); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			return empty, errno.ErrUserDuplicated
 		}
 		return empty, errno.ErrServerInternal
 	}
 
-	return userdto.ToBriefDTO(u), nil
-}
-
-// Login 登录
-func (svc *authService) Login(ctx context.Context, username, pass string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 参数校验
-	if username == "" || pass == "" {
-		return empty, errno.ErrInvalidCredential
-	}
-
-	// 获取用户
-	user, err := svc.userRepo.GetByUsername(ctx, username)
+	// 查找个人资料
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
 		}
 		return empty, errno.ErrServerInternal
 	}
-	if user == nil {
+
+	return userdto.ToBriefDTO(userProfile), nil
+}
+
+// LoginByPassword 手机号码/邮箱 + 密码登录
+func (svc *authService) LoginByPassword(ctx context.Context, biz model.CodeBiz, identifier, password string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
+
+	// 获取登录认证
+	authType := model.AuthTypeFromBiz(biz)
+	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, identifier)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	uid := authIdentity.UserID // 得到用户 ID
+
+	// 获取密码
+	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
 		return empty, errno.ErrServerInternal
 	}
 
 	// 比较密码
-	err = svc.passHasher.Compare(user.PasswordHash, pass)
+	err = svc.passHasher.Compare(passwordHash, password)
 	if err != nil {
 		if errors.Is(err, ports.ErrInvalidPassword) { // 密码错误, 返回为账号或密码错误
 			return empty, errno.ErrInvalidCredential
@@ -110,30 +124,119 @@ func (svc *authService) Login(ctx context.Context, username, pass string) (userd
 		return empty, errno.ErrServerInternal
 	}
 
-	return userdto.ToBriefDTO(user), nil
-}
-
-// ClearTokens 清除 Tokens
-func (svc *authService) ClearTokens(ctx context.Context, accessToken, refreshToken string) error {
-	// 删除 refreshToken
-	if refreshToken != "" {
-		if err := svc.authRepo.DelRefreshToken(ctx, refreshToken); err != nil {
-			return errno.ErrLogoutFailed
+	// 查找个人资料
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
 		}
+		return empty, errno.ErrServerInternal
 	}
 
-	// 拉黑 ssid
-	if accessToken != "" {
-		if claim, err := svc.VerifyAccessToken(accessToken); err == nil && claim != nil && claim.SSid != "" {
-			_ = svc.authRepo.SetBlackList(ctx, claim.SSid) // 拉黑 ssid
-		}
-		// accessToken 解析失败就跳过，不影响 logout 成功
-	}
-
-	return nil
+	return userdto.ToBriefDTO(userProfile), nil
 }
 
-// IssueTokens 签发 Tokens
+// LoginByEmail 邮箱 + 验证码进行登录
+func (svc *authService) LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
+
+	// 校验验证码并消费
+	ok, err := svc.codeSvc.CheckCode(ctx, model.EmailCode, email, code)
+	if err != nil {
+		slog.Error("Check Code Failed", "biz", model.EmailCode)
+		return empty, errno.ErrServerInternal
+	} else if !ok {
+		return empty, errno.ErrEmailCodeInvalid
+	}
+
+	// 获取登录认证
+	authType := model.AuthTypeFromBiz(model.EmailCode)
+	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 查找个人资料
+	uid := authIdentity.UserID
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	return userdto.ToBriefDTO(userProfile), nil
+}
+
+// LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
+func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) {
+	var empty userdto.BriefDTO
+
+	// 校验验证码并消费
+	ok, err := svc.codeSvc.CheckCode(ctx, model.SMSCode, phone, code)
+	if err != nil {
+		slog.Error("Check Code Failed", "biz", model.SMSCode)
+		return empty, errno.ErrServerInternal
+	} else if !ok {
+		return empty, errno.ErrPhoneCodeInvalid
+	}
+
+	// 获取登录认证
+	authType := model.AuthTypeFromBiz(model.SMSCode)
+	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, phone)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			// 用户不存在, 创建用户（包括用户最小项、用户登录认证、无密码、用户资料、注册扩展功能）
+			uid := svc.idGen.NextID()
+			verifiedAt := time.Now()
+			authIdentity := model.AuthIdentity{ // 登录认证方式
+				ID:         svc.idGen.NextID(),
+				UserID:     uid,
+				AuthType:   authType,
+				Identifier: phone,
+				IsVerified: 1,
+				VerifiedAt: &verifiedAt,
+			}
+
+			if err := svc.authRepo.CreateUser(ctx, &authIdentity, nil); err != nil {
+				if errors.Is(err, repository.ErrUniqueKey) {
+					return empty, errno.ErrUserDuplicated
+				}
+				return empty, errno.ErrServerInternal
+			}
+
+			// 查找个人资料
+			userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
+			if err != nil {
+				if errors.Is(err, repository.ErrRecordNotFound) {
+					return empty, errno.ErrUserNotFound
+				}
+				return empty, errno.ErrServerInternal
+			}
+
+			return userdto.ToBriefDTO(userProfile), nil
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 查找个人资料
+	uid := authIdentity.UserID
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrUserNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	return userdto.ToBriefDTO(userProfile), nil
+}
+
+// IssueTokens 签发双 Token
 func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error) {
 	// 参数校验
 	if role > 1 || role < 0 {
@@ -175,6 +278,26 @@ func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, age
 	return accessToken, refreshToken, nil
 }
 
+// ClearTokens 清除双 Token
+func (svc *authService) ClearTokens(ctx context.Context, accessToken, refreshToken string) error {
+	// 删除 refreshToken
+	if refreshToken != "" {
+		if err := svc.authRepo.DelRefreshToken(ctx, refreshToken); err != nil {
+			return errno.ErrLogoutFailed
+		}
+	}
+
+	// 拉黑 ssid
+	if accessToken != "" {
+		if claim, err := svc.VerifyAccessToken(accessToken); err == nil && claim != nil && claim.SSid != "" {
+			_ = svc.authRepo.SetBlackList(ctx, claim.SSid) // 拉黑 ssid
+		}
+		// accessToken 解析失败就跳过，不影响 logout 成功
+	}
+
+	return nil
+}
+
 // VerifyAccessToken 校验 AccessToken
 func (svc *authService) VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error) {
 	claim, err := svc.jwtManager.VerifyToken(tokenString)
@@ -184,16 +307,7 @@ func (svc *authService) VerifyAccessToken(tokenString string) (*ports.JWTTokenCl
 	return claim, nil
 }
 
-// CheckBlackList 检查黑名单
-func (svc *authService) CheckBlackList(ctx context.Context, ssid string) (bool, error) {
-	exist, err := svc.authRepo.CheckBlackList(ctx, ssid)
-	if err != nil {
-		return false, errno.ErrServerInternal
-	}
-	return exist, nil
-}
-
-// GetInfoByRefreshToken 根据 RefreshToken 获取用户信息
+// GetInfoByRefreshToken 根据 RefreshToken 获取用户信息, 用于重新签发双 Token
 func (svc *authService) GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) {
 	uid, role, ssid, err := svc.authRepo.GetInfoByRefreshToken(ctx, refreshToken)
 	if err != nil {
@@ -202,74 +316,11 @@ func (svc *authService) GetInfoByRefreshToken(ctx context.Context, refreshToken 
 	return uid, role, ssid, nil
 }
 
-func (svc *authService) LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-	// 获取邮箱验证码
-	authCode, err := svc.authRepo.GetEmailCode(ctx, email)
+// CheckBlackList 根据 SSID 检查黑名单, 检查用户是否被拉黑
+func (svc *authService) CheckBlackList(ctx context.Context, ssid string) (bool, error) {
+	exist, err := svc.authRepo.CheckBlackList(ctx, ssid)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			// 验证码不存在
-			return empty, errno.ErrEmailCodeInvalid
-		}
-		return empty, errno.ErrServerInternal
+		return false, errno.ErrServerInternal
 	}
-
-	// 校验验证码是否正确
-	if authCode != code {
-		return empty, errno.ErrEmailCodeInvalid
-	}
-
-	// 根据邮箱查找用户
-	user, err := svc.userRepo.GetByEmail(ctx, email)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	return userdto.ToBriefDTO(user), nil
-}
-
-func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-	// 获取手机验证码
-	authCode, err := svc.authRepo.GetPhoneCode(ctx, phone)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			// 验证码不存在
-			return empty, errno.ErrPhoneCodeInvalid
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	// 校验验证码是否正确
-	if authCode != code {
-		return empty, errno.ErrEmailCodeInvalid
-	}
-
-	// 根据手机号查找用户
-	user, err := svc.userRepo.GetByPhone(ctx, phone)
-	if err == nil {
-		return userdto.ToBriefDTO(user), nil
-	} else if errors.Is(err, repository.ErrRecordNotFound) {
-		// 用户不存在, 需要新建用户
-		user := &model.User{
-			ID:           svc.idGen.NextID(),
-			Username:     "用户_" + xid.New().String(),
-			Email:        xid.New().String(),
-			PasswordHash: xid.New().String(),
-			Phone:        phone,
-		}
-		if err := svc.userRepo.Create(ctx, user); err != nil {
-			if errors.Is(err, repository.ErrUniqueKey) {
-				return empty, errno.ErrUserDuplicated
-			}
-			return empty, errno.ErrServerInternal
-		}
-		return userdto.ToBriefDTO(user), nil
-	}
-
-	// 系统错误
-	return empty, errno.ErrServerInternal
+	return exist, nil
 }

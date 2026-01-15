@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	_ "embed"
-	"errors"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/conf"
@@ -12,6 +11,9 @@ import (
 
 //go:embed lua/allow_send_code.lua
 var allowSendCodeScript string
+
+//go:embed lua/check_code.lua
+var checkCodeScript string
 
 type redisCodeCache struct {
 	client redis.UniversalClient
@@ -55,13 +57,9 @@ func (cache *redisCodeCache) CheckCode(ctx context.Context, biz model.CodeBiz, f
 		return false, nil
 	}
 
-	target, err := cache.client.Get(ctx, key).Result()
+	ok, err := cache.client.Eval(ctx, checkCodeScript, []string{key}, code).Bool()
 	if err != nil {
-		if errors.Is(err, redis.Nil) { // Key 不存在
-			return false, nil
-		}
 		return false, err
 	}
-
-	return code == target, nil
+	return ok, nil
 }

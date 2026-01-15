@@ -8,10 +8,9 @@ import (
 
 // BriefDTO 后端返回简要 User 信息
 type BriefDTO struct {
-	ID     int64  `json:"id,string"` // ID
-	Email  string `json:"email"`
-	Name   string `json:"name"`   // 用户名
-	Avatar string `json:"avatar"` // 头像 URL
+	ID       int64  `json:"id,string"` // ID
+	NickName string `json:"nickname"`  // 昵称
+	Avatar   string `json:"avatar"`    // 头像 URL
 }
 
 // DetailDTO 后端返回详细 User 信息
@@ -47,14 +46,19 @@ func ToTopDTO(user *model.User, score float64) TopDTO {
 	}
 }
 
-// ToBriefDTO model.User 转 BriefDTO
-func ToBriefDTO(user *model.User) BriefDTO {
-	return BriefDTO{
-		ID:     user.ID,
-		Email:  user.Email,
-		Name:   user.Username,
-		Avatar: "", // todo
+// ToBriefDTO model.UserProfile 转 BriefDTO
+func ToBriefDTO(userProfile *model.UserProfile) BriefDTO {
+	var res = BriefDTO{
+		ID:       userProfile.UserID,
+		NickName: userProfile.NickName,
 	}
+
+	if userProfile.Avatar == nil {
+		res.Avatar = ""
+	} else {
+		res.Avatar = *userProfile.Avatar
+	}
+	return res
 }
 
 // ToDetailDTO model.User 转 DetailDTO

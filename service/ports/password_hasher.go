@@ -1,6 +1,8 @@
 package ports
 
-import "errors"
+import (
+	"errors"
+)
 
 type PasswordHasher interface {
 	Hash(password string) (string, error)

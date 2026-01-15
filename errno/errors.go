@@ -52,7 +52,7 @@ var (
 )
 
 var (
-	ErrInvalidSMSCode   = &Error{70001, 401, "验证码验证失败"}
+	ErrInvalidCode      = &Error{70001, 401, "验证码验证失败"}
 	ErrSendToFrequent   = &Error{70002, 401, "验证码发送过于频繁"}
 	ErrCodeNotFound     = &Error{70003, 401, "验证码不存在"}
 	ErrEmailCodeInvalid = &Error{70004, 401, "邮箱或验证码错误"}

@@ -29,3 +29,14 @@ type AuthPassword struct {
 func (u AuthPassword) TableName() string {
 	return "auth_passwords"
 }
+
+func AuthTypeFromBiz(biz CodeBiz) int {
+	switch biz {
+	case SMSCode:
+		return 1
+	case EmailCode:
+		return 2
+	default:
+		return 0
+	}
+}

@@ -7,10 +7,24 @@ import (
 	"github.com/yzletter/go-postery/model"
 )
 
+type AuthRepository interface {
+	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error)
+	GetPasswordHash(ctx context.Context, uid int64) (string, error)
+	CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error
+
+	DelRefreshToken(ctx context.Context, refreshToken string) error
+	CheckBlackList(ctx context.Context, ssid string) (bool, error)
+	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
+	SetBlackList(ctx context.Context, ssid string) error
+	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error
+}
+
 type UserRepository interface {
+	GetProfileByID(ctx context.Context, uid int64) (*model.UserProfile, error)
+
 	Create(ctx context.Context, user *model.User) error
 	Delete(ctx context.Context, id int64) error
-	GetPasswordHash(ctx context.Context, id int64) (string, error)
+	//GetPasswordHash(ctx context.Context, id int64) (string, error)
 	GetStatus(ctx context.Context, id int64) (int, error)
 	GetByID(ctx context.Context, id int64) (*model.User, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
@@ -82,10 +96,6 @@ type MessageRepository interface {
 	GetByPage(ctx context.Context, id int64, targetID int64, pageNo, pageSize int) (int, []*model.Message, error)
 }
 
-type SmsRepository interface {
-	CheckCode(ctx context.Context, phoneNumber string, code string) error
-}
-
 type OrderRepository interface {
 	CreateTempOrder(ctx context.Context, uid, gid int64) error
 	DeleteTempOrder(ctx context.Context, uid int64) error
@@ -101,20 +111,6 @@ type GiftRepository interface {
 	ReduceCacheInventory(ctx context.Context, gid int64) error
 	IncreaseCacheInventory(ctx context.Context, gid int64) error
 	InitCacheInventory(ctx context.Context)
-}
-
-type EmailRepository interface {
-	CheckCode(ctx context.Context, emailAddress string, code string) error
-}
-
-type AuthRepository interface {
-	DelRefreshToken(ctx context.Context, refreshToken string) error
-	CheckBlackList(ctx context.Context, ssid string) (bool, error)
-	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
-	SetBlackList(ctx context.Context, ssid string) error
-	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error
-	GetPhoneCode(ctx context.Context, phone string) (string, error)
-	GetEmailCode(ctx context.Context, email string) (string, error)
 }
 
 type AgentRepository interface {
