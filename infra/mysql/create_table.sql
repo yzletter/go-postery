@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users
 (
     id         BIGINT   NOT NULL COMMENT '用户 ID (雪花算法)',
     status     TINYINT  NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
+    role       TINYINT  NOT NULL DEFAULT 0 COMMENT '用户权限 0 普通 1 管理员',
 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -53,7 +54,7 @@ CREATE TABLE IF NOT EXISTS user_profiles
     CHECK (gender IN (0, 1, 2, 3))
 ) DEFAULT CHARSET = utf8mb4 COMMENT '个人资料';
 
-CREATE TABLE IF NOT EXISTS user_identities
+CREATE TABLE IF NOT EXISTS auth_identities
 (
     id          BIGINT       NOT NULL COMMENT 'ID',
     user_id     BIGINT       NOT NULL COMMENT '用户 ID',
@@ -74,11 +75,11 @@ CREATE TABLE IF NOT EXISTS user_identities
     UNIQUE KEY uk_user_auth_type (user_id, auth_type),                   # 一个用户只能绑定一个手机号一个邮箱
     UNIQUE KEY uk_type_identifier (auth_type, identifier),
 
-    CHECK (auth_type IN (1, 2))
-
+    CHECK (auth_type IN (1, 2)),
+    CHECK (is_verified IN (0, 1))
 ) DEFAULT CHARSET = utf8mb4 COMMENT '用户登录认证';
 
-CREATE TABLE user_passwords
+CREATE TABLE auth_passwords
 (
     user_id       BIGINT       NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -172,15 +173,12 @@ CREATE TABLE IF NOT EXISTS tags
 (
     id         BIGINT      NOT NULL COMMENT '标签 id',
     slug       varchar(32) NOT NULL COMMENT '标签名',
-    slug       varchar(32) NOT NULL COMMENT '标签唯一标识',
-
     created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted_at DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
 
     PRIMARY KEY (id),
-    UNIQUE KEY uq_slug (slug),
-    UNIQUE KEY uq_name (slug)
+    UNIQUE KEY uq_slug (slug)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '标签信息表';
 
 # Post_Tag 表

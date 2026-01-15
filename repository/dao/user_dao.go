@@ -16,6 +16,13 @@ type gormUserDAO struct {
 	db *gorm.DB
 }
 
+// NewUserDAO 构造函数
+func NewUserDAO(db *gorm.DB) UserDAO {
+	return &gormUserDAO{
+		db: db,
+	}
+}
+
 func (dao *gormUserDAO) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	user := &model.User{}
 	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("email = ? AND deleted_at IS NULL", email).First(user)
@@ -48,13 +55,6 @@ func (dao *gormUserDAO) GetByPhone(ctx context.Context, phone string) (*model.Us
 
 	// 3. 返回结果
 	return user, nil
-}
-
-// NewUserDAO 构造函数
-func NewUserDAO(db *gorm.DB) UserDAO {
-	return &gormUserDAO{
-		db: db,
-	}
 }
 
 // Create 创建 User

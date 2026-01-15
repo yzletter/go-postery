@@ -37,7 +37,7 @@ func (cache *redisUserCache) Top(ctx context.Context) ([]int64, []float64, error
 	return ids, scores, nil
 }
 
-func (cache *redisUserCache) ChangeScore(ctx context.Context, pid int64, delta int) error {
-	_, err := cache.client.ZIncrBy(ctx, conf.KeyUserScore, float64(delta), strconv.FormatInt(pid, 10)).Result()
+func (cache *redisUserCache) ChangeScore(ctx context.Context, uid int64, delta int) error {
+	_, err := cache.client.ZIncrBy(ctx, conf.KeyUserScore, float64(delta), strconv.FormatInt(uid, 10)).Result()
 	return err
 }
