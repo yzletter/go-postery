@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/conf"
 )
 
 // redisUserCache 用 Redis 实现 UserCache
@@ -18,7 +18,7 @@ func NewUserCache(client redis.UniversalClient) UserCache {
 	return &redisUserCache{client: client}
 }
 func (cache *redisUserCache) Top(ctx context.Context) ([]int64, []float64, error) {
-	pairs, err := cache.client.ZRevRangeWithScores(ctx, model.KeyUserScore, 0, 5).Result()
+	pairs, err := cache.client.ZRevRangeWithScores(ctx, conf.KeyUserScore, 0, 5).Result()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -38,6 +38,6 @@ func (cache *redisUserCache) Top(ctx context.Context) ([]int64, []float64, error
 }
 
 func (cache *redisUserCache) ChangeScore(ctx context.Context, pid int64, delta int) error {
-	_, err := cache.client.ZIncrBy(ctx, model.KeyUserScore, float64(delta), strconv.FormatInt(pid, 10)).Result()
+	_, err := cache.client.ZIncrBy(ctx, conf.KeyUserScore, float64(delta), strconv.FormatInt(pid, 10)).Result()
 	return err
 }
