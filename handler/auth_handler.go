@@ -278,18 +278,18 @@ func (hdl *AuthHandler) ModifyPassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
-	if err != nil {
-		response.Error(ctx, errno.ErrUserNotLogin)
-		return
-	}
+	//uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	//if err != nil {
+	//	response.Error(ctx, errno.ErrUserNotLogin)
+	//	return
+	//}
 
-	err = hdl.userSvc.UpdatePassword(ctx, uid, modifyPassReq.OldPass, modifyPassReq.NewPass)
-	if err != nil {
-		// 密码更改失败
-		response.Error(ctx, err)
-		return
-	}
+	//err = hdl.auth.UpdatePassword(ctx, uid, modifyPassReq.OldPass, modifyPassReq.NewPass)
+	//if err != nil {
+	//	// 密码更改失败
+	//	response.Error(ctx, err)
+	//	return
+	//}
 
 	// 默认情况下也返回200
 	response.Success(ctx, "密码修改成功", nil)

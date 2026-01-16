@@ -16,16 +16,17 @@ type AuthDAO interface {
 }
 
 type UserDAO interface {
-	Create(ctx context.Context, user *model.User) error
-	Delete(ctx context.Context, id int64) error
-	GetPasswordHash(ctx context.Context, id int64) (string, error)
-	GetStatus(ctx context.Context, id int64) (int, error)
-	GetByID(ctx context.Context, id int64) (*model.User, error)
-	GetByUsername(ctx context.Context, username string) (*model.User, error)
-	UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
-	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error
-	GetByEmail(ctx context.Context, email string) (*model.User, error)
-	GetByPhone(ctx context.Context, phone string) (*model.User, error)
+	GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error)  // 根据 ID 查找用户资料
+	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error // 根据 ID 修改用户资料的多个字段
+
+	//Create(ctx context.Context, user *model.User) error
+	//Delete(ctx context.Context, id int64) error
+	//GetPasswordHash(ctx context.Context, id int64) (string, error)
+	//GetStatus(ctx context.Context, id int64) (int, error)
+	//GetByUsername(ctx context.Context, username string) (*model.User, error)
+	//UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
+	//GetByEmail(ctx context.Context, email string) (*model.User, error)
+	//GetByPhone(ctx context.Context, phone string) (*model.User, error)
 }
 
 type PostDAO interface {

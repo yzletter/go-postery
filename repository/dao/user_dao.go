@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -23,123 +21,13 @@ func NewUserDAO(db *gorm.DB) UserDAO {
 	}
 }
 
-func (dao *gormUserDAO) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	user := &model.User{}
-	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("email = ? AND deleted_at IS NULL", email).First(user)
-	if result.Error != nil {
-		// 业务层面错误
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
-		}
-		// 系统层面错误
-		slog.Error(FindFailed, "email", email, "error", result.Error)
-		return nil, ErrServerInternal
-	}
-
-	// 3. 返回结果
-	return user, nil
-}
-
-func (dao *gormUserDAO) GetByPhone(ctx context.Context, phone string) (*model.User, error) {
-	user := &model.User{}
-	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("phone = ? AND deleted_at IS NULL", phone).First(user)
-	if result.Error != nil {
-		// 业务层面错误
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
-		}
-		// 系统层面错误
-		slog.Error(FindFailed, "phone", phone, "error", result.Error)
-		return nil, ErrServerInternal
-	}
-
-	// 3. 返回结果
-	return user, nil
-}
-
-// Create 创建 User
-func (dao *gormUserDAO) Create(ctx context.Context, user *model.User) error {
-	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).Create(user)
-	if result.Error != nil {
-		// 业务层面错误
-		var mysqlErr *mysql.MySQLError
-		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 { // 判断是否为 Unique Key 冲突
-			return ErrUniqueKey
-		}
-
-		// 系统层面错误
-		slog.Error(CreateFailed, "username", user.Username, "error", result.Error)
-		return ErrServerInternal
-	}
-
-	// 2. 返回结果
-	return nil
-}
-
-// Delete 软删除 User
-func (dao *gormUserDAO) Delete(ctx context.Context, id int64) error {
-	// 1. 操作数据库
-	now := time.Now()
-	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now)
-	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(DeleteFailed, "id", id, "error", result.Error)
-		return ErrServerInternal
-	} else if result.RowsAffected == 0 {
-		// 业务层面错误
-		return ErrRecordNotFound
-	}
-
-	// 2. 返回结果
-	return nil
-}
-
-// GetPasswordHash 返回 User 的 PasswordHash
-func (dao *gormUserDAO) GetPasswordHash(ctx context.Context, id int64) (string, error) {
-	// 1. 操作数据库
-	var res string
-	result := dao.db.WithContext(ctx).Model(&model.User{}).Select("password_hash").Where("id = ? AND deleted_at IS NULL", id).Take(&res)
-	if result.Error != nil {
-		// 业务层面错误
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return "", ErrRecordNotFound
-		}
-		// 系统层面错误
-		slog.Error(FindFailed, "id", id, "error", result.Error)
-		return "", ErrServerInternal
-	}
-
-	// 2. 返回结果
-	return res, nil
-}
-
-// GetStatus 返回 User 的 Status
-func (dao *gormUserDAO) GetStatus(ctx context.Context, id int64) (int, error) {
-	// 1. 操作数据库
-	var status int
-	result := dao.db.WithContext(ctx).Model(&model.User{}).Select("status").Where("id = ? AND deleted_at IS NULL", id).Take(&status)
-	if result.Error != nil {
-		// 业务层面错误
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return 0, ErrRecordNotFound
-		}
-		// 系统层面错误
-		slog.Error(FindFailed, "id", id, "error", result.Error)
-		return 0, ErrServerInternal
-	}
-
-	// 2. 返回结果
-	return status, nil
-}
-
-// GetByID 根据 User 的 ID 查找不带密码的 User
-func (dao *gormUserDAO) GetByID(ctx context.Context, id int64) (*model.User, error) {
+// GetProfileByID 根据 ID 查找用户资料
+func (dao *gormUserDAO) GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error) {
 	// 1. 构造结构体对象
-	user := &model.User{}
+	userProfile := &model.UserProfile{}
 
 	// 2. 操作数据库
-	result := dao.db.WithContext(ctx).Omit("password_hash").Where("id = ? AND deleted_at IS NULL", id).First(user)
+	result := dao.db.WithContext(ctx).Where("user_id = ? AND deleted_at IS NULL", id).First(userProfile)
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -151,62 +39,13 @@ func (dao *gormUserDAO) GetByID(ctx context.Context, id int64) (*model.User, err
 	}
 
 	// 3. 返回结果
-	return user, nil
+	return userProfile, nil
 }
 
-// GetByUsername 根据 User 的 Username 查找带密码的 User
-func (dao *gormUserDAO) GetByUsername(ctx context.Context, username string) (*model.User, error) {
-	// 1. 构造结构体对象
-	user := &model.User{}
-
-	// 2. 操作数据库
-	result := dao.db.WithContext(ctx).Where("username = ? AND deleted_at IS NULL", username).First(user)
-	if result.Error != nil {
-		// 业务层面错误
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
-		}
-		// 系统层面错误
-		slog.Error(FindFailed, "username", username, "error", result.Error)
-		return nil, ErrServerInternal
-	}
-
-	// 3. 返回结果
-	return user, nil
-}
-
-// UpdatePasswordHash 更新 User 的 PasswordHash
-func (dao *gormUserDAO) UpdatePasswordHash(ctx context.Context, id int64, newHash string) error {
-	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Update("password_hash", newHash)
-	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(UpdateFailed, "id", id, "error", result.Error)
-		return ErrServerInternal
-	} else if result.RowsAffected == 0 {
-		// 业务层面错误
-		var cnt int64
-		result2 := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
-		if result2.Error != nil {
-			// 系统层面错误
-			slog.Error(FindFailed, "id", id, "error", result.Error)
-			return ErrServerInternal
-		}
-
-		if cnt == 0 {
-			// 记录不存在
-			return ErrRecordNotFound
-		}
-	}
-
-	// 2. 返回结果
-	return nil
-}
-
-// UpdateProfile 更新 User 的多个字段
+// UpdateProfile 根据 ID 修改用户资料的多个字段
 func (dao *gormUserDAO) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
 	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Updates(updates)
+	result := dao.db.WithContext(ctx).Model(&model.UserProfile{}).Where("user_id = ? AND deleted_at IS NULL", id).Updates(updates)
 	if result.Error != nil {
 		// 系统层面错误
 		slog.Error(UpdateFailed, "id", id, "error", result.Error)
@@ -214,7 +53,7 @@ func (dao *gormUserDAO) UpdateProfile(ctx context.Context, id int64, updates map
 	} else if result.RowsAffected == 0 {
 		// 业务层面错误
 		var cnt int64
-		result2 := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
+		result2 := dao.db.WithContext(ctx).Model(&model.UserProfile{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
 		if result2.Error != nil {
 			// 系统层面错误
 			slog.Error(FindFailed, "id", id, "error", result.Error)

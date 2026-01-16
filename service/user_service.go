@@ -24,8 +24,8 @@ func NewUserService(userRepo repository.UserRepository, idGen ports.IDGenerator,
 	}
 }
 
-// GetDetailById 根据 ID 查找用户的详细信息
-func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.DetailDTO, error) {
+// GetProfileById 根据 ID 查找用户的资料
+func (svc *userService) GetProfileById(ctx context.Context, id int64) (userdto.DetailDTO, error) {
 	var empty userdto.DetailDTO
 
 	// 参数校验
@@ -34,7 +34,7 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.De
 	}
 
 	// 获取用户
-	user, err := svc.userRepo.GetByID(ctx, id)
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
@@ -43,100 +43,11 @@ func (svc *userService) GetDetailById(ctx context.Context, id int64) (userdto.De
 	}
 
 	// panic 兜底
-	if user == nil {
+	if userProfile == nil {
 		return empty, errno.ErrUserNotFound
 	}
 
-	return userdto.ToDetailDTO(user), nil
-}
-
-// GetBriefById 根据 ID 查找用户的简要信息
-func (svc *userService) GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	userDetailDTO, err := svc.GetDetailById(ctx, id)
-	if err != nil {
-		return empty, err
-	}
-
-	return userdto.BriefDTO{
-		ID:     userDetailDTO.ID,
-		Email:  userDetailDTO.Email,
-		Name:   userDetailDTO.Name,
-		Avatar: userDetailDTO.Avatar,
-	}, nil
-}
-
-// GetBriefByName 根据 username 查找用户的简要信息
-func (svc *userService) GetBriefByName(ctx context.Context, username string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 参数校验
-	if len(username) <= 0 {
-		return empty, errno.ErrInvalidParam
-	}
-
-	// 获取用户
-	user, err := svc.userRepo.GetByUsername(ctx, username)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	// panic 兜底
-	if user == nil {
-		return empty, errno.ErrUserNotFound
-	}
-	return userdto.ToBriefDTO(user), nil
-}
-
-// UpdatePassword 更新密码
-func (svc *userService) UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error {
-	if id <= 0 || len(oldPass) <= 0 || len(newPass) <= 0 {
-		return errno.ErrInvalidParam
-	}
-
-	if len(newPass) < 8 {
-		return errno.ErrPasswordWeak
-	}
-
-	// todo 并发安全
-	// 获取用户
-	oldPasswordHash, err := svc.userRepo.GetPasswordHash(ctx, id)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return errno.ErrUserNotFound
-		}
-		return errno.ErrServerInternal
-	}
-
-	// 判断旧密码是否正确
-	err = svc.passHasher.Compare(oldPasswordHash, oldPass)
-	if err != nil {
-		if errors.Is(err, ports.ErrInvalidPassword) {
-			return errno.ErrOldPasswordInvalid
-		}
-		return errno.ErrServerInternal
-	}
-
-	// 对新密码进行加密
-	newPassHash, err := svc.passHasher.Hash(newPass)
-	if err != nil {
-		return errno.ErrServerInternal
-	}
-
-	// 改新密码
-	err = svc.userRepo.UpdatePasswordHash(ctx, id, newPassHash)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return errno.ErrUserNotFound
-		}
-		return errno.ErrServerInternal
-	}
-
-	return nil
+	return userdto.ToDetailDTO(userProfile), nil
 }
 
 // UpdateProfile 修改个人资料
@@ -146,16 +57,16 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto
 	}
 
 	// 将 DTO 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
-	modelReq := userdto.ModifyProfileRequestToModel(req)
+	userProfile := userdto.ModifyProfileRequestToModel(req)
 
 	updates := map[string]any{
-		"email":    modelReq.Email,
-		"avatar":   modelReq.Avatar,
-		"bio":      modelReq.Bio,
-		"gender":   modelReq.Gender,
-		"birthday": modelReq.BirthDay,
-		"location": modelReq.Location,
-		"country":  modelReq.Country,
+		"nickname": userProfile.Nickname,
+		"avatar":   userProfile.Avatar,
+		"bio":      userProfile.Bio,
+		"gender":   userProfile.Gender,
+		"birthday": userProfile.BirthDay,
+		"location": userProfile.Location,
+		"country":  userProfile.Country,
 	}
 
 	if err := svc.userRepo.UpdateProfile(ctx, id, updates); err != nil {
@@ -167,16 +78,17 @@ func (svc *userService) UpdateProfile(ctx context.Context, id int64, req userdto
 	return nil
 }
 
+// Top 返回热门推荐用户
 func (svc *userService) Top(ctx context.Context) ([]userdto.TopDTO, error) {
 	var empty []userdto.TopDTO
-	users, scores, err := svc.userRepo.Top(ctx)
+	userProfiles, scores, err := svc.userRepo.Top(ctx)
 	if err != nil {
 		return empty, errno.ErrServerInternal
 	}
 
 	var userDTOs []userdto.TopDTO
-	for idx, user := range users {
-		userDTOs = append(userDTOs, userdto.ToTopDTO(user, scores[idx]))
+	for idx, userProfile := range userProfiles {
+		userDTOs = append(userDTOs, userdto.ToTopDTO(userProfile, scores[idx]))
 	}
 
 	return userDTOs, nil

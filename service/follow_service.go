@@ -99,11 +99,11 @@ func (svc *followService) ListFollowersByPage(ctx context.Context, uid int64, pa
 
 	res := make([]dto.BriefDTO, 0)
 	for _, id := range followersId {
-		user, err := svc.userRepo.GetByID(ctx, id)
+		userProfile, err := svc.userRepo.GetProfileByID(ctx, id)
 		if err != nil {
 			continue
 		}
-		userBriefDTO := dto.ToBriefDTO(user)
+		userBriefDTO := dto.ToBriefDTO(userProfile)
 		res = append(res, userBriefDTO)
 	}
 
@@ -120,12 +120,12 @@ func (svc *followService) ListFolloweesByPage(ctx context.Context, uid int64, pa
 
 	res := make([]dto.BriefDTO, 0)
 	for _, id := range followeesId {
-		user, err := svc.userRepo.GetByID(ctx, id)
+		userProfile, err := svc.userRepo.GetProfileByID(ctx, id)
 		if err != nil {
 
 			continue
 		}
-		userBriefDTO := dto.ToBriefDTO(user)
+		userBriefDTO := dto.ToBriefDTO(userProfile)
 		res = append(res, userBriefDTO)
 	}
 

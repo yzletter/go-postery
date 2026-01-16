@@ -212,12 +212,12 @@ func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO,
 	if err != nil {
 		gift = &model.Gift{}
 	}
-	user, err := svc.userRepo.GetByID(ctx, uid)
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
 	if err != nil {
-		user = &model.User{}
+		userProfile = &model.UserProfile{}
 	}
 
-	return orderdto.ToDTO(order, user, gift), nil
+	return orderdto.ToDTO(order, userProfile, gift), nil
 }
 
 func (svc *lotteryService) Consume(ctx context.Context) {

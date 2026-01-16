@@ -16,10 +16,10 @@ type DTO struct {
 	CreatedAt string           `json:"created_at"` // 创建时间
 }
 
-func ToDTO(order *model.Order, user *model.User, gift *model.Gift) DTO {
+func ToDTO(order *model.Order, userProfile *model.UserProfile, gift *model.Gift) DTO {
 	return DTO{
 		ID:        order.ID,
-		User:      userdto.ToBriefDTO(user),
+		User:      userdto.ToBriefDTO(userProfile),
 		Gift:      giftdto.ToDTO(gift),
 		Count:     order.Count,
 		CreatedAt: order.CreatedAt.Format(time.RFC3339),

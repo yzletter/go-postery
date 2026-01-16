@@ -31,9 +31,9 @@ func (svc *commentService) ListReplies(ctx context.Context, id int64, pageNo, pa
 
 	var commentDTOs []commentdto.DTO
 	for _, comment := range comments {
-		user, err := svc.userRepo.GetByID(ctx, comment.UserID)
+		user, err := svc.userRepo.GetProfileByID(ctx, comment.UserID)
 		if err != nil {
-			user = &model.User{}
+			user = &model.UserProfile{}
 		}
 		commentDTO := commentdto.ToDTO(comment, user)
 		commentDTOs = append(commentDTOs, commentDTO)
@@ -55,7 +55,7 @@ func (svc *commentService) Create(ctx context.Context, pid int64, uid int64, par
 	var empty commentdto.DTO
 
 	// 查询作者
-	author, err := svc.userRepo.GetByID(ctx, uid)
+	author, err := svc.userRepo.GetProfileByID(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
@@ -143,11 +143,11 @@ func (svc *commentService) List(ctx context.Context, pid int64, pageNo, pageSize
 
 	var commentDTOs []commentdto.DTO
 	for _, comment := range comments {
-		user, err := svc.userRepo.GetByID(ctx, comment.UserID)
+		userProfile, err := svc.userRepo.GetProfileByID(ctx, comment.UserID)
 		if err != nil {
-			user = &model.User{}
+			userProfile = &model.UserProfile{}
 		}
-		commentDTO := commentdto.ToDTO(comment, user)
+		commentDTO := commentdto.ToDTO(comment, userProfile)
 		commentDTOs = append(commentDTOs, commentDTO)
 	}
 

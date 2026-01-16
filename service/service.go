@@ -35,10 +35,10 @@ type CodeService interface {
 }
 
 type UserService interface {
-	GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error)
-	GetDetailById(ctx context.Context, id int64) (userdto.DetailDTO, error)
-	GetBriefByName(ctx context.Context, username string) (userdto.BriefDTO, error)
-	UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error
+	//GetBriefById(ctx context.Context, id int64) (userdto.BriefDTO, error)
+	GetProfileById(ctx context.Context, id int64) (userdto.DetailDTO, error)
+	//GetBriefByName(ctx context.Context, username string) (userdto.BriefDTO, error)
+	//UpdatePassword(ctx context.Context, id int64, oldPass, newPass string) error
 	UpdateProfile(ctx context.Context, id int64, req userdto.ModifyProfileRequest) error
 	Top(ctx context.Context) ([]userdto.TopDTO, error)
 }

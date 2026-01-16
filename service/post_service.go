@@ -38,7 +38,7 @@ func (svc *postService) Create(ctx context.Context, uid int64, title, content st
 	var empty postdto.DetailDTO
 
 	// 先查找作者
-	user, err := svc.userRepo.GetByID(ctx, uid)
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
@@ -63,7 +63,7 @@ func (svc *postService) Create(ctx context.Context, uid int64, title, content st
 		return empty, errno.ErrServerInternal
 	}
 
-	return postdto.ToDetailDTO(post, user), err
+	return postdto.ToDetailDTO(post, userProfile), err
 }
 
 // GetDetailById 获取帖子详情，并选择是否增加浏览量
@@ -79,7 +79,7 @@ func (svc *postService) GetDetailById(ctx context.Context, id int64, addViewCnt 
 	}
 
 	// 查找作者信息
-	user, err := svc.userRepo.GetByID(ctx, post.UserID)
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, post.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
@@ -99,7 +99,7 @@ func (svc *postService) GetDetailById(ctx context.Context, id int64, addViewCnt 
 		post.ViewCount += 1
 	}
 
-	postDTO := postdto.ToDetailDTO(post, user)
+	postDTO := postdto.ToDetailDTO(post, userProfile)
 	return postDTO, nil
 }
 
@@ -251,12 +251,12 @@ func (svc *postService) ListByPage(ctx context.Context, pageNo, pageSize int) (i
 	var postDTOs []postdto.DetailDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		author, err := svc.userRepo.GetByID(ctx, post.UserID)
+		authorProfile, err := svc.userRepo.GetProfileByID(ctx, post.UserID)
 		if err != nil {
 			slog.Warn("could not get name of user", "uid", post.UserID)
-			author = &model.User{}
+			authorProfile = &model.UserProfile{}
 		}
-		postDTO := postdto.ToDetailDTO(post, author)
+		postDTO := postdto.ToDetailDTO(post, authorProfile)
 		postDTOs = append(postDTOs, postDTO)
 	}
 	return int(total), postDTOs, nil
@@ -271,7 +271,7 @@ func (svc *postService) ListByPageAndUid(ctx context.Context, uid int64, pageNo,
 	}
 
 	// 查找作者信息
-	author, err := svc.userRepo.GetByID(ctx, uid)
+	authorProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
 	if err != nil {
 		return 0, empty, errno.ErrPostNotFound
 	}
@@ -280,7 +280,7 @@ func (svc *postService) ListByPageAndUid(ctx context.Context, uid int64, pageNo,
 	postDTOs := make([]postdto.BriefDTO, 0, len(posts))
 	for _, post := range posts {
 		// 转成 DTO 返回给 Handler
-		postDTO := postdto.ToBriefDTO(post, author)
+		postDTO := postdto.ToBriefDTO(post, authorProfile)
 		postDTOs = append(postDTOs, postDTO)
 	}
 
@@ -307,13 +307,13 @@ func (svc *postService) ListByPageAndTag(ctx context.Context, name string, pageN
 	var postDTOs []postdto.DetailDTO
 	for _, post := range posts {
 		// 根据 uid 找到 username 进行赋值
-		author, err := svc.userRepo.GetByID(ctx, post.UserID)
+		authorProfile, err := svc.userRepo.GetProfileByID(ctx, post.UserID)
 		if err != nil {
 			slog.Warn("could not get name of user", "uid", post.UserID)
-			author = &model.User{}
+			authorProfile = &model.UserProfile{}
 		}
 
-		postDTO := postdto.ToDetailDTO(post, author)
+		postDTO := postdto.ToDetailDTO(post, authorProfile)
 		postDTOs = append(postDTOs, postDTO)
 	}
 	return int(total), postDTOs, nil

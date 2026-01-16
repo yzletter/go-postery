@@ -31,9 +31,9 @@ type sessionService struct {
 
 func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) (sessiondto.DTO, error) {
 	var empty sessiondto.DTO
-	user, err := svc.userRepo.GetByID(ctx, targetID)
+	userProfile, err := svc.userRepo.GetProfileByID(ctx, targetID)
 	if err != nil {
-		user = &model.User{}
+		userProfile = &model.UserProfile{}
 	}
 
 	session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, uid, targetID)
@@ -78,7 +78,7 @@ func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) 
 			if err != nil {
 				return empty, errno.ErrServerInternal
 			}
-			return sessiondto.ToDTO(newSession1, user), nil
+			return sessiondto.ToDTO(newSession1, userProfile), nil
 		} else {
 			// 对方的会话有，说明只有我单边删除，同一个 sessionID 单边新建
 			ssid := session.SessionID
@@ -94,11 +94,11 @@ func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) 
 			if err != nil {
 				return empty, errno.ErrServerInternal
 			}
-			return sessiondto.ToDTO(newSession1, user), nil
+			return sessiondto.ToDTO(newSession1, userProfile), nil
 		}
 	}
 
-	return sessiondto.ToDTO(session, user), nil
+	return sessiondto.ToDTO(session, userProfile), nil
 }
 
 func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository,
@@ -124,11 +124,11 @@ func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiond
 		// 获取对方字段
 		if session.TargetType == 1 {
 			// 私聊
-			targetUser, err := svc.userRepo.GetByID(ctx, session.TargetID)
+			targetUserProfile, err := svc.userRepo.GetProfileByID(ctx, session.TargetID)
 			if err != nil {
-				targetUser = &model.User{}
+				targetUserProfile = &model.UserProfile{}
 			}
-			sessionDTO := sessiondto.ToDTO(session, targetUser)
+			sessionDTO := sessiondto.ToDTO(session, targetUserProfile)
 			sessionDTOs = append(sessionDTOs, sessionDTO)
 		} else {
 			// todo 群聊查 Group 表

@@ -24,6 +24,7 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 	}
 }
 
+// Profile 获取个人资料
 func (hdl *UserHandler) Profile(ctx *gin.Context) {
 	uid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -31,7 +32,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 		return
 	}
 
-	userDetailDTO, err := hdl.userSvc.GetDetailById(ctx, uid)
+	userDetailDTO, err := hdl.userSvc.GetProfileById(ctx, uid)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -40,6 +41,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 	response.Success(ctx, "获取个人资料成功", userDetailDTO)
 }
 
+// ModifyProfile 修改个人资料
 func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	var modifyProfileReq user.ModifyProfileRequest
 	// 将请求参数绑定到结构体
@@ -68,6 +70,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	response.Success(ctx, "修改个人资料成功", nil)
 }
 
+// Top 获取热门推荐用户
 func (hdl *UserHandler) Top(ctx *gin.Context) {
 	userDTOs, err := hdl.userSvc.Top(ctx)
 	if err != nil {

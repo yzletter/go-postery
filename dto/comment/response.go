@@ -17,7 +17,7 @@ type DTO struct {
 	Author    userdto.BriefDTO `json:"author"`
 }
 
-func ToDTO(comment *model.Comment, user *model.User) DTO {
+func ToDTO(comment *model.Comment, userProfile *model.UserProfile) DTO {
 	return DTO{
 		ID:        comment.ID,
 		PostID:    comment.PostID,
@@ -25,6 +25,6 @@ func ToDTO(comment *model.Comment, user *model.User) DTO {
 		ReplyID:   comment.ReplyID,
 		Content:   comment.Content,
 		CreatedAt: comment.CreatedAt.Format(time.RFC3339),
-		Author:    userdto.ToBriefDTO(user),
+		Author:    userdto.ToBriefDTO(userProfile),
 	}
 }

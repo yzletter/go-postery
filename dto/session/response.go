@@ -18,16 +18,22 @@ type DTO struct {
 	UnreadCount     int    `json:"unread_count"`           // 未读消息数
 }
 
-func ToDTO(session *model.Session, user *model.User) DTO {
-	return DTO{
+func ToDTO(session *model.Session, userProfile *model.UserProfile) DTO {
+	var res = DTO{
 		//ID:              session.ID,
 		SessionID:       session.SessionID,
 		TargetID:        session.TargetID,
-		TargetName:      user.Username,
-		TargetAvatar:    user.Avatar,
+		TargetName:      userProfile.Nickname,
+		TargetAvatar:    "",
 		LastMessageID:   session.LastMessageID,
 		LastMessage:     session.LastMessage,
 		LastMessageTime: session.UpdatedAt.Format(time.RFC3339),
 		UnreadCount:     session.UnreadCount,
 	}
+
+	if userProfile.Avatar != nil {
+		res.TargetAvatar = *userProfile.Avatar
+	}
+
+	return res
 }

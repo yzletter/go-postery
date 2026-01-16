@@ -32,13 +32,13 @@ type TopDTO struct {
 	Score float64 `json:"score"`
 }
 
-func ToDetailDTO(post *model.Post, user *model.User) DetailDTO {
+func ToDetailDTO(post *model.Post, userProfile *model.UserProfile) DetailDTO {
 	return DetailDTO{
 		ID:           post.ID,
 		Title:        post.Title,
 		Content:      post.Content,
 		CreatedAt:    post.CreatedAt.Format(time.RFC3339),
-		Author:       userdto.ToBriefDTO(user),
+		Author:       userdto.ToBriefDTO(userProfile),
 		ViewCount:    post.ViewCount,
 		CommentCount: post.CommentCount,
 		LikeCount:    post.LikeCount,
@@ -46,12 +46,12 @@ func ToDetailDTO(post *model.Post, user *model.User) DetailDTO {
 	}
 }
 
-func ToBriefDTO(post *model.Post, user *model.User) BriefDTO {
+func ToBriefDTO(post *model.Post, userProfile *model.UserProfile) BriefDTO {
 	return BriefDTO{
 		ID:        post.ID,
 		Title:     post.Title,
 		CreatedAt: post.CreatedAt.Format(time.RFC3339),
-		Author:    userdto.ToBriefDTO(user),
+		Author:    userdto.ToBriefDTO(userProfile),
 	}
 }
 
