@@ -19,25 +19,23 @@ import (
 )
 
 type authService struct {
-	codeSvc      CodeService
-	authRepo     repository.AuthRepository
-	userRepo     repository.UserRepository
-	jwtManager   ports.JwtManager
-	emailManager ports.EmailManager
-	passHasher   ports.PasswordHasher
-	idGen        ports.IDGenerator
+	codeSvc    CodeService
+	authRepo   repository.AuthRepository
+	userRepo   repository.UserRepository
+	jwtManager ports.JwtManager
+	passHasher ports.PasswordHasher
+	idGen      ports.IDGenerator
 }
 
 // NewAuthService 构造函数
-func NewAuthService(codeSvc CodeService, authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, emailManager ports.EmailManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
+func NewAuthService(codeSvc CodeService, authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
 	return &authService{
-		codeSvc:      codeSvc,
-		authRepo:     authRepo,
-		userRepo:     userRepo,
-		jwtManager:   jwtManager,
-		emailManager: emailManager,
-		passHasher:   passHasher,
-		idGen:        idGen,
+		codeSvc:    codeSvc,
+		authRepo:   authRepo,
+		userRepo:   userRepo,
+		jwtManager: jwtManager,
+		passHasher: passHasher,
+		idGen:      idGen,
 	}
 }
 

@@ -8,15 +8,14 @@ import (
 )
 
 type AuthRepository interface {
-	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error)
-	GetPasswordHash(ctx context.Context, uid int64) (string, error)
-	CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error
-
-	DelRefreshToken(ctx context.Context, refreshToken string) error
-	CheckBlackList(ctx context.Context, ssid string) (bool, error)
-	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)
-	SetBlackList(ctx context.Context, ssid string) error
-	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error
+	CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error      // 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
+	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) // 根据登录方式和凭证获取登录认证
+	GetPasswordHash(ctx context.Context, uid int64) (string, error)                                    // 根据 UID 获取用户密码
+	DelRefreshToken(ctx context.Context, refreshToken string) error                                    // 缓存中删除 RefreshToken
+	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error                         // 根据 RefreshToken 在缓存中存储用户信息
+	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)        // 根据 RefreshToken 从缓存中读取用户信息
+	SetBlackList(ctx context.Context, ssid string) error                                               // 拉黑 SSID
+	CheckBlackList(ctx context.Context, ssid string) (bool, error)                                     // 查看 SSID 是否被拉黑
 }
 
 type UserRepository interface {

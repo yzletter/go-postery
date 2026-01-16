@@ -9,6 +9,12 @@ import (
 
 // 定义 DAO 层所有接口
 
+type AuthDAO interface {
+	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error)
+	GetPasswordHash(ctx context.Context, uid int64) (string, error)
+	CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error
+}
+
 type UserDAO interface {
 	Create(ctx context.Context, user *model.User) error
 	Delete(ctx context.Context, id int64) error
