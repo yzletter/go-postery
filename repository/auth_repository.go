@@ -54,6 +54,33 @@ func (repo *authRepository) GetAuthIdentityByAuthType(ctx context.Context, uid i
 	return authIdentity, nil
 }
 
+// GetAuthIdentityByUID 获取用户身份认证
+func (repo *authRepository) GetAuthIdentityByUID(ctx context.Context, uid int64) (string, string, error) {
+	authIdentitys, err := repo.dao.GetAuthIdentityByUID(ctx, uid)
+	if err != nil {
+		return "", "", toRepositoryErr(err)
+	}
+
+	if authIdentitys == nil || len(authIdentitys) == 0 {
+		return "", "", nil
+	}
+
+	var phone, email string
+	for _, authIdentity := range authIdentitys {
+		if authIdentity == nil {
+			continue
+		}
+		switch authIdentity.AuthType {
+		case 0:
+			phone = authIdentity.Identifier
+		case 1:
+			email = authIdentity.Identifier
+		}
+	}
+
+	return phone, email, nil
+}
+
 // GetPasswordHash 根据 UID 获取用户密码
 func (repo *authRepository) GetPasswordHash(ctx context.Context, uid int64) (string, error) {
 	passwordHash, err := repo.dao.GetPasswordHash(ctx, uid)

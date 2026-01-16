@@ -209,6 +209,16 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code, newPas
 	return nil
 }
 
+// GetAuthIdentityByUID 获取用户身份认证
+func (svc *authService) GetAuthIdentityByUID(ctx context.Context, uid int64) (string, string, error) {
+	phone, email, err := svc.authRepo.GetAuthIdentityByUID(ctx, uid)
+	if err != nil {
+		return "", "", errno.ErrServerInternal
+	}
+
+	return phone, email, nil
+}
+
 // IssueTokens 签发双 Token
 func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error) {
 	// 参数校验

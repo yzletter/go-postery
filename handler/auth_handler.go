@@ -160,6 +160,7 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 	response.Success(ctx, "密码修改成功", nil)
 }
 
+// SetPassword 初始化密码
 func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	// 获取参数并校验
 	var req auth.SetPassRequest
@@ -185,6 +186,7 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	response.Success(ctx, "设置密码成功", nil)
 }
 
+// HasPassword 查询密码状态
 func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
 	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
@@ -201,6 +203,28 @@ func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	}
 
 	response.Success(ctx, "获取密码状态成功", auth.PassStatusResponse{HasPassword: has})
+	return
+}
+
+// GetAuthIdentity 获取用户身份认证
+func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+	phone, email, err := hdl.authSvc.GetAuthIdentityByUID(ctx, uid)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "获取用户身份认证成功", auth.AuthIdentityResponse{
+		Phone: phone,
+		Email: email,
+	})
 	return
 }
 
