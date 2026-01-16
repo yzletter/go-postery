@@ -6,12 +6,6 @@ import (
 	"github.com/yzletter/go-postery/model"
 )
 
-// ModifyPassRequest 定义前端提交修改密码表单信息的模型映射
-type ModifyPassRequest struct {
-	OldPass string `json:"old_password"  binding:"required,len=32"` // 长度 == 32
-	NewPass string `json:"new_password" binding:"required,len=32"`  // 长度 == 32
-}
-
 type ModifyProfileRequest struct {
 	Nickname string `json:"nickname,omitempty"`
 	Avatar   string `json:"avatar,omitempty"`   // 头像 URL

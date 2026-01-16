@@ -12,6 +12,7 @@ type AuthRepository interface {
 	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) // 根据登录方式和凭证获取登录认证
 	GetAuthIdentityByIdentifier(ctx context.Context, identifier string) (*model.AuthIdentity, error)   // 根据凭证获取登录认证
 	GetPasswordHash(ctx context.Context, uid int64) (string, error)                                    // 根据 UID 获取用户密码
+	HasPassword(ctx context.Context, uid int64) (bool, error)                                          // 查询密码状态
 	DelRefreshToken(ctx context.Context, refreshToken string) error                                    // 缓存中删除 RefreshToken
 	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error                         // 根据 RefreshToken 在缓存中存储用户信息
 	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)        // 根据 RefreshToken 从缓存中读取用户信息

@@ -20,6 +20,7 @@ import (
 type AuthService interface {
 	LoginByPassword(ctx context.Context, identifier, password string) (userdto.BriefDTO, error) // 手机号码/邮箱 + 密码登录
 	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)             // 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
+	HasPassword(ctx context.Context, uid int64) (bool, error)                                   // 查询密码状态
 	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)  // 签发双 Token
 	ClearTokens(ctx context.Context, accessToken, refreshToken string) error                    // 清除双 Token
 	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)                        // 校验 AccessToken

@@ -55,6 +55,15 @@ func (repo *authRepository) GetPasswordHash(ctx context.Context, uid int64) (str
 	return passwordHash, nil
 }
 
+// HasPassword 查询密码状态
+func (repo *authRepository) HasPassword(ctx context.Context, uid int64) (bool, error) {
+	has, err := repo.dao.HasPassword(ctx, uid)
+	if err != nil {
+		return false, toRepositoryErr(err)
+	}
+	return has, nil
+}
+
 // DelRefreshToken 缓存中删除 RefreshToken
 func (repo *authRepository) DelRefreshToken(ctx context.Context, refreshToken string) error {
 	err := repo.cache.DelRefreshToken(ctx, refreshToken)

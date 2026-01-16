@@ -14,6 +14,7 @@ type AuthDAO interface {
 	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) // 根据登录方式和凭证获取登录认证
 	GetAuthIdentityByIdentifier(ctx context.Context, identifier string) (*model.AuthIdentity, error)   // 根据凭证获取登录认证
 	GetPasswordHash(ctx context.Context, uid int64) (string, error)                                    // 根据 UID 获取用户密码
+	HasPassword(ctx context.Context, uid int64) (bool, error)                                          // 查询密码状态
 }
 
 type UserDAO interface {

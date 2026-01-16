@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/auth"
-	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service"
@@ -133,12 +132,10 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	response.Success(ctx, "发送短信验证码成功", nil)
 }
 
-func (hdl *AuthHandler) ModifyPassword(ctx *gin.Context) {
-	// ModifyPass 修改密码 Handler
-	var modifyPassReq user.ModifyPassRequest
-	// 将请求参数绑定到结构体
-	err := ctx.ShouldBindJSON(&modifyPassReq)
-	if err != nil {
+func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.UpdatePassRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -146,13 +143,13 @@ func (hdl *AuthHandler) ModifyPassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	//uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
-	//if err != nil {
-	//	response.Error(ctx, errno.ErrUserNotLogin)
-	//	return
-	//}
+	_, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
 
-	//err = hdl.auth.UpdatePassword(ctx, uid, modifyPassReq.OldPass, modifyPassReq.NewPass)
+	//err = hdl.authSvc.UpdatePassword(ctx, uid, req.OldPass, req.NewPass)
 	//if err != nil {
 	//	// 密码更改失败
 	//	response.Error(ctx, err)
@@ -161,6 +158,44 @@ func (hdl *AuthHandler) ModifyPassword(ctx *gin.Context) {
 
 	// 默认情况下也返回200
 	response.Success(ctx, "密码修改成功", nil)
+}
+
+func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.SetPassRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	_, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+}
+
+func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+	// 查询是否有密码
+	has, err := hdl.authSvc.HasPassword(ctx, uid)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "获取密码状态成功", auth.PassStatusResponse{HasPassword: has})
+	return
 }
 
 // Logout 退出登录

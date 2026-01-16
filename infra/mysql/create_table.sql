@@ -13,7 +13,7 @@ use go_postery;
 CREATE TABLE IF NOT EXISTS users
 (
     id         BIGINT   NOT NULL COMMENT '用户 ID (雪花算法)',
-    status     TINYINT  NOT NULL DEFAULT 1 COMMENT '用户状态 1 正常, 2 封禁, 3 注销',
+    status     TINYINT  NOT NULL DEFAULT 0 COMMENT '用户状态 0 正常, 1 封禁, 2 注销',
     role       TINYINT  NOT NULL DEFAULT 0 COMMENT '用户权限 0 普通 1 管理员',
 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS users
     KEY idx_user_status_deleted (status, deleted_at),
     KEY idx_users_deleted_at (deleted_at),
 
-    CHECK (status IN (1, 2, 3))
+    CHECK (status IN (0, 1, 2))
 ) DEFAULT CHARSET = utf8mb4 COMMENT '最小用户表';
 
 CREATE TABLE IF NOT EXISTS user_profiles

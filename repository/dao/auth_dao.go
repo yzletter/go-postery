@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -97,4 +98,16 @@ func (dao *gormAuthDAO) GetPasswordHash(ctx context.Context, uid int64) (string,
 	}
 
 	return authPassword.PasswordHash, nil
+}
+
+// HasPassword 查询密码状态
+func (dao *gormAuthDAO) HasPassword(ctx context.Context, uid int64) (bool, error) {
+	var cnt int64
+	result := dao.db.Model(&model.AuthPassword{}).WithContext(ctx).Where("user_id = ?", uid).Count(&cnt)
+	if result.Error != nil {
+		slog.Error(FindFailed, "uid", uid, "error", result.Error)
+		return false, errno.ErrServerInternal
+	}
+
+	return cnt > 0, nil
 }

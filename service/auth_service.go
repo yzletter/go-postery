@@ -59,7 +59,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier, passwor
 	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
+			return empty, errno.ErrInvalidCredential
 		}
 		return empty, errno.ErrServerInternal
 	}
@@ -109,7 +109,9 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 			authType := model.AuthTypeFromBiz(model.SMSCode)
 
 			nickname := newNickname()
-			user := model.User{ID: uid}
+			user := model.User{
+				ID: uid,
+			}
 			authIdentity := model.AuthIdentity{ // 登录认证方式
 				ID:         svc.idGen.NextID(),
 				UserID:     uid,
@@ -150,6 +152,18 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 	}
 
 	return userdto.ToBriefDTO(userProfile), nil
+}
+
+// HasPassword 查询密码状态
+func (svc *authService) HasPassword(ctx context.Context, uid int64) (bool, error) {
+	has, err := svc.authRepo.HasPassword(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, repository.ErrServerInternal
+	}
+	return has, nil
 }
 
 // IssueTokens 签发双 Token
