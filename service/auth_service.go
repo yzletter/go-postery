@@ -78,7 +78,7 @@ func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identif
 		VerifiedAt: &verifiedAt,
 	}
 	authPassword := model.AuthPassword{UserID: uid, PasswordHash: passwordHash}
-	userProfile := model.UserProfile{UserID: uid, NickName: nickname}
+	userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
 
 	authAggregate := model.AuthAggregate{
 		User:         &user,
@@ -211,7 +211,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 				IsVerified: 1,
 				VerifiedAt: &verifiedAt,
 			}
-			userProfile := model.UserProfile{UserID: uid, NickName: nickname}
+			userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
 
 			// 聚合信息
 			authAggregate := model.AuthAggregate{

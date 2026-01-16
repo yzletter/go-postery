@@ -9,7 +9,7 @@ import (
 // BriefDTO 后端返回简要 User 信息
 type BriefDTO struct {
 	ID       int64  `json:"id,string"` // ID
-	NickName string `json:"nickname"`  // 昵称
+	Nickname string `json:"nickname"`  // 昵称
 	Avatar   string `json:"avatar"`    // 头像 URL
 }
 
@@ -39,7 +39,7 @@ type TopDTO struct {
 func ToBriefDTO(userProfile *model.UserProfile) BriefDTO {
 	var res = BriefDTO{
 		ID:       userProfile.UserID,
-		NickName: userProfile.NickName,
+		Nickname: userProfile.Nickname,
 		Avatar:   "",
 	}
 
@@ -49,14 +49,19 @@ func ToBriefDTO(userProfile *model.UserProfile) BriefDTO {
 	return res
 }
 
-// ToTopDTO model.User 转 ToTopDTO
+// ToTopDTO model.UserProfile 转 ToTopDTO
 func ToTopDTO(userProfile *model.UserProfile, score float64) TopDTO {
 	var res = TopDTO{
-		ID:     userProfile.UserID,
-		Score:  score,
-		Avatar: "",
+		ID:       userProfile.UserID,
+		Nickname: userProfile.Nickname,
+		Bio:      "",
+		Avatar:   "",
+		Score:    score,
 	}
 
+	if userProfile.Bio != nil {
+		res.Bio = *userProfile.Bio
+	}
 	if userProfile.Avatar != nil {
 		res.Avatar = *userProfile.Avatar
 	}
@@ -64,11 +69,11 @@ func ToTopDTO(userProfile *model.UserProfile, score float64) TopDTO {
 	return res
 }
 
-// ToDetailDTO model.User 转 DetailDTO
+// ToDetailDTO model.UserProfile 转 DetailDTO
 func ToDetailDTO(userProfile *model.UserProfile) DetailDTO {
 	var res = DetailDTO{
 		ID:          userProfile.UserID,
-		Nickname:    userProfile.NickName,
+		Nickname:    userProfile.Nickname,
 		Gender:      userProfile.Gender,
 		Avatar:      "",
 		Bio:         "",
@@ -79,10 +84,10 @@ func ToDetailDTO(userProfile *model.UserProfile) DetailDTO {
 	}
 
 	if userProfile.Country != nil {
-		res.Location = *userProfile.Country
+		res.Country = *userProfile.Country
 	}
 	if userProfile.LastLoginIP != nil {
-		res.Location = *userProfile.LastLoginIP
+		res.LastLoginIP = *userProfile.LastLoginIP
 	}
 	if userProfile.Location != nil {
 		res.Location = *userProfile.Location

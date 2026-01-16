@@ -19,7 +19,7 @@ func (u User) TableName() string {
 // UserProfile 用户个人资料
 type UserProfile struct {
 	UserID         int64      `gorm:"column:user_id;primaryKey;autoIncrement:false"` // 用户 ID
-	NickName       string     `gorm:"column:nickname"`                               // 用户昵称
+	Nickname       string     `gorm:"column:nickname"`                               // 用户昵称
 	NicknameActive *string    `gorm:"column:nickname_active;->"`                     // 昵称是否有效
 	Avatar         *string    `gorm:"column:avatar"`                                 // 头像 URL
 	Bio            *string    `gorm:"column:bio"`                                    // 个性签名
