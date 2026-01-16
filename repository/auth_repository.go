@@ -38,6 +38,14 @@ func (repo *authRepository) GetAuthIdentity(ctx context.Context, authType int, i
 	return authIdentity, nil
 }
 
+func (repo *authRepository) GetAuthIdentityByIdentifier(ctx context.Context, identifier string) (*model.AuthIdentity, error) {
+	authIdentity, err := repo.dao.GetAuthIdentityByIdentifier(ctx, identifier)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return authIdentity, nil
+}
+
 // GetPasswordHash 根据 UID 获取用户密码
 func (repo *authRepository) GetPasswordHash(ctx context.Context, uid int64) (string, error) {
 	passwordHash, err := repo.dao.GetPasswordHash(ctx, uid)

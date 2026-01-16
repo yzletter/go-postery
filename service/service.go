@@ -18,15 +18,13 @@ import (
 // 定义 Service 层所有接口
 
 type AuthService interface {
-	Register(ctx context.Context, biz model.CodeBiz, identifier, code, password, nickname string) (userdto.BriefDTO, error) // 昵称 + 手机号码/邮箱 + 验证码 + 密码注册
-	LoginByPassword(ctx context.Context, biz model.CodeBiz, identifier, password string) (userdto.BriefDTO, error)          // 手机号码/邮箱 + 密码登录
-	LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error)                                         // 邮箱 + 验证码进行登录
-	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)                                         // 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
-	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)                              // 签发双 Token
-	ClearTokens(ctx context.Context, accessToken, refreshToken string) error                                                // 清除双 Token
-	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)                                                    // 校验 AccessToken
-	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error)                             // 根据 RefreshToken 获取用户信息, 用于重新签发双 Token
-	CheckBlackList(ctx context.Context, ssid string) (bool, error)                                                          // 根据 SSID 检查黑名单, 检查用户是否被拉黑
+	LoginByPassword(ctx context.Context, identifier, password string) (userdto.BriefDTO, error) // 手机号码/邮箱 + 密码登录
+	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)             // 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
+	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)  // 签发双 Token
+	ClearTokens(ctx context.Context, accessToken, refreshToken string) error                    // 清除双 Token
+	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)                        // 校验 AccessToken
+	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) // 根据 RefreshToken 获取用户信息, 用于重新签发双 Token
+	CheckBlackList(ctx context.Context, ssid string) (bool, error)                              // 根据 SSID 检查黑名单, 检查用户是否被拉黑
 }
 
 type CodeService interface {

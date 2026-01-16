@@ -39,70 +39,12 @@ func NewAuthService(codeSvc CodeService, authRepo repository.AuthRepository, use
 	}
 }
 
-// Register 昵称 + 手机号码/邮箱 + 验证码 + 密码注册
-func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identifier, code, password, nickname string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 先检查是否已注册, 避免重复注册消耗验证码
-	authType := model.AuthTypeFromBiz(biz)
-	if _, err := svc.authRepo.GetAuthIdentity(ctx, authType, identifier); err == nil {
-		return empty, errno.ErrUserDuplicated
-	} else if !errors.Is(err, repository.ErrRecordNotFound) {
-		return empty, errno.ErrServerInternal
-	}
-
-	// 校验验证码并消费
-	ok, err := svc.codeSvc.CheckCode(ctx, biz, identifier, code)
-	if err != nil {
-		slog.Error("Check Code Failed", "biz", biz)
-		return empty, errno.ErrServerInternal
-	} else if !ok {
-		return empty, errno.ErrInvalidCode
-	}
-
-	// 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、todo注册扩展功能）
-	uid := svc.idGen.NextID()
-	verifiedAt := time.Now()
-	passwordHash, err := svc.passHasher.Hash(password) // 对密码进行加密
-	if err != nil {
-		slog.Error("PasswordHasher Hash Failed", "error", err)
-		return empty, errno.ErrServerInternal
-	}
-	user := model.User{ID: uid}
-	authIdentity := model.AuthIdentity{
-		ID:         svc.idGen.NextID(),
-		UserID:     uid,
-		AuthType:   authType,
-		Identifier: identifier,
-		IsVerified: 1,
-		VerifiedAt: &verifiedAt,
-	}
-	authPassword := model.AuthPassword{UserID: uid, PasswordHash: passwordHash}
-	userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
-
-	authAggregate := model.AuthAggregate{
-		User:         &user,
-		UserProfile:  &userProfile,
-		AuthPassword: &authPassword,
-		AuthIdentity: &authIdentity,
-	}
-	if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
-		if errors.Is(err, repository.ErrUniqueKey) {
-			return empty, errno.ErrUserDuplicated
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	return userdto.ToBriefDTO(&userProfile), nil
-}
-
 // LoginByPassword 手机号码/邮箱 + 密码登录
-func (svc *authService) LoginByPassword(ctx context.Context, biz model.CodeBiz, identifier, password string) (userdto.BriefDTO, error) {
+func (svc *authService) LoginByPassword(ctx context.Context, identifier, password string) (userdto.BriefDTO, error) {
 	var empty userdto.BriefDTO
 
 	// 获取登录认证
-	authType := model.AuthTypeFromBiz(biz)
-	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, identifier)
+	authIdentity, err := svc.authRepo.GetAuthIdentityByIdentifier(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return empty, errno.ErrUserNotFound
@@ -110,7 +52,8 @@ func (svc *authService) LoginByPassword(ctx context.Context, biz model.CodeBiz, 
 		return empty, errno.ErrServerInternal
 	}
 
-	uid := authIdentity.UserID // 得到用户 ID
+	// 得到用户 ID
+	uid := authIdentity.UserID
 
 	// 获取密码
 	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, uid)
@@ -131,42 +74,6 @@ func (svc *authService) LoginByPassword(ctx context.Context, biz model.CodeBiz, 
 	}
 
 	// 查找个人资料
-	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	return userdto.ToBriefDTO(userProfile), nil
-}
-
-// LoginByEmail 邮箱 + 验证码进行登录
-func (svc *authService) LoginByEmail(ctx context.Context, email, code string) (userdto.BriefDTO, error) {
-	var empty userdto.BriefDTO
-
-	// 校验验证码并消费
-	ok, err := svc.codeSvc.CheckCode(ctx, model.EmailCode, email, code)
-	if err != nil {
-		slog.Error("Check Code Failed", "biz", model.EmailCode)
-		return empty, errno.ErrServerInternal
-	} else if !ok {
-		return empty, errno.ErrEmailCodeInvalid
-	}
-
-	// 获取登录认证
-	authType := model.AuthTypeFromBiz(model.EmailCode)
-	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, email)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	// 查找个人资料
-	uid := authIdentity.UserID
 	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {

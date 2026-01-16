@@ -67,6 +67,22 @@ func (dao *gormAuthDAO) GetAuthIdentity(ctx context.Context, authType int, ident
 	return &authIdentity, nil
 }
 
+// GetAuthIdentityByIdentifier 根据凭证获取登录认证
+func (dao *gormAuthDAO) GetAuthIdentityByIdentifier(ctx context.Context, identifier string) (*model.AuthIdentity, error) {
+	var authIdentity model.AuthIdentity
+	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("identifier = ? AND is_verified = ?", identifier, 1).First(&authIdentity)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		slog.Error(FindFailed, "identifier", identifier, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	return &authIdentity, nil
+}
+
 // GetPasswordHash 根据 UID 获取用户密码
 func (dao *gormAuthDAO) GetPasswordHash(ctx context.Context, uid int64) (string, error) {
 	var authPassword model.AuthPassword

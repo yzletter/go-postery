@@ -27,76 +27,10 @@ func NewAuthHandler(authSvc service.AuthService, codeSvc service.CodeService) *A
 	}
 }
 
-// RegisterByPhone 昵称 + 手机号码 + 验证码 + 密码注册
-func (hdl *AuthHandler) RegisterByPhone(ctx *gin.Context) {
-	// 参数校验
-	var req auth.RegisterByPhoneRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		// 参数绑定失败
-		slog.Error("Register Param Bind Failed", "error", utils.BindErrMsg(err))
-		response.Error(ctx, errno.ErrInvalidParam)
-		return
-	}
-
-	// 注册用户
-	userBriefDTO, err := hdl.authSvc.Register(ctx, model.SMSCode, req.Phone, req.Code, req.Password, req.Nickname)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 根据 UserID 签发双 Token
-	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	setTokens(ctx, accessToken, refreshToken)
-
-	// 返回成功响应
-	response.Success(ctx, "注册成功", userBriefDTO)
-	return
-}
-
-// RegisterByEmail 昵称 + 邮箱 + 验证码 + 密码注册
-func (hdl *AuthHandler) RegisterByEmail(ctx *gin.Context) {
-	// 参数校验
-	var req auth.RegisterByEmailRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		// 参数绑定失败
-		slog.Error("Register Param Bind Failed", "error", utils.BindErrMsg(err))
-		response.Error(ctx, errno.ErrInvalidParam)
-		return
-	}
-
-	// 注册用户
-	userBriefDTO, err := hdl.authSvc.Register(ctx, model.EmailCode, req.Email, req.Code, req.Password, req.Nickname)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 根据 UserID 签发双 Token
-	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	setTokens(ctx, accessToken, refreshToken)
-
-	// 返回成功响应
-	response.Success(ctx, "注册成功", userBriefDTO)
-	return
-}
-
-// LoginByPhoneAndPassword 手机号码 + 密码登录
-func (hdl *AuthHandler) LoginByPhoneAndPassword(ctx *gin.Context) {
+// LoginByPassword 手机号码/邮箱 + 密码登录
+func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth.LoginByPhoneAndPasswordRequest
+	var req auth.LoginByPasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -105,40 +39,7 @@ func (hdl *AuthHandler) LoginByPhoneAndPassword(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	userBriefDTO, err := hdl.authSvc.LoginByPassword(ctx, model.SMSCode, req.Phone, req.Password)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 根据 UserID 签发双 Token
-	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	setTokens(ctx, accessToken, refreshToken)
-
-	// 返回成功响应
-	response.Success(ctx, "登录成功", userBriefDTO)
-	return
-}
-
-// LoginByEmailAndPassword 邮箱 + 密码登录
-func (hdl *AuthHandler) LoginByEmailAndPassword(ctx *gin.Context) {
-	// 获取参数并校验
-	var req auth.LoginByEmailAndPasswordRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
-		response.Error(ctx, errno.ErrInvalidParam)
-		return
-	}
-
-	// 进行登录
-	userBriefDTO, err := hdl.authSvc.LoginByPassword(ctx, model.EmailCode, req.Email, req.Password)
+	userBriefDTO, err := hdl.authSvc.LoginByPassword(ctx, req.Identifier, req.Password)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -189,39 +90,6 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 
 	// 返回成功响应
 	response.Success(ctx, "根据手机号登录成功", userBriefDTO)
-	return
-}
-
-// LoginByEmail 邮箱 + 验证码进行登录
-func (hdl *AuthHandler) LoginByEmail(ctx *gin.Context) {
-	// 获取参数并校验
-	var req auth.LoginByEmailRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
-		response.Error(ctx, errno.ErrInvalidParam)
-		return
-	}
-
-	// 进行登录
-	userBriefDTO, err := hdl.authSvc.LoginByEmail(ctx, req.Email, req.Code)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 根据 UID 签发双 Token
-	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	setTokens(ctx, accessToken, refreshToken)
-
-	// 返回成功响应
-	response.Success(ctx, "根据邮箱登录成功", userBriefDTO)
 	return
 }
 
