@@ -112,7 +112,7 @@ func main() {
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                         // 注册 LotteryService
 
 	// Handler 层
-	AuthHdl := handler.NewAuthHandler(AuthSvc, SessionSvc)                // 注册 AuthHandler
+	AuthHdl := handler.NewAuthHandler(AuthSvc, CodeSvc)                   // 注册 AuthHandler
 	UserHdl := handler.NewUserHandler(UserSvc)                            // 注册 UserHandler
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
@@ -127,7 +127,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -158,14 +158,14 @@ func main() {
 	// 身份认证模块
 	auth := v1.Group("/auth")
 	{
-		// todo AuthHandler
-		auth.POST("/register", AuthHdl.Register) // POST /api/v1/auth/register 	注册
-		auth.POST("/login", AuthHdl.Login)       // POST /api/v1/auth/login 		登录
-
-		auth.POST("/login/phone", AuthHdl.LoginByPhone) // 手机号 验证码登录
-		auth.POST("/login/pass", AuthHdl.LoginByEmail)  // 邮箱 账号密码登录
-		auth.POST("/sms", AuthHdl.SendSMSCode)          // POST /api/v1/auth/sms		发送短信验证码
-		auth.POST("/email", AuthHdl.SendEmailCode)      // POST /api/v1/auth/email		发送邮箱验证码
+		auth.POST("/register/phone", AuthHdl.RegisterByPhone)           // POST /api/v1/auth/register/phone 		手机号码 + 验证码 + 密码注册
+		auth.POST("/register/email", AuthHdl.RegisterByEmail)           // POST /api/v1/auth/register/email 		邮箱 + 验证码 + 密码注册
+		auth.POST("/login/phone_pass", AuthHdl.LoginByPhoneAndPassword) // POST /api/v1/auth/login/phone_pass 	手机号码 + 密码登录
+		auth.POST("/login/email_pass", AuthHdl.LoginByEmailAndPassword) // POST /api/v1/auth/login/email_pass 	邮箱 + 密码登录
+		auth.POST("/login/phone", AuthHdl.LoginByPhone)                 // POST /api/v1/auth/login/phone 		手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
+		auth.POST("/login/email", AuthHdl.LoginByEmail)                 // POST /api/v1/auth/login/email 		邮箱 + 验证码进行登录
+		auth.POST("/sms", AuthHdl.SendSMSCode)                          // POST /api/v1/auth/sms					发送短信验证码
+		auth.POST("/email", AuthHdl.SendEmailCode)                      // POST /api/v1/auth/email				发送邮箱验证码
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)

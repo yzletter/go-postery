@@ -7,8 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/auth"
-	"github.com/yzletter/go-postery/dto/email"
-	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service"
@@ -17,24 +15,22 @@ import (
 )
 
 type AuthHandler struct {
-	authSvc    service.AuthService
-	sessionSvc service.SessionService
-	codeSvc    service.CodeService
+	authSvc service.AuthService
+	codeSvc service.CodeService
 }
 
-func NewAuthHandler(authSvc service.AuthService, sessionSvc service.SessionService) *AuthHandler {
+func NewAuthHandler(authSvc service.AuthService, codeSvc service.CodeService) *AuthHandler {
 	return &AuthHandler{
-		authSvc:    authSvc,
-		sessionSvc: sessionSvc,
+		authSvc: authSvc,
+		codeSvc: codeSvc,
 	}
 }
 
-// Register 用户注册 Handler
-func (hdl *AuthHandler) Register(ctx *gin.Context) {
+// RegisterByPhone 手机号码 + 验证码 + 密码注册
+func (hdl *AuthHandler) RegisterByPhone(ctx *gin.Context) {
 	// 参数校验
-	var registerReq user.RegisterRequest
-	err := ctx.ShouldBindJSON(&registerReq)
-	if err != nil {
+	var req auth.RegisterByPhoneRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("Register Param Bind Failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -42,16 +38,9 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 	}
 
 	// 注册用户
-	userBriefDTO, err := hdl.authSvc.Register(ctx, registerReq.Name, registerReq.Email, registerReq.PassWord)
+	userBriefDTO, err := hdl.authSvc.Register(ctx, model.SMSCode, req.Phone, req.Code, req.Password)
 	if err != nil {
 		response.Error(ctx, err)
-		return
-	}
-
-	// 注册私信功能
-	err = hdl.sessionSvc.Register(ctx, userBriefDTO.ID)
-	if err != nil {
-		response.Error(ctx, errno.ErrServerInternal)
 		return
 	}
 
@@ -67,14 +56,47 @@ func (hdl *AuthHandler) Register(ctx *gin.Context) {
 
 	// 返回成功响应
 	response.Success(ctx, "注册成功", userBriefDTO)
+	return
 }
 
-// Login 登录 Handler
-func (hdl *AuthHandler) Login(ctx *gin.Context) {
+// RegisterByEmail 邮箱 + 验证码 + 密码注册
+func (hdl *AuthHandler) RegisterByEmail(ctx *gin.Context) {
 	// 参数校验
-	var loginReq user.LoginRequest
-	err := ctx.ShouldBindJSON(&loginReq)
+	var req auth.RegisterByEmailRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("Register Param Bind Failed", "error", utils.BindErrMsg(err))
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 注册用户
+	userBriefDTO, err := hdl.authSvc.Register(ctx, model.EmailCode, req.Email, req.Code, req.Password)
 	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 根据 UserID 签发双 Token
+	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+	setTokens(ctx, accessToken, refreshToken)
+
+	// 返回成功响应
+	response.Success(ctx, "注册成功", userBriefDTO)
+	return
+}
+
+// LoginByPhoneAndPassword 手机号码 + 密码登录
+func (hdl *AuthHandler) LoginByPhoneAndPassword(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.LoginByPhoneAndPasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -82,7 +104,7 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	userBriefDTO, err := hdl.authSvc.Login(ctx, loginReq.Name, loginReq.PassWord)
+	userBriefDTO, err := hdl.authSvc.LoginByPassword(ctx, model.SMSCode, req.Phone, req.Password)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -103,11 +125,46 @@ func (hdl *AuthHandler) Login(ctx *gin.Context) {
 	return
 }
 
-// LoginByPhone 根据手机号码进行登录, 未注册的手机号码自动进行注册
+// LoginByEmailAndPassword 邮箱 + 密码登录
+func (hdl *AuthHandler) LoginByEmailAndPassword(ctx *gin.Context) {
+	// 获取参数并校验
+	var req auth.LoginByEmailAndPasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 进行登录
+	userBriefDTO, err := hdl.authSvc.LoginByPassword(ctx, model.EmailCode, req.Email, req.Password)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 根据 UserID 签发双 Token
+	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
+	setTokens(ctx, accessToken, refreshToken)
+
+	// 返回成功响应
+	response.Success(ctx, "登录成功", userBriefDTO)
+	return
+}
+
+// LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth.LoginByPhone
+	var req auth.LoginByPhoneRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -116,13 +173,6 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	userBriefDTO, err := hdl.authSvc.LoginByPhone(ctx, req.Phone, req.Code)
 	if err != nil {
 		response.Error(ctx, err)
-		return
-	}
-
-	// 注册私信功能
-	err = hdl.sessionSvc.Register(ctx, userBriefDTO.ID)
-	if err != nil {
-		response.Error(ctx, errno.ErrServerInternal)
 		return
 	}
 
@@ -141,11 +191,13 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	return
 }
 
-// LoginByEmail 根据邮箱进行登录
+// LoginByEmail 邮箱 + 验证码进行登录
 func (hdl *AuthHandler) LoginByEmail(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth.LoginByEmail
+	var req auth.LoginByEmailRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -172,10 +224,13 @@ func (hdl *AuthHandler) LoginByEmail(ctx *gin.Context) {
 	return
 }
 
+// SendEmailCode 发送邮箱验证码
 func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	// 获取参数并校验
 	var req auth.SendEmailCodeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -189,10 +244,13 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	response.Success(ctx, "发送邮箱验证码成功", nil)
 }
 
+// SendSMSCode 发送短信验证码
 func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	// 获取参数并校验
 	var req auth.SendSMSCodeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -206,7 +264,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	response.Success(ctx, "发送短信验证码成功", nil)
 }
 
-// Logout 登出 Handler
+// Logout 退出登录
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
 	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)

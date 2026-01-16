@@ -54,7 +54,7 @@ func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identif
 		return empty, errno.ErrInvalidCode
 	}
 
-	// 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
+	// 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、todo注册扩展功能）
 	uid := svc.idGen.NextID()
 	verifiedAt := time.Now()
 	passwordHash, err := svc.passHasher.Hash(password) // 对密码进行加密
