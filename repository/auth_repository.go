@@ -90,6 +90,15 @@ func (repo *authRepository) GetPasswordHash(ctx context.Context, uid int64) (str
 	return passwordHash, nil
 }
 
+// UpdatePasswordHash 修改用户密码
+func (repo *authRepository) UpdatePasswordHash(ctx context.Context, uid int64, passwordHash string) error {
+	err := repo.dao.UpdatePasswordHash(ctx, uid, passwordHash)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
 // HasPassword 查询密码状态
 func (repo *authRepository) HasPassword(ctx context.Context, uid int64) (bool, error) {
 	has, err := repo.dao.HasPassword(ctx, uid)

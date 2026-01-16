@@ -22,6 +22,7 @@ type AuthService interface {
 	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)             // 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 	HasPassword(ctx context.Context, uid int64) (bool, error)                                   // 查询密码状态
 	SetPassword(ctx context.Context, uid int64, code, newPass string) error                     // 初始化密码
+	UpdatePassword(ctx context.Context, uid int64, oldPass, newPass string) error               // 修改密码
 	GetAuthIdentityByUID(ctx context.Context, uid int64) (string, string, error)                // 获取用户身份认证
 	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)  // 签发双 Token
 	ClearTokens(ctx context.Context, accessToken, refreshToken string) error                    // 清除双 Token

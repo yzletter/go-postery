@@ -157,3 +157,23 @@ func (dao *gormAuthDAO) SetPassword(ctx context.Context, authPassword *model.Aut
 
 	return nil
 }
+
+// UpdatePasswordHash 修改用户密码
+func (dao *gormAuthDAO) UpdatePasswordHash(ctx context.Context, uid int64, passwordHash string) error {
+	// 先查是否有密码
+	var cnt int64
+	if err := dao.db.WithContext(ctx).Model(&model.AuthPassword{}).Where("user_id = ?", uid).Count(&cnt).Error; err != nil {
+		return ErrServerInternal
+	}
+	if cnt == 0 {
+		return ErrRecordNotFound
+	}
+
+	result := dao.db.WithContext(ctx).Model(&model.AuthPassword{}).Where("user_id = ?", uid).Update("password_hash", passwordHash)
+	if result.Error != nil {
+		slog.Error(UpdateFailed, "uid", uid, "error", result.Error)
+		return ErrServerInternal
+	}
+
+	return nil
+}

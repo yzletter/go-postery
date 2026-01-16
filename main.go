@@ -166,12 +166,14 @@ func main() {
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
-		authedAuth.POST("/logout", AuthHdl.Logout)                  // POST /api/v1/auth/logout			退出登录
-		authedAuth.GET("/status", AuthHdl.Status)                   // GET /api/v1/auth/status			检查状态
+		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout			退出登录
+		authedAuth.GET("/status", AuthHdl.Status)  // GET /api/v1/auth/status			检查登录状态
+
 		authedAuth.POST("/password/update", AuthHdl.UpdatePassword) // POST /api/v1/auth/password/update	修改密码
 		authedAuth.POST("/password/set", AuthHdl.SetPassword)       // POST /api/v1/auth/password/set	初始化密码
 		authedAuth.GET("/password/status", AuthHdl.HasPassword)     // GET /api/v1/auth/password/status	查询密码状态
-		authedAuth.GET("/auth_identity", AuthHdl.GetAuthIdentity)   // GET /api/v1/auth/auth_identity	获取用户的身份认证
+
+		authedAuth.GET("/auth_identity", AuthHdl.GetAuthIdentity) // GET /api/v1/auth/auth_identity	获取用户的身份认证
 	}
 
 	// 用户模块

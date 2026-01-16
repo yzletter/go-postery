@@ -209,6 +209,44 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code, newPas
 	return nil
 }
 
+// UpdatePassword 更新密码
+func (svc *authService) UpdatePassword(ctx context.Context, uid int64, oldPass, newPass string) error {
+	// 获取旧密码
+	oldPasswordHash, err := svc.authRepo.GetPasswordHash(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errno.ErrUserNotFound
+		}
+		return errno.ErrServerInternal
+	}
+
+	// 判断旧密码是否正确
+	err = svc.passHasher.Compare(oldPasswordHash, oldPass)
+	if err != nil {
+		if errors.Is(err, ports.ErrInvalidPassword) {
+			return errno.ErrOldPasswordInvalid
+		}
+		return errno.ErrServerInternal
+	}
+
+	// 对新密码进行加密
+	newPassHash, err := svc.passHasher.Hash(newPass)
+	if err != nil {
+		return errno.ErrServerInternal
+	}
+
+	// 改新密码
+	err = svc.authRepo.UpdatePasswordHash(ctx, uid, newPassHash)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errno.ErrUserNotFound
+		}
+		return errno.ErrServerInternal
+	}
+
+	return nil
+}
+
 // GetAuthIdentityByUID 获取用户身份认证
 func (svc *authService) GetAuthIdentityByUID(ctx context.Context, uid int64) (string, string, error) {
 	phone, email, err := svc.authRepo.GetAuthIdentityByUID(ctx, uid)
