@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
@@ -18,7 +19,7 @@ func NewWebsocketHandler(websocketSvc service.WebsocketService) *WebsocketHandle
 
 func (hdl *WebsocketHandler) Connect(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return

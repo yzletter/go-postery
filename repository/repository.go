@@ -23,16 +23,6 @@ type UserRepository interface {
 	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error // 根据 ID 修改用户资料的多个字段
 	Top(ctx context.Context) ([]*model.UserProfile, []float64, error)          // 返回热门推荐用户
 	ChangeScore(ctx context.Context, uid int64, delta int)                     // 修改用户分数
-
-	//Create(ctx context.Context, user *model.User) error
-	//Delete(ctx context.Context, id int64) error
-	//GetPasswordHash(ctx context.Context, id int64) (string, error)
-	//GetStatus(ctx context.Context, id int64) (int, error)
-	//GetProfileByID(ctx context.Context, id int64) (*model.User, error)
-	//GetByUsername(ctx context.Context, username string) (*model.User, error)
-	//GetByEmail(ctx context.Context, email string) (*model.User, error)
-	//GetByPhone(ctx context.Context, phone string) (*model.User, error)
-	//UpdatePasswordHash(ctx context.Context, id int64, newHash string) error
 }
 
 type PostRepository interface {

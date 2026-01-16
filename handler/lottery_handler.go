@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/conf"
 	orderdto "github.com/yzletter/go-postery/dto/order"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
@@ -41,7 +42,7 @@ func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
@@ -57,7 +58,7 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
@@ -86,7 +87,7 @@ func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
@@ -118,7 +119,7 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Result(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return

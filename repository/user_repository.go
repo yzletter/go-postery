@@ -20,6 +20,7 @@ func NewUserRepository(userDAO dao.UserDAO, userCache cache.UserCache) UserRepos
 	return &userRepository{dao: userDAO, cache: userCache}
 }
 
+// GetProfileByID 根据 ID 查找用户资料
 func (repo *userRepository) GetProfileByID(ctx context.Context, uid int64) (*model.UserProfile, error) {
 	userProfile, err := repo.dao.GetProfileByID(ctx, uid)
 	if err != nil {
@@ -29,6 +30,7 @@ func (repo *userRepository) GetProfileByID(ctx context.Context, uid int64) (*mod
 	return userProfile, nil
 }
 
+// UpdateProfile 根据 ID 修改用户资料的多个字段
 func (repo *userRepository) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
 	err := repo.dao.UpdateProfile(ctx, id, updates)
 	if err != nil {

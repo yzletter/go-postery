@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
@@ -29,7 +30,7 @@ func NewCommentHandler(commentService service.CommentService, userService servic
 // Create 新建评论
 func (hdl *CommentHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -62,7 +63,7 @@ func (hdl *CommentHandler) Create(ctx *gin.Context) {
 
 func (hdl *CommentHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -164,7 +165,7 @@ func (hdl *CommentHandler) ListReplies(ctx *gin.Context) {
 
 func (hdl *CommentHandler) CheckAuth(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/post"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
@@ -134,7 +135,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 // Create 创建帖子
 func (hdl *PostHandler) Create(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -169,7 +170,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 // Delete 删除帖子
 func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -195,7 +196,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -232,7 +233,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 // Belong 查询帖子作者是否为当前登录用户
 func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -291,7 +292,7 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 
 func (hdl *PostHandler) Like(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -315,7 +316,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 
 func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -339,7 +340,7 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 
 func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return

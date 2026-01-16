@@ -298,7 +298,7 @@ func (hdl *AuthHandler) ModifyPassword(ctx *gin.Context) {
 // Logout 退出登录
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	_, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	_, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		slog.Error("Get Uid From CTX Failed", "error", err)
 		response.Error(ctx, errno.ErrUserNotLogin)
@@ -325,7 +325,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 // Status 检查登录状态
 func (hdl *AuthHandler) Status(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	if _, err := utils.GetUidFromCTX(ctx, UserIDInContext); err != nil {
+	if _, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext); err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
@@ -23,7 +24,7 @@ func NewSessionHandler(sessionSvc service.SessionService) *SessionHandler {
 // List 列出会话列表
 func (hdl *SessionHandler) List(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -42,7 +43,7 @@ func (hdl *SessionHandler) List(ctx *gin.Context) {
 
 func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -68,7 +69,7 @@ func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 
 func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -95,7 +96,7 @@ func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 // 获取历史消息
 func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
