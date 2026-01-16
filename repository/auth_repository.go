@@ -71,9 +71,9 @@ func (repo *authRepository) GetAuthIdentityByUID(ctx context.Context, uid int64)
 			continue
 		}
 		switch authIdentity.AuthType {
-		case 0:
-			phone = authIdentity.Identifier
 		case 1:
+			phone = authIdentity.Identifier
+		case 2:
 			email = authIdentity.Identifier
 		}
 	}

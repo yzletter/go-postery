@@ -87,7 +87,7 @@ func (dao *gormAuthDAO) GetAuthIdentityByIdentifier(ctx context.Context, identif
 // GetAuthIdentityByAuthType 根据认证方式获取登录认证
 func (dao *gormAuthDAO) GetAuthIdentityByAuthType(ctx context.Context, uid int64, authType int) (*model.AuthIdentity, error) {
 	var authIdentity model.AuthIdentity
-	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("user_id = ? AND authType = ? AND is_verified = ?", uid, authType, 1).First(&authIdentity)
+	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("user_id = ? AND auth_type = ? AND is_verified = ?", uid, authType, 1).First(&authIdentity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrRecordNotFound
