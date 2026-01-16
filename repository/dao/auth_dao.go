@@ -84,6 +84,22 @@ func (dao *gormAuthDAO) GetAuthIdentityByIdentifier(ctx context.Context, identif
 	return &authIdentity, nil
 }
 
+// GetAuthIdentityByAuthType 根据认证方式获取登录认证
+func (dao *gormAuthDAO) GetAuthIdentityByAuthType(ctx context.Context, uid int64, authType int) (*model.AuthIdentity, error) {
+	var authIdentity model.AuthIdentity
+	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("user_id = ? AND authType = ? AND is_verified = ?", uid, authType, 1).First(&authIdentity)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		slog.Error(FindFailed, "uid", uid, "auth_type", authType, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	return &authIdentity, nil
+}
+
 // GetPasswordHash 根据 UID 获取用户密码
 func (dao *gormAuthDAO) GetPasswordHash(ctx context.Context, uid int64) (string, error) {
 	var authPassword model.AuthPassword
@@ -110,4 +126,18 @@ func (dao *gormAuthDAO) HasPassword(ctx context.Context, uid int64) (bool, error
 	}
 
 	return cnt > 0, nil
+}
+
+// SetPassword 初始化密码
+func (dao *gormAuthDAO) SetPassword(ctx context.Context, authPassword *model.AuthPassword) error {
+	result := dao.db.WithContext(ctx).Create(authPassword)
+	if result.Error != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+			return ErrUniqueKey
+		}
+		return ErrServerInternal
+	}
+
+	return nil
 }

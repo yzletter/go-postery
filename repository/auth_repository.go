@@ -46,6 +46,14 @@ func (repo *authRepository) GetAuthIdentityByIdentifier(ctx context.Context, ide
 	return authIdentity, nil
 }
 
+func (repo *authRepository) GetAuthIdentityByAuthType(ctx context.Context, uid int64, authType int) (*model.AuthIdentity, error) {
+	authIdentity, err := repo.dao.GetAuthIdentityByAuthType(ctx, uid, authType)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return authIdentity, nil
+}
+
 // GetPasswordHash 根据 UID 获取用户密码
 func (repo *authRepository) GetPasswordHash(ctx context.Context, uid int64) (string, error) {
 	passwordHash, err := repo.dao.GetPasswordHash(ctx, uid)
@@ -62,6 +70,16 @@ func (repo *authRepository) HasPassword(ctx context.Context, uid int64) (bool, e
 		return false, toRepositoryErr(err)
 	}
 	return has, nil
+}
+
+// SetPassword 初始化密码
+func (repo *authRepository) SetPassword(ctx context.Context, authPassword *model.AuthPassword) error {
+	err := repo.dao.SetPassword(ctx, authPassword)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+
+	return nil
 }
 
 // DelRefreshToken 缓存中删除 RefreshToken

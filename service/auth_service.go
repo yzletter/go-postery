@@ -166,6 +166,49 @@ func (svc *authService) HasPassword(ctx context.Context, uid int64) (bool, error
 	return has, nil
 }
 
+// SetPassword 初始化密码
+func (svc *authService) SetPassword(ctx context.Context, uid int64, code, newPass string) error {
+	// 获取当前用户认证的手机号
+	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(model.SMSCode))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("Set Pass Without AuthIdentity", "error", err)
+			return errno.ErrServerInternal
+		}
+		return errno.ErrServerInternal
+	}
+
+	// 校验验证码并消费
+	ok, err := svc.codeSvc.CheckCode(ctx, model.SMSCode, authIdentity.Identifier, code)
+	if err != nil {
+		slog.Error("Check Code Failed", "biz", model.SMSCode)
+		return errno.ErrServerInternal
+	} else if !ok {
+		return errno.ErrPhoneCodeInvalid
+	}
+
+	// 对密码进行哈希
+	passwordHash, err := svc.passHasher.Hash(newPass)
+	if err != nil {
+		return errno.ErrServerInternal
+	}
+
+	// 初始化密码
+	var authPassword = model.AuthPassword{
+		UserID:       uid,
+		PasswordHash: passwordHash,
+	}
+	if err := svc.authRepo.SetPassword(ctx, &authPassword); err != nil {
+		if errors.Is(err, repository.ErrUniqueKey) {
+			slog.Error("Set Password Failed", "error", err)
+			return errno.ErrSetPassword
+		}
+		return errno.ErrServerInternal
+	}
+
+	return nil
+}
+
 // IssueTokens 签发双 Token
 func (svc *authService) IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error) {
 	// 参数校验

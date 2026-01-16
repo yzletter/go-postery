@@ -169,7 +169,7 @@ func main() {
 		authedAuth.POST("/logout", AuthHdl.Logout)                  // POST /api/v1/auth/logout			退出登录
 		authedAuth.GET("/status", AuthHdl.Status)                   // GET /api/v1/auth/status			检查状态
 		authedAuth.POST("/password/update", AuthHdl.UpdatePassword) // POST /api/v1/auth/password/update	修改密码
-		authedAuth.POST("/password/set", AuthHdl.SetPassword)       // POST /api/v1/auth/password/set	首次设置密码
+		authedAuth.POST("/password/set", AuthHdl.SetPassword)       // POST /api/v1/auth/password/set	初始化密码
 		authedAuth.GET("/password/status", AuthHdl.HasPassword)     // GET /api/v1/auth/password/status	查询密码状态
 	}
 

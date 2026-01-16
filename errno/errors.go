@@ -24,6 +24,7 @@ var (
 	ErrUnauthorized       = &Error{20006, 403, "没有权限"}
 	ErrLogoutFailed       = &Error{20007, 500, "登出失败"}
 	ErrOldPasswordInvalid = &Error{20008, 401, "旧密码错误"}
+	ErrSetPassword        = &Error{20009, 401, "初始化密码失败"}
 )
 
 // Post 错误 Code 3000X

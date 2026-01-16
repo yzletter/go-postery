@@ -25,7 +25,6 @@ type UpdatePassRequest struct {
 }
 
 type SetPassRequest struct {
-	Phone   string `json:"phone" binding:"required,len=11"`
-	Code    string `json:"code" binding:"required"`
 	NewPass string `json:"new_password" binding:"required,len=32"` // 长度 == 32
+	Code    string `json:"code" binding:"required"`
 }
