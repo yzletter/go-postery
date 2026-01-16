@@ -1,8 +1,6 @@
 package user
 
 import (
-	"time"
-
 	"github.com/yzletter/go-postery/model"
 )
 
@@ -23,23 +21,6 @@ type ModifyProfileRequest struct {
 }
 
 func ModifyProfileRequestToModel(request ModifyProfileRequest) model.User {
-	user := model.User{
-		Email:    request.Email,
-		Avatar:   request.Avatar,
-		Bio:      request.Bio,
-		Gender:   request.Gender,
-		BirthDay: nil,
-		Location: request.Location,
-		Country:  request.Country,
-	}
-
-	if request.BirthDay != "" {
-		t, err := time.Parse("2006-01-02", request.BirthDay)
-		if err != nil {
-			return user
-		}
-		user.BirthDay = &t
-	}
-
+	user := model.User{}
 	return user
 }

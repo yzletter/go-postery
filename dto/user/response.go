@@ -16,8 +16,7 @@ type BriefDTO struct {
 // DetailDTO 后端返回详细 User 信息
 type DetailDTO struct {
 	ID          int64  `json:"id,string"`     // ID 雪花算法
-	Name        string `json:"name"`          // 用户名
-	Email       string `json:"email"`         // 邮箱
+	Nickname    string `json:"nickname"`      // 用户名
 	Avatar      string `json:"avatar"`        // 头像 URL
 	Bio         string `json:"bio"`           // 个性签名
 	Gender      int    `json:"gender"`        // 性别: 0 表示空, 1 表示男, 2 表示女, 3 表示其它
@@ -27,23 +26,13 @@ type DetailDTO struct {
 	LastLoginIP string `json:"last_login_ip"` // 最近一次登录 IP
 }
 
+// TopDTO 后端返回排行榜 User 信息
 type TopDTO struct {
-	ID     int64   `json:"id,string"`
-	Name   string  `json:"name"`   // 用户名
-	Bio    string  `json:"bio"`    // 个性签名
-	Avatar string  `json:"avatar"` // 头像 URL
-	Score  float64 `json:"score"`
-}
-
-// ToTopDTO model.User 转 ToTopDTO
-func ToTopDTO(user *model.User, score float64) TopDTO {
-	return TopDTO{
-		ID:     user.ID,
-		Name:   user.Username,
-		Bio:    user.Bio,
-		Avatar: "",
-		Score:  score,
-	}
+	ID       int64   `json:"id,string"`
+	Nickname string  `json:"nickname"` // 用户名
+	Bio      string  `json:"bio"`      // 个性签名
+	Avatar   string  `json:"avatar"`   // 头像 URL
+	Score    float64 `json:"score"`
 }
 
 // ToBriefDTO model.UserProfile 转 BriefDTO
@@ -51,34 +40,61 @@ func ToBriefDTO(userProfile *model.UserProfile) BriefDTO {
 	var res = BriefDTO{
 		ID:       userProfile.UserID,
 		NickName: userProfile.NickName,
+		Avatar:   "",
 	}
 
-	if userProfile.Avatar == nil {
-		res.Avatar = ""
-	} else {
+	if userProfile.Avatar != nil {
 		res.Avatar = *userProfile.Avatar
 	}
 	return res
 }
 
+// ToTopDTO model.User 转 ToTopDTO
+func ToTopDTO(userProfile *model.UserProfile, score float64) TopDTO {
+	var res = TopDTO{
+		ID:     userProfile.UserID,
+		Score:  score,
+		Avatar: "",
+	}
+
+	if userProfile.Avatar != nil {
+		res.Avatar = *userProfile.Avatar
+	}
+
+	return res
+}
+
 // ToDetailDTO model.User 转 DetailDTO
-func ToDetailDTO(user *model.User) DetailDTO {
-	userDetailDTO := DetailDTO{
-		ID:          user.ID,
-		Name:        user.Username,
-		Email:       user.Email,
-		Avatar:      user.Avatar,
-		Bio:         user.Bio,
-		Gender:      user.Gender,
+func ToDetailDTO(userProfile *model.UserProfile) DetailDTO {
+	var res = DetailDTO{
+		ID:          userProfile.UserID,
+		Nickname:    userProfile.NickName,
+		Gender:      userProfile.Gender,
+		Avatar:      "",
+		Bio:         "",
 		BirthDay:    "",
-		Location:    user.Location,
-		Country:     user.Country,
-		LastLoginIP: user.LastLoginIP,
+		Location:    "",
+		Country:     "",
+		LastLoginIP: "",
 	}
 
-	if user.BirthDay != nil {
-		userDetailDTO.BirthDay = user.BirthDay.Format(time.RFC3339)
+	if userProfile.Country != nil {
+		res.Location = *userProfile.Country
 	}
-
-	return userDetailDTO
+	if userProfile.LastLoginIP != nil {
+		res.Location = *userProfile.LastLoginIP
+	}
+	if userProfile.Location != nil {
+		res.Location = *userProfile.Location
+	}
+	if userProfile.BirthDay != nil {
+		res.BirthDay = userProfile.BirthDay.Format(time.RFC3339)
+	}
+	if userProfile.Bio != nil {
+		res.Bio = *userProfile.Bio
+	}
+	if userProfile.Avatar != nil {
+		res.Avatar = *userProfile.Avatar
+	}
+	return res
 }

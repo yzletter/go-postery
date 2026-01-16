@@ -68,6 +68,7 @@ func main() {
 	SessionDAO := dao.NewSessionDAO(GormDB)
 	OrderDAO := dao.NewOrderDAO(GormDB)
 	GiftDAO := dao.NewGiftDAO(GormDB)
+	AuthDAO := dao.NewAuthDAO(GormDB)
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -94,7 +95,7 @@ func main() {
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
 	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)             // 注册 GiftRepository
-	AuthRepo := repository.NewAuthRepository(AuthCache)
+	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
 	CodeRepo := repository.NewCodeRepository(CodeCache)
 
 	// Service 层
@@ -127,7 +128,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -158,19 +159,20 @@ func main() {
 	// 身份认证模块
 	auth := v1.Group("/auth")
 	{
-		auth.POST("/register/phone", AuthHdl.RegisterByPhone)           // POST /api/v1/auth/register/phone 		手机号码 + 验证码 + 密码注册
-		auth.POST("/register/email", AuthHdl.RegisterByEmail)           // POST /api/v1/auth/register/email 		邮箱 + 验证码 + 密码注册
-		auth.POST("/login/phone_pass", AuthHdl.LoginByPhoneAndPassword) // POST /api/v1/auth/login/phone_pass 	手机号码 + 密码登录
-		auth.POST("/login/email_pass", AuthHdl.LoginByEmailAndPassword) // POST /api/v1/auth/login/email_pass 	邮箱 + 密码登录
-		auth.POST("/login/phone", AuthHdl.LoginByPhone)                 // POST /api/v1/auth/login/phone 		手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
-		auth.POST("/login/email", AuthHdl.LoginByEmail)                 // POST /api/v1/auth/login/email 		邮箱 + 验证码进行登录
 		auth.POST("/sms", AuthHdl.SendSMSCode)                          // POST /api/v1/auth/sms					发送短信验证码
 		auth.POST("/email", AuthHdl.SendEmailCode)                      // POST /api/v1/auth/email				发送邮箱验证码
+		auth.POST("/register/phone", AuthHdl.RegisterByPhone)           // POST /api/v1/auth/register/phone 		注册: 昵称 + 手机号码 + 验证码 + 密码注册
+		auth.POST("/register/email", AuthHdl.RegisterByEmail)           // POST /api/v1/auth/register/email 		注册: 邮箱 + 验证码 + 密码注册
+		auth.POST("/login/phone_pass", AuthHdl.LoginByPhoneAndPassword) // POST /api/v1/auth/login/phone_pass 	登录: 手机号码 + 密码登录
+		auth.POST("/login/email_pass", AuthHdl.LoginByEmailAndPassword) // POST /api/v1/auth/login/email_pass 	登录: 邮箱 + 密码登录
+		auth.POST("/login/phone", AuthHdl.LoginByPhone)                 // POST /api/v1/auth/login/phone 		登录: 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
+		auth.POST("/login/email", AuthHdl.LoginByEmail)                 // POST /api/v1/auth/login/email 		登录: 邮箱 + 验证码进行登录
 
 		authedAuth := auth.Group("")
 		authedAuth.Use(AuthRequiredMdl)
-		authedAuth.POST("/logout", AuthHdl.Logout) // POST /api/v1/auth/logout	登出
-		authedAuth.GET("/status", AuthHdl.Status)  // GET /api/v1/auth/status	检查状态
+		authedAuth.POST("/logout", AuthHdl.Logout)           // POST /api/v1/auth/logout		退出登录
+		authedAuth.GET("/status", AuthHdl.Status)            // GET /api/v1/auth/status		检查状态
+		authedAuth.POST("/password", AuthHdl.ModifyPassword) // POST /api/v1/auth/password	修改密码
 	}
 
 	// 用户模块
@@ -179,11 +181,11 @@ func main() {
 		users.GET("/:id", UserHdl.Profile)                // GET /api/v1/users/:id									获取个人资料
 		users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
 		users.GET("/top", UserHdl.Top)                    // GET /api/v1/users/top 									获取推荐关注
+
 		// 个人模块
 		me := users.Group("/me")
 		me.Use(AuthRequiredMdl)
 		me.POST("", UserHdl.ModifyProfile)            // POST /api/v1/users/me									修改个人资料
-		me.POST("/password", UserHdl.ModifyPass)      // POST /api/v1/users/me/password 							修改密码
 		me.GET("/followers", FollowHdl.ListFollowers) // GET /api/v1/users/me/followers?pageNo=1&pageSize=10		按页获取用户粉丝
 		me.GET("/followees", FollowHdl.ListFollowees) // GET /api/v1/users/me/followees?pageNo=1&pageSize=10 	按页获取用户关注的人
 
