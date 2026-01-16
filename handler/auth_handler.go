@@ -142,6 +142,11 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 		return
 	}
 
+	if req.OldPass == req.NewPass {
+		response.Error(ctx, errno.ErrSamePassword)
+		return
+	}
+
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
 	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {

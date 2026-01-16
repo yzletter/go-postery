@@ -52,12 +52,14 @@ var (
 	ErrDuplicatedUnFollow = &Error{60002, 409, "尚未关注，无法取消"}
 )
 
+// Auth
 var (
 	ErrInvalidCode      = &Error{70001, 401, "验证码验证失败"}
 	ErrSendToFrequent   = &Error{70002, 401, "验证码发送过于频繁"}
 	ErrCodeNotFound     = &Error{70003, 401, "验证码不存在"}
 	ErrEmailCodeInvalid = &Error{70004, 401, "邮箱或验证码错误"}
 	ErrPhoneCodeInvalid = &Error{70005, 401, "手机号或验证码错误"}
+	ErrSamePassword     = &Error{70006, 401, "两次密码一致"}
 )
 
 var (
