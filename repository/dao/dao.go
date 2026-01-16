@@ -10,9 +10,9 @@ import (
 // 定义 DAO 层所有接口
 
 type AuthDAO interface {
-	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error)
-	GetPasswordHash(ctx context.Context, uid int64) (string, error)
-	CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error
+	CreateUser(ctx context.Context, authAggregate *model.AuthAggregate) error                          // 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
+	GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) // 根据登录方式和凭证获取登录认证
+	GetPasswordHash(ctx context.Context, uid int64) (string, error)                                    // 根据 UID 获取用户密码
 }
 
 type UserDAO interface {

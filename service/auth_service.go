@@ -5,13 +5,13 @@ import (
 	"errors"
 	"log/slog"
 
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service/ports"
-
-	"time"
 
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
@@ -39,9 +39,17 @@ func NewAuthService(codeSvc CodeService, authRepo repository.AuthRepository, use
 	}
 }
 
-// Register 手机号码/邮箱 + 验证码 + 密码注册
-func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identifier, code, password string) (userdto.BriefDTO, error) {
+// Register 昵称 + 手机号码/邮箱 + 验证码 + 密码注册
+func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identifier, code, password, nickname string) (userdto.BriefDTO, error) {
 	var empty userdto.BriefDTO
+
+	// 先检查是否已注册, 避免重复注册消耗验证码
+	authType := model.AuthTypeFromBiz(biz)
+	if _, err := svc.authRepo.GetAuthIdentity(ctx, authType, identifier); err == nil {
+		return empty, errno.ErrUserDuplicated
+	} else if !errors.Is(err, repository.ErrRecordNotFound) {
+		return empty, errno.ErrServerInternal
+	}
 
 	// 校验验证码并消费
 	ok, err := svc.codeSvc.CheckCode(ctx, biz, identifier, code)
@@ -60,8 +68,8 @@ func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identif
 		slog.Error("PasswordHasher Hash Failed", "error", err)
 		return empty, errno.ErrServerInternal
 	}
-	authType := model.AuthTypeFromBiz(biz)
-	authIdentity := model.AuthIdentity{ // 登录认证方式
+	user := model.User{ID: uid}
+	authIdentity := model.AuthIdentity{
 		ID:         svc.idGen.NextID(),
 		UserID:     uid,
 		AuthType:   authType,
@@ -69,23 +77,23 @@ func (svc *authService) Register(ctx context.Context, biz model.CodeBiz, identif
 		IsVerified: 1,
 		VerifiedAt: &verifiedAt,
 	}
-	if err := svc.authRepo.CreateUser(ctx, &authIdentity, &passwordHash); err != nil {
+	authPassword := model.AuthPassword{UserID: uid, PasswordHash: passwordHash}
+	userProfile := model.UserProfile{UserID: uid, NickName: nickname}
+
+	authAggregate := model.AuthAggregate{
+		User:         &user,
+		UserProfile:  &userProfile,
+		AuthPassword: &authPassword,
+		AuthIdentity: &authIdentity,
+	}
+	if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			return empty, errno.ErrUserDuplicated
 		}
 		return empty, errno.ErrServerInternal
 	}
 
-	// 查找个人资料
-	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
-		}
-		return empty, errno.ErrServerInternal
-	}
-
-	return userdto.ToBriefDTO(userProfile), nil
+	return userdto.ToBriefDTO(&userProfile), nil
 }
 
 // LoginByPassword 手机号码/邮箱 + 密码登录
@@ -191,6 +199,10 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 			// 用户不存在, 创建用户（包括用户最小项、用户登录认证、无密码、用户资料、注册扩展功能）
 			uid := svc.idGen.NextID()
 			verifiedAt := time.Now()
+			authType := model.AuthTypeFromBiz(model.SMSCode)
+
+			nickname := newNickname()
+			user := model.User{ID: uid}
 			authIdentity := model.AuthIdentity{ // 登录认证方式
 				ID:         svc.idGen.NextID(),
 				UserID:     uid,
@@ -199,24 +211,23 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 				IsVerified: 1,
 				VerifiedAt: &verifiedAt,
 			}
+			userProfile := model.UserProfile{UserID: uid, NickName: nickname}
 
-			if err := svc.authRepo.CreateUser(ctx, &authIdentity, nil); err != nil {
+			// 聚合信息
+			authAggregate := model.AuthAggregate{
+				User:         &user,
+				UserProfile:  &userProfile,
+				AuthPassword: nil, // 无密码
+				AuthIdentity: &authIdentity,
+			}
+			if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
 				if errors.Is(err, repository.ErrUniqueKey) {
 					return empty, errno.ErrUserDuplicated
 				}
 				return empty, errno.ErrServerInternal
 			}
 
-			// 查找个人资料
-			userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
-			if err != nil {
-				if errors.Is(err, repository.ErrRecordNotFound) {
-					return empty, errno.ErrUserNotFound
-				}
-				return empty, errno.ErrServerInternal
-			}
-
-			return userdto.ToBriefDTO(userProfile), nil
+			return userdto.ToBriefDTO(&userProfile), nil
 		}
 		return empty, errno.ErrServerInternal
 	}
@@ -321,4 +332,9 @@ func (svc *authService) CheckBlackList(ctx context.Context, ssid string) (bool, 
 		return false, errno.ErrServerInternal
 	}
 	return exist, nil
+}
+
+// 生成默认用户名
+func newNickname() string {
+	return "用户_" + uuid.NewString()[:8]
 }

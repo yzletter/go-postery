@@ -26,7 +26,7 @@ func NewAuthHandler(authSvc service.AuthService, codeSvc service.CodeService) *A
 	}
 }
 
-// RegisterByPhone 手机号码 + 验证码 + 密码注册
+// RegisterByPhone 昵称 + 手机号码 + 验证码 + 密码注册
 func (hdl *AuthHandler) RegisterByPhone(ctx *gin.Context) {
 	// 参数校验
 	var req auth.RegisterByPhoneRequest
@@ -38,7 +38,7 @@ func (hdl *AuthHandler) RegisterByPhone(ctx *gin.Context) {
 	}
 
 	// 注册用户
-	userBriefDTO, err := hdl.authSvc.Register(ctx, model.SMSCode, req.Phone, req.Code, req.Password)
+	userBriefDTO, err := hdl.authSvc.Register(ctx, model.SMSCode, req.Phone, req.Code, req.Password, req.Nickname)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -59,7 +59,7 @@ func (hdl *AuthHandler) RegisterByPhone(ctx *gin.Context) {
 	return
 }
 
-// RegisterByEmail 邮箱 + 验证码 + 密码注册
+// RegisterByEmail 昵称 + 邮箱 + 验证码 + 密码注册
 func (hdl *AuthHandler) RegisterByEmail(ctx *gin.Context) {
 	// 参数校验
 	var req auth.RegisterByEmailRequest
@@ -71,7 +71,7 @@ func (hdl *AuthHandler) RegisterByEmail(ctx *gin.Context) {
 	}
 
 	// 注册用户
-	userBriefDTO, err := hdl.authSvc.Register(ctx, model.EmailCode, req.Email, req.Code, req.Password)
+	userBriefDTO, err := hdl.authSvc.Register(ctx, model.EmailCode, req.Email, req.Code, req.Password, req.Nickname)
 	if err != nil {
 		response.Error(ctx, err)
 		return

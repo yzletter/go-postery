@@ -32,10 +32,12 @@ type RegisterByPhoneRequest struct {
 	Phone    string `json:"phone" binding:"required,len=11"`
 	Password string `json:"password" binding:"required"`
 	Code     string `json:"code" binding:"required"`
+	Nickname string `json:"nickname" binding:"required"`
 }
 
 type RegisterByEmailRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Code     string `json:"code" binding:"required"`
+	Nickname string `json:"nickname" binding:"required"`
 }

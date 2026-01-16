@@ -2,7 +2,10 @@ package dao
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -17,17 +20,65 @@ func NewAuthDAO(db *gorm.DB) AuthDAO {
 	}
 }
 
-func (dao *gormAuthDAO) CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error {
-	//TODO implement me
-	panic("implement me")
+// CreateUser 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
+func (dao *gormAuthDAO) CreateUser(ctx context.Context, authAggregate *model.AuthAggregate) error {
+	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(authAggregate.User).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(authAggregate.UserProfile).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(authAggregate.AuthIdentity).Error; err != nil {
+			return err
+		}
+
+		if authAggregate.AuthPassword == nil {
+			return nil
+		}
+		if err := tx.Create(authAggregate.AuthPassword).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+			return ErrUniqueKey
+		}
+		return ErrServerInternal
+	}
+	return nil
 }
 
+// GetAuthIdentity 根据登录方式和凭证获取登录认证
 func (dao *gormAuthDAO) GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) {
-	//TODO implement me
-	panic("implement me")
+	var authIdentity model.AuthIdentity
+	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("auth_type = ? AND identifier = ?", authType, identifier).First(&authIdentity)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		slog.Error(FindFailed, "auth_type", authType, "identifier", identifier, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	return &authIdentity, nil
 }
 
+// GetPasswordHash 根据 UID 获取用户密码
 func (dao *gormAuthDAO) GetPasswordHash(ctx context.Context, uid int64) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	var authPassword model.AuthPassword
+	result := dao.db.WithContext(ctx).Model(&model.AuthPassword{}).Where("user_id = ?", uid).First(&authPassword)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return "", ErrRecordNotFound
+		}
+
+		slog.Error(FindFailed, "uid", uid, "error", result.Error)
+		return "", ErrServerInternal
+	}
+
+	return authPassword.PasswordHash, nil
 }

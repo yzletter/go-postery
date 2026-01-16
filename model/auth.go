@@ -40,3 +40,10 @@ func AuthTypeFromBiz(biz CodeBiz) int {
 		return 0
 	}
 }
+
+type AuthAggregate struct {
+	User         *User
+	UserProfile  *UserProfile
+	AuthPassword *AuthPassword
+	AuthIdentity *AuthIdentity
+}

@@ -21,8 +21,8 @@ func NewAuthRepository(authDAO dao.AuthDAO, authCache cache.AuthCache) AuthRepos
 }
 
 // CreateUser 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
-func (repo *authRepository) CreateUser(ctx context.Context, authIdentity *model.AuthIdentity, passwordHash *string) error {
-	err := repo.dao.CreateUser(ctx, authIdentity, passwordHash)
+func (repo *authRepository) CreateUser(ctx context.Context, authAggregate *model.AuthAggregate) error {
+	err := repo.dao.CreateUser(ctx, authAggregate)
 	if err != nil {
 		return toRepositoryErr(err)
 	}
