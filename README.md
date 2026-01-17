@@ -50,6 +50,11 @@
 - **用户头像**
 - 对每个 email、phone 设置单日验证码上限防刷
 - 注册 Session 前进行 DB 唯一约束避免打爆 RabbitMQ
+- Outbox 对消息抢占避免（或乐观）多实例部署重复发送消息
+  - next_retry_at 指数退避
+  - 批量发送 Kafka：减少网络调用，提高吞吐
+  - 运行控制：支持 ctx cancel + ticker.Stop()
+
 - 密码校验 identifier
 - 找回密码功能
 - 新用户注册聊天功能

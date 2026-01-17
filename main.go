@@ -36,29 +36,18 @@ func main() {
 	// Infra 层
 	slog.InitSlog(conf.LogFilePath) // 初始化 slog
 
-	// 初始化 Crontab
-	crontab.NewCrontabBuilder().
-		AddFuncWithSpec("*/10 * * * *", infraMySQL.Ping).
-		AddFuncWithSpec("*/10 * * * *", infraRedis.Ping).
-		Build()
-
-	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                     // 初始化 MySQL
-	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                       // 初始化 Redis
-	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                          // 初始化 RabbitMQ
-	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                            // 初始化 RocketMQ
-	SessionKafka := infraKafka.Init([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 SessionKafka
+	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                     // 初始化 MySQL
+	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
+	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
+	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
+	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
 	EmailManager := email.NewEmailManager(conf.EmailFrom, os.Getenv(conf.EmailAuthCode), conf.EmailSubject, conf.EmailExpireMin, conf.AppName, conf.EmailYear, conf.Address)
 	SmsClient := sms.NewAliyunSmsClient(os.Getenv(conf.AliyunAccessTokenKeyID), os.Getenv(conf.AliyunAccessTokenKeySecret)) // 初始化 短信服务商
-
-	// 初始化 GracefulStop
-	graceful_stop.NewGracefulStopBuilder().
-		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(SessionKafka.Close).
-		Build()
 
 	// DAO 层
 	UserDAO := dao.NewUserDAO(GormDB)
@@ -103,19 +92,20 @@ func main() {
 
 	// Service 层
 	CodeSvc := service.NewCodeService(CodeRepo, EmailManager, SmsClient)
-	MetricSvc := service.NewMetricService()                                                                          // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)             // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)          // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                         // 注册 userSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                            // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                         // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                            // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                            // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafka, IDGenerator) // 注册 SessionService
-	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)           // 注册 WebsocketService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                    // 注册 LotteryService
+	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
+	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                  // 注册 AuthService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                                 // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                                    // 注册 postSvc
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                                 // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                    // 注册 commentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                                    // 注册 TagService
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
+	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
 
 	// 协程开启
+	go infraMySQL.ScanOutbox(context.Background(), KafkaProducer)    // 开启扫表发消息协程
 	go SessionSvc.StartSessionRegisterConsumer(context.Background()) // 开启协程注册新用户聊天功能
 	go LotterySvc.StartLotteryOrderConsumer(context.Background())    // 开启协程
 	LotterySvc.InitCacheInventory(context.Background())              // 初始化缓存库存
@@ -144,6 +134,18 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length", "Authorization"},
 		MaxAge:           12 * time.Hour,
 	})
+
+	// 初始化 Crontab
+	crontab.NewCrontabBuilder().
+		AddFuncWithSpec("*/10 * * * *", infraMySQL.Ping).
+		AddFuncWithSpec("*/10 * * * *", infraRedis.Ping).
+		Build()
+
+	// 初始化 GracefulStop
+	graceful_stop.NewGracefulStopBuilder().
+		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
+		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close).
+		Build()
 
 	// 初始化 gin
 	engine := gin.Default()

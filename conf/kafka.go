@@ -1,6 +1,5 @@
 package conf
 
 const (
-	KafkaCommitInterval = 0
-	KafkaEndpoint       = "localhost:9092"
+	KafkaEndpoint = "localhost:9092"
 )

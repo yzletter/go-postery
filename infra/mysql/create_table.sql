@@ -286,3 +286,20 @@ VALUES (170406720000000001, '论坛定制马克杯', NULL, '官方定制陶瓷�
        (170406720000000008, '论坛纪念徽章', NULL, '限量版论坛纪念徽章', 120, 500),
        (170406720000000009, '技术书籍兑换券', NULL, '可兑换一本技术类书籍', 500, 150),
        (170406720000000010, '谢谢参与', NULL, '谢谢参与', 0, 3000);
+
+
+CREATE TABLE IF NOT EXISTS events
+(
+    id            BIGINT      NOT NULL COMMENT 'ID',
+    status        TINYINT     NOT NULL DEFAULT 0 COMMENT '消息发送状态 0 待发送 1 已发送 2 需重试 3 失败（重试次数超过 5 的消息）',
+    retry_cnt     INT         NOT NULL DEFAULT 0 COMMENT '重试次数',
+    next_retry_at DATETIME             DEFAULT NULL COMMENT '下次重试时间',
+    topic         VARCHAR(64) NOT NULL COMMENT 'Kafka Topic',
+    message_key   VARCHAR(64) NOT NULL COMMENT 'Kafka 消息 Key',
+    message_value TEXT        NOT NULL COMMENT 'Kafka 消息 Value',
+    created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    CHECK (status IN (0, 1, 2, 3)),
+    KEY idx_events_scan (status, next_retry_at, created_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '消息队列表';

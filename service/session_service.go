@@ -9,10 +9,10 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/segmentio/kafka-go"
 	messagedto "github.com/yzletter/go-postery/dto/message"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/infra/kafka"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/service/ports"
@@ -24,29 +24,29 @@ var (
 )
 
 type sessionService struct {
-	sessionRepo repository.SessionRepository
-	messageRepo repository.MessageRepository
-	userRepo    repository.UserRepository
-	mqConn      *amqp.Connection
-	kafka       *kafka.Kafka
-	idGen       ports.IDGenerator
+	sessionRepo   repository.SessionRepository
+	messageRepo   repository.MessageRepository
+	userRepo      repository.UserRepository
+	mqConn        *amqp.Connection
+	kafkaConsumer *kafka.Reader
+	idGen         ports.IDGenerator
 }
 
-func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository, mq *amqp.Connection, kafka *kafka.Kafka, idGen ports.IDGenerator) SessionService {
+func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
 	return &sessionService{
-		sessionRepo: sessionRepo,
-		messageRepo: messageRepo,
-		userRepo:    userRepo,
-		mqConn:      mq,
-		kafka:       kafka,
-		idGen:       idGen,
+		sessionRepo:   sessionRepo,
+		messageRepo:   messageRepo,
+		userRepo:      userRepo,
+		mqConn:        mq,
+		kafkaConsumer: consumer,
+		idGen:         idGen,
 	}
 }
 
 func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 	backoff := time.Second
 	for {
-		message, err := svc.kafka.Reader.FetchMessage(ctx)
+		message, err := svc.kafkaConsumer.FetchMessage(ctx)
 		if err != nil {
 			if ctx.Err() != nil { // 正常退出
 				return
@@ -71,7 +71,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 		if err != nil {
 			// 脏消息
 			slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
-			_ = svc.kafka.Reader.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
+			_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 		}
 
 		// 把消息 Commit 掉
-		err = svc.kafka.Reader.CommitMessages(ctx, message)
+		err = svc.kafkaConsumer.CommitMessages(ctx, message)
 		if err != nil {
 			slog.Error("Commit Kafka Message Failed", "uid", uid, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
 
