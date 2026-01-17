@@ -14,6 +14,7 @@ import (
 	"github.com/yzletter/go-postery/infra/crontab"
 	"github.com/yzletter/go-postery/infra/email"
 	"github.com/yzletter/go-postery/infra/graceful_stop"
+	infraKafka "github.com/yzletter/go-postery/infra/kafka"
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
@@ -40,22 +41,23 @@ func main() {
 		AddFuncWithSpec("*/10 * * * *", infraRedis.Ping).
 		Build()
 
-	// 初始化 GracefulStop
-	graceful_stop.NewGracefulStopBuilder().
-		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).
-		Build()
-
-	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 初始化 MySQL
-	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)   // 初始化 Redis
-	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)      // 初始化 RabbitMQ
-	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)        // 初始化 RocketMQ
+	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                     // 初始化 MySQL
+	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                       // 初始化 Redis
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                          // 初始化 RabbitMQ
+	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                            // 初始化 RocketMQ
+	SessionKafka := infraKafka.Init([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 SessionKafka
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
 	EmailManager := email.NewEmailManager(conf.EmailFrom, os.Getenv(conf.EmailAuthCode), conf.EmailSubject, conf.EmailExpireMin, conf.AppName, conf.EmailYear, conf.Address)
 	SmsClient := sms.NewAliyunSmsClient(os.Getenv(conf.AliyunAccessTokenKeyID), os.Getenv(conf.AliyunAccessTokenKeySecret)) // 初始化 短信服务商
+
+	// 初始化 GracefulStop
+	graceful_stop.NewGracefulStopBuilder().
+		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
+		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(SessionKafka.Close).
+		Build()
 
 	// DAO 层
 	UserDAO := dao.NewUserDAO(GormDB)
@@ -128,7 +130,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
