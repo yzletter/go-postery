@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	messagedto "github.com/yzletter/go-postery/dto/message"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/infra/kafka"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/service/ports"
@@ -26,7 +28,70 @@ type sessionService struct {
 	messageRepo repository.MessageRepository
 	userRepo    repository.UserRepository
 	mqConn      *amqp.Connection
+	kafka       *kafka.Kafka
 	idGen       ports.IDGenerator
+}
+
+func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository, mq *amqp.Connection, kafka *kafka.Kafka, idGen ports.IDGenerator) SessionService {
+	return &sessionService{
+		sessionRepo: sessionRepo,
+		messageRepo: messageRepo,
+		userRepo:    userRepo,
+		mqConn:      mq,
+		kafka:       kafka,
+		idGen:       idGen,
+	}
+}
+
+func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
+	backoff := time.Second
+	for {
+		message, err := svc.kafka.Reader.FetchMessage(ctx)
+		if err != nil {
+			if ctx.Err() != nil { // 正常退出
+				return
+			}
+
+			slog.Error("Fetch Message From Kafka Failed", "Kafka", "SessionKafka", "error", err)
+
+			// 简单退避，避免狂刷日志
+			time.Sleep(backoff)
+			if backoff < 10*time.Second {
+				backoff *= 2
+			}
+			continue
+		}
+
+		backoff = time.Second
+
+		slog.Info("Read Kafka Message", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "key", string(message.Key), "value", string(message.Value))
+
+		// 获取用户 ID
+		uid, err := strconv.ParseInt(string(message.Value), 10, 64)
+		if err != nil {
+			// 脏消息
+			slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+			_ = svc.kafka.Reader.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
+			continue
+		}
+
+		// 进行注册, 幂等
+		err = svc.Register(ctx, uid)
+		if err != nil {
+			slog.Error("Register Session Failed", "error", err)
+			time.Sleep(time.Second) // 最小退避，避免打爆
+			continue                // 不 commit -> 重试
+		}
+
+		// 把消息 Commit 掉
+		err = svc.kafka.Reader.CommitMessages(ctx, message)
+		if err != nil {
+			slog.Error("Commit Kafka Message Failed", "uid", uid, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+
+			// Commit 失败通常会导致重复消费，但不会丢消息，可接受
+			continue
+		}
+	}
 }
 
 func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) (sessiondto.DTO, error) {
@@ -101,17 +166,6 @@ func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) 
 	return sessiondto.ToDTO(session, userProfile), nil
 }
 
-func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository,
-	mq *amqp.Connection, idGen ports.IDGenerator) SessionService {
-	return &sessionService{
-		sessionRepo: sessionRepo,
-		messageRepo: messageRepo,
-		userRepo:    userRepo,
-		mqConn:      mq,
-		idGen:       idGen,
-	}
-}
-
 func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiondto.DTO, error) {
 	var empty []sessiondto.DTO
 	sessions, err := svc.sessionRepo.ListByUid(ctx, uid)
@@ -140,6 +194,7 @@ func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiond
 
 // Register 注册用户的 Exchange 和 Queue
 func (svc *sessionService) Register(ctx context.Context, uid int64) error {
+
 	// 定义 Exchange 和 Queue 名字
 	exchangeName := fmt.Sprintf("%d_exchange", uid)
 	queueNameComputer := fmt.Sprintf("%d_computer", uid)

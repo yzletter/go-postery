@@ -49,6 +49,7 @@
 
 - **用户头像**
 - 对每个 email、phone 设置单日验证码上限防刷
+- 注册 Session 前进行 DB 唯一约束避免打爆 RabbitMQ
 - 密码校验 identifier
 - 找回密码功能
 - 新用户注册聊天功能

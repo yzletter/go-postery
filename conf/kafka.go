@@ -1,8 +1,6 @@
 package conf
 
-import "time"
-
 const (
-	KafkaCommitInterval = time.Second
+	KafkaCommitInterval = 0
 	KafkaEndpoint       = "localhost:9092"
 )

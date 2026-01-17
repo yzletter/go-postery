@@ -16,6 +16,7 @@ type SessionHandler struct {
 }
 
 func NewSessionHandler(sessionSvc service.SessionService) *SessionHandler {
+
 	return &SessionHandler{
 		sessionSvc: sessionSvc,
 	}

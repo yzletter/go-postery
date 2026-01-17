@@ -86,6 +86,7 @@ type SessionService interface {
 	Register(ctx context.Context, uid int64) error
 	GetHistoryMessagesByPage(ctx context.Context, uid int64, targetID int64, pageNo, pageSize int) (int, []messagedto.DTO, error)
 	Delete(ctx context.Context, uid, sid int64) error
+	StartSessionRegisterConsumer(ctx context.Context)
 }
 
 type WebsocketService interface {
@@ -98,7 +99,7 @@ type LotteryService interface {
 	Pay(ctx context.Context, uid, gid int64) error
 	GiveUp(ctx context.Context, uid, gid int64) error
 	Result(ctx context.Context, uid int64) (orderdto.DTO, error)
-	Consume(ctx context.Context)
+	StartLotteryOrderConsumer(ctx context.Context)
 	InitCacheInventory(ctx context.Context)
 }
 

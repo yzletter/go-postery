@@ -220,7 +220,7 @@ func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO,
 	return orderdto.ToDTO(order, userProfile, gift), nil
 }
 
-func (svc *lotteryService) Consume(ctx context.Context) {
+func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 	consumer := svc.mq.RocketConsumer
 	for {
 		messages, err := consumer.Receive(ctx, 1, conf.RocketLotteryInvisibleDuration) // 一批一条

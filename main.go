@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"syscall"
@@ -102,17 +103,22 @@ func main() {
 
 	// Service 层
 	CodeSvc := service.NewCodeService(CodeRepo, EmailManager, SmsClient)
-	MetricSvc := service.NewMetricService()                                                                 // 注册 MetricService
-	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)    // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator) // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                // 注册 userSvc
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                   // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                // 注册 FollowService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                   // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                   // 注册 TagService
-	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)      // 注册 SessionService
-	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)  // 注册 WebsocketService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)           // 注册 LotteryService
+	MetricSvc := service.NewMetricService()                                                                          // 注册 MetricService
+	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)             // 注册 RateLimitService
+	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)          // 注册 AuthService
+	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                         // 注册 userSvc
+	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                            // 注册 postSvc
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                         // 注册 FollowService
+	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                            // 注册 commentService
+	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                            // 注册 TagService
+	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafka, IDGenerator) // 注册 SessionService
+	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)           // 注册 WebsocketService
+	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                    // 注册 LotteryService
+
+	// 协程开启
+	go SessionSvc.StartSessionRegisterConsumer(context.Background()) // 开启协程注册新用户聊天功能
+	go LotterySvc.StartLotteryOrderConsumer(context.Background())    // 开启协程
+	LotterySvc.InitCacheInventory(context.Background())              // 初始化缓存库存
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, CodeSvc)                   // 注册 AuthHandler

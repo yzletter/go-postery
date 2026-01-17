@@ -136,7 +136,7 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 	// 子程：写数据到 Websocket 中
 	go func() {
 		if err := consumeMQ(connCtx, svc.mqConn, uid, send); err != nil && !errors.Is(err, context.Canceled) {
-			slog.Error("Consume MQ Failed", "error", err)
+			slog.Error("StartLotteryOrderConsumer MQ Failed", "error", err)
 		}
 	}()
 
