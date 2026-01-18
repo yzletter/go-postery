@@ -104,11 +104,14 @@ func main() {
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// 协程开启
-	go infraMySQL.ScanOutbox(context.Background(), KafkaProducer)    // 开启扫表发消息协程
-	go SessionSvc.StartSessionRegisterConsumer(context.Background()) // 开启协程注册新用户聊天功能
-	go LotterySvc.StartLotteryOrderConsumer(context.Background())    // 开启协程
-	LotterySvc.InitCacheInventory(context.Background())              // 初始化缓存库存
+	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
+	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
+	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程
+	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc, CodeSvc)                   // 注册 AuthHandler
@@ -145,6 +148,7 @@ func main() {
 	graceful_stop.NewGracefulStopBuilder().
 		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
 		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close).
+		AddFunc(cancel).
 		Build()
 
 	// 初始化 gin

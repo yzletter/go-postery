@@ -46,58 +46,64 @@ func NewSessionService(sessionRepo repository.SessionRepository, messageRepo rep
 func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 	backoff := time.Second
 	for {
-		message, err := svc.kafkaConsumer.FetchMessage(ctx)
-		if err != nil {
-			if ctx.Err() != nil { // 正常退出
-				return
+		select {
+		case <-ctx.Done():
+			slog.Info("关闭 Session Register Consumer 成功 ...")
+			return
+		default:
+			message, err := svc.kafkaConsumer.FetchMessage(ctx)
+			if err != nil {
+				if ctx.Err() != nil { // 正常退出
+					return
+				}
+
+				slog.Error("Fetch Message From Kafka Failed", "Kafka", "SessionKafka", "error", err)
+
+				// 简单退避，避免狂刷日志
+				time.Sleep(backoff)
+				if backoff < 10*time.Second {
+					backoff *= 2
+				}
+				continue
 			}
 
-			slog.Error("Fetch Message From Kafka Failed", "Kafka", "SessionKafka", "error", err)
-
-			// 简单退避，避免狂刷日志
-			time.Sleep(backoff)
-			if backoff < 10*time.Second {
-				backoff *= 2
+			backoff = time.Second
+			var payload model.RegisterSessionEvent
+			err = sonic.Unmarshal(message.Value, &payload)
+			if err != nil {
+				// 脏消息
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
+				continue
 			}
-			continue
-		}
 
-		backoff = time.Second
-		var payload model.RegisterSessionEvent
-		err = sonic.Unmarshal(message.Value, &payload)
-		if err != nil {
-			// 脏消息
-			slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
-			_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
-			continue
-		}
+			slog.Info("Read Kafka Message", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "key", string(message.Key), "value", string(message.Value))
 
-		slog.Info("Read Kafka Message", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "key", string(message.Key), "value", string(message.Value))
+			// 获取用户 ID
+			uid := payload.UserID
+			if err != nil {
+				// 脏消息
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
+				continue
+			}
 
-		// 获取用户 ID
-		uid := payload.UserID
-		if err != nil {
-			// 脏消息
-			slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
-			_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
-			continue
-		}
+			// 进行注册, 幂等
+			err = svc.Register(ctx, uid)
+			if err != nil {
+				slog.Error("Register Session Failed", "error", err)
+				time.Sleep(time.Second) // 最小退避，避免打爆
+				continue                // 不 commit -> 重试
+			}
 
-		// 进行注册, 幂等
-		err = svc.Register(ctx, uid)
-		if err != nil {
-			slog.Error("Register Session Failed", "error", err)
-			time.Sleep(time.Second) // 最小退避，避免打爆
-			continue                // 不 commit -> 重试
-		}
+			// 把消息 Commit 掉
+			err = svc.kafkaConsumer.CommitMessages(ctx, message)
+			if err != nil {
+				slog.Error("Commit Kafka Message Failed", "uid", uid, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
 
-		// 把消息 Commit 掉
-		err = svc.kafkaConsumer.CommitMessages(ctx, message)
-		if err != nil {
-			slog.Error("Commit Kafka Message Failed", "uid", uid, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
-
-			// Commit 失败通常会导致重复消费，但不会丢消息，可接受
-			continue
+				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
+				continue
+			}
 		}
 	}
 }
