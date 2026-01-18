@@ -21,3 +21,7 @@ func (e Event) TableName() string {
 type RegisterSessionEvent struct {
 	UserID int64 `json:"user_id,string"`
 }
+
+type InitUserScoreEvent struct {
+	UserID int64 `json:"user_id,string"`
+}

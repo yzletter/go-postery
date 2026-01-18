@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
+	"github.com/bytedance/sonic"
+	"github.com/segmentio/kafka-go"
 	dto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
@@ -13,16 +16,77 @@ import (
 )
 
 type followService struct {
-	followRepo repository.FollowRepository
-	userRepo   repository.UserRepository
-	idGen      ports.IDGenerator
+	followRepo    repository.FollowRepository
+	userRepo      repository.UserRepository
+	kafkaConsumer *kafka.Reader
+	idGen         ports.IDGenerator
 }
 
-func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository, idGen ports.IDGenerator) FollowService {
+func NewFollowService(followRepo repository.FollowRepository, userRepo repository.UserRepository, kafkaConsumer *kafka.Reader, idGen ports.IDGenerator) FollowService {
 	return &followService{
-		followRepo: followRepo,
-		userRepo:   userRepo,
-		idGen:      idGen,
+		followRepo:    followRepo,
+		userRepo:      userRepo,
+		kafkaConsumer: kafkaConsumer,
+		idGen:         idGen,
+	}
+}
+
+// StartInitUserScoreConsumer 开启用户分数改变的 Kafka 消费者协程
+func (svc *followService) StartInitUserScoreConsumer(ctx context.Context) {
+	backoff := time.Second
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("关闭 Score Init Consumer 成功 ...")
+			return
+		default:
+			// Fetch 消息
+			message, err := svc.kafkaConsumer.FetchMessage(ctx)
+			if err != nil {
+				if ctx.Err() != nil { // 正常退出
+					return
+				}
+
+				slog.Error("Fetch Message From Kafka Failed", "Kafka", "SessionKafka", "error", err)
+
+				// 简单退避，避免狂刷日志
+				time.Sleep(backoff)
+				if backoff < 10*time.Second {
+					backoff *= 2
+				}
+				continue
+			}
+
+			backoff = time.Second // 重置
+
+			// 解析 JSON
+			var payload model.InitUserScoreEvent
+			err = sonic.Unmarshal(message.Value, &payload)
+			if err != nil {
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				// 脏消息 Commit 掉
+				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
+			}
+
+			uid := payload.UserID
+
+			// 进行初始化用户分数
+			err = svc.userRepo.ChangeScore(ctx, uid, int(time.Now().Unix()))
+			if err != nil {
+				slog.Error("Init User Score Failed", "error", err)
+				time.Sleep(time.Second) // 最小退避，避免打爆
+				continue                // 不 commit -> 重试
+			}
+
+			// 初始化用户分数成功, 把消息 Commit 掉
+			err = svc.kafkaConsumer.CommitMessages(ctx, message)
+			if err != nil {
+				slog.Error("Commit Kafka Message Failed", "uid", uid, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+
+				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
+				continue
+			}
+		}
 	}
 }
 
@@ -51,7 +115,7 @@ func (svc *followService) Follow(ctx context.Context, ferId, feeId int64) error 
 		}
 		return errno.ErrServerInternal
 	}
-	svc.userRepo.ChangeScore(ctx, feeId, 1)
+	_ = svc.userRepo.ChangeScore(ctx, feeId, 1)
 	return nil
 }
 
@@ -75,7 +139,7 @@ func (svc *followService) UnFollow(ctx context.Context, ferId, feeId int64) erro
 		return errno.ErrServerInternal
 	}
 
-	svc.userRepo.ChangeScore(ctx, feeId, -1)
+	_ = svc.userRepo.ChangeScore(ctx, feeId, -1)
 
 	return nil
 }

@@ -81,12 +81,6 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 
 			// 获取用户 ID
 			uid := payload.UserID
-			if err != nil {
-				// 脏消息
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
-				_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
-				continue
-			}
 
 			// 进行注册, 幂等
 			err = svc.Register(ctx, uid)

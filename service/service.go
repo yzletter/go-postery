@@ -73,6 +73,7 @@ type TagService interface {
 }
 
 type FollowService interface {
+	StartInitUserScoreConsumer(ctx context.Context)
 	Follow(ctx context.Context, ferId, feeId int64) error
 	UnFollow(ctx context.Context, ferId, feeId int64) error
 	IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error)

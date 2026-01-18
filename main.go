@@ -42,6 +42,7 @@ func main() {
 	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
+	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")    // 初始化 Follow 模块 Kafka 消费方
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -97,7 +98,7 @@ func main() {
 	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                  // 注册 AuthService
 	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                                 // 注册 userSvc
 	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                                    // 注册 postSvc
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, IDGenerator)                                                 // 注册 FollowService
+	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, FollowKafkaConsumer, IDGenerator)                            // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                    // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                                    // 注册 TagService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
@@ -109,6 +110,7 @@ func main() {
 
 	// 协程开启
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
+	go FollowSvc.StartInitUserScoreConsumer(ctx)    // 开启修改用户分数的消息协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程
 	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存

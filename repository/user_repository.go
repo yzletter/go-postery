@@ -65,10 +65,12 @@ func (repo *userRepository) Top(ctx context.Context) ([]*model.UserProfile, []fl
 }
 
 // ChangeScore 修改用户分数
-func (repo *userRepository) ChangeScore(ctx context.Context, uid int64, delta int) {
+func (repo *userRepository) ChangeScore(ctx context.Context, uid int64, delta int) error {
 	err := repo.cache.ChangeScore(ctx, uid, delta)
 	if err != nil {
 		slog.Error("Change User Score Failed", "error", err)
-		return
+		return toRepositoryErr(err)
 	}
+
+	return nil
 }

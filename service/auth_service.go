@@ -109,9 +109,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 			authType := model.AuthTypeFromBiz(model.SMSCode)
 
 			nickname := newNickname()
-			user := model.User{
-				ID: uid,
-			}
+			user := model.User{ID: uid}
 			authIdentity := model.AuthIdentity{ // 登录认证方式
 				ID:         svc.idGen.NextID(),
 				UserID:     uid,
@@ -121,23 +119,35 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 				VerifiedAt: &verifiedAt,
 			}
 			userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
-			payload, _ := sonic.Marshal(model.RegisterSessionEvent{UserID: uid})
-			event := model.Event{
+			events := make([]*model.Event, 0)
+
+			// 注册聊天功能 Event
+			registerSessionPayload, _ := sonic.Marshal(model.RegisterSessionEvent{UserID: uid})
+			registerSessionEvent := model.Event{
 				ID:           svc.idGen.NextID(),
-				Status:       0, // 未发送
-				RetryCnt:     0,
 				Topic:        "session",
 				MessageKey:   "register_session",
-				MessageValue: string(payload),
-				NextRetryAt:  nil,
+				MessageValue: string(registerSessionPayload),
 			}
+			events = append(events, &registerSessionEvent)
+
+			// 初始化用户推荐分数 Event
+			initUserScorePayload, _ := sonic.Marshal(model.InitUserScoreEvent{UserID: uid})
+			initUserScoreEvent := model.Event{
+				ID:           svc.idGen.NextID(),
+				Topic:        "follow",
+				MessageKey:   "init_user_score",
+				MessageValue: string(initUserScorePayload),
+			}
+			events = append(events, &initUserScoreEvent)
+
 			// 聚合信息
 			authAggregate := model.AuthAggregate{
 				User:         &user,
 				UserProfile:  &userProfile,
 				AuthPassword: nil, // 无密码
 				AuthIdentity: &authIdentity,
-				Event:        &event,
+				Events:       events,
 			}
 			if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
 				if errors.Is(err, repository.ErrUniqueKey) {
