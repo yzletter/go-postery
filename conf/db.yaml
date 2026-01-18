@@ -5,3 +5,6 @@ mysql:
   password: 123456        # 密码
   dbName: go_postery      # 数据库名
   logFileName: db.log     # 日志文件名
+qdrant:
+  host: localhost
+  port: 6334 # 走grpc的默认端口号 6334（http的默认端口号是6333，不要走http）

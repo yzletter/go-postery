@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"syscall"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/yzletter/go-postery/infra/graceful_stop"
 	infraKafka "github.com/yzletter/go-postery/infra/kafka"
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
+	infraQdarant "github.com/yzletter/go-postery/infra/qdrant"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
@@ -36,7 +36,8 @@ func main() {
 	// Infra 层
 	slog.InitSlog(conf.LogFilePath) // 初始化 slog
 
-	GormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                     // 初始化 MySQL
+	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                // 初始化 MySQL
+	QdrantClient := infraQdarant.Init("./conf", "db", viper.YAML)                                       // 初始化 Qdrant
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
 	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
@@ -51,17 +52,17 @@ func main() {
 	SmsClient := sms.NewAliyunSmsClient(os.Getenv(conf.AliyunAccessTokenKeyID), os.Getenv(conf.AliyunAccessTokenKeySecret)) // 初始化 短信服务商
 
 	// DAO 层
-	UserDAO := dao.NewUserDAO(GormDB)
-	PostDAO := dao.NewPostDAO(GormDB)
-	CommentDAO := dao.NewCommentDAO(GormDB)
-	LikeDAO := dao.NewLikeDAO(GormDB)
-	FollowDAO := dao.NewFollowDAO(GormDB)
-	TagDAO := dao.NewTagDAO(GormDB)
-	MessageDAO := dao.NewMessageDAO(GormDB)
-	SessionDAO := dao.NewSessionDAO(GormDB)
-	OrderDAO := dao.NewOrderDAO(GormDB)
-	GiftDAO := dao.NewGiftDAO(GormDB)
-	AuthDAO := dao.NewAuthDAO(GormDB)
+	UserDAO := dao.NewUserDAO(MySQLGormDB)
+	PostDAO := dao.NewPostDAO(MySQLGormDB)
+	CommentDAO := dao.NewCommentDAO(MySQLGormDB)
+	LikeDAO := dao.NewLikeDAO(MySQLGormDB)
+	FollowDAO := dao.NewFollowDAO(MySQLGormDB)
+	TagDAO := dao.NewTagDAO(MySQLGormDB)
+	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
+	SessionDAO := dao.NewSessionDAO(MySQLGormDB)
+	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
+	GiftDAO := dao.NewGiftDAO(MySQLGormDB)
+	AuthDAO := dao.NewAuthDAO(MySQLGormDB)
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -125,13 +126,11 @@ func main() {
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
 	LotteryHdl := handler.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
 
-	fmt.Println(LotteryHdl)
-
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -150,7 +149,7 @@ func main() {
 	graceful_stop.NewGracefulStopBuilder().
 		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
 		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close).
-		AddFunc(cancel).
+		AddFunc(cancel).AddFunc(infraQdarant.Close).
 		Build()
 
 	// 初始化 gin
