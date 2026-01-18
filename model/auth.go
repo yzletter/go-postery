@@ -46,4 +46,5 @@ type AuthAggregate struct {
 	UserProfile  *UserProfile
 	AuthPassword *AuthPassword
 	AuthIdentity *AuthIdentity
+	Event        *Event
 }

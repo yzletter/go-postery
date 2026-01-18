@@ -34,6 +34,11 @@ func (dao *gormAuthDAO) CreateUser(ctx context.Context, authAggregate *model.Aut
 			return err
 		}
 
+		// 写 OutBox
+		if err := tx.Create(authAggregate.Event).Error; err != nil {
+			return err
+		}
+
 		if authAggregate.AuthPassword == nil {
 			return nil
 		}

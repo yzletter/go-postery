@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/conf"
@@ -121,13 +121,23 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 				VerifiedAt: &verifiedAt,
 			}
 			userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
-
+			payload, _ := sonic.Marshal(model.RegisterSessionEvent{UserID: uid})
+			event := model.Event{
+				ID:           svc.idGen.NextID(),
+				Status:       0, // 未发送
+				RetryCnt:     0,
+				Topic:        "session",
+				MessageKey:   "register_session",
+				MessageValue: string(payload),
+				NextRetryAt:  nil,
+			}
 			// 聚合信息
 			authAggregate := model.AuthAggregate{
 				User:         &user,
 				UserProfile:  &userProfile,
 				AuthPassword: nil, // 无密码
 				AuthIdentity: &authIdentity,
+				Event:        &event,
 			}
 			if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
 				if errors.Is(err, repository.ErrUniqueKey) {

@@ -3,6 +3,7 @@ package kafka
 import (
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -20,7 +21,8 @@ func InitProducer(brokers []string) *kafka.Writer {
 			Balancer:               &kafka.Hash{},         // 把message的key进行hash，确定partition
 			RequiredAcks:           kafka.RequireAll,      // RequireNone不需要等待ack返回，效率最高，安全性最低；RequireOne只需要确保Leader写入成功就可以发送下一条消息；RequiredAcks需要确保Leader和所有Follower都写入成功才可以发送下一条消息。
 			AllowAutoTopicCreation: true,                  // Topic不存在时自动创建。生产环境中一般设为false，由运维管理员创建Topic并配置partition数目
-			WriteTimeout:           10,                    // 设定写超时
+			WriteTimeout:           10 * time.Second,      // 设定写超时
+			ReadTimeout:            10 * time.Second,      // 建议也补上
 		}
 	})
 	return producer

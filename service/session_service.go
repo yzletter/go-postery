@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"time"
 
+	"github.com/bytedance/sonic"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
 	messagedto "github.com/yzletter/go-postery/dto/message"
@@ -63,11 +63,19 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 		}
 
 		backoff = time.Second
+		var payload model.RegisterSessionEvent
+		err = sonic.Unmarshal(message.Value, &payload)
+		if err != nil {
+			// 脏消息
+			slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+			_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
+			continue
+		}
 
 		slog.Info("Read Kafka Message", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "key", string(message.Key), "value", string(message.Value))
 
 		// 获取用户 ID
-		uid, err := strconv.ParseInt(string(message.Value), 10, 64)
+		uid := payload.UserID
 		if err != nil {
 			// 脏消息
 			slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)

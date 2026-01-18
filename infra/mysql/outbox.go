@@ -44,6 +44,7 @@ func ScanOutbox(ctx context.Context, producer *kafka.Writer) {
 				Value: []byte(event.MessageValue),
 			})
 			if err != nil {
+				slog.Error("Kafka Write Message Failed", "error", err)
 				// 发送失败回填表
 				status := 2
 				if event.RetryCnt >= 5 { // 已经重试五次了，标记为毒消息

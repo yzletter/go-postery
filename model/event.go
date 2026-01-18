@@ -17,3 +17,7 @@ type Event struct {
 func (e Event) TableName() string {
 	return "events"
 }
+
+type RegisterSessionEvent struct {
+	UserID int64 `json:"user_id,string"`
+}
