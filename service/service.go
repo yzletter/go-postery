@@ -43,7 +43,7 @@ type UserService interface {
 }
 
 type PostService interface {
-	Create(ctx context.Context, uid int64, title, content string) (postdto.DetailDTO, error)
+	Create(ctx context.Context, uid int64, title string, content string, contentType int) (postdto.DetailDTO, error)
 	GetDetailById(ctx context.Context, id int64, addViewCnt bool) (postdto.DetailDTO, error)
 	GetBriefById(ctx context.Context, id int64) (postdto.BriefDTO, error)
 	Belong(ctx context.Context, pid, uid int64) bool

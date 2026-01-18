@@ -34,7 +34,7 @@ func NewPostService(postRepo repository.PostRepository, userRepo repository.User
 }
 
 // Create 新建一篇帖子
-func (svc *postService) Create(ctx context.Context, uid int64, title, content string) (postdto.DetailDTO, error) {
+func (svc *postService) Create(ctx context.Context, uid int64, title string, content string, contentType int) (postdto.DetailDTO, error) {
 	var empty postdto.DetailDTO
 
 	// 先查找作者
@@ -48,11 +48,12 @@ func (svc *postService) Create(ctx context.Context, uid int64, title, content st
 
 	// 创建帖子
 	post := &model.Post{
-		ID:      svc.idGen.NextID(),
-		UserID:  uid,
-		Title:   title,
-		Content: content,
-		Status:  1,
+		ID:          svc.idGen.NextID(),
+		UserID:      uid,
+		Title:       title,
+		Content:     content,
+		ContentType: contentType,
+		Status:      1,
 	}
 	err = svc.postRepo.Create(ctx, post)
 	if err != nil {

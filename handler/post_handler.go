@@ -151,7 +151,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.postSvc.Create(ctx, uid, createRequest.Title, createRequest.Content)
+	postDTO, err := hdl.postSvc.Create(ctx, uid, createRequest.Title, createRequest.Content, createRequest.ContentType)
 	if err != nil {
 		response.Error(ctx, err)
 		return

@@ -16,6 +16,7 @@ type Post struct {
 	Status       int        `gorm:"column:status"`        // 状态 1 正常, 2 封禁
 	Title        string     `gorm:"column:title"`         // 标题
 	Content      string     `gorm:"column:content"`       // 正文
+	ContentType  int        `gorm:"column:content_type"`  // 正文类型 0 普通文本 1 markdown 文本
 	CreatedAt    time.Time  `gorm:"column:created_at"`    // 创建时间
 	UpdatedAt    time.Time  `gorm:"column:updated_at"`    // 更新时间
 	DeletedAt    *time.Time `gorm:"column:deleted_at"`    // 逻辑删除时间

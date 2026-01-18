@@ -22,6 +22,8 @@ type Response struct {
 	Data giftdto.DTO `json:"data,omitempty"` // 具体数据，失败时可以为空
 }
 
+const token = "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJVaWQiOjIwMTI3MTYxOTI1NjA1Nzg1NjAsIlNTaWQiOiJjNDZlNDYyOC05NjlkLTQ0YmUtODBkYy0yMThiODM1NTI0MDIiLCJSb2xlIjowLCJVc2VyQWdlbnQiOiJBcGlmb3gvMS4wLjAgKGh0dHBzOi8vYXBpZm94LmNvbSkiLCJpc3MiOiJnby1wb3N0ZXJ5IiwiZXhwIjoxNzY4NzE5OTYzfQ.juJY9NCuElTM3jGnUsE1vC5Sny-k4uPKYskEFlfbl9Lf9EkJ7Aci7IPOXz7_-IszJvJQVH6dKJ61006tNHAbuA"
+
 func TestLottery(t *testing.T) {
 	hitMap := make(map[string]int, 10) // 每个奖品被抽中的次数
 	giftCh := make(chan string, 10000) // 抽中的奖品id放入这个channel
@@ -52,7 +54,7 @@ func TestLottery(t *testing.T) {
 					panic(err)
 				}
 				// 添加 Header
-				req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJVaWQiOjIwMDIwMTE2Njg4MTIzOTg1OTIsIlNTaWQiOiI1N2UwM2FjMy05OTIyLTQ2M2ItYmQxNy02MGE5YTZlNGMyMjciLCJSb2xlIjowLCJVc2VyQWdlbnQiOiJBcGlmb3gvMS4wLjAgKGh0dHBzOi8vYXBpZm94LmNvbSkiLCJpc3MiOiJnby1wb3N0ZXJ5IiwiZXhwIjoxNzY3NTMwNjkwfQ.0A9BH6Fb1LcsD5FODH2wcDJSAnafF_sr1XytwsdnbJ8-XO7kUFT9QfGWmd7UwyQaiF2KFEEx9itypas9LnHQxg")
+				req.Header.Set("Authorization", token)
 				req.Header.Set("Content-Type", "application/json")
 				req.Header.Set("User-Agent", "Go-http-client/1.1")
 
@@ -96,7 +98,6 @@ func TestLottery(t *testing.T) {
 		qps := totalCall / totalTime
 		avgTime := totalUseTime / totalCall
 		fmt.Printf("QPS %d, avg time %dms\n", qps, avgTime)
-		//QPS 1650, avg time 69ms
 
 		total := 0
 		for name, count := range hitMap {
@@ -109,7 +110,7 @@ func TestLottery(t *testing.T) {
 
 // go test -v ./test -run=^TestLottery$ -count=1
 /*
-	QPS 2850, avg time 79ms
+	QPS 3160, avg time 73ms
 	论坛定制马克杯  500
 	咖啡兑换券      500
 	机械键盘        400
@@ -120,5 +121,5 @@ func TestLottery(t *testing.T) {
 	积分翻倍卡      1000
 	无线鼠标        200
 	论坛周边T恤     500
-	共计11200件商品
+	共计15600件商品
 */

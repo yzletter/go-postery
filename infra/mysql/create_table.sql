@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS posts
     user_id       BIGINT       NOT NULL COMMENT '发布者 ID',
     title         varchar(255) NOT NULL COMMENT '标题',
     content       TEXT COMMENT '正文',
+    content_type  TINYINT      NOT NULL DEFAULT 0 COMMENT '文本类型 0 普通文本 1 Markdown',
     status        TINYINT      NOT NULL DEFAULT 1 COMMENT '状态 1 正常, 2 封禁',
     view_count    INT          NOT NULL DEFAULT 0 COMMENT '浏览量',
     like_count    INT          NOT NULL DEFAULT 0 COMMENT '点赞数',

@@ -14,6 +14,7 @@ type DetailDTO struct {
 	CommentCount int              `json:"comment_count"`
 	Title        string           `json:"title"`
 	Content      string           `json:"content"`
+	ContentType  int              `json:"content_type"`
 	CreatedAt    string           `json:"created_at"`
 	Author       userdto.BriefDTO `json:"author"`
 	Tags         []string         `json:"tags"`
@@ -39,6 +40,7 @@ func ToDetailDTO(post *model.Post, userProfile *model.UserProfile) DetailDTO {
 		Content:      post.Content,
 		CreatedAt:    post.CreatedAt.Format(time.RFC3339),
 		Author:       userdto.ToBriefDTO(userProfile),
+		ContentType:  post.ContentType,
 		ViewCount:    post.ViewCount,
 		CommentCount: post.CommentCount,
 		LikeCount:    post.LikeCount,
