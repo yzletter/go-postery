@@ -15,6 +15,7 @@ import (
 	"github.com/yzletter/go-postery/infra/email"
 	"github.com/yzletter/go-postery/infra/graceful_stop"
 	infraKafka "github.com/yzletter/go-postery/infra/kafka"
+	infraLLM "github.com/yzletter/go-postery/infra/llm"
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraQdarant "github.com/yzletter/go-postery/infra/qdrant"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
@@ -36,14 +37,15 @@ func main() {
 	// Infra 层
 	slog.InitSlog(conf.LogFilePath) // 初始化 slog
 
-	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                // 初始化 MySQL
-	QdrantClient := infraQdarant.Init("./conf", "db", viper.YAML)                                       // 初始化 Qdrant
-	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
-	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
-	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
-	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
-	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
-	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")    // 初始化 Follow 模块 Kafka 消费方
+	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                                 // 初始化 MySQL
+	QdrantClient := infraQdarant.Init("./conf", "db", viper.YAML)                                                        // 初始化 Qdrant
+	ArkEmbedder := infraLLM.NewArkEmbedder(context.Background(), "doubao-embedding-vision-250615", os.Getenv("ARK_KEY")) // 初始化火山引擎向量模型
+	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                                        // 初始化 Redis
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                                           // 初始化 RabbitMQ
+	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                                             // 初始化 RocketMQ
+	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                                               // 初始化 Kafka 生产方
+	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session")                  // 初始化 Session 模块 Kafka 消费方
+	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")                     // 初始化 Follow 模块 Kafka 消费方
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -130,7 +132,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
