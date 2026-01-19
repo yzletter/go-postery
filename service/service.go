@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	agentdto "github.com/yzletter/go-postery/dto/agent"
 	commentdto "github.com/yzletter/go-postery/dto/comment"
 	giftdto "github.com/yzletter/go-postery/dto/gift"
 	messagedto "github.com/yzletter/go-postery/dto/message"
@@ -108,4 +109,5 @@ type AgentService interface {
 	StartChunkDocConsumer(ctx context.Context)
 	StartUpsertQdrantConsumer(ctx context.Context)
 	ConsumeMessage(ctx context.Context, BatchID int64) error
+	Chat(ctx context.Context, uid int64, sessionID int64, query string) (agentdto.DTO, error)
 }

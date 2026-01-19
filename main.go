@@ -133,6 +133,7 @@ func main() {
 	SessionHdl := handler.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
 	LotteryHdl := handler.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
+	AgentHdl := handler.NewAgentHandler(AgentSvc)                         // 注册 AgentHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
@@ -260,7 +261,7 @@ func main() {
 	sessions := v1.Group("/sessions")
 	sessions.Use(AuthRequiredMdl)
 	{
-		sessions.GET("", SessionHdl.List)          // GET /api/v1/sessions								获取当前登录用户会话列表
+		sessions.GET("", SessionHdl.List)          // GET /api/v1/sessions							获取当前登录用户会话列表
 		sessions.DELETE("/:id", SessionHdl.Delete) // DELETE /api/v1/sessions/:id						删除当前会话
 	}
 
@@ -280,6 +281,12 @@ func main() {
 		lottery.POST("/giveup", LotteryHdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
 		lottery.POST("/pay", LotteryHdl.Pay)       // POST /api/v1/lottery/pay 支付
 		lottery.GET("/result", LotteryHdl.Result)  // GET /api/v1/lottery/result 查询结果
+	}
+
+	agent := v1.Group("/agent")
+	agent.Use(AuthRequiredMdl)
+	{
+		agent.POST("/chat", AgentHdl.Chat) // POST /api/v1/agent/chat
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

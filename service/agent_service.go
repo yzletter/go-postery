@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
+	agentdto "github.com/yzletter/go-postery/dto/agent"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/service/ports"
@@ -153,6 +154,10 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (svc *agentService) Chat(ctx context.Context, uid int64, sessionID int64, query string) (agentdto.DTO, error) {
+
 }
 
 // IndexDocument 索引文本

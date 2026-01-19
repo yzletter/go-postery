@@ -13,11 +13,11 @@
 ## 简介
 
 - 用 Go 实现一个现代化论坛
-- 后端纯代码量：7300 + 行
+- 后端纯代码量：8000 + 行
 
 ## 项目进度
 
-**Gin + Gorm + Mysql + Redis + Viper + Slog + Kafka + RabbitMQ + RocketMQ + Promethus + Grafana + Crontab + Lua**
+**Gin + Eino + Gorm + Mysql + Redis + Viper + Slog + Kafka + RabbitMQ + RocketMQ + Promethus + Grafana + Crontab + Lua**
 
 - **功能：** 通过 **SnowFlake** 生成**分布式ID**；
   - **认证功能：**
