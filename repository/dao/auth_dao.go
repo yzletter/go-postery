@@ -23,32 +23,33 @@ func NewAuthDAO(db *gorm.DB) AuthDAO {
 
 // CreateUser 创建用户（包括用户最小项、用户登录认证、用户密码、用户资料、注册扩展功能）
 func (dao *gormAuthDAO) CreateUser(ctx context.Context, authAggregate *model.AuthAggregate) error {
-	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(authAggregate.User).Error; err != nil {
-			return err
-		}
-		if err := tx.Create(authAggregate.UserProfile).Error; err != nil {
-			return err
-		}
-		if err := tx.Create(authAggregate.AuthIdentity).Error; err != nil {
-			return err
-		}
-
-		// 写 OutBox
-		for _, event := range authAggregate.Events {
-			if err := tx.Create(event).Error; err != nil {
+	err := dao.db.WithContext(ctx).Transaction(
+		func(tx *gorm.DB) error {
+			if err := tx.Create(authAggregate.User).Error; err != nil {
 				return err
 			}
-		}
+			if err := tx.Create(authAggregate.UserProfile).Error; err != nil {
+				return err
+			}
+			if err := tx.Create(authAggregate.AuthIdentity).Error; err != nil {
+				return err
+			}
 
-		if authAggregate.AuthPassword == nil {
+			// 写 OutBox
+			for _, event := range authAggregate.Events {
+				if err := tx.Create(event).Error; err != nil {
+					return err
+				}
+			}
+
+			if authAggregate.AuthPassword == nil {
+				return nil
+			}
+			if err := tx.Create(authAggregate.AuthPassword).Error; err != nil {
+				return err
+			}
 			return nil
-		}
-		if err := tx.Create(authAggregate.AuthPassword).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+		})
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {

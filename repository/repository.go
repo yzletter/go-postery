@@ -109,6 +109,8 @@ type GiftRepository interface {
 }
 
 type AgentRepository interface {
+	Retrieve(ctx context.Context, query string, scoreThreshold float64, limit int) ([]string, error)
+	CreateChunks(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error
 }
 
 type CodeRepository interface {

@@ -60,7 +60,7 @@ func (svc *followService) StartInitUserScoreConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model.InitUserScoreEvent
+			var payload model.InitUserScoreEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)

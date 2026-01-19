@@ -18,14 +18,19 @@ func (e Event) TableName() string {
 	return "events"
 }
 
-type RegisterSessionEvent struct {
+type RegisterSessionEventPayload struct {
 	UserID int64 `json:"user_id,string"`
 }
 
-type InitUserScoreEvent struct {
+type InitUserScoreEventPayload struct {
 	UserID int64 `json:"user_id,string"`
 }
 
-type ChunkDocumentEvent struct {
+type ChunkDocumentEventPayload struct {
 	ID int64 `json:"id,string"`
+}
+
+type UpsertQdrantEventPayload struct {
+	IDs     []string
+	Vectors [][]float64
 }

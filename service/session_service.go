@@ -68,7 +68,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 			}
 
 			backoff = time.Second
-			var payload model.RegisterSessionEvent
+			var payload model.RegisterSessionEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
 				// 脏消息

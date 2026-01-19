@@ -122,7 +122,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 			events := make([]*model.Event, 0)
 
 			// 注册聊天功能 Event
-			registerSessionPayload, _ := sonic.Marshal(model.RegisterSessionEvent{UserID: uid})
+			registerSessionPayload, _ := sonic.Marshal(model.RegisterSessionEventPayload{UserID: uid})
 			registerSessionEvent := model.Event{
 				ID:           svc.idGen.NextID(),
 				Topic:        "session",
@@ -132,7 +132,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 			events = append(events, &registerSessionEvent)
 
 			// 初始化用户推荐分数 Event
-			initUserScorePayload, _ := sonic.Marshal(model.InitUserScoreEvent{UserID: uid})
+			initUserScorePayload, _ := sonic.Marshal(model.InitUserScoreEventPayload{UserID: uid})
 			initUserScoreEvent := model.Event{
 				ID:           svc.idGen.NextID(),
 				Topic:        "follow",

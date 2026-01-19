@@ -12,7 +12,6 @@ import (
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
-	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
@@ -39,6 +38,7 @@ func NewAgentService(agentRepo repository.AgentRepository, postRepo repository.P
 	}
 }
 
+// 订阅两种消息：1. 文章新建时，进行切分入库 topic 为 IndexDocument，2. 有向量要入 Qdrant UpsertQdrant
 func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 	backoff := time.Second
 	for {
@@ -67,7 +67,7 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model.ChunkDocumentEvent
+			var payload model.ChunkDocumentEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
@@ -131,7 +131,7 @@ func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
 		return err
 	}
 
-	points := make([]*qdrant.PointStruct, 0, len(chunks))
+	//points := make([]*qdrant.PointStruct, 0, len(chunks))
 	chunkModels := make([]*model.Chunk, 0, len(chunks))
 
 	for idx, chunk := range chunks {
@@ -140,16 +140,19 @@ func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
 
 		// 用于入 MySQL
 		chunkModels = append(chunkModels, &model.Chunk{ID: chunkID, Content: chunk.Content, Vector: vectors[idx]})
-
-		// 用于入 Qdrant
-		points = append(points, &qdrant.PointStruct{
-			Id:      &qdrant.PointId{PointIdOptions: &qdrant.PointId_Uuid{Uuid: chunkID}},
-			Vectors: &qdrant.Vectors{VectorsOptions: &qdrant.Vectors_Vector{Vector: &qdrant.Vector{Vector: &qdrant.Vector_Dense{Dense: &qdrant.DenseVector{Data: ToFloat32(vectors[idx])}}}}},
-		})
 	}
 
+	value, _ := sonic.MarshalString(chunkModels)
+
 	// 入库
-	err = svc.agentRepo.CreateChunks(ctx, chunkModels, points) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
+	event := &model.Event{
+		ID:           svc.idGenerator.NextID(),
+		Topic:        "UpsertQdrant",
+		MessageKey:   "upsert_vectors",
+		MessageValue: value,
+	}
+
+	err = svc.agentRepo.CreateChunks(ctx, chunkModels, event) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
 	if err != nil {
 		slog.Error("MySQL Create Chunk Failed", "error", err)
 		return err
@@ -161,17 +164,12 @@ func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
 // RetrieveDocument 召回
 func (svc *agentService) RetrieveDocument(ctx context.Context, query string, limit int) ([]string, error) {
 	scoreThreshold := 0.5 // 分数阈值
-	neighbors, err := svc.agentRepo.Retrive(ctx, query, scoreThreshold, limit)
+	neighbors, err := svc.agentRepo.Retrieve(ctx, query, scoreThreshold, limit)
 	if err != nil {
 		return []string{}, err
 	}
 
-	res := make([]string, 0, len(neighbors))
-	for _, neighbor := range neighbors {
-		res = append(res, neighbor.Content)
-	}
-
-	return res, nil
+	return neighbors, nil
 }
 
 // Transform 切分文本
@@ -234,14 +232,6 @@ func Transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 	}
 
 	return transformedDocs, nil
-}
-
-func ToFloat32(vector []float64) []float32 {
-	rect := make([]float32, len(vector))
-	for i, ele := range vector {
-		rect[i] = float32(ele)
-	}
-	return rect
 }
 
 func stableChunkID(postID int64, idx int) string {
