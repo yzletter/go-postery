@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/recursive"
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/schema"
+	"github.com/google/uuid"
+	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
@@ -70,10 +73,11 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
 				// 脏消息 Commit 掉
 				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
+				continue
 			}
 
 			// 消费消息
-			err = svc.IndexDocument(payload.ID)
+			err = svc.IndexDocument(ctx, payload.ID)
 			if err != nil {
 				slog.Error("Chunk Document Failed", "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
@@ -92,14 +96,82 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 }
 
 // IndexDocument 索引文本
-func (svc *agentService) IndexDocument(id int64) error {
+func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
+	// 读文本
+	post, err := svc.postRepo.GetByID(ctx, id)
+	if err != nil {
+		slog.Error("获取文本失败", "pid", id, "error", err)
+		return err
+	}
+
+	// 转为 Document
+	docs := []*schema.Document{{
+		ID:       "",
+		Content:  post.Content,
+		MetaData: nil,
+	}}
+
+	// 切分文本
+	chunks, err := Transform(ctx, docs, post.ContentType)
+	if err != nil {
+		slog.Error("切分文本失败", "pid", id, "error", err)
+		return err
+	}
+
+	// 收集文本，一次性 Embedd
+	text := make([]string, 0, len(chunks))
+	for _, chunk := range chunks {
+		text = append(text, chunk.Content)
+	}
+
+	// 计算向量
+	vectors, err := svc.embedder.Embedding(ctx, text)
+	if err != nil {
+		slog.Error("计算向量失败", "error", err)
+		return err
+	}
+
+	points := make([]*qdrant.PointStruct, 0, len(chunks))
+	chunkModels := make([]*model.Chunk, 0, len(chunks))
+
+	for idx, chunk := range chunks {
+		//chunkID := uuid.New().String()
+		chunkID := stableChunkID(post.ID, idx) // 根据 PID + idx 生成固定的 ChunkID, 防止重试生成一套新 ID，导致数据库迅速膨胀
+
+		// 用于入 MySQL
+		chunkModels = append(chunkModels, &model.Chunk{ID: chunkID, Content: chunk.Content, Vector: vectors[idx]})
+
+		// 用于入 Qdrant
+		points = append(points, &qdrant.PointStruct{
+			Id:      &qdrant.PointId{PointIdOptions: &qdrant.PointId_Uuid{Uuid: chunkID}},
+			Vectors: &qdrant.Vectors{VectorsOptions: &qdrant.Vectors_Vector{Vector: &qdrant.Vector{Vector: &qdrant.Vector_Dense{Dense: &qdrant.DenseVector{Data: ToFloat32(vectors[idx])}}}}},
+		})
+	}
+
+	// 入库
+	err = svc.agentRepo.CreateChunks(ctx, chunkModels, points) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
+	if err != nil {
+		slog.Error("MySQL Create Chunk Failed", "error", err)
+		return err
+	}
 
 	return nil
 }
 
 // RetrieveDocument 召回
-func (svc *agentService) RetrieveDocument(ctx context.Context, query string, limit int) []*model.Chunk {
+func (svc *agentService) RetrieveDocument(ctx context.Context, query string, limit int) ([]string, error) {
+	scoreThreshold := 0.5 // 分数阈值
+	neighbors, err := svc.agentRepo.Retrive(ctx, query, scoreThreshold, limit)
+	if err != nil {
+		return []string{}, err
+	}
 
+	res := make([]string, 0, len(neighbors))
+	for _, neighbor := range neighbors {
+		res = append(res, neighbor.Content)
+	}
+
+	return res, nil
 }
 
 // Transform 切分文本
@@ -110,11 +182,11 @@ func Transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 
 	if biz == 0 { // 普通文本
 		splitter, err = recursive.NewSplitter(ctx, &recursive.Config{
-			ChunkSize:   500,                                   // 必需：目标片段大小
-			OverlapSize: 100,                                   // 可选：片段重叠大小
-			Separators:  []string{"\n", "\n\n", ".", "?", "!"}, // 可选：分隔符列表
-			LenFunc:     nil,                                   // 可选：自定义长度计算函数
-			KeepType:    recursive.KeepTypeNone,                // 可选：分隔符保留策略
+			ChunkSize:   500,                                                  // 必需：目标片段大小
+			OverlapSize: 100,                                                  // 可选：片段重叠大小
+			Separators:  []string{"\n\n", "\n", ".", "?", "!", "。", "？", "！"}, // 可选：分隔符列表
+			LenFunc:     nil,                                                  // 可选：自定义长度计算函数
+			KeepType:    recursive.KeepTypeNone,                               // 可选：分隔符保留策略
 		})
 		if err != nil {
 			return []*schema.Document{}, err
@@ -149,7 +221,7 @@ func Transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 			return []*schema.Document{}, err
 		}
 	}
-	
+
 	// 进行切分
 	transformedDocs, err := splitter.Transform(ctx, docs)
 	if err != nil {
@@ -162,4 +234,19 @@ func Transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 	}
 
 	return transformedDocs, nil
+}
+
+func ToFloat32(vector []float64) []float32 {
+	rect := make([]float32, len(vector))
+	for i, ele := range vector {
+		rect[i] = float32(ele)
+	}
+	return rect
+}
+
+func stableChunkID(postID int64, idx int) string {
+	// 你也可以用 sha1/xxhash 做得更短
+	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(
+		fmt.Sprintf("%d:%d", postID, idx),
+	)).String()
 }

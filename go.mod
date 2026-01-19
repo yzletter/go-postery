@@ -15,6 +15,7 @@ require (
 	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20260116084156-bb0daea635b9
 	github.com/cloudwego/eino-ext/components/document/transformer/splitter/recursive v0.0.0-20260116084156-bb0daea635b9
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.1.1
+	github.com/cloudwego/eino-ext/components/retriever/qdrant v0.0.0-20260109062358-b9080dbc7bed
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-playground/validator/v10 v10.28.0

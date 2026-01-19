@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
@@ -42,5 +43,58 @@ func (e ArkEmbedder) Embedding(ctx context.Context, text []string) ([][]float64,
 		return nil, ports.ErrEmbeddingFailed
 	}
 
+	// 向量归一化
+	for i, vector := range embeddings {
+		embeddings[i] = e.NormVector(vector)
+	}
+
 	return embeddings, nil
+}
+
+func (e ArkEmbedder) NormVector(vec []float64) []float64 {
+	// 检查参数
+	if vec == nil || len(vec) == 0 {
+		return nil
+	}
+
+	// 计算模长
+	sum := 0.
+	for _, degree := range vec {
+		sum += degree * degree
+	}
+	norm := math.Sqrt(sum)
+
+	for i := range vec {
+		vec[i] /= norm
+	}
+
+	return vec
+}
+
+// AvgOfVector 多个向量按位求平均
+func (e ArkEmbedder) AvgOfVector(vectors [][]float64) ([]float64, error) {
+	n := len(vectors)
+	if n == 0 {
+		return nil, ports.ErrInvalidEmbeddingParams
+	} else if n == 1 {
+		// 向量归一化
+		return e.NormVector(vectors[0]), nil
+	}
+
+	l := len(vectors[0])
+	sum := make([]float64, l)
+	for i := 0; i < n; i++ {
+		if len(vectors[i]) != l {
+			return nil, ports.ErrInvalidEmbeddingParams
+		}
+		for j := 0; j < l; j++ {
+			sum[j] += vectors[i][j] //按位求和
+		}
+	}
+	for j := 0; j < l; j++ {
+		sum[j] /= float64(n) //按位求平均
+	}
+
+	// 向量归一化
+	return e.NormVector(sum), nil
 }

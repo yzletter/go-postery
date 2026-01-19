@@ -66,6 +66,7 @@ func (svc *followService) StartInitUserScoreConsumer(ctx context.Context) {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
 				// 脏消息 Commit 掉
 				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
+				continue
 			}
 
 			uid := payload.UserID
