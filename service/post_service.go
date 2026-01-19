@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 
 	postdto "github.com/yzletter/go-postery/dto/post"
 	"github.com/yzletter/go-postery/errno"
@@ -55,7 +56,15 @@ func (svc *postService) Create(ctx context.Context, uid int64, title string, con
 		ContentType: contentType,
 		Status:      1,
 	}
-	err = svc.postRepo.Create(ctx, post)
+
+	// 通知 RAG 新帖子建立
+	event := &model.Event{
+		ID:           svc.idGen.NextID(),
+		Topic:        "index_document",
+		MessageKey:   "index_document",
+		MessageValue: strconv.FormatInt(post.ID, 10),
+	}
+	err = svc.postRepo.Create(ctx, post, event)
 	if err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 雪花 ID 的帖子不会已存在, 需要排查

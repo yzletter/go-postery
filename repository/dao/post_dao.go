@@ -22,23 +22,34 @@ func NewPostDAO(db *gorm.DB) PostDAO {
 }
 
 // Create 创建 Post
-func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post) error {
+func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, event *model.Event) error {
 	// 0. 兜底
 	if post.ID == 0 || post.UserID == 0 || post.Title == "" || post.Content == "" {
 		return ErrParamsInvalid
 	}
 
-	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).Create(post)
-	if result.Error != nil {
+	// 事务写 Post 和 Outbox
+	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(post).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Create(event).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		// 业务层面错误
 		var mysqlErr *mysql.MySQLError
-		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			return ErrUniqueKey
 		}
 
 		// 系统层面错误
-		slog.Error(CreateFailed, "post_id", post.ID, "error", result.Error)
+		slog.Error(CreateFailed, "post_id", post.ID, "error", err)
 		return ErrServerInternal
 	}
 
