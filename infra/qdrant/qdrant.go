@@ -26,7 +26,7 @@ func Init(confDir, confFileName, confFileType string) *qdrant.Client {
 			Port: port,
 		})
 		if err != nil {
-			slog.Error("初始化 Qdrant 失败 ...", "error", err)
+			slog.Info("初始化 Qdrant 失败 ...", "error", err)
 		}
 	})
 
@@ -37,9 +37,9 @@ func Close() {
 	if client != nil {
 		err := client.Close()
 		if err != nil {
-			slog.Error("关闭 Qdrant 失败 ...")
+			slog.Info("关闭 Qdrant 失败 ...")
 			return
 		}
-		slog.Error("关闭 Qdrant 成功 ...")
+		slog.Info("关闭 Qdrant 成功 ...")
 	}
 }

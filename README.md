@@ -41,6 +41,7 @@
 ## 待开发
 
 - **用户头像**
+- mysql 表的抢占设计
 - 抽象出 Kafka Consumer
 - 添加 RAG metadata
   1. **biz**：文本类型（plain / md）

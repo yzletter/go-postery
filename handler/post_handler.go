@@ -143,8 +143,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 
 	// 参数绑定
 	var createRequest post.CreateRequest
-	err = ctx.ShouldBindJSON(&createRequest)
-	if err != nil {
+	if err = ctx.ShouldBindJSON(&createRequest); err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return

@@ -28,6 +28,7 @@ func NewAgentDAO(db *gorm.DB, embeddingDB *qdrant.Client, embedder *ark.Embedder
 	}
 }
 
+// Retrieve 根据 query 召回
 func (dao *agentDAO) Retrieve(ctx context.Context, query string, scoreThreshold float64, limit int) ([]string, error) {
 	// 构建召回器
 	retriever, err := qdrant_retriever.NewRetriever(ctx, &qdrant_retriever.Config{
@@ -57,7 +58,7 @@ func (dao *agentDAO) Retrieve(ctx context.Context, query string, scoreThreshold 
 	return res, nil
 }
 
-func (dao *agentDAO) CreateChunks(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
+func (dao *agentDAO) CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
 	err := dao.db.WithContext(ctx).Transaction(
 		func(tx *gorm.DB) error {
 			// 写 Chunk
@@ -76,22 +77,15 @@ func (dao *agentDAO) CreateChunks(ctx context.Context, chunkModels []*model.Chun
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			return ErrUniqueKey
 		}
+		slog.Error("Create Chunks Error", "error", err)
 		return ErrServerInternal
 	}
 
 	return nil
 }
 
-func (dao *agentDAO) UpsertVectors(ctx context.Context, chunkModels []*model.Chunk) error {
-	points := make([]*qdrant.PointStruct, 0, len(chunkModels))
-	for _, chunk := range chunkModels {
-		// 用于入 Qdrant
-		points = append(points, &qdrant.PointStruct{
-			Id:      &qdrant.PointId{PointIdOptions: &qdrant.PointId_Uuid{Uuid: chunk.ID}},
-			Vectors: &qdrant.Vectors{VectorsOptions: &qdrant.Vectors_Vector{Vector: &qdrant.Vector{Vector: &qdrant.Vector_Dense{Dense: &qdrant.DenseVector{Data: toFloat32(chunk.Vector)}}}}},
-		})
-	}
-
+// UpsertVectorPoints 向 Qdrant 中插入向量
+func (dao *agentDAO) UpsertVectorPoints(ctx context.Context, points []*qdrant.PointStruct) error {
 	// 判断表是否存在
 	exist, err := dao.embeddingDB.CollectionExists(ctx, "knowledge")
 	if err != nil {
@@ -128,10 +122,17 @@ func (dao *agentDAO) UpsertVectors(ctx context.Context, chunkModels []*model.Chu
 	return nil
 }
 
-func toFloat32(vector []float64) []float32 {
-	rect := make([]float32, len(vector))
-	for i, ele := range vector {
-		rect[i] = float32(ele)
+func (dao *agentDAO) GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model.Chunk, error) {
+	var chunks []*model.Chunk
+	result := dao.db.WithContext(ctx).Where("batch_id = ?", BatchID).Find(&chunks)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		slog.Error(FindFailed, "batch_id", BatchID, "error", result.Error)
+		return nil, ErrServerInternal
 	}
-	return rect
+
+	return chunks, nil
 }

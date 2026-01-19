@@ -12,6 +12,7 @@ import (
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
+	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository"
@@ -135,7 +136,8 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 			}
 
 			// 消费消息
-			err = svc.agentRepo.UpsertVectors(ctx, payload.Chunks)
+
+			err = svc.ConsumeMessage(ctx, payload.BatchID)
 			if err != nil {
 				slog.Error("Upsert Vectors Failed", "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
@@ -176,33 +178,25 @@ func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
 		return err
 	}
 
-	// 收集文本，一次性 Embedd
-	text := make([]string, 0, len(chunks))
-	for _, chunk := range chunks {
-		text = append(text, chunk.Content)
-	}
-
-	// 计算向量
-	vectors, err := svc.embedder.Embedding(ctx, text)
-	if err != nil {
-		slog.Error("计算向量失败", "error", err)
-		return err
-	}
-
-	//points := make([]*qdrant.PointStruct, 0, len(chunks))
 	chunkModels := make([]*model.Chunk, 0, len(chunks))
 
+	// 指定批次
+	batchID := svc.idGenerator.NextID()
+
 	for idx, chunk := range chunks {
-		//chunkID := uuid.New().String()
 		chunkID := stableChunkID(post.ID, idx) // 根据 PID + idx 生成固定的 ChunkID, 防止重试生成一套新 ID，导致数据库迅速膨胀
 
 		// 用于入 MySQL
-		chunkModels = append(chunkModels, &model.Chunk{ID: chunkID, Content: chunk.Content, Vector: vectors[idx]})
+		chunkModels = append(chunkModels, &model.Chunk{
+			ID:      chunkID,
+			Content: chunk.Content,
+			BatchID: batchID,
+		})
 	}
 
-	value, _ := sonic.MarshalString(chunkModels)
-
-	// 入库
+	var payload model.UpsertQdrantEventPayload
+	payload.BatchID = batchID
+	value, _ := sonic.MarshalString(payload)
 	event := &model.Event{
 		ID:           svc.idGenerator.NextID(),
 		Topic:        "upsert_qdrant",
@@ -210,7 +204,7 @@ func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
 		MessageValue: value,
 	}
 
-	err = svc.agentRepo.CreateChunks(ctx, chunkModels, event) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
+	err = svc.agentRepo.CreateChunksWithOutbox(ctx, chunkModels, event) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
 	if err != nil {
 		slog.Error("MySQL Create Chunk Failed", "error", err)
 		return err
@@ -267,11 +261,11 @@ func Transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 
 		// 再递归切
 		splitter, err = recursive.NewSplitter(ctx, &recursive.Config{
-			ChunkSize:   500,                                   // 必需：目标片段大小
-			OverlapSize: 100,                                   // 可选：片段重叠大小
-			Separators:  []string{"\n", "\n\n", ".", "?", "!"}, // 可选：分隔符列表
-			LenFunc:     nil,                                   // 可选：自定义长度计算函数
-			KeepType:    recursive.KeepTypeNone,                // 可选：分隔符保留策略
+			ChunkSize:   500,                                                  // 必需：目标片段大小
+			OverlapSize: 100,                                                  // 可选：片段重叠大小
+			Separators:  []string{"\n\n", "\n", ".", "?", "!", "。", "？", "！"}, // 可选：分隔符列表
+			LenFunc:     nil,                                                  // 可选：自定义长度计算函数
+			KeepType:    recursive.KeepTypeNone,                               // 可选：分隔符保留策略
 		})
 		if err != nil {
 			return []*schema.Document{}, err
@@ -298,4 +292,52 @@ func stableChunkID(postID int64, idx int) string {
 	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(
 		fmt.Sprintf("%d:%d", postID, idx),
 	)).String()
+}
+
+func (svc *agentService) ConsumeMessage(ctx context.Context, BatchID int64) error {
+	// 根据 BatchID 查找 Chunks
+	chunks, err := svc.agentRepo.GetChunksByBatchID(ctx, BatchID)
+	if err != nil {
+		return err
+	}
+
+	// 计算 Embeddings
+	// 收集文本，一次性 Embedd
+	text := make([]string, 0, len(chunks))
+	for _, chunk := range chunks {
+		text = append(text, chunk.Content)
+	}
+
+	// 计算向量
+	vectors, err := svc.embedder.Embedding(ctx, text)
+	if err != nil {
+		slog.Error("计算向量失败", "error", err)
+		return err
+	}
+
+	points := make([]*qdrant.PointStruct, 0, len(chunks))
+
+	// 构造 Points
+	for idx, chunk := range chunks {
+		points = append(points, &qdrant.PointStruct{
+			Id:      &qdrant.PointId{PointIdOptions: &qdrant.PointId_Uuid{Uuid: chunk.ID}},
+			Vectors: &qdrant.Vectors{VectorsOptions: &qdrant.Vectors_Vector{Vector: &qdrant.Vector{Vector: &qdrant.Vector_Dense{Dense: &qdrant.DenseVector{Data: toFloat32(vectors[idx])}}}}},
+		})
+	}
+
+	// 插入 Qdrant
+	err = svc.agentRepo.UpsertVectorPoints(ctx, points)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func toFloat32(vector []float64) []float32 {
+	rect := make([]float32, len(vector))
+	for i, ele := range vector {
+		rect[i] = float32(ele)
+	}
+	return rect
 }

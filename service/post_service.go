@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
 
+	"github.com/bytedance/sonic"
 	postdto "github.com/yzletter/go-postery/dto/post"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
@@ -57,12 +57,16 @@ func (svc *postService) Create(ctx context.Context, uid int64, title string, con
 		Status:      1,
 	}
 
+	var payload model.ChunkDocumentEventPayload
+	payload.ID = post.ID
+	value, _ := sonic.MarshalString(payload)
+
 	// 通知 RAG 新帖子建立
 	event := &model.Event{
 		ID:           svc.idGen.NextID(),
 		Topic:        "index_document",
 		MessageKey:   "index_document",
-		MessageValue: strconv.FormatInt(post.ID, 10),
+		MessageValue: value,
 	}
 	err = svc.postRepo.Create(ctx, post, event)
 	if err != nil {

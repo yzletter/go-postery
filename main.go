@@ -46,8 +46,8 @@ func main() {
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                                               // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session")                  // 初始化 Session 模块 Kafka 消费方
 	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")                     // 初始化 Follow 模块 Kafka 消费方
-	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent")
-	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent")
+	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
+	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent_document")
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -111,7 +111,7 @@ func main() {
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
-	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, QdrantKafkaConsumer, AgentKafkaConsumer, ArkEmbedder, IDGenerator)
+	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, IDGenerator)
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())
@@ -156,8 +156,9 @@ func main() {
 	// 初始化 GracefulStop
 	graceful_stop.NewGracefulStopBuilder().
 		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close).
-		AddFunc(cancel).AddFunc(infraQdarant.Close).
+		AddFunc(cancel).                                                                     // 关协程
+		AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close). // 关消息队列
+		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraQdarant.Close).     // 关数据库
 		Build()
 
 	// 初始化 gin

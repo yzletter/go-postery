@@ -31,5 +31,5 @@ type ChunkDocumentEventPayload struct {
 }
 
 type UpsertQdrantEventPayload struct {
-	Chunks []*Chunk `json:"chunks"`
+	BatchID int64 `json:"batch_id,string"`
 }

@@ -29,11 +29,11 @@ func NewArkEmbedder(ctx context.Context, model, APIKey string) *ArkEmbedder {
 		APIType:    &apiType,
 	})
 	if err != nil {
-		slog.Error("初始化 ArkEmbedder 失败 ...")
+		slog.Info("初始化 ArkEmbedder 失败 ...")
 		return nil
 	}
 
-	slog.Error("初始化 ArkEmbedder 成功 ...")
+	slog.Info("初始化 ArkEmbedder 成功 ...")
 	return &ArkEmbedder{embedder: embedder}
 }
 func (e *ArkEmbedder) GetInternal() *ark.Embedder {

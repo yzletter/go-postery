@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/qdrant/go-client/qdrant"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/repository/dao"
 )
@@ -20,8 +21,8 @@ func (repo *agentRepository) Retrieve(ctx context.Context, query string, scoreTh
 	panic("implement me")
 }
 
-func (repo *agentRepository) CreateChunks(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
-	err := repo.dao.CreateChunks(ctx, chunkModels, event)
+func (repo *agentRepository) CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
+	err := repo.dao.CreateChunksWithOutbox(ctx, chunkModels, event)
 	if err != nil {
 		return toRepositoryErr(err)
 	}
@@ -29,11 +30,20 @@ func (repo *agentRepository) CreateChunks(ctx context.Context, chunkModels []*mo
 	return nil
 }
 
-func (repo *agentRepository) UpsertVectors(ctx context.Context, chunkModels []*model.Chunk) error {
-	err := repo.dao.UpsertVectors(ctx, chunkModels)
+func (repo *agentRepository) UpsertVectorPoints(ctx context.Context, points []*qdrant.PointStruct) error {
+	err := repo.dao.UpsertVectorPoints(ctx, points)
 	if err != nil {
 		return toRepositoryErr(err)
 	}
 
 	return nil
+}
+
+func (repo *agentRepository) GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model.Chunk, error) {
+	chunks, err := repo.dao.GetChunksByBatchID(ctx, BatchID)
+	if err != nil {
+		return []*model.Chunk{}, toRepositoryErr(err)
+	}
+
+	return chunks, nil
 }

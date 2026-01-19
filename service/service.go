@@ -107,4 +107,5 @@ type LotteryService interface {
 type AgentService interface {
 	StartChunkDocConsumer(ctx context.Context)
 	StartUpsertQdrantConsumer(ctx context.Context)
+	ConsumeMessage(ctx context.Context, BatchID int64) error
 }
