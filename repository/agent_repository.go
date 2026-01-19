@@ -21,8 +21,12 @@ func (repo *agentRepository) Retrieve(ctx context.Context, query string, scoreTh
 }
 
 func (repo *agentRepository) CreateChunks(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
-	//TODO implement me
-	panic("implement me")
+	err := repo.dao.CreateChunks(ctx, chunkModels, event)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+
+	return nil
 }
 
 func (repo *agentRepository) UpsertVectors(ctx context.Context, chunkModels []*model.Chunk) error {

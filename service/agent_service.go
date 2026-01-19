@@ -19,26 +19,28 @@ import (
 )
 
 type agentService struct {
-	agentRepo     repository.AgentRepository
-	postRepo      repository.PostRepository
-	commentRepo   repository.CommentRepository
-	kafkaConsumer *kafka.Reader
-	embedder      ports.Embedder
-	idGenerator   ports.IDGenerator
+	agentRepo           repository.AgentRepository
+	postRepo            repository.PostRepository
+	commentRepo         repository.CommentRepository
+	agentKafkaConsumer  *kafka.Reader
+	qdrantKafkaConsumer *kafka.Reader
+	embedder            ports.Embedder
+	idGenerator         ports.IDGenerator
 }
 
-func NewAgentService(agentRepo repository.AgentRepository, postRepo repository.PostRepository, commentRepo repository.CommentRepository, kafkaConsumer *kafka.Reader, embedder ports.Embedder, idGenerator ports.IDGenerator) AgentService {
+func NewAgentService(agentRepo repository.AgentRepository, postRepo repository.PostRepository, commentRepo repository.CommentRepository, agentKafkaConsumer *kafka.Reader, qdrantKafkaConsumer *kafka.Reader, embedder ports.Embedder, idGenerator ports.IDGenerator) AgentService {
 	return &agentService{
-		agentRepo:     agentRepo,
-		postRepo:      postRepo,
-		commentRepo:   commentRepo,
-		kafkaConsumer: kafkaConsumer,
-		embedder:      embedder,
-		idGenerator:   idGenerator,
+		agentRepo:           agentRepo,
+		postRepo:            postRepo,
+		commentRepo:         commentRepo,
+		agentKafkaConsumer:  agentKafkaConsumer,
+		qdrantKafkaConsumer: qdrantKafkaConsumer,
+		embedder:            embedder,
+		idGenerator:         idGenerator,
 	}
 }
 
-// 订阅两种消息：1. 文章新建时，进行切分入库 topic 为 IndexDocument，2. 有向量要入 Qdrant UpsertQdrant
+// 订阅两种消息：1. 文章新建时，进行切分入库 topic 为 index_document，2. 有向量要入 Qdrant upsert_qdrant
 func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 	backoff := time.Second
 	for {
@@ -48,7 +50,7 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			return
 		default:
 			// Fetch 消息
-			message, err := svc.kafkaConsumer.FetchMessage(ctx)
+			message, err := svc.agentKafkaConsumer.FetchMessage(ctx)
 			if err != nil {
 				if ctx.Err() != nil { // 正常退出
 					return
@@ -72,7 +74,7 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			if err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
 				// 脏消息 Commit 掉
-				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
+				_ = svc.agentKafkaConsumer.CommitMessages(ctx, message)
 				continue
 			}
 
@@ -85,9 +87,65 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			}
 
 			// 消费成功, 把消息 Commit 掉
-			err = svc.kafkaConsumer.CommitMessages(ctx, message)
+			err = svc.agentKafkaConsumer.CommitMessages(ctx, message)
 			if err != nil {
 				slog.Error("Commit Kafka Message Failed", "id", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
+				continue
+			}
+		}
+	}
+}
+
+func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
+	backoff := time.Second
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("关闭 Chunk Doc Consumer 成功 ...")
+			return
+		default:
+			// Fetch 消息
+			message, err := svc.qdrantKafkaConsumer.FetchMessage(ctx)
+			if err != nil {
+				if ctx.Err() != nil { // 正常退出
+					return
+				}
+
+				slog.Error("Fetch Message From Kafka Failed", "Kafka", "ChunkKafka", "error", err)
+
+				// 简单退避，避免狂刷日志
+				time.Sleep(backoff)
+				if backoff < 10*time.Second {
+					backoff *= 2
+				}
+				continue
+			}
+
+			backoff = time.Second // 重置
+
+			// 解析 JSON
+			var payload model.UpsertQdrantEventPayload
+			err = sonic.Unmarshal(message.Value, &payload)
+			if err != nil {
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				// 脏消息 Commit 掉
+				_ = svc.qdrantKafkaConsumer.CommitMessages(ctx, message)
+				continue
+			}
+
+			// 消费消息
+			err = svc.agentRepo.UpsertVectors(ctx, payload.Chunks)
+			if err != nil {
+				slog.Error("Upsert Vectors Failed", "error", err)
+				time.Sleep(time.Second) // 最小退避，避免打爆
+				continue                // 不 commit -> 重试
+			}
+
+			// 消费成功, 把消息 Commit 掉
+			err = svc.qdrantKafkaConsumer.CommitMessages(ctx, message)
+			if err != nil {
+				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}
@@ -147,7 +205,7 @@ func (svc *agentService) IndexDocument(ctx context.Context, id int64) error {
 	// 入库
 	event := &model.Event{
 		ID:           svc.idGenerator.NextID(),
-		Topic:        "UpsertQdrant",
+		Topic:        "upsert_qdrant",
 		MessageKey:   "upsert_vectors",
 		MessageValue: value,
 	}
@@ -234,6 +292,7 @@ func Transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 	return transformedDocs, nil
 }
 
+// 生成固定 ChunkID
 func stableChunkID(postID int64, idx int) string {
 	// 你也可以用 sha1/xxhash 做得更短
 	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(

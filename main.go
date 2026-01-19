@@ -46,6 +46,8 @@ func main() {
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                                               // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session")                  // 初始化 Session 模块 Kafka 消费方
 	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")                     // 初始化 Follow 模块 Kafka 消费方
+	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent")
+	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent")
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -65,7 +67,7 @@ func main() {
 	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
 	GiftDAO := dao.NewGiftDAO(MySQLGormDB)
 	AuthDAO := dao.NewAuthDAO(MySQLGormDB)
-	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient)
+	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -109,13 +111,14 @@ func main() {
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
-	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, ArkEmbedder, IDGenerator)
+	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, QdrantKafkaConsumer, AgentKafkaConsumer, ArkEmbedder, IDGenerator)
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
 	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
+	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启切分文档协程
 	go FollowSvc.StartInitUserScoreConsumer(ctx)    // 开启修改用户分数的消息协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程

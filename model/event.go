@@ -31,6 +31,5 @@ type ChunkDocumentEventPayload struct {
 }
 
 type UpsertQdrantEventPayload struct {
-	IDs     []string
-	Vectors [][]float64
+	Chunks []*Chunk `json:"chunks"`
 }

@@ -36,8 +36,15 @@ func NewArkEmbedder(ctx context.Context, model, APIKey string) *ArkEmbedder {
 	slog.Error("初始化 ArkEmbedder 成功 ...")
 	return &ArkEmbedder{embedder: embedder}
 }
+func (e *ArkEmbedder) GetInternal() *ark.Embedder {
+	if e.embedder != nil {
+		return e.embedder
+	}
 
-func (e ArkEmbedder) Embedding(ctx context.Context, text []string) ([][]float64, error) {
+	return nil
+}
+
+func (e *ArkEmbedder) Embedding(ctx context.Context, text []string) ([][]float64, error) {
 	embeddings, err := e.embedder.EmbedStrings(ctx, text)
 	if err != nil {
 		return nil, ports.ErrEmbeddingFailed
@@ -51,7 +58,7 @@ func (e ArkEmbedder) Embedding(ctx context.Context, text []string) ([][]float64,
 	return embeddings, nil
 }
 
-func (e ArkEmbedder) NormVector(vec []float64) []float64 {
+func (e *ArkEmbedder) NormVector(vec []float64) []float64 {
 	// 检查参数
 	if vec == nil || len(vec) == 0 {
 		return nil
@@ -72,7 +79,7 @@ func (e ArkEmbedder) NormVector(vec []float64) []float64 {
 }
 
 // AvgOfVector 多个向量按位求平均
-func (e ArkEmbedder) AvgOfVector(vectors [][]float64) ([]float64, error) {
+func (e *ArkEmbedder) AvgOfVector(vectors [][]float64) ([]float64, error) {
 	n := len(vectors)
 	if n == 0 {
 		return nil, ports.ErrInvalidEmbeddingParams
