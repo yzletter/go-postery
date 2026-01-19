@@ -50,9 +50,23 @@ func (dao *agentDAO) Retrieve(ctx context.Context, query string, scoreThreshold 
 		return nil, ErrServerInternal
 	}
 
-	res := make([]string, 0, len(neighbors))
+	ids := make([]string, 0, len(neighbors))
 	for _, neighbor := range neighbors {
-		res = append(res, neighbor.Content)
+		ids = append(ids, neighbor.ID)
+	}
+
+	var chunks []*model.Chunk
+	result := dao.db.WithContext(ctx).Where("id in ?", ids).Find(&chunks)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return []string{}, nil
+		}
+		return []string{}, ErrServerInternal
+	}
+
+	res := make([]string, 0, len(neighbors))
+	for _, chunk := range chunks {
+		res = append(res, chunk.Content)
 	}
 
 	return res, nil

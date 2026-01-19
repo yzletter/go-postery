@@ -11,10 +11,11 @@ require (
 	github.com/apache/rocketmq-clients/golang/v5 v5.1.3
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/bytedance/sonic v1.14.2
-	github.com/cloudwego/eino v0.6.0
+	github.com/cloudwego/eino v0.7.13
 	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20260116084156-bb0daea635b9
 	github.com/cloudwego/eino-ext/components/document/transformer/splitter/recursive v0.0.0-20260116084156-bb0daea635b9
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.1.1
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.63
 	github.com/cloudwego/eino-ext/components/retriever/qdrant v0.0.0-20260109062358-b9080dbc7bed
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
@@ -56,7 +57,7 @@ require (
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/eino-contrib/jsonschema v1.0.2 // indirect
+	github.com/eino-contrib/jsonschema v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
@@ -107,7 +108,7 @@ require (
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.0.181 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.1.49 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	go.opencensus.io v0.24.0 // indirect

@@ -40,12 +40,13 @@ func main() {
 	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                                 // 初始化 MySQL
 	QdrantClient := infraQdarant.Init("./conf", "db", viper.YAML)                                                        // 初始化 Qdrant
 	ArkEmbedder := infraLLM.NewArkEmbedder(context.Background(), "doubao-embedding-vision-250615", os.Getenv("ARK_KEY")) // 初始化火山引擎向量模型
-	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                                        // 初始化 Redis
-	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                                           // 初始化 RabbitMQ
-	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                                             // 初始化 RocketMQ
-	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                                               // 初始化 Kafka 生产方
-	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session")                  // 初始化 Session 模块 Kafka 消费方
-	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")                     // 初始化 Follow 模块 Kafka 消费方
+	ArkChatModel := infraLLM.NewArkModel(context.Background(), "doubao-seed-1-8-251228", os.Getenv("ARK_KEY"))
+	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
+	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
+	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
+	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
+	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")    // 初始化 Follow 模块 Kafka 消费方
 	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
 	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent_document")
 
@@ -111,7 +112,7 @@ func main() {
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
-	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, IDGenerator)
+	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())

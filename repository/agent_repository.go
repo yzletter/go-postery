@@ -17,8 +17,12 @@ func NewAgentRepository(dao dao.AgentDAO) AgentRepository {
 }
 
 func (repo *agentRepository) Retrieve(ctx context.Context, query string, scoreThreshold float64, limit int) ([]string, error) {
-	//TODO implement me
-	panic("implement me")
+	texts, err := repo.dao.Retrieve(ctx, query, scoreThreshold, limit)
+	if err != nil {
+		return []string{}, toRepositoryErr(err)
+	}
+
+	return texts, nil
 }
 
 func (repo *agentRepository) CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
