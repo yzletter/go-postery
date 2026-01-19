@@ -304,3 +304,13 @@ CREATE TABLE IF NOT EXISTS events
     CHECK (status IN (0, 1, 2, 3)),
     KEY idx_events_scan (status, next_retry_at, created_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '消息队列表';
+
+CREATE TABLE IF NOT EXISTS chunks
+(
+    id         VARCHAR(255) NOT NULL COMMENT 'ID，用 UUID',
+    content    TEXT COMMENT '内容',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
+    PRIMARY KEY (id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '语义片段';
