@@ -6,6 +6,8 @@ type PostFormProps = {
   submitLabel: string
   title: string
   content: string
+  contentType?: 0 | 1
+  onContentTypeChange?: (value: 0 | 1) => void
   onTitleChange: (value: string) => void
   onContentChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -21,6 +23,8 @@ export default function PostForm({
   submitLabel,
   title,
   content,
+  contentType,
+  onContentTypeChange,
   onTitleChange,
   onContentChange,
   onSubmit,
@@ -41,6 +45,12 @@ export default function PostForm({
     handleCompositionEnd,
     handleTagKeyDown,
   } = tagsInput
+  const showContentType = typeof contentType === 'number' && typeof onContentTypeChange === 'function'
+  const contentHint = showContentType
+    ? contentType === 1
+      ? 'Markdown 文本将按语法渲染'
+      : '普通文本将按原样展示'
+    : '支持 Markdown 格式'
 
   return (
     <form onSubmit={onSubmit} className="card space-y-6">
@@ -110,6 +120,54 @@ export default function PostForm({
         </div>
       </div>
 
+      {showContentType && (
+        <div>
+          <span className="block text-sm font-medium text-gray-700 mb-2">文本格式</span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm transition ${
+                contentType === 0
+                  ? 'border-primary-300 bg-primary-50/60'
+                  : 'border-gray-200/70 bg-white/70 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="contentType"
+                value="0"
+                checked={contentType === 0}
+                onChange={() => onContentTypeChange?.(0)}
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-200"
+              />
+              <div>
+                <p className="font-medium text-gray-900">普通文本</p>
+                <p className="text-xs text-gray-500">不解析 Markdown 语法</p>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm transition ${
+                contentType === 1
+                  ? 'border-primary-300 bg-primary-50/60'
+                  : 'border-gray-200/70 bg-white/70 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="contentType"
+                value="1"
+                checked={contentType === 1}
+                onChange={() => onContentTypeChange?.(1)}
+                className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-200"
+              />
+              <div>
+                <p className="font-medium text-gray-900">Markdown 文本</p>
+                <p className="text-xs text-gray-500">支持标题、列表、代码块</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      )}
+
       <div>
         <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
           内容
@@ -123,7 +181,7 @@ export default function PostForm({
           required
           className="textarea"
         />
-        <p className="mt-2 text-sm text-gray-500">支持 Markdown 格式</p>
+        <p className="mt-2 text-sm text-gray-500">{contentHint}</p>
       </div>
 
       <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">

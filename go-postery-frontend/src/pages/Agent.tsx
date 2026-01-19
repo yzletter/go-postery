@@ -2,11 +2,97 @@ import { FormEvent, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { apiPost } from '../utils/api'
 
 type ChatMessage = {
   id: string
   role: 'user' | 'ai'
   content: string
+  documents?: AgentDocument[]
+}
+
+type AgentDocument = {
+  title?: string
+  url?: string
+  snippet?: string
+  source?: string
+  id?: string
+}
+
+const buildSessionId = () => {
+  const now = BigInt(Date.now())
+  const rand = BigInt(Math.floor(Math.random() * 1_000_000))
+  return (now * 1_000_000n + rand).toString()
+}
+
+const asString = (value: unknown) => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed ? trimmed : undefined
+  }
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : undefined
+  return undefined
+}
+
+const normalizeDocuments = (raw: unknown): AgentDocument[] => {
+  if (!raw) return []
+  const list = Array.isArray(raw) ? raw : [raw]
+  const normalized = list.map((item) => {
+    if (typeof item === 'string') {
+      const title = item.trim()
+      return title ? { title } : null
+    }
+    if (!item || typeof item !== 'object') {
+      const title = asString(item)
+      return title ? { title } : null
+    }
+    const record = item as Record<string, unknown>
+    return {
+      title:
+        asString(record.title) ??
+        asString(record.name) ??
+        asString(record.doc_title) ??
+        asString(record.document) ??
+        asString(record.filename),
+      url: asString(record.url) ?? asString(record.link) ?? asString(record.source_url),
+      snippet:
+        asString(record.snippet) ??
+        asString(record.summary) ??
+        asString(record.abstract) ??
+        asString(record.content),
+      source: asString(record.source) ?? asString(record.provider) ?? asString(record.origin),
+      id: asString(record.id) ?? asString(record.document_id),
+    }
+  })
+
+  return normalized.filter((doc): doc is AgentDocument => Boolean(doc))
+}
+
+const extractAgentPayload = (payload: unknown) => {
+  if (typeof payload === 'string') {
+    return { reply: payload, documents: [] as AgentDocument[] }
+  }
+  if (!payload || typeof payload !== 'object') {
+    return { reply: '', documents: [] as AgentDocument[] }
+  }
+  const record = payload as Record<string, unknown>
+  const candidates = [record.reply, record.answer, record.content, record.message, record.result]
+  let reply = ''
+  for (const candidate of candidates) {
+    const value = asString(candidate)
+    if (value) {
+      reply = value
+      break
+    }
+  }
+  const documents = normalizeDocuments(
+    record.documents ?? record.document ?? record.references ?? record.reference ?? record.sources ?? record.source
+  )
+  return { reply, documents }
+}
+
+const buildDocumentLabel = (doc: AgentDocument, index: number) => {
+  return doc.title || doc.url || doc.id || `文献 ${index + 1}`
 }
 
 export default function Agent() {
@@ -16,6 +102,7 @@ export default function Agent() {
   ])
   const [input, setInput] = useState('')
   const [isThinking, setIsThinking] = useState(false)
+  const sessionIdRef = useRef<string>(buildSessionId())
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -29,7 +116,7 @@ export default function Agent() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     const trimmed = input.trim()
-    if (!trimmed) return
+    if (!trimmed || isThinking) return
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -40,18 +127,34 @@ export default function Agent() {
     setInput('')
     setIsThinking(true)
 
-    // 简单模拟 AI 回复
-    setTimeout(() => {
+    try {
+      const { data } = await apiPost<unknown>('/agent/chat', {
+        session_id: sessionIdRef.current,
+        query: trimmed,
+      })
+      const { reply, documents } = extractAgentPayload(data)
       setMessages(prev => [
         ...prev,
         {
           id: `a-${Date.now()}`,
           role: 'ai',
-          content: `已收到：${trimmed}`,
+          content: reply || '暂时没有返回内容。',
+          documents,
         },
       ])
+    } catch (error) {
+      console.error('Agent chat failed:', error)
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `a-${Date.now()}`,
+          role: 'ai',
+          content: '抱歉，Agent 暂时不可用，请稍后再试。',
+        },
+      ])
+    } finally {
       setIsThinking(false)
-    }, 600)
+    }
   }
 
   return (
@@ -111,6 +214,38 @@ export default function Agent() {
                   }`}
                 >
                   <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
+                  {!isUser && msg.documents && msg.documents.length > 0 && (
+                    <div className="mt-3 border-t border-gray-200/70 pt-3 text-xs text-gray-600">
+                      <p className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">引用文献</p>
+                      <ol className="list-decimal space-y-1 pl-4">
+                        {msg.documents.map((doc, index) => {
+                          const label = buildDocumentLabel(doc, index)
+                          return (
+                            <li key={`${label}-${index}`} className="leading-relaxed">
+                              {doc.url ? (
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-primary-600 hover:text-primary-700 underline"
+                                >
+                                  {label}
+                                </a>
+                              ) : (
+                                <span>{label}</span>
+                              )}
+                              {doc.source && <span className="text-gray-400"> · {doc.source}</span>}
+                              {doc.snippet && (
+                                <span className="block text-[11px] text-gray-400">
+                                  {doc.snippet}
+                                </span>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ol>
+                    </div>
+                  )}
                 </div>
                 {isUser && (
                   <img

@@ -2,13 +2,13 @@ import { useState, useEffect, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lock, User, LogIn, Eye, EyeOff, Phone, KeyRound } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { md5Hash } from '../utils/crypto'
+import { apiPost, AUTH_API_BASE_URL } from '../utils/api'
 
 type ActiveTab = 'code' | 'password'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { loginWithPassword, loginWithPhone } = useAuth()
   const [activeTab, setActiveTab] = useState<ActiveTab>('password')
   const [loginPhone, setLoginPhone] = useState('')
   const [loginCode, setLoginCode] = useState('')
@@ -18,6 +18,7 @@ export default function Login() {
   const [showLoginPassword, setShowLoginPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isSendingCode, setIsSendingCode] = useState(false)
 
   useEffect(() => {
     if (loginCodeCountdown <= 0) {
@@ -29,13 +30,27 @@ export default function Login() {
     return () => window.clearInterval(timer)
   }, [loginCodeCountdown])
 
-  const handleSendLoginCode = () => {
+  const handleSendLoginCode = async () => {
     setError('')
-    if (!loginPhone.trim()) {
+    const trimmedPhone = loginPhone.trim()
+    if (!trimmedPhone) {
       setError('请输入手机号')
       return
     }
-    setLoginCodeCountdown(60)
+    setIsSendingCode(true)
+    try {
+      await apiPost(
+        '/auth/sms',
+        { phone: trimmedPhone },
+        { baseUrl: AUTH_API_BASE_URL, skipAuthToken: true }
+      )
+      setLoginCodeCountdown(60)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '验证码发送失败'
+      setError(message)
+    } finally {
+      setIsSendingCode(false)
+    }
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -57,8 +72,7 @@ export default function Login() {
 
       setIsLoading(true)
       try {
-        const hashedCode = md5Hash(trimmedCode)
-        const success = await login(trimmedPhone, hashedCode)
+        const success = await loginWithPhone(trimmedPhone, trimmedCode)
 
         if (success) {
           navigate('/')
@@ -86,8 +100,7 @@ export default function Login() {
 
     setIsLoading(true)
     try {
-      const hashedPassword = md5Hash(loginPassword)
-      const success = await login(trimmedAccount, hashedPassword)
+      const success = await loginWithPassword(trimmedAccount, loginPassword)
 
       if (success) {
         navigate('/')
@@ -207,10 +220,10 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={handleSendLoginCode}
-                      disabled={loginCodeCountdown > 0 || isLoading}
+                      disabled={loginCodeCountdown > 0 || isLoading || isSendingCode}
                       className="btn-secondary whitespace-nowrap px-4"
                     >
-                      {loginCodeCountdown > 0 ? `${loginCodeCountdown}s后重试` : '发送验证码'}
+                      {loginCodeCountdown > 0 ? `${loginCodeCountdown}s后重试` : isSendingCode ? '发送中...' : '发送验证码'}
                     </button>
                   </div>
                 </div>

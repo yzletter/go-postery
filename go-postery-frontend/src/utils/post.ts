@@ -19,6 +19,13 @@ const parseTags = (raw: unknown): string[] | undefined => {
   return unique.length > 0 ? unique : undefined
 }
 
+const parseContentType = (raw: unknown): 0 | 1 | undefined => {
+  const normalized = toOptionalNumber(raw)
+  if (normalized === 0) return 0
+  if (normalized === 1) return 1
+  return undefined
+}
+
 // 将后端的 PostDTO / 含 Title/Id 格式转为前端使用的 Post 结构
 export function normalizePost(raw: any): Post {
   const authorRaw = raw?.author || {}
@@ -35,9 +42,21 @@ export function normalizePost(raw: any): Post {
     id: normalizeId(raw?.id ?? raw?.Id),
     title: raw?.title ?? raw?.Title ?? '',
     content: raw?.content ?? raw?.Content ?? '',
+    contentType: parseContentType(
+      raw?.content_type ??
+      raw?.ContentType ??
+      raw?.contentType ??
+      raw?.contentTypeId ??
+      raw?.Content_Type
+    ),
     author: {
       id: normalizeId(authorRaw?.id ?? authorRaw?.Id),
-      name: authorRaw?.name ?? authorRaw?.Name ?? '匿名用户',
+      name:
+        authorRaw?.nickname ??
+        authorRaw?.Nickname ??
+        authorRaw?.name ??
+        authorRaw?.Name ??
+        '匿名用户',
     },
     createdAt:
       raw?.createdAt ??

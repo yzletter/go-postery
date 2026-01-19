@@ -20,7 +20,12 @@ export function normalizeComment(raw: any): Comment {
     content: raw?.content ?? raw?.Content ?? '',
     author: {
       id: normalizeId(authorRaw?.id ?? authorRaw?.Id ?? ''),
-      name: authorRaw?.name ?? authorRaw?.Name ?? '匿名用户',
+      name:
+        authorRaw?.nickname ??
+        authorRaw?.Nickname ??
+        authorRaw?.name ??
+        authorRaw?.Name ??
+        '匿名用户',
     },
     createdAt:
       raw?.createdAt ??

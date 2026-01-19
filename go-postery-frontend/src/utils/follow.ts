@@ -5,7 +5,12 @@ import { normalizeId } from './id'
 const normalizeFollowUser = (raw: any): FollowUser | null => {
   if (!raw) return null
   const id = normalizeId(raw.id ?? raw.Id)
-  const name = raw.name ?? raw.Name ?? ''
+  const name =
+    raw.nickname ??
+    raw.Nickname ??
+    raw.name ??
+    raw.Name ??
+    ''
   const avatar = raw.avatar ?? raw.Avatar ?? ''
 
   if (!id || !name) return null

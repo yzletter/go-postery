@@ -6,10 +6,16 @@ export const normalizeUserDetail = (raw: any): UserDetail => {
   const genderRaw = raw?.gender ?? raw?.Gender
   const parsedGender = typeof genderRaw === 'string' ? Number.parseInt(genderRaw, 10) : genderRaw
   const normalizedGender = Number.isFinite(parsedGender) ? Number(parsedGender) : 0
+  const nickname =
+    raw?.nickname ??
+    raw?.Nickname ??
+    raw?.name ??
+    raw?.Name ??
+    '未命名用户'
 
   return {
     id: normalizeId(raw?.id ?? raw?.Id),
-    name: raw?.name ?? raw?.Name ?? '未命名用户',
+    name: nickname,
     email: raw?.email ?? raw?.Email,
     avatar: raw?.avatar ?? raw?.Avatar,
     bio: raw?.bio ?? raw?.Bio,

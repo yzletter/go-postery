@@ -10,6 +10,7 @@ export default function CreatePost() {
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [contentType, setContentType] = useState<0 | 1>(0)
   const tagsInput = useTagsInput()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -22,7 +23,12 @@ export default function CreatePost() {
     }
     
     try {
-      const { data } = await apiPost('/posts', { title, content, tags: validation.tags })
+      const { data } = await apiPost('/posts', {
+        title,
+        content,
+        content_type: contentType,
+        tags: validation.tags,
+      })
       const createdPost = normalizePost(data || {})
       if (createdPost.id) {
         console.log('帖子创建成功，帖子ID:', createdPost.id)
@@ -53,6 +59,8 @@ export default function CreatePost() {
         submitLabel="发布帖子"
         title={title}
         content={content}
+        contentType={contentType}
+        onContentTypeChange={setContentType}
         onTitleChange={setTitle}
         onContentChange={setContent}
         onSubmit={handleSubmit}

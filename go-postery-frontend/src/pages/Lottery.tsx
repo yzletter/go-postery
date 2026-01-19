@@ -94,7 +94,14 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
   if (!id) return null
   const userRaw = raw.user ?? raw.User ?? {}
   const userId = normalizeId(userRaw.id ?? userRaw.Id ?? userRaw.ID)
-  const userName = typeof userRaw.name === 'string' ? userRaw.name.trim() : ''
+  const userName =
+    typeof userRaw.nickname === 'string'
+      ? userRaw.nickname.trim()
+      : typeof userRaw.Nickname === 'string'
+        ? userRaw.Nickname.trim()
+        : typeof userRaw.name === 'string'
+          ? userRaw.name.trim()
+          : ''
   const email = typeof userRaw.email === 'string' ? userRaw.email.trim() : ''
   const avatar = typeof userRaw.avatar === 'string' ? userRaw.avatar.trim() : ''
   const gift = normalizeGift(raw.gift ?? raw.Gift ?? raw.prize ?? raw.gift_info)

@@ -1,6 +1,16 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, Edit, Trash2, Heart } from 'lucide-react'
-import { useState, useEffect, FormEvent, useMemo, useCallback, useRef } from 'react'
+import {
+  useState,
+  useEffect,
+  FormEvent,
+  useMemo,
+  useCallback,
+  useRef,
+  type HTMLAttributes,
+  type AnchorHTMLAttributes,
+  type ImgHTMLAttributes,
+} from 'react'
 import type { Post, Comment } from '../types'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
@@ -9,6 +19,8 @@ import { formatRelativeTime } from '../utils/date'
 import { useAuth } from '../contexts/AuthContext'
 import { apiDelete, apiGet, apiPost } from '../utils/api'
 import { buildCommentAuthorMap } from './postDetail/commentModel'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type ReplyPaginationState = {
   isExpanded: boolean
@@ -22,6 +34,70 @@ type ReplyPaginationState = {
 
 const COMMENTS_PAGE_SIZE = 10
 const REPLIES_PAGE_SIZE = 3
+
+const markdownComponents = {
+  h1: (props: HTMLAttributes<HTMLHeadingElement>) => (
+    <h1 {...props} className="text-2xl sm:text-3xl font-semibold text-gray-900 mt-6 mb-4 first:mt-0" />
+  ),
+  h2: (props: HTMLAttributes<HTMLHeadingElement>) => (
+    <h2 {...props} className="text-xl sm:text-2xl font-semibold text-gray-900 mt-6 mb-3 first:mt-0" />
+  ),
+  h3: (props: HTMLAttributes<HTMLHeadingElement>) => (
+    <h3 {...props} className="text-lg sm:text-xl font-semibold text-gray-900 mt-5 mb-3 first:mt-0" />
+  ),
+  p: (props: HTMLAttributes<HTMLParagraphElement>) => (
+    <p {...props} className="mb-4 last:mb-0" />
+  ),
+  ul: (props: HTMLAttributes<HTMLUListElement>) => (
+    <ul {...props} className="mb-4 list-disc pl-6 space-y-1" />
+  ),
+  ol: (props: HTMLAttributes<HTMLOListElement>) => (
+    <ol {...props} className="mb-4 list-decimal pl-6 space-y-1" />
+  ),
+  li: (props: HTMLAttributes<HTMLLIElement>) => (
+    <li {...props} className="leading-relaxed" />
+  ),
+  blockquote: (props: HTMLAttributes<HTMLQuoteElement>) => (
+    <blockquote
+      {...props}
+      className="mb-4 border-l-4 border-primary-200 bg-primary-50/50 px-4 py-2 text-gray-600"
+    />
+  ),
+  a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props} className="text-primary-600 hover:text-primary-700 underline" target="_blank" rel="noreferrer" />
+  ),
+  pre: (props: HTMLAttributes<HTMLPreElement>) => (
+    <pre {...props} className="mb-4 overflow-x-auto rounded-xl bg-gray-900 p-4 text-gray-100" />
+  ),
+  code: ({
+    inline,
+    className,
+    children,
+    ...props
+  }: HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
+    if (inline) {
+      return (
+        <code
+          {...props}
+          className="rounded bg-gray-100 px-1.5 py-0.5 text-sm text-gray-800"
+        >
+          {children}
+        </code>
+      )
+    }
+    return (
+      <code {...props} className={`text-sm font-mono ${className ?? ''}`}>
+        {children}
+      </code>
+    )
+  },
+  hr: (props: HTMLAttributes<HTMLHRElement>) => (
+    <hr {...props} className="my-6 border-gray-200" />
+  ),
+  img: (props: ImgHTMLAttributes<HTMLImageElement>) => (
+    <img {...props} className="my-4 max-w-full rounded-xl shadow-sm" />
+  ),
+}
 
 const createReplyPaginationState = (): ReplyPaginationState => ({
   isExpanded: false,
@@ -519,6 +595,8 @@ export default function PostDetail() {
     )
   }
 
+  const isMarkdown = post.contentType === 1
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* 返回按钮 */}
@@ -605,9 +683,19 @@ export default function PostDetail() {
 
         {/* 正文内容 */}
         <div className="max-w-none mb-6">
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base sm:text-lg">
-            {post.content}
-          </div>
+          {isMarkdown ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={markdownComponents}
+              className="text-gray-800 leading-relaxed text-base sm:text-lg"
+            >
+              {post.content}
+            </ReactMarkdown>
+          ) : (
+            <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base sm:text-lg">
+              {post.content}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200/60 pt-6 mt-8 gap-3">

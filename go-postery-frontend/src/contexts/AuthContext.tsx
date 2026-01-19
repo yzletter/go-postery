@@ -6,9 +6,10 @@ import { normalizeId } from '../utils/id'
 
 interface AuthContextType {
   user: User | null
-  login: (username: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string) => Promise<boolean>
+  loginWithPassword: (identifier: string, password: string) => Promise<boolean>
+  loginWithPhone: (phone: string, code: string) => Promise<boolean>
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
+  updateUser: (updates: Partial<User>) => void
   logout: () => void
   isLoading: boolean
 }
@@ -25,11 +26,27 @@ const normalizeUserFromResponse = (raw: any, fallbackName: string): User => {
       raw?.ID ??
       raw?.id
   )
+  const resolvedName =
+    responseUser.nickname ??
+    responseUser.Nickname ??
+    responseUser.name ??
+    responseUser.Name ??
+    raw?.nickname ??
+    raw?.Nickname ??
+    raw?.name ??
+    raw?.Name ??
+    fallbackName
   return {
     id: resolvedId || Date.now().toString(),
-    name: responseUser.name ?? responseUser.Name ?? raw?.Name ?? fallbackName,
+    name: resolvedName,
     email: responseUser.email ?? responseUser.Email,
   }
+}
+
+const normalizePasswordInput = (value: string) => {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  return trimmed.length === 32 ? trimmed : md5Hash(trimmed)
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -59,16 +76,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return newUser
   }
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const updateUser = (updates: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...updates }
+      localStorage.setItem('user', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const loginWithPassword = async (identifier: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     try {
-      const payloadPassword = password.length === 32 ? password : md5Hash(password)
-      const { data } = await apiPost('/auth/login', { name: username, password: payloadPassword }, {
+      const trimmedIdentifier = identifier.trim()
+      const payloadPassword = normalizePasswordInput(password)
+      const { data } = await apiPost('/auth/login/password', { identifier: trimmedIdentifier, password: payloadPassword }, {
         baseUrl: AUTH_API_BASE_URL,
         skipAuthToken: true,
       })
 
-      persistUser(data, username)
+      persistUser(data, trimmedIdentifier)
       return true
     } catch (error) {
       console.error('Login error:', error)
@@ -78,19 +105,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const loginWithPhone = async (phone: string, code: string): Promise<boolean> => {
     setIsLoading(true)
     try {
-      const payloadPassword = password.length === 32 ? password : md5Hash(password)
-      const { data } = await apiPost('/auth/register', { name, email, password: payloadPassword }, {
+      const trimmedPhone = phone.trim()
+      const trimmedCode = code.trim()
+      const { data } = await apiPost('/auth/login/phone', { phone: trimmedPhone, code: trimmedCode }, {
         baseUrl: AUTH_API_BASE_URL,
         skipAuthToken: true,
       })
 
-      persistUser(data, name)
+      persistUser(data, trimmedPhone)
       return true
     } catch (error) {
-      console.error('Register error:', error)
+      console.error('Login phone error:', error)
       return false
     } finally {
       setIsLoading(false)
@@ -100,11 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
     setIsLoading(true)
     try {
-      const hashedOldPassword = md5Hash(oldPassword)
-      const hashedNewPassword = md5Hash(newPassword)
+      const hashedOldPassword = normalizePasswordInput(oldPassword)
+      const hashedNewPassword = normalizePasswordInput(newPassword)
       
       await apiPost(
-        '/users/me/password',
+        '/auth/password/update',
         { old_password: hashedOldPassword, new_password: hashedNewPassword },
         { baseUrl: AUTH_API_BASE_URL }
       )
@@ -130,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, changePassword, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, loginWithPassword, loginWithPhone, changePassword, updateUser, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -22,10 +22,27 @@ type RecommendUser = {
 const normalizeRecommendUser = (raw: any): RecommendUser | null => {
   if (!raw) return null
   const id = normalizeId(raw.id ?? raw.Id)
-  const name = typeof raw.name === 'string' ? raw.name.trim() : ''
+  const name =
+    typeof raw.nickname === 'string'
+      ? raw.nickname.trim()
+      : typeof raw.Nickname === 'string'
+        ? raw.Nickname.trim()
+        : typeof raw.name === 'string'
+          ? raw.name.trim()
+          : ''
   if (!id || !name) return null
-  const bio = typeof raw.bio === 'string' ? raw.bio.trim() : ''
-  const avatar = typeof raw.avatar === 'string' ? raw.avatar.trim() : ''
+  const bio =
+    typeof raw.bio === 'string'
+      ? raw.bio.trim()
+      : typeof raw.Bio === 'string'
+        ? raw.Bio.trim()
+        : ''
+  const avatar =
+    typeof raw.avatar === 'string'
+      ? raw.avatar.trim()
+      : typeof raw.Avatar === 'string'
+        ? raw.Avatar.trim()
+        : ''
   const score = Number.isFinite(Number(raw.score)) ? Number(raw.score) : 0
   return { id, name, bio, avatar, score }
 }

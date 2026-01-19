@@ -9,7 +9,6 @@ import {
   EyeOff,
   Settings as SettingsIcon,
   User as UserIcon,
-  Mail,
   Image,
   MapPin,
   Globe,
@@ -22,9 +21,9 @@ import type { ModifyUserProfileRequest, UserDetail } from '../types'
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { user, changePassword } = useAuth()
+  const { user, changePassword, updateUser } = useAuth()
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile')
-  const [profileEmail, setProfileEmail] = useState(user?.email || '')
+  const [nickname, setNickname] = useState(user?.name || '')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [bio, setBio] = useState('')
   const [gender, setGender] = useState<number>(0)
@@ -64,7 +63,7 @@ export default function Settings() {
       const detail = data ? normalizeUserDetail(data) : null
 
       if (detail) {
-        setProfileEmail(detail.email || '')
+        setNickname(detail.name || user?.name || '')
         setAvatarUrl(detail.avatar || '')
         setBio(detail.bio || '')
         setGender(detail.gender ?? 0)
@@ -72,7 +71,7 @@ export default function Settings() {
         setLocation(detail.location || '')
         setCountry(detail.country || '')
       } else {
-        setProfileEmail('')
+        setNickname(user?.name || '')
         setAvatarUrl('')
         setBio('')
         setGender(0)
@@ -86,7 +85,7 @@ export default function Settings() {
     } finally {
       setIsProfileLoading(false)
     }
-  }, [normalizeBirthdayInput, user?.id])
+  }, [normalizeBirthdayInput, user?.id, user?.name])
 
   useEffect(() => {
     void fetchProfile()
@@ -97,9 +96,10 @@ export default function Settings() {
     return null
   }
 
+  const displayName = nickname.trim() || user?.name || '用户'
   const avatarPreview =
     (avatarUrl && avatarUrl.trim()) ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`
   const disableProfileForm = isProfileLoading || isSavingProfile
 
   const handleProfileSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -107,8 +107,14 @@ export default function Settings() {
     setProfileSuccess('')
     setProfileError('')
 
+    const normalizedNickname = nickname.trim()
+    if (!normalizedNickname) {
+      setProfileError('昵称不能为空')
+      return
+    }
+
     const payload: ModifyUserProfileRequest = {
-      email: profileEmail.trim(),
+      nickname: normalizedNickname,
       avatar: avatarUrl.trim(),
       bio: bio.trim(),
       gender,
@@ -121,6 +127,7 @@ export default function Settings() {
 
     try {
       await apiPost('/users/me', payload as Record<string, unknown>)
+      updateUser({ name: normalizedNickname })
       setProfileSuccess('个人资料已更新')
       await fetchProfile()
     } catch (err) {
@@ -250,11 +257,11 @@ export default function Settings() {
                 <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
                   <img
                     src={avatarPreview}
-                    alt={user.name}
+                    alt={displayName}
                     className="w-14 h-14 rounded-full border border-white shadow-sm"
                   />
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                    <p className="text-sm font-semibold text-gray-900">{displayName}</p>
                     <p className="text-xs text-gray-500">用户 ID：{user.id ?? '—'}</p>
                     <p className="text-xs text-gray-500">头像预览基于填写的 URL</p>
                   </div>
@@ -263,17 +270,17 @@ export default function Settings() {
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">昵称</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Mail className="h-5 w-5 text-gray-400" />
+                          <UserIcon className="h-5 w-5 text-gray-400" />
                         </div>
                         <input
-                          type="email"
-                          value={profileEmail}
-                          onChange={(e) => setProfileEmail(e.target.value)}
+                          type="text"
+                          value={nickname}
+                          onChange={(e) => setNickname(e.target.value)}
                           className="input pl-10"
-                          placeholder="邮箱将作为 email 字段"
+                          placeholder="展示给其他用户的昵称"
                           disabled={disableProfileForm}
                         />
                       </div>

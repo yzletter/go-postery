@@ -26,7 +26,7 @@ export interface UserDetail {
 }
 
 export interface ModifyUserProfileRequest {
-  email?: string
+  nickname?: string
   avatar?: string
   bio?: string
   gender?: number
@@ -39,6 +39,7 @@ export interface Post {
   id: Id
   title: string
   content: string
+  contentType?: 0 | 1
   author: {
     id: Id
     name: string
