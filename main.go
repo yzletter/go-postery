@@ -65,6 +65,7 @@ func main() {
 	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
 	GiftDAO := dao.NewGiftDAO(MySQLGormDB)
 	AuthDAO := dao.NewAuthDAO(MySQLGormDB)
+	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient)
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -93,6 +94,7 @@ func main() {
 	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)             // 注册 GiftRepository
 	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
 	CodeRepo := repository.NewCodeRepository(CodeCache)
+	AgentRepo := repository.NewAgentRepository(AgentDAO)
 
 	// Service 层
 	CodeSvc := service.NewCodeService(CodeRepo, EmailManager, SmsClient)
@@ -107,12 +109,13 @@ func main() {
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
+	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, ArkEmbedder, IDGenerator)
 
+	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	// 协程开启
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
+	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
 	go FollowSvc.StartInitUserScoreConsumer(ctx)    // 开启修改用户分数的消息协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程

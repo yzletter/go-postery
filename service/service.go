@@ -105,4 +105,5 @@ type LotteryService interface {
 }
 
 type AgentService interface {
+	StartChunkDocConsumer(ctx context.Context)
 }

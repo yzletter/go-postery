@@ -41,6 +41,15 @@
 ## 待开发
 
 - **用户头像**
+- 添加 RAG metadata
+  1. **biz**：文本类型（plain / md）
+  2. **source_id**：原始文档 id（你索引的 document_id）
+  3. **chunk_id**：chunk 唯一 id（建议：`source_id + ":" + chunk_index` 或 snowflake）
+  4. **chunk_index**：chunk 序号
+  5. **chunk_total**：该 source 一共几个 chunk
+  6. **start_offset / end_offset**：chunk 在原文中的字符区间（方便回溯定位、拼接上下文）
+  7. **title / headers**：如果是 markdown，记录 header 路径（`# A / ## B`）
+  8. **hash**：chunk 内容 hash（去重、幂等、更新对比非常好用）
 - 对每个 email、phone 设置单日验证码上限防刷
 - 注册 Session 前进行 DB 唯一约束避免打爆 RabbitMQ
 - Outbox 对消息抢占避免（或乐观）多实例部署重复发送消息

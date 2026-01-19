@@ -25,3 +25,7 @@ type RegisterSessionEvent struct {
 type InitUserScoreEvent struct {
 	UserID int64 `json:"user_id,string"`
 }
+
+type ChunkDocumentEvent struct {
+	ID int64 `json:"id,string"`
+}
