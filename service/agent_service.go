@@ -165,7 +165,7 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 func (svc *agentService) Chat(ctx context.Context, uid int64, sessionID int64, query string) (agentdto.DTO, error) {
 	var empty agentdto.DTO
 
-	//// 拉取历史记录
+	// 拉取历史记录
 	//messages, err := svc.agentRepo.GetMessagesBySessionID(ctx, sessionID)
 	//if err != nil {
 	//	if errors.Is(err, repository.ErrServerInternal) {
@@ -236,7 +236,9 @@ func (svc *agentService) Chat(ctx context.Context, uid int64, sessionID int64, q
 	}
 
 	if lastMsg.Role == schema.Assistant && len(lastMsg.Content) > 0 {
-		return agentdto.ToDTO(lastMsg, sessionID), nil
+		dto := agentdto.ToDTO(lastMsg, sessionID)
+		dto.Documents = knowledge // 参考文献
+		return dto, nil
 	}
 
 	return agentdto.DTO{

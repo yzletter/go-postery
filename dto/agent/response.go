@@ -5,8 +5,9 @@ import (
 )
 
 type DTO struct {
-	SessionID int64  `json:"session_id,string"`
-	Content   string `json:"content"`
+	SessionID int64    `json:"session_id,string"`
+	Content   string   `json:"content"`
+	Documents []string `json:"documents"`
 }
 
 func ToDTO(message adk.Message, ssid int64) DTO {
