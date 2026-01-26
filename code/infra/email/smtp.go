@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/code/service/ports"
 	"gopkg.in/gomail.v2"
 )
 

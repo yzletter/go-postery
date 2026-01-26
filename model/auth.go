@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/yzletter/go-postery/code/model"
+)
 
 // AuthIdentity 用户登录凭证
 type AuthIdentity struct {
@@ -30,11 +34,11 @@ func (u AuthPassword) TableName() string {
 	return "auth_passwords"
 }
 
-func AuthTypeFromBiz(biz CodeBiz) int {
+func AuthTypeFromBiz(biz model.CodeBiz) int {
 	switch biz {
-	case SMSCode:
+	case model.SMSCode:
 		return 1
-	case EmailCode:
+	case model.EmailCode:
 		return 2
 	default:
 		return 0

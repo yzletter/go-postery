@@ -47,11 +47,6 @@ type GiftCache interface {
 	IncreaseInventory(ctx context.Context, gid int64) error
 }
 
-type CodeCache interface {
-	Allow(ctx context.Context, biz model.CodeBiz, field string, code string) (int, error)
-	CheckCode(ctx context.Context, biz model.CodeBiz, field string, code string) (bool, error)
-}
-
 type AuthCache interface {
 	DelRefreshToken(ctx context.Context, refreshToken string) error
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)

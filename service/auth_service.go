@@ -9,9 +9,14 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
+	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	code_conf "github.com/yzletter/go-postery/code/conf"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service/ports"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials/insecure"
 
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
@@ -19,18 +24,20 @@ import (
 )
 
 type authService struct {
-	codeSvc    CodeService
 	authRepo   repository.AuthRepository
 	userRepo   repository.UserRepository
 	jwtManager ports.JwtManager
 	passHasher ports.PasswordHasher
 	idGen      ports.IDGenerator
+
+	codeConn *grpc.ClientConn
 }
 
 // NewAuthService 构造函数
-func NewAuthService(codeSvc CodeService, authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
+func NewAuthService(authRepo repository.AuthRepository, userRepo repository.UserRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator) AuthService {
+	codeConn := newCodeGrpcConn()
 	return &authService{
-		codeSvc:    codeSvc,
+		codeConn:   codeConn,
 		authRepo:   authRepo,
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
@@ -89,12 +96,24 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier, passwor
 func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error) {
 	var empty userdto.BriefDTO
 
+	// 判断连接是否可复用
+	if !(svc.codeConn.GetState() == connectivity.Ready || svc.codeConn.GetState() == connectivity.Connecting) {
+		_ = svc.codeConn.Close() // 关闭旧连接
+		svc.codeConn = newCodeGrpcConn()
+	}
+	codeClient := code_grpc.NewCodeServiceClient(svc.codeConn)
+
 	// 校验验证码并消费
-	ok, err := svc.codeSvc.CheckCode(ctx, model.SMSCode, phone, code)
+	req := code_grpc.CheckCodeRequest{
+		Biz:        int64(model.SMSCode),
+		Identifier: phone,
+		Code:       code,
+	}
+	resp, err := codeClient.Verify(ctx, &req)
 	if err != nil {
 		slog.Error("Check Code Failed", "biz", model.SMSCode)
 		return empty, errno.ErrServerInternal
-	} else if !ok {
+	} else if !resp.Result {
 		return empty, errno.ErrPhoneCodeInvalid
 	}
 
@@ -198,12 +217,24 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code, newPas
 		return errno.ErrServerInternal
 	}
 
+	// 判断连接是否可复用
+	if !(svc.codeConn.GetState() == connectivity.Ready || svc.codeConn.GetState() == connectivity.Connecting) {
+		_ = svc.codeConn.Close() // 关闭旧连接
+		svc.codeConn = newCodeGrpcConn()
+	}
+	codeClient := code_grpc.NewCodeServiceClient(svc.codeConn)
+
 	// 校验验证码并消费
-	ok, err := svc.codeSvc.CheckCode(ctx, model.SMSCode, authIdentity.Identifier, code)
+	req := code_grpc.CheckCodeRequest{
+		Biz:        int64(model.SMSCode),
+		Identifier: authIdentity.Identifier,
+		Code:       code,
+	}
+	resp, err := codeClient.Verify(ctx, &req)
 	if err != nil {
 		slog.Error("Check Code Failed", "biz", model.SMSCode)
 		return errno.ErrServerInternal
-	} else if !ok {
+	} else if !resp.Result {
 		return errno.ErrPhoneCodeInvalid
 	}
 
@@ -369,4 +400,16 @@ func (svc *authService) CheckBlackList(ctx context.Context, ssid string) (bool, 
 // 生成默认用户名
 func newNickname() string {
 	return "用户_" + uuid.NewString()[:8]
+}
+
+func newCodeGrpcConn() *grpc.ClientConn {
+	conn, err := grpc.NewClient(
+		"localhost:"+code_conf.Port,
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
+	)
+	if err != nil {
+		return nil
+	}
+
+	return conn
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
-	"github.com/yzletter/go-postery/infra/email"
 	"github.com/yzletter/go-postery/infra/graceful_stop"
 	infraKafka "github.com/yzletter/go-postery/infra/kafka"
 	infraLLM "github.com/yzletter/go-postery/infra/llm"
@@ -23,7 +22,6 @@ import (
 	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
-	"github.com/yzletter/go-postery/infra/sms"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/tokenizer"
 	"github.com/yzletter/go-postery/infra/viper"
@@ -56,8 +54,6 @@ func main() {
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
-	EmailManager := email.NewEmailManager(conf.EmailFrom, os.Getenv(conf.EmailAuthCode), conf.EmailSubject, conf.EmailExpireMin, conf.AppName, conf.EmailYear, conf.Address)
-	SmsClient := sms.NewAliyunSmsClient(os.Getenv(conf.AliyunAccessTokenKeyID), os.Getenv(conf.AliyunAccessTokenKeySecret)) // 初始化 短信服务商
 
 	// DAO 层
 	UserDAO := dao.NewUserDAO(MySQLGormDB)
@@ -82,7 +78,6 @@ func main() {
 	TagCache := cache.NewTagCache(RedisClient)
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
-	CodeCache := cache.NewCodeCache(RedisClient)
 	OrderCache := cache.NewOrderCache(RedisClient)
 	GiftCache := cache.NewGiftCache(RedisClient)
 	AuthCache := cache.NewAuthCache(RedisClient)
@@ -99,14 +94,12 @@ func main() {
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
 	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)             // 注册 GiftRepository
 	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
-	CodeRepo := repository.NewCodeRepository(CodeCache)
 	AgentRepo := repository.NewAgentRepository(AgentDAO)
 
 	// Service 层
-	CodeSvc := service.NewCodeService(CodeRepo, EmailManager, SmsClient)
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(CodeSvc, AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                  // 注册 AuthService
+	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
 	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                                 // 注册 userSvc
 	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                                    // 注册 postSvc
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, FollowKafkaConsumer, IDGenerator)                            // 注册 FollowService
@@ -131,7 +124,7 @@ func main() {
 	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存
 
 	// Handler 层
-	AuthHdl := handler.NewAuthHandler(AuthSvc, CodeSvc)                   // 注册 AuthHandler
+	AuthHdl := handler.NewAuthHandler(AuthSvc)                            // 注册 AuthHandler
 	UserHdl := handler.NewUserHandler(UserSvc)                            // 注册 UserHandler
 	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
 	CommentHdl := handler.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler

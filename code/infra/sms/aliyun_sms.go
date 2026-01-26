@@ -10,8 +10,8 @@ import (
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
 	credential "github.com/aliyun/credentials-go/credentials"
-	"github.com/yzletter/go-postery/conf"
-	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/code/conf"
+	"github.com/yzletter/go-postery/code/service/ports"
 )
 
 type AliyunSmsClient struct {

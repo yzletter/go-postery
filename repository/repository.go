@@ -115,8 +115,3 @@ type AgentRepository interface {
 	UpsertVectorPoints(ctx context.Context, points []*qdrant.PointStruct) error
 	GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model.Chunk, error)
 }
-
-type CodeRepository interface {
-	Allow(ctx context.Context, biz model.CodeBiz, field string, code string) error             // Allow 判断是否允许发送 Code
-	CheckCode(ctx context.Context, biz model.CodeBiz, field string, code string) (bool, error) // CheckCode 校验 Code
-}

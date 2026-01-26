@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package code.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/code/v1;code_grpc";
+
+// 发送验证码请求体
+message SendCodeRequest{
+  int64 biz = 1;
+  string identifier = 2;
+}
+
+// 发送验证码响应体
+message SendCodeResponse{}
+
+// 校验验证码请求体
+message CheckCodeRequest{
+  int64 biz = 1;
+  string identifier = 2;
+  string code = 3;
+}
+
+// 校验验证码响应体
+message CheckCodeResponse{
+  bool result = 1;
+}
+
+// 验证码服务
+service CodeService {
+  // 发送验证码
+  rpc Send(SendCodeRequest) returns (SendCodeResponse);
+  // 校验验证码
+  rpc Verify(CheckCodeRequest) returns (CheckCodeResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/code/v1/code.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

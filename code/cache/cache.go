@@ -5,8 +5,8 @@ import (
 	_ "embed"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/yzletter/go-postery/code/model"
 	"github.com/yzletter/go-postery/conf"
-	"github.com/yzletter/go-postery/model"
 )
 
 //go:embed lua/allow_send_code.lua

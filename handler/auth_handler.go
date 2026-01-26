@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	code_conf "github.com/yzletter/go-postery/code/conf"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/auth"
 	"github.com/yzletter/go-postery/errno"
@@ -12,17 +14,21 @@ import (
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthHandler struct {
-	authSvc service.AuthService
-	codeSvc service.CodeService
+	authSvc  service.AuthService
+	codeConn *grpc.ClientConn
 }
 
-func NewAuthHandler(authSvc service.AuthService, codeSvc service.CodeService) *AuthHandler {
+func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
+	codeConn := newCodeGrpcConn()
 	return &AuthHandler{
-		authSvc: authSvc,
-		codeSvc: codeSvc,
+		authSvc:  authSvc,
+		codeConn: codeConn,
 	}
 }
 
@@ -103,8 +109,20 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 		return
 	}
 
+	// 判断连接是否可复用
+	if !(hdl.codeConn.GetState() == connectivity.Ready || hdl.codeConn.GetState() == connectivity.Connecting) {
+		_ = hdl.codeConn.Close() // 关闭旧连接
+		hdl.codeConn = newCodeGrpcConn()
+	}
+	codeClient := code_grpc.NewCodeServiceClient(hdl.codeConn)
+
 	// 发送邮件
-	if err := hdl.codeSvc.SendCode(ctx, model.EmailCode, req.Email); err != nil {
+	grpcReq := code_grpc.SendCodeRequest{
+		Biz:        int64(model.EmailCode),
+		Identifier: req.Email,
+	}
+
+	if _, err := codeClient.Send(ctx, &grpcReq); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -123,8 +141,20 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 		return
 	}
 
-	// 发送短信
-	if err := hdl.codeSvc.SendCode(ctx, model.SMSCode, req.Phone); err != nil {
+	// 判断连接是否可复用
+	if !(hdl.codeConn.GetState() == connectivity.Ready || hdl.codeConn.GetState() == connectivity.Connecting) {
+		_ = hdl.codeConn.Close() // 关闭旧连接
+		hdl.codeConn = newCodeGrpcConn()
+	}
+	codeClient := code_grpc.NewCodeServiceClient(hdl.codeConn)
+
+	// 发送邮件
+	grpcReq := code_grpc.SendCodeRequest{
+		Biz:        int64(model.SMSCode),
+		Identifier: req.Phone,
+	}
+
+	if _, err := codeClient.Send(ctx, &grpcReq); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -292,4 +322,16 @@ func ExtractToken(ctx *gin.Context) string {
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	ctx.Header("Authorization", "Bearer "+accessToken)
 	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+}
+
+func newCodeGrpcConn() *grpc.ClientConn {
+	conn, err := grpc.NewClient(
+		"localhost:"+code_conf.Port,
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
+	)
+	if err != nil {
+		return nil
+	}
+
+	return conn
 }
