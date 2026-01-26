@@ -113,16 +113,18 @@ func main() {
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
 	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
+	SearchSvc := service.NewSearchService() // 注册 SearchService
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
 	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
-	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启切分文档协程
+	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启向量数据库协程
 	go FollowSvc.StartInitUserScoreConsumer(ctx)    // 开启修改用户分数的消息协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
-	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程
+	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程核查临时订单进行库存回流
+	go SearchSvc.StartPostIndexConsumer(ctx)        // 开启协程对文章进行索引
 	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存
 
 	// Handler 层
@@ -135,6 +137,7 @@ func main() {
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
 	LotteryHdl := handler.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
 	AgentHdl := handler.NewAgentHandler(AgentSvc)                         // 注册 AgentHandler
+	SearchHdl := handler.NewSearchHandler(SearchSvc)                      // 注册 SearchHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
@@ -290,7 +293,13 @@ func main() {
 		agent.POST("/chat", AgentHdl.Chat) // POST /api/v1/agent/chat
 	}
 
-	if err := engine.Run("localhost:8765"); err != nil {
+	search := v1.Group("/search")
+	search.Use(AuthRequiredMdl)
+	{
+		search.POST("", SearchHdl.Search)
+	}
+
+	if err := engine.Run("localhost:8080"); err != nil {
 		panic(err)
 	}
 }

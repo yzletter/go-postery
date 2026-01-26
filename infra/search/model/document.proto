@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package model;
+
+option go_package = "github.com/yzletter/go-postery/infra/search/model;model";
+
+// 用于索引的 Keyword
+message Keyword {
+  string Field = 1;
+  string Word = 2;
+}
+
+message Document {
+  uint64 IndexID = 1;             // 用于索引 ID
+  string DocID = 2;               // 业务 ID
+  uint64 BitsFeature = 3;         // 表示 Document 特征 Bits
+  repeated Keyword Keywords = 4;  // Document 的关键词
+  bytes Bytes = 5;                // 业务实体序列化后的结果
+}
+
+/*
+  protoc \
+  -I .  \
+  infra/search/model/document.proto \
+  --go_out=./ \
+  --go_opt=paths=source_relative 
+*/
