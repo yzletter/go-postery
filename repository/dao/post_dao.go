@@ -22,7 +22,7 @@ func NewPostDAO(db *gorm.DB) PostDAO {
 }
 
 // Create 创建 Post
-func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, event *model.Event) error {
+func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, events []*model.Event) error {
 	// 0. 兜底
 	if post.ID == 0 || post.UserID == 0 || post.Title == "" || post.Content == "" {
 		return ErrParamsInvalid
@@ -34,7 +34,7 @@ func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, event *mod
 			return err
 		}
 
-		if err := tx.Create(event).Error; err != nil {
+		if err := tx.Create(events).Error; err != nil {
 			return err
 		}
 

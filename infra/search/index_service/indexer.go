@@ -7,8 +7,8 @@ import (
 	"log/slog"
 
 	"github.com/bytedance/sonic"
-	"github.com/yzletter/go-postery/infra/search/internal/forward_index"
-	"github.com/yzletter/go-postery/infra/search/internal/reverse_index"
+	"github.com/yzletter/go-postery/infra/search/internal_/forward_index"
+	"github.com/yzletter/go-postery/infra/search/internal_/reverse_index"
 	"github.com/yzletter/go-postery/infra/search/model"
 )
 

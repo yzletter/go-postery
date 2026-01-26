@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
@@ -25,13 +25,11 @@ func NewSearchHandler(searchSvc service.SearchService) *SearchHandler {
 
 func (hdl *SearchHandler) Search(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	_, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
-
-	fmt.Println(uid)
 
 	// 参数绑定
 	var req search.SearchRequest
@@ -40,4 +38,13 @@ func (hdl *SearchHandler) Search(ctx *gin.Context) {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
+
+	querys := strings.Split(req.Query, " ")
+	postDTOs, err := hdl.searchSvc.Search(ctx, querys)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.Success(ctx, "搜索成功", postDTOs)
 }

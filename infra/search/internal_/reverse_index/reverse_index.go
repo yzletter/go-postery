@@ -1,6 +1,6 @@
 package reverse_index
 
-import "github.com/yzletter/go-searchery/model"
+import "github.com/yzletter/go-postery/infra/search/model"
 
 // ReverseIndex 倒排索引接口
 type ReverseIndex interface {

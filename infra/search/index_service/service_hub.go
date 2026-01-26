@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ServiceRootPath = "/go-searchery/index"
+	ServiceRootPath = "/go-postery-search/index"
 )
 
 // ServiceHub 服务注册中心

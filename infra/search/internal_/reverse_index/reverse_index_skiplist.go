@@ -6,8 +6,8 @@ import (
 
 	"github.com/huandu/skiplist"
 	farmhash "github.com/leemcloughlin/gofarmhash"
-	"github.com/yzletter/go-searchery/model"
-	"github.com/yzletter/go-searchery/util"
+	"github.com/yzletter/go-postery/infra/search/model"
+	"github.com/yzletter/go-postery/infra/search/util"
 )
 
 // SkipListReverseIndex 用跳表实现的倒排索引

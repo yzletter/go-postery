@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -261,7 +260,6 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 	// 从路由中获取 uid
 	uid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
-		fmt.Println(uid)
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}

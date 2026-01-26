@@ -21,9 +21,9 @@ func NewPostRepository(postDao dao.PostDAO, postCache cache.PostCache) PostRepos
 	return &postRepository{dao: postDao, cache: postCache}
 }
 
-func (repo *postRepository) Create(ctx context.Context, post *model.Post, event *model.Event) error {
+func (repo *postRepository) Create(ctx context.Context, post *model.Post, events []*model.Event) error {
 	// 创建文章
-	err := repo.dao.Create(ctx, post, event)
+	err := repo.dao.Create(ctx, post, events)
 	if err != nil {
 		return toRepositoryErr(err)
 	}

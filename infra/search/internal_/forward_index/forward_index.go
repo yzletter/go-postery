@@ -37,7 +37,7 @@ func NewForwardIndex(filepath string) (ForwardIndex, error) {
 	}
 
 	index := new(BoltForwardIndex)
-	index.AddFilePath(filepath).AddBucket("go-searchery")
+	index.AddFilePath(filepath).AddBucket("go-postery")
 
 	err = index.Open()
 	if err != nil {

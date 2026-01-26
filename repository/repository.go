@@ -33,7 +33,7 @@ type UserRepository interface {
 }
 
 type PostRepository interface {
-	Create(ctx context.Context, post *model.Post, event *model.Event) error
+	Create(ctx context.Context, post *model.Post, events []*model.Event) error
 	Delete(ctx context.Context, id int64) error
 	UpdateCount(ctx context.Context, id int64, field model.PostCntField, delta int) error
 	Update(ctx context.Context, id int64, updates map[string]any) error

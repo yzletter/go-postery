@@ -61,6 +61,7 @@ func (svc *postService) Create(ctx context.Context, uid int64, title string, con
 	payload.ID = post.ID
 	value, _ := sonic.MarshalString(payload)
 
+	events := make([]*model.Event, 0)
 	// 通知 RAG 新帖子建立
 	event := &model.Event{
 		ID:           svc.idGen.NextID(),
@@ -68,8 +69,19 @@ func (svc *postService) Create(ctx context.Context, uid int64, title string, con
 		MessageKey:   "index_document",
 		MessageValue: value,
 	}
-	err = svc.postRepo.Create(ctx, post, event)
-	if err != nil {
+
+	events = append(events, event)
+
+	// 通知搜索引擎新帖子建立
+	event = &model.Event{
+		ID:           svc.idGen.NextID(),
+		Topic:        "index_search",
+		MessageKey:   "index_search",
+		MessageValue: value,
+	}
+	events = append(events, event)
+
+	if err = svc.postRepo.Create(ctx, post, events); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 雪花 ID 的帖子不会已存在, 需要排查
 			slog.Error("Create Post Failed", "error", err)

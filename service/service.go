@@ -114,4 +114,5 @@ type AgentService interface {
 
 type SearchService interface {
 	StartPostIndexConsumer(ctx context.Context)
+	Search(ctx context.Context, querys []string) ([]postdto.DetailDTO, error)
 }
