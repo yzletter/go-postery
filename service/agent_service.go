@@ -195,7 +195,7 @@ func (svc *agentService) Chat(ctx context.Context, uid int64, sessionID int64, q
 		Model:       svc.llmModel,
 		Name:        "knowledge_service",
 		Description: "知识库助手",
-		Instruction: "请根据我提供的可靠的论坛文章内容以及历史消息记录，回答用户的问题，若不能根据已有信息回答，请不要随便给出答案",
+		Instruction: "你是网站的知识库助手，请结合所提供的可靠的论坛文章内容以及历史消息记录以及自己的思考，回答用户的问题",
 	})
 
 	// 创建 Runner

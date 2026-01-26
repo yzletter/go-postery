@@ -14,5 +14,5 @@ func NewJiebaTokenizer() *JiebaTokenizer {
 func (tokenizer *JiebaTokenizer) Cut(text string) []string {
 	// 初始化 gojieba
 	x := gojieba.NewJieba()
-	return x.Extract(text, 1000)
+	return x.CutForSearch(text, true)
 }

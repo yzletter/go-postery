@@ -4,6 +4,26 @@ import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartH
 import { useAuth } from '../contexts/AuthContext'
 import { isAdminUser } from '../utils/admin'
 
+type SearchInputProps = {
+  value: string
+  onChange: (next: string) => void
+}
+
+function SearchInput({ value, onChange }: SearchInputProps) {
+  return (
+    <div className="relative">
+      <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="搜索帖子标题、内容或作者..."
+        className="input w-full pl-10 pr-4 h-11"
+      />
+    </div>
+  )
+}
+
 export default function Navbar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -19,19 +39,6 @@ export default function Navbar() {
     setShowMobileSearch(false)
     navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
   }
-
-  const SearchInput = () => (
-    <div className="relative">
-      <Search className="h-5 w-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="搜索帖子标题、内容或作者..."
-        className="input w-full pl-10 pr-4 h-11"
-      />
-    </div>
-  )
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/70 backdrop-blur-md">
@@ -52,7 +59,7 @@ export default function Navbar() {
             className="hidden md:block flex-1 max-w-xl lg:ml-20"
             onSubmit={handleSearchSubmit}
           >
-            <SearchInput />
+            <SearchInput value={searchTerm} onChange={setSearchTerm} />
           </form>
           
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
@@ -183,7 +190,7 @@ export default function Navbar() {
         {showMobileSearch && (
           <div className="md:hidden pb-4">
             <form onSubmit={handleSearchSubmit}>
-              <SearchInput />
+              <SearchInput value={searchTerm} onChange={setSearchTerm} />
             </form>
           </div>
         )}

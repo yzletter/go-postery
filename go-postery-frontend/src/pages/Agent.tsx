@@ -1,8 +1,10 @@
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState, type AnchorHTMLAttributes, type HTMLAttributes } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { apiPost } from '../utils/api'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type ChatMessage = {
   id: string
@@ -95,6 +97,85 @@ const buildDocumentLabel = (doc: AgentDocument, index: number) => {
   return doc.title || doc.url || doc.id || `文献 ${index + 1}`
 }
 
+const buildMarkdownComponents = (tone: 'light' | 'dark') => {
+  const linkClass =
+    tone === 'light'
+      ? 'text-white underline underline-offset-2'
+      : 'text-primary-600 hover:text-primary-700 underline'
+  const quoteClass =
+    tone === 'light'
+      ? 'border-white/40 bg-white/10'
+      : 'border-primary-200 bg-primary-50/50'
+  const inlineCodeClass = tone === 'light' ? 'bg-white/20' : 'bg-gray-200'
+  const codeBlockClass =
+    tone === 'light' ? 'bg-white/10 text-white' : 'bg-gray-900 text-gray-100'
+  const hrClass = tone === 'light' ? 'border-white/20' : 'border-gray-200/70'
+
+  return {
+    h1: (props: HTMLAttributes<HTMLHeadingElement>) => (
+      <h1 {...props} className="text-lg font-semibold mt-4 mb-2 first:mt-0" />
+    ),
+    h2: (props: HTMLAttributes<HTMLHeadingElement>) => (
+      <h2 {...props} className="text-base font-semibold mt-4 mb-2 first:mt-0" />
+    ),
+    h3: (props: HTMLAttributes<HTMLHeadingElement>) => (
+      <h3 {...props} className="text-sm font-semibold mt-3 mb-2 first:mt-0" />
+    ),
+    p: (props: HTMLAttributes<HTMLParagraphElement>) => (
+      <p {...props} className="mb-2 last:mb-0" />
+    ),
+    ul: (props: HTMLAttributes<HTMLUListElement>) => (
+      <ul {...props} className="mb-2 list-disc pl-5 space-y-1" />
+    ),
+    ol: (props: HTMLAttributes<HTMLOListElement>) => (
+      <ol {...props} className="mb-2 list-decimal pl-5 space-y-1" />
+    ),
+    li: (props: HTMLAttributes<HTMLLIElement>) => (
+      <li {...props} className="leading-relaxed" />
+    ),
+    blockquote: (props: HTMLAttributes<HTMLQuoteElement>) => (
+      <blockquote
+        {...props}
+        className={`mb-2 rounded-lg border-l-2 px-3 py-2 ${quoteClass}`}
+      />
+    ),
+    a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      <a {...props} className={linkClass} target="_blank" rel="noreferrer" />
+    ),
+    pre: (props: HTMLAttributes<HTMLPreElement>) => (
+      <pre
+        {...props}
+        className={`mb-2 overflow-x-auto rounded-lg p-3 text-xs font-mono ${codeBlockClass}`}
+      />
+    ),
+    code: ({
+      inline,
+      className,
+      children,
+      ...props
+    }: HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
+      if (inline) {
+        return (
+          <code
+            {...props}
+            className={`rounded px-1.5 py-0.5 text-xs font-mono ${inlineCodeClass}`}
+          >
+            {children}
+          </code>
+        )
+      }
+      return (
+        <code {...props} className={`text-xs font-mono ${className ?? ''}`}>
+          {children}
+        </code>
+      )
+    },
+    hr: (props: HTMLAttributes<HTMLHRElement>) => (
+      <hr {...props} className={`my-3 ${hrClass}`} />
+    ),
+  }
+}
+
 export default function Agent() {
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -104,6 +185,7 @@ export default function Agent() {
   const [isThinking, setIsThinking] = useState(false)
   const sessionIdRef = useRef<string>(buildSessionId())
   const bottomRef = useRef<HTMLDivElement>(null)
+  const isComposingRef = useRef(false)
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -113,8 +195,7 @@ export default function Agent() {
     scrollToBottom()
   }, [messages])
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed || isThinking) return
 
@@ -155,6 +236,11 @@ export default function Agent() {
     } finally {
       setIsThinking(false)
     }
+  }
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    await sendMessage()
   }
 
   return (
@@ -213,7 +299,13 @@ export default function Agent() {
                       : 'bg-gray-100 text-gray-900 rounded-bl-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={buildMarkdownComponents(isUser ? 'light' : 'dark')}
+                    className="text-sm leading-relaxed break-words"
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
                   {!isUser && msg.documents && msg.documents.length > 0 && (
                     <div className="mt-3 border-t border-gray-200/70 pt-3 text-xs text-gray-600">
                       <p className="mb-2 text-[11px] uppercase tracking-wide text-gray-400">引用文献</p>
@@ -271,6 +363,18 @@ export default function Agent() {
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
+                  e.preventDefault()
+                  void sendMessage()
+                }
+              }}
+              onCompositionStart={() => {
+                isComposingRef.current = true
+              }}
+              onCompositionEnd={() => {
+                isComposingRef.current = false
+              }}
               placeholder="输入你的问题或需求..."
               rows={1}
               className="textarea flex-1 resize-none min-h-[44px]"
