@@ -13,15 +13,15 @@ import (
 	"github.com/yzletter/go-postery/errno"
 )
 
-type CodeService struct {
+type codeService struct {
 	repository   repository.CodeRepository
 	emailManager ports.EmailManager
 	smsClient    ports.SmsClient
 	code_grpc.UnimplementedCodeServiceServer
 }
 
-func NewCodeService(repository repository.CodeRepository, emailManager ports.EmailManager, smsClient ports.SmsClient) *CodeService {
-	return &CodeService{
+func NewCodeService(repository repository.CodeRepository, emailManager ports.EmailManager, smsClient ports.SmsClient) CodeService {
+	return &codeService{
 		repository:                     repository,
 		emailManager:                   emailManager,
 		smsClient:                      smsClient,
@@ -30,7 +30,7 @@ func NewCodeService(repository repository.CodeRepository, emailManager ports.Ema
 }
 
 // Send 发送验证码
-func (svc *CodeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
+func (svc *codeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
 	// 生成验证码
 	newCode := generateCode()
 
@@ -61,7 +61,7 @@ func (svc *CodeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest
 }
 
 // Verify 校验验证码
-func (svc *CodeService) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
+func (svc *codeService) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
 	ok, err := svc.repository.CheckCode(ctx, model.CodeBiz(req.Biz), req.Identifier, req.Code)
 	if err != nil {
 		return &code_grpc.CheckCodeResponse{Result: false}, errno.ErrServerInternal

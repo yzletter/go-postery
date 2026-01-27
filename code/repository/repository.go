@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/code/cache"
 	"github.com/yzletter/go-postery/code/model"
+	"github.com/yzletter/go-postery/code/repository/cache"
 )
 
 type codeRepository struct {
