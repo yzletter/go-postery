@@ -3,15 +3,20 @@ package service
 import (
 	"context"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
+	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
+	post_conf "github.com/yzletter/go-postery/post/conf"
 	"github.com/yzletter/go-postery/search/model"
 	"github.com/yzletter/go-postery/search/service/index_service"
 	"github.com/yzletter/go-postery/search/service/ports"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type searchService struct {
@@ -134,35 +139,46 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 }
 
 // Index 为新 Post 建立索引
-func (svc *searchService) Index(ctx context.Context, id int64) error {
-	//// 读文本
-	//post, err := svc.postRepo.GetByID(ctx, id)
-	//if err != nil {
-	//	slog.Error("获取文本失败", "pid", id, "error", err)
-	//	return err
-	//}
-	//
-	//// 对标题分词
-	//titleSegments := svc.tokenizer.Cut(post.Title)
-	//titleKeywords := toKeywords("Title", titleSegments)
-	//
-	//// 对文本分词转为关键词
-	//contentSegments := svc.tokenizer.Cut(post.Content)
-	//contentKeywords := toKeywords("Content", contentSegments)
-	//
-	//keywords := make([]*model.Keyword, 0, len(contentSegments)+len(titleSegments))
-	//keywords = append(keywords, titleKeywords...)
-	//keywords = append(keywords, contentKeywords...)
-	//
-	//// 建索引
-	//bs, _ := sonic.Marshal(post) // todo 用 Protobuf
-	//_, err = svc.indexer.AddDoc(&model.Document{
-	//	IndexID:     svc.idGen.NextIDUint64(),
-	//	DocID:       strconv.FormatInt(id, 10),
-	//	BitsFeature: 0, // todo 完善 Post BitsFeature
-	//	Keywords:    keywords,
-	//	Bytes:       bs,
-	//})
+func (svc *searchService) Index(ctx context.Context, postID int64) error {
+
+	conn, err := grpc.NewClient(
+		"localhost:"+post_conf.Port,
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
+	)
+
+	postClient := post_grpc.NewPostServiceClient(conn)
+
+	// 读文本
+	post, err := postClient.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{
+		PostID:     postID,
+		AddViewCnt: false,
+	})
+	if err != nil {
+		slog.Error("获取文本失败", "pid", postID, "error", err)
+		return err
+	}
+
+	// 对标题分词
+	titleSegments := svc.tokenizer.Cut(post.Title)
+	titleKeywords := toKeywords("Title", titleSegments)
+
+	// 对文本分词转为关键词
+	contentSegments := svc.tokenizer.Cut(post.Content)
+	contentKeywords := toKeywords("Content", contentSegments)
+
+	keywords := make([]*model.Keyword, 0, len(contentSegments)+len(titleSegments))
+	keywords = append(keywords, titleKeywords...)
+	keywords = append(keywords, contentKeywords...)
+
+	// 建索引
+	bs, _ := sonic.Marshal(post) // todo 用 Protobuf
+	_, err = svc.indexer.AddDoc(&model.Document{
+		IndexID:     svc.idGen.NextIDUint64(),
+		DocID:       strconv.FormatInt(postID, 10),
+		BitsFeature: 0, // todo 完善 Post BitsFeature
+		Keywords:    keywords,
+		Bytes:       bs,
+	})
 	return nil
 }
 

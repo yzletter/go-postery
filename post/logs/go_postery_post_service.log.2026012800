@@ -1,2 +1,3 @@
 time="2026-01-28 00:18:02.240" level=INFO source=/Users/yzletter/go_project/go-postery/post/infra/redis/redis.go:41 msg="初始化 Redis 成功 ..."
 time="2026-01-28 00:18:02.244" level=INFO source=/Users/yzletter/go_project/go-postery/post/infra/mysql/mysql.go:69 msg="初始化 MySQL 成功 ..."
+time="2026-01-28 00:41:50.476" level=ERROR source=/Users/yzletter/go_project/go-postery/post/repository/dao/post_dao.go:52 msg="MySQL Create Record Failed" post_id=2016189919529009152 error="Error 1264 (22003): Out of range value for column 'content_type' at row 1"
