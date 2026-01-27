@@ -49,7 +49,6 @@ func main() {
 	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
 	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent_document")
 
-	Tokenizer := tokenizer.NewJiebaTokenizer()            // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
@@ -107,14 +106,12 @@ func main() {
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())
-
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
 	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
 	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启向量数据库协程
 	go FollowSvc.StartInitUserScoreConsumer(ctx)    // 开启修改用户分数的消息协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程核查临时订单进行库存回流
-	go SearchSvc.StartPostIndexConsumer(ctx)        // 开启协程对文章进行索引
 	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存
 
 	// Handler 层

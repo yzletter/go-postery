@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/yzletter/go-postery/infra/viper"
+	"github.com/yzletter/go-postery/post/infra/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
