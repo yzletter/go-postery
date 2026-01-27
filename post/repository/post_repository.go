@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/post/model"
+	"github.com/yzletter/go-postery/post/repository/cache"
+	"github.com/yzletter/go-postery/post/repository/dao"
 )
 
 const OneWeekTimeSecs = 60 * 60 * 24 * 7

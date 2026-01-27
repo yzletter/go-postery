@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/yzletter/go-postery/utils"
+	"github.com/yzletter/go-postery/post/utils"
 )
 
 func TestSlug(t *testing.T) {

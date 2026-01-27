@@ -54,11 +54,7 @@ func main() {
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
 
 	// DAO 层
-	PostDAO := dao.NewPostDAO(MySQLGormDB)
-	CommentDAO := dao.NewCommentDAO(MySQLGormDB)
-	LikeDAO := dao.NewLikeDAO(MySQLGormDB)
 	FollowDAO := dao.NewFollowDAO(MySQLGormDB)
-	TagDAO := dao.NewTagDAO(MySQLGormDB)
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
 	SessionDAO := dao.NewSessionDAO(MySQLGormDB)
 	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
@@ -67,11 +63,8 @@ func main() {
 	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 
 	// Cache 层
-	PostCache := cache.NewPostCache(RedisClient)
 	CommentCache := cache.NewCommentCache(RedisClient)
-	LikeCache := cache.NewLikeCache(RedisClient)
 	FollowCache := cache.NewFollowCache(RedisClient)
-	TagCache := cache.NewTagCache(RedisClient)
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
 	OrderCache := cache.NewOrderCache(RedisClient)
@@ -79,11 +72,8 @@ func main() {
 	AuthCache := cache.NewAuthCache(RedisClient)
 
 	// Repository 层
-	PostRepo := repository.NewPostRepository(PostDAO, PostCache)             // 注册 PostRepository
 	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
-	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
 	FollowRepo := repository.NewFollowRepository(FollowDAO, FollowCache)     // 注册 FollowRepository
-	TagRepo := repository.NewTagRepository(TagDAO, TagCache)                 // 注册 TagRepository
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
@@ -95,7 +85,6 @@ func main() {
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
-	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                                    // 注册 postSvc
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, FollowKafkaConsumer, IDGenerator)                            // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                    // 注册 commentService
 	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                                    // 注册 TagService

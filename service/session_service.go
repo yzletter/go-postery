@@ -252,7 +252,7 @@ func (svc *sessionService) Register(ctx context.Context, uid int64) error {
 		)
 
 		if err != nil {
-			slog.Error("Queue Bind Failed", "queue_name", queueName)
+			slog.Error("Queue BindTag Failed", "queue_name", queueName)
 			return errno.ErrServerInternal
 		}
 	}

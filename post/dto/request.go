@@ -1,4 +1,4 @@
-package post
+package dto
 
 type CreateRequest struct {
 	Title       string   `json:"title"   binding:"required,gte=1"`  // 长度>=1

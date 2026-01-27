@@ -3,18 +3,16 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/post/model"
+	"github.com/yzletter/go-postery/post/repository/dao"
 )
 
 type likeRepository struct {
-	dao   dao.LikeDAO
-	cache cache.LikeCache
+	dao dao.LikeDAO
 }
 
-func NewLikeRepository(likeDAO dao.LikeDAO, likeCache cache.LikeCache) LikeRepository {
-	return &likeRepository{dao: likeDAO, cache: likeCache}
+func NewLikeRepository(likeDAO dao.LikeDAO) LikeRepository {
+	return &likeRepository{dao: likeDAO}
 }
 
 func (repo *likeRepository) Like(ctx context.Context, like *model.Like) error {

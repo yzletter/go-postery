@@ -9,10 +9,10 @@ import (
 	giftdto "github.com/yzletter/go-postery/dto/gift"
 	messagedto "github.com/yzletter/go-postery/dto/message"
 	orderdto "github.com/yzletter/go-postery/dto/order"
-	postdto "github.com/yzletter/go-postery/dto/post"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/model"
+	postdto "github.com/yzletter/go-postery/post/dto"
 	"github.com/yzletter/go-postery/service/ports"
 )
 
@@ -32,34 +32,12 @@ type AuthService interface {
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)                              // 根据 SSID 检查黑名单, 检查用户是否被拉黑
 }
 
-type PostService interface {
-	Create(ctx context.Context, uid int64, title string, content string, contentType int) (postdto.DetailDTO, error)
-	GetDetailById(ctx context.Context, id int64, addViewCnt bool) (postdto.DetailDTO, error)
-	GetBriefById(ctx context.Context, id int64) (postdto.BriefDTO, error)
-	Belong(ctx context.Context, pid, uid int64) bool
-	Delete(ctx context.Context, pid, uid int64) error
-	Update(ctx context.Context, pid int64, uid int64, title, content string, tags []string) error
-	ListByPage(ctx context.Context, pageNo, pageSize int) (int, []postdto.DetailDTO, error)
-	ListByPageAndUid(ctx context.Context, uid int64, pageNo, pageSize int) (int, []postdto.BriefDTO, error)
-	ListByPageAndTag(ctx context.Context, name string, pageNo, pageSize int) (int, []postdto.DetailDTO, error)
-	Like(ctx context.Context, pid, uid int64) error
-	Unlike(ctx context.Context, pid, uid int64) error
-	IfLike(ctx context.Context, pid, uid int64) (bool, error)
-	Top(ctx context.Context) ([]postdto.TopDTO, error)
-}
-
 type CommentService interface {
 	Create(ctx context.Context, pid int64, uid int64, parentId int64, replyId int64, content string) (commentdto.DTO, error)
 	Delete(ctx context.Context, uid, cid int64) error
 	List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []commentdto.DTO, error)
 	ListReplies(ctx context.Context, ids int64, pageNo, pageSize int) (int, []commentdto.DTO, error)
 	CheckAuth(ctx context.Context, cid, uid int64) bool
-}
-
-type TagService interface {
-	Create(ctx context.Context, name string) (int64, error)
-	Bind(ctx context.Context, pid int64, tags []string) error
-	FindTagsByPostID(ctx context.Context, pid int64) ([]string, error)
 }
 
 type FollowService interface {

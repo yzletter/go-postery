@@ -3,18 +3,16 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/post/model"
+	"github.com/yzletter/go-postery/post/repository/dao"
 )
 
 type tagRepository struct {
-	dao   dao.TagDAO
-	cache cache.TagCache
+	dao dao.TagDAO
 }
 
-func NewTagRepository(tagDAO dao.TagDAO, tagCache cache.TagCache) TagRepository {
-	return &tagRepository{dao: tagDAO, cache: tagCache}
+func NewTagRepository(tagDAO dao.TagDAO) TagRepository {
+	return &tagRepository{dao: tagDAO}
 }
 
 func (repo *tagRepository) Create(ctx context.Context, tag *model.Tag) error {

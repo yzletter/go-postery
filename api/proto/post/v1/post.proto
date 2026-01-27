@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package post.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/post/v1;post_grpc";
+
+message PostDetail {
+  int64 ID = 1;
+  uint64 ViewCount = 2;
+  uint64 LikeCount = 3;
+  uint64 CommentCount = 4;
+  string Title = 5;
+  string Content = 6;
+  uint32 ContentType = 7;
+  string CreatedAt = 8;
+  int64 UserID = 9;
+  repeated string Tags = 10;
+}
+
+message PostBrief {
+  int64 ID = 1;
+  string Title = 5;
+  string CreatedAt = 8;
+  int64 UserID = 9;
+}
+
+message TopPost {
+  int64 ID = 1;
+  string Title = 2;
+  float Score = 3;
+}
+
+message CreatePostRequest {
+  int64 UserID = 1;
+  string Title = 2;
+  string Content = 3;
+  uint32 ContentType = 4;
+  repeated string Tags = 5;
+}
+
+message GetDetailByIDRequest {
+  int64 PostID = 1;
+  bool AddViewCnt = 2;  // 是否加浏览量
+}
+
+message GetBriefByIDRequest {
+  int64 PostID = 1;
+}
+
+message UpdateRequest {
+  int64 PostID = 1;
+  int64 UserID = 2;
+  string Title = 3;
+  string Content = 4;
+  repeated string Tags = 5;
+}
+
+message ListByPageRequest {
+  uint32 PageNo = 1;
+  uint32 PageSize = 2;
+}
+
+message ListByPageAndUidRequest {
+  int64 UserID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message ListByPageAndTagRequest {
+  string Tag = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message PostDetailsResponse {
+  uint64 Count = 1;
+  repeated PostDetail PostDetails = 2;
+}
+
+message PostBriefsResponse {
+  uint64 Count = 1;
+  repeated PostBrief PostBriefs = 2;
+}
+
+message PostCommonRequest {
+  int64 PostID = 1;
+  int64 UserID = 2;
+}
+
+message PostEmptyRequest {}
+
+message BelongResponse {
+  bool Result = 1;
+}
+
+message TopResponse {
+  repeated TopPost TopPosts = 1;
+}
+
+message PostEmptyResponse {}
+
+message IfLikeResponse {
+  bool Result = 1;
+}
+
+service PostService {
+  // 创建帖子
+  rpc Create(CreatePostRequest) returns (PostDetail);
+  // 根据帖子 ID 查询帖子详情
+  rpc GetDetailByID(GetDetailByIDRequest) returns (PostDetail);
+  // 根据帖子 ID 查询帖子摘要
+  rpc GetBriefByID(GetBriefByIDRequest) returns (PostBrief);
+  // 返回推荐帖子
+  rpc Top(PostEmptyRequest) returns (TopResponse);
+  // 更新帖子
+  rpc Update(UpdateRequest) returns (PostEmptyResponse);
+  // 按页查询帖子
+  rpc ListByPage(ListByPageRequest) returns (PostDetailsResponse);
+  // 按页 + 用户 ID 查询用户发表的帖子
+  rpc ListByPageAndUid(ListByPageAndUidRequest) returns (PostBriefsResponse);
+  // 按页 + Tag 查询该 Tag 的帖子
+  rpc ListByPageAndTag(ListByPageAndTagRequest) returns (PostDetailsResponse);
+  // 查询帖子是否属于用户
+  rpc Belong(PostCommonRequest) returns (BelongResponse);
+  // 删除帖子
+  rpc Delete(PostCommonRequest) returns (PostEmptyResponse);
+  // 点赞帖子
+  rpc Like(PostCommonRequest) returns (PostEmptyResponse);
+  // 取消点赞帖子
+  rpc Unlike(PostCommonRequest) returns (PostEmptyResponse);
+  // 查询用户是否点过赞
+  rpc IfLike(PostCommonRequest) returns (IfLikeResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/post/v1/post.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

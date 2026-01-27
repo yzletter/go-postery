@@ -1,0 +1,4 @@
+redis:
+  host: localhost
+  port: 6379
+  db: 0         # redis默认会创建0-15号DB，这里使用默认的DB

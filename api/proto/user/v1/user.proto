@@ -4,6 +4,12 @@ package user.v1;
 
 option go_package = "github.com/yzletter/go-postery/api/proto/user/v1;user_grpc";
 
+message UserBrief {
+  int64 ID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+}
+
 message TopUser {
   int64 ID = 1;
   string Nickname = 2;

@@ -8,6 +8,7 @@ import (
 	commentdto "github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/model"
+	model2 "github.com/yzletter/go-postery/post/model"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/service/ports"
 )
@@ -91,7 +92,7 @@ func (svc *commentService) Create(ctx context.Context, pid int64, uid int64, par
 	}
 
 	// 修改评论数
-	field := model.PostCommentCount
+	field := model2.PostCommentCount
 	err = svc.postRepo.UpdateCount(ctx, pid, field, 1)
 	if err != nil {
 		slog.Error("Update Comment Count Failed", "error", err)
@@ -125,7 +126,7 @@ func (svc *commentService) Delete(ctx context.Context, uid, cid int64) error {
 	}
 
 	// 改变评论数
-	field := model.PostCommentCount
+	field := model2.PostCommentCount
 	err = svc.postRepo.UpdateCount(ctx, comment.PostID, field, -cnt)
 	if err != nil {
 		slog.Error("Update Comment Failed", "error", err)

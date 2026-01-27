@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
-	"github.com/yzletter/go-postery/dto/post"
 	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/post/dto"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -141,7 +141,7 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var createRequest post.CreateRequest
+	var createRequest dto.CreateRequest
 	if err = ctx.ShouldBindJSON(&createRequest); err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -208,7 +208,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var updateRequest post.UpdateRequest
+	var updateRequest dto.UpdateRequest
 	err = ctx.ShouldBindJSON(&updateRequest)
 
 	if err != nil {
