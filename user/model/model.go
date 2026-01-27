@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// User 定义数据库模型
+// User 用户最小单位
 type User struct {
 	ID        int64      `gorm:"column:id;primaryKey;autoIncrement:false"` // 用户 ID
 	Status    int        `gorm:"column:status"`                            // 状态 1 正常, 2 封禁, 3 注销
@@ -24,7 +24,7 @@ type UserProfile struct {
 	Avatar         *string    `gorm:"column:avatar"`                                 // 头像 URL
 	Bio            *string    `gorm:"column:bio"`                                    // 个性签名
 	Gender         int        `gorm:"column:gender"`                                 // 性别 0 空, 1 男, 2 女, 3 其他
-	BirthDay       *time.Time `gorm:"column:birthday"`                               // 生日
+	Birthday       *time.Time `gorm:"column:birthday"`                               // 生日
 	Location       *string    `gorm:"column:location"`                               // 地区
 	Country        *string    `gorm:"column:country"`                                // 国家
 	LastLoginIP    *string    `gorm:"column:last_login_ip"`                          // 最后登录 IP

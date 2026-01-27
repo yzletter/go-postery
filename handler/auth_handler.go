@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	code_conf "github.com/yzletter/go-postery/code/conf"
+	code_model "github.com/yzletter/go-postery/code/model"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/dto/auth"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
@@ -118,7 +118,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 
 	// 发送邮件
 	grpcReq := code_grpc.SendCodeRequest{
-		Biz:        int64(model.EmailCode),
+		Biz:        int64(code_model.EmailCode),
 		Identifier: req.Email,
 	}
 
@@ -150,7 +150,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 
 	// 发送邮件
 	grpcReq := code_grpc.SendCodeRequest{
-		Biz:        int64(model.SMSCode),
+		Biz:        int64(code_model.SMSCode),
 		Identifier: req.Phone,
 	}
 

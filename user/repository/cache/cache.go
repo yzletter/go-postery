@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/user/conf"
 )
 
 // redisUserCache 用 Redis 实现 UserCache

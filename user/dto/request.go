@@ -1,9 +1,10 @@
-package user
+package dto
 
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/model"
+	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/user/model"
 )
 
 type ModifyProfileRequest struct {
@@ -16,21 +17,22 @@ type ModifyProfileRequest struct {
 	Country  string `json:"country,omitempty"`  // 国家
 }
 
-func ModifyProfileRequestToModel(request ModifyProfileRequest) model.UserProfile {
-	userProfile := model.UserProfile{
+// UpdateProfileRequestToModel user_grpc.UpdateProfileRequest 转 model.UserProfile
+func UpdateProfileRequestToModel(request *user_grpc.UpdateProfileRequest) *model.UserProfile {
+	profile := &model.UserProfile{
 		Nickname: request.Nickname,
 		Avatar:   &request.Avatar,
 		Bio:      &request.Bio,
-		Gender:   request.Gender,
-		BirthDay: nil,
+		Gender:   int(request.Gender),
+		Birthday: nil,
 		Location: &request.Location,
 		Country:  &request.Country,
 	}
 
-	t, err := time.Parse("2006-01-02", request.BirthDay)
+	t, err := time.Parse("2006-01-02", request.Birthday)
 	if err == nil {
-		userProfile.BirthDay = &t
+		profile.Birthday = &t
 	}
 
-	return userProfile
+	return profile
 }

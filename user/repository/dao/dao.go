@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/user/model"
 	"gorm.io/gorm"
 )
 

@@ -1,0 +1,3 @@
+time="2026-01-27 17:03:33.622" level=INFO source=/Users/yzletter/go_project/go-postery/code/infra/redis/redis.go:41 msg="初始化 Redis 成功 ..."
+time="2026-01-27 17:04:43.616" level=INFO source=/Users/yzletter/go_project/go-postery/code/infra/redis/redis.go:41 msg="初始化 Redis 成功 ..."
+time="2026-01-27 17:04:50.043" level=INFO source=/Users/yzletter/go_project/go-postery/code/infra/sms/aliyun_sms.go:61 msg="{\n   \"Code\": \"OK\",\n   \"Message\": \"OK\",\n   \"Model\": {\n      \"BizId\": \"881225369504690072^0\",\n      \"RequestId\": \"e20106d2-2d91-4351-91b0-64f0f480dbbe\"\n   },\n   \"Success\": true\n}"

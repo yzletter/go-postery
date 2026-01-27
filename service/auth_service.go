@@ -11,6 +11,7 @@ import (
 	"github.com/rs/xid"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	code_conf "github.com/yzletter/go-postery/code/conf"
+	code_model "github.com/yzletter/go-postery/code/model"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/model"
 	"github.com/yzletter/go-postery/service/ports"
@@ -105,27 +106,27 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone, code string) (u
 
 	// 校验验证码并消费
 	req := code_grpc.CheckCodeRequest{
-		Biz:        int64(model.SMSCode),
+		Biz:        int64(code_model.SMSCode),
 		Identifier: phone,
 		Code:       code,
 	}
 	resp, err := codeClient.Verify(ctx, &req)
 	if err != nil {
-		slog.Error("Check Code Failed", "biz", model.SMSCode)
+		slog.Error("Check Code Failed", "biz", code_model.SMSCode)
 		return empty, errno.ErrServerInternal
 	} else if !resp.Result {
 		return empty, errno.ErrPhoneCodeInvalid
 	}
 
 	// 获取登录认证
-	authType := model.AuthTypeFromBiz(model.SMSCode)
+	authType := model.AuthTypeFromBiz(code_model.SMSCode)
 	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, phone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 用户不存在, 创建用户（包括用户最小项、用户登录认证、无密码、用户资料、注册扩展功能）
 			uid := svc.idGen.NextID()
 			verifiedAt := time.Now()
-			authType := model.AuthTypeFromBiz(model.SMSCode)
+			authType := model.AuthTypeFromBiz(code_model.SMSCode)
 
 			nickname := newNickname()
 			user := model.User{ID: uid}
@@ -208,7 +209,7 @@ func (svc *authService) HasPassword(ctx context.Context, uid int64) (bool, error
 // SetPassword 初始化密码
 func (svc *authService) SetPassword(ctx context.Context, uid int64, code, newPass string) error {
 	// 获取当前用户认证的手机号
-	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(model.SMSCode))
+	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(code_model.SMSCode))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("Set Pass Without AuthIdentity", "error", err)
@@ -226,13 +227,13 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code, newPas
 
 	// 校验验证码并消费
 	req := code_grpc.CheckCodeRequest{
-		Biz:        int64(model.SMSCode),
+		Biz:        int64(code_model.SMSCode),
 		Identifier: authIdentity.Identifier,
 		Code:       code,
 	}
 	resp, err := codeClient.Verify(ctx, &req)
 	if err != nil {
-		slog.Error("Check Code Failed", "biz", model.SMSCode)
+		slog.Error("Check Code Failed", "biz", code_model.SMSCode)
 		return errno.ErrServerInternal
 	} else if !resp.Result {
 		return errno.ErrPhoneCodeInvalid

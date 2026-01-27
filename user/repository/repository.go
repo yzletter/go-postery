@@ -4,12 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/user/model"
+	"github.com/yzletter/go-postery/user/repository/cache"
+	"github.com/yzletter/go-postery/user/repository/dao"
 )
-
-// todo 错误映射
 
 type userRepository struct {
 	dao   dao.UserDAO

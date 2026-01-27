@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/user/v1;user_grpc";
+
+message TopUser {
+  int64 ID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+  float Score = 5;
+}
+
+message GetProfileByIdRequest {
+  int64 ID = 1;
+}
+
+message GetProfileByIdResponse {
+  int64 ID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+  uint32 Gender = 5;
+  string Birthday = 6;
+  string Location = 7;
+  string Country = 8;
+  string LastLoginIP = 9;
+}
+
+message UpdateProfileRequest {
+  int64 ID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+  uint32 Gender = 5;
+  string Birthday = 6;
+  string Location = 7;
+  string Country = 8;
+}
+
+message UpdateProfileResponse {}
+
+message TopRequest {}
+
+message TopResponse {
+  repeated TopUser TopUsers = 1;
+}
+
+service UserService {
+  // 根据用户 ID 获取用户资料
+  rpc GetProfileById(GetProfileByIdRequest) returns(GetProfileByIdResponse);
+  // 更新用户资料
+  rpc UpdateProfile(UpdateProfileRequest) returns(UpdateProfileResponse);
+  // 返回推荐用户
+  rpc Top(TopRequest) returns(TopResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/user/v1/user.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

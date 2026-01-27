@@ -32,17 +32,6 @@ type AuthService interface {
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)                              // 根据 SSID 检查黑名单, 检查用户是否被拉黑
 }
 
-type CodeService interface {
-	SendCode(ctx context.Context, biz model.CodeBiz, field string) error                       // 发送验证码
-	CheckCode(ctx context.Context, biz model.CodeBiz, field string, code string) (bool, error) // 校验验证码
-}
-
-type UserService interface {
-	GetProfileById(ctx context.Context, id int64) (userdto.DetailDTO, error)
-	UpdateProfile(ctx context.Context, id int64, req userdto.ModifyProfileRequest) error
-	Top(ctx context.Context) ([]userdto.TopDTO, error)
-}
-
 type PostService interface {
 	Create(ctx context.Context, uid int64, title string, content string, contentType int) (postdto.DetailDTO, error)
 	GetDetailById(ctx context.Context, id int64, addViewCnt bool) (postdto.DetailDTO, error)

@@ -56,7 +56,6 @@ func main() {
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
 
 	// DAO 层
-	UserDAO := dao.NewUserDAO(MySQLGormDB)
 	PostDAO := dao.NewPostDAO(MySQLGormDB)
 	CommentDAO := dao.NewCommentDAO(MySQLGormDB)
 	LikeDAO := dao.NewLikeDAO(MySQLGormDB)
@@ -70,7 +69,6 @@ func main() {
 	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 
 	// Cache 层
-	UserCache := cache.NewUserCache(RedisClient)
 	PostCache := cache.NewPostCache(RedisClient)
 	CommentCache := cache.NewCommentCache(RedisClient)
 	LikeCache := cache.NewLikeCache(RedisClient)
@@ -83,7 +81,6 @@ func main() {
 	AuthCache := cache.NewAuthCache(RedisClient)
 
 	// Repository 层
-	UserRepo := repository.NewUserRepository(UserDAO, UserCache)             // 注册 userRepo
 	PostRepo := repository.NewPostRepository(PostDAO, PostCache)             // 注册 PostRepository
 	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
 	LikeRepo := repository.NewLikeRepository(LikeDAO, LikeCache)             // 注册 LikeRepository
@@ -100,7 +97,6 @@ func main() {
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
-	UserSvc := service.NewUserService(UserRepo, IDGenerator, PasswordHasher)                                                 // 注册 userSvc
 	PostSvc := service.NewPostService(PostRepo, UserRepo, LikeRepo, TagRepo, IDGenerator)                                    // 注册 postSvc
 	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, FollowKafkaConsumer, IDGenerator)                            // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                    // 注册 commentService

@@ -8,11 +8,6 @@ import (
 
 // 定义 Cache 层所有接口
 
-type UserCache interface {
-	ChangeScore(ctx context.Context, uid int64, delta int) error
-	Top(ctx context.Context) ([]int64, []float64, error)
-}
-
 type PostCache interface {
 	ChangeInteractiveCnt(ctx context.Context, pid int64, field model.PostCntField, delta int) (bool, error)
 	SetInteractiveKey(ctx context.Context, pid int64, fields []model.PostCntField, vals []int)
