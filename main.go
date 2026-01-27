@@ -48,7 +48,6 @@ func main() {
 	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")    // 初始化 Follow 模块 Kafka 消费方
 	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
 	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent_document")
-	SearchKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_search", "search_index")
 
 	Tokenizer := tokenizer.NewJiebaTokenizer()            // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
@@ -105,7 +104,6 @@ func main() {
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
 	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
-	SearchSvc := service.NewSearchService(SearchKafkaConsumer, PostRepo, UserRepo, Tokenizer, IDGenerator) // 注册 SearchService
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())

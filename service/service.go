@@ -100,8 +100,3 @@ type AgentService interface {
 	ConsumeMessage(ctx context.Context, BatchID int64) error
 	Chat(ctx context.Context, uid int64, sessionID int64, query string) (agentdto.DTO, error)
 }
-
-type SearchService interface {
-	StartPostIndexConsumer(ctx context.Context)
-	Search(ctx context.Context, querys []string) ([]postdto.DetailDTO, error)
-}

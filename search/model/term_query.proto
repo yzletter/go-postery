@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package model;
+
+option go_package = "github.com/yzletter/go-postery/search/model;model";
+
+import "search/model/document.proto";
+
+message TermQuery {
+  model.Keyword Keyword = 1;   // Keyword 类型引用自 document.proto
+  repeated TermQuery Must = 2;
+  repeated TermQuery Should = 3;
+}
+
+/*
+ protoc \
+  -I .  \
+  search/model/term_query.proto \
+  --go_out=. \
+  --go_opt=paths=source_relative
+ */
