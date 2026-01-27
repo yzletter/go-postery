@@ -7,10 +7,8 @@ import (
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 	"github.com/yzletter/go-postery/user/conf"
 	infraMySQL "github.com/yzletter/go-postery/user/infra/mysql"
-	"github.com/yzletter/go-postery/user/infra/password_hasher"
 	infraRedis "github.com/yzletter/go-postery/user/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/user/infra/slog"
-	"github.com/yzletter/go-postery/user/infra/snowflake"
 	"github.com/yzletter/go-postery/user/infra/viper"
 	"github.com/yzletter/go-postery/user/repository"
 	"github.com/yzletter/go-postery/user/repository/cache"
@@ -24,8 +22,6 @@ func main() {
 	infraSlog.InitSlog(conf.LogFilePath)                                 // 初始化 slog
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)        // 初始化 Redis
 	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs") // 初始化 MySQL
-	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)                  // 初始化 雪花算法
-	PasswordHasher := password_hasher.NewBcryptPasswordHasher(0)         // 初始化 密码哈希器
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
 	// DAO 层
@@ -33,7 +29,7 @@ func main() {
 	// Repository 层
 	UserRepo := repository.NewUserRepository(UserDAO, UserCache) // 注册 userRepo
 	// Service 层
-	UserService := service.NewUserService(UserRepo, IDGenerator, PasswordHasher) // 注册 userSvc
+	UserService := service.NewUserService(UserRepo) // 注册 userSvc
 
 	// 监听本地端口
 	lis, err := net.Listen("tcp", "localhost:"+conf.Port)

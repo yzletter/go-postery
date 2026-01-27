@@ -51,7 +51,7 @@ func (index *SkipListReverseIndex) Add(document *model.Document) {
 	//		list.Set(document.IndexID, sklValue)
 	//		index.table.Set(key, list)
 	//	}
-	//	// util.Log.Printf("add key %s value %d to reverse index\n", key, DocId)
+	//	// utils.Log.Printf("add key %s value %d to reverse index\n", key, DocId)
 	//	lock.Unlock()
 	//}
 

@@ -8,21 +8,16 @@ import (
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/user/dto"
 	"github.com/yzletter/go-postery/user/repository"
-	"github.com/yzletter/go-postery/user/service/ports"
 )
 
 type userService struct {
 	repository repository.UserRepository // 依赖 UserRepository
-	idGen      ports.IDGenerator         // 用于生成 ID
-	passHasher ports.PasswordHasher      // 用于加密和比较密码
 	user_grpc.UnimplementedUserServiceServer
 }
 
-func NewUserService(repository repository.UserRepository, idGen ports.IDGenerator, passHasher ports.PasswordHasher) UserService {
+func NewUserService(repository repository.UserRepository) UserService {
 	return &userService{
 		repository:                     repository,
-		idGen:                          idGen,
-		passHasher:                     passHasher,
 		UnimplementedUserServiceServer: user_grpc.UnimplementedUserServiceServer{},
 	}
 }
