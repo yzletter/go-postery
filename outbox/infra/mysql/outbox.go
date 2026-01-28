@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	"github.com/yzletter/go-postery/bff/model"
+	"github.com/yzletter/go-postery/outbox/model"
 	"gorm.io/gorm"
 )
 

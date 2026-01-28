@@ -5,7 +5,7 @@ import (
 	"net"
 
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	infraKafka "github.com/yzletter/go-postery/bff/infra/kafka"
+	infraKafka "github.com/yzletter/go-postery/outbox/infra/kafka"
 	"github.com/yzletter/go-postery/user/conf"
 	infraMySQL "github.com/yzletter/go-postery/user/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/user/infra/redis"

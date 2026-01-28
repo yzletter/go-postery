@@ -23,7 +23,6 @@ func MetricMiddleware(metricService *service.MetricService) gin.HandlerFunc {
 		// 对该路径的请求进行统计
 		metricService.CounterAdd(path)      // 计数器 +1
 		metricService.TimerSet(path, start) // 计时器记录时间
-
 	}
 }
 

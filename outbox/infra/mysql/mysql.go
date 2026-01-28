@@ -124,6 +124,7 @@ func getDataSourceName(user string, password string, host string, port int, dbNa
 // 初始化 MySQL 日志
 func initDBLogger(logDir string, logFileName string, loggerConfig logger.Config) logger.Interface {
 	// 打开 logger 文件
+	_ = os.MkdirAll(logDir, 0o777)
 	logFile, err := os.OpenFile(path.Join(logDir, logFileName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		panic(err)

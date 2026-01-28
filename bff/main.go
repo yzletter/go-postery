@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"syscall"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	handler2 "github.com/yzletter/go-postery/bff/handler"
 	"github.com/yzletter/go-postery/bff/infra/crontab"
 	"github.com/yzletter/go-postery/bff/infra/graceful_stop"
-	infraKafka "github.com/yzletter/go-postery/bff/infra/kafka"
 	infraRabbitMQ "github.com/yzletter/go-postery/bff/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/bff/infra/redis"
 	"github.com/yzletter/go-postery/bff/infra/slog"
@@ -21,38 +19,32 @@ import (
 	"github.com/yzletter/go-postery/bff/infra/viper"
 	middleware2 "github.com/yzletter/go-postery/bff/middleware"
 	service2 "github.com/yzletter/go-postery/bff/service"
-	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
+	infraKafka "github.com/yzletter/go-postery/outbox/infra/kafka"
+	"github.com/yzletter/go-postery/outbox/infra/mysql"
 )
 
 func main() {
 	// Infra 层
-	slog.InitSlog(conf2.LogFilePath)                                        // 初始化 slog
-	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)           // 初始化 Redis
-	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)              // 初始化 RabbitMQ
-	KafkaProducer := infraKafka.InitProducer([]string{conf2.KafkaEndpoint}) // 初始化 Kafka 生产方
-	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)                     // 初始化 雪花算法
+	slog.InitSlog(conf2.LogFilePath)                              // 初始化 slog
+	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML) // 初始化 Redis
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)    // 初始化 RabbitMQ
+	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)           // 初始化 雪花算法
 
 	// Service 层
 	MetricSvc := service2.NewMetricService()                                                                // 注册 MetricService
 	RateLimitSvc := service2.NewRateLimitService(RedisClient, conf2.RateLimitInterval, conf2.RateLimitRate) // 注册 RateLimitService
 	WebsocketSvc := service2.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator) // 注册 WebsocketService
 
-	// 开启协程
-	ctx, cancel := context.WithCancel(context.Background())
-	go infraMySQL.ScanOutbox(ctx, KafkaProducer) // 开启扫表发消息协程
-
 	// Handler 层
-	AuthHdl := handler2.NewAuthHandler(AuthSvc)                            // 注册 AuthHandler
-	UserHdl := handler2.NewUserHandler(UserSvc)                            // 注册 UserHandler
-	PostHdl := handler2.NewPostHandler(PostSvc, UserSvc, TagSvc)           // 注册 PostHandler
-	CommentHdl := handler2.NewCommentHandler(CommentSvc, UserSvc, PostSvc) // 注册 CommentHandler
-	FollowHdl := handler2.NewFollowHandler(FollowSvc, UserSvc)             // 注册 FollowHandler
-	SessionHdl := handler2.NewSessionHandler(SessionSvc)                   // 注册 SessionHandler
-	WebsocketHdl := handler2.NewWebsocketHandler(WebsocketSvc)             // 注册 WebsocketHandler
-	LotteryHdl := handler2.NewLotteryHandler(LotterySvc)                   // 注册 LotteryHandler
-	AgentHdl := handler2.NewAgentHandler(AgentSvc)                         // 注册 AgentHandler
-	SearchHdl := handler2.NewSearchHandler(SearchSvc)                      // 注册 SearchHandler
+	AuthHdl := handler2.NewAuthHandler(AuthSvc)                  // 注册 AuthHandler
+	UserHdl := handler2.NewUserHandler(UserSvc)                  // 注册 UserHandler
+	PostHdl := handler2.NewPostHandler(PostSvc, UserSvc, TagSvc) // 注册 PostHandler
+	SessionHdl := handler2.NewSessionHandler(SessionSvc)         // 注册 SessionHandler
+	WebsocketHdl := handler2.NewWebsocketHandler(WebsocketSvc)   // 注册 WebsocketHandler
+	LotteryHdl := handler2.NewLotteryHandler(LotterySvc)         // 注册 LotteryHandler
+	AgentHdl := handler2.NewAgentHandler(AgentSvc)               // 注册 AgentHandler
+	SearchHdl := handler2.NewSearchHandler(SearchSvc)            // 注册 SearchHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware2.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
@@ -69,16 +61,15 @@ func main() {
 
 	// 初始化 Crontab
 	crontab.NewCrontabBuilder().
-		AddFuncWithSpec("*/10 * * * *", infraMySQL.Ping).
+		AddFuncWithSpec("*/10 * * * *", infra.Ping).
 		AddFuncWithSpec("*/10 * * * *", infraRedis.Ping).
 		Build()
 
 	// 初始化 GracefulStop
 	graceful_stop.NewGracefulStopBuilder().
 		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(cancel).                                                                     // 关协程
 		AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close). // 关消息队列
-		AddFunc(infraMySQL.Close).AddFunc(infraRedis.Close).AddFunc(infraQdarant.Close).     // 关数据库
+		AddFunc(infra.Close).AddFunc(infraRedis.Close).AddFunc(infraQdarant.Close).          // 关数据库
 		Build()
 
 	// 初始化 gin

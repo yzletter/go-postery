@@ -28,14 +28,20 @@ type searchService struct {
 }
 
 func NewSearchService(kafkaConsumer *kafka.Reader, tokenizer ports.Tokenizer, idGen ports.IDGenerator) SearchService {
-	service := &searchService{kafkaConsumer: kafkaConsumer, tokenizer: tokenizer, idGen: idGen}
-	service.indexer = new(index_service.Indexer)
-	err := service.indexer.Init(5000000, "data/local_db/search")
-	if err != nil {
+	service := &searchService{
+		indexer:                          new(index_service.Indexer),
+		kafkaConsumer:                    kafkaConsumer,
+		tokenizer:                        tokenizer,
+		idGen:                            idGen,
+		UnimplementedSearchServiceServer: search_grpc.UnimplementedSearchServiceServer{},
+	}
+
+	if err := service.indexer.Init(5000000, "data/local_db/search"); err != nil {
 		slog.Error("Init Search Index Failed", "error", err)
 		return nil
 	}
 	service.indexer.LoadFromIndexFile() // 从正排中加载数据
+
 	return service
 }
 

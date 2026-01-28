@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net"
 
@@ -23,6 +24,9 @@ func main() {
 
 	// Service 层
 	SearchService := service.NewSearchService(KafkaConsumer, Tokenizer, IDGenerator)
+
+	ctx := context.Background()
+	go SearchService.StartConsumer(ctx) // 开启协程消费消息对新文章进行索引
 
 	// 监听本地端口
 	lis, err := net.Listen("tcp", "localhost:"+conf.Port)
