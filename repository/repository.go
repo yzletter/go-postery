@@ -6,6 +6,7 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/model"
+	model2 "github.com/yzletter/go-postery/user/model"
 )
 
 type AuthRepository interface {
@@ -38,14 +39,6 @@ type CommentRepository interface {
 	Delete(ctx context.Context, id int64) (int, error)
 	GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
 	GetRepliesByParentID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
-}
-
-type FollowRepository interface {
-	Create(ctx context.Context, follow *model.Follow) error
-	Delete(ctx context.Context, ferID, feeID int64) error
-	Exists(ctx context.Context, ferID, feeID int64) (model.FollowType, error)
-	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
-	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
 }
 
 type SessionRepository interface {

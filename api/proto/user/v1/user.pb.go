@@ -201,7 +201,7 @@ func (x *GetProfileByIdRequest) GetID() int64 {
 	return 0
 }
 
-type GetProfileByIdResponse struct {
+type UserDetail struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ID            int64                  `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	Nickname      string                 `protobuf:"bytes,2,opt,name=Nickname,proto3" json:"Nickname,omitempty"`
@@ -216,20 +216,20 @@ type GetProfileByIdResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetProfileByIdResponse) Reset() {
-	*x = GetProfileByIdResponse{}
+func (x *UserDetail) Reset() {
+	*x = UserDetail{}
 	mi := &file_api_proto_user_v1_user_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetProfileByIdResponse) String() string {
+func (x *UserDetail) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetProfileByIdResponse) ProtoMessage() {}
+func (*UserDetail) ProtoMessage() {}
 
-func (x *GetProfileByIdResponse) ProtoReflect() protoreflect.Message {
+func (x *UserDetail) ProtoReflect() protoreflect.Message {
 	mi := &file_api_proto_user_v1_user_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -241,68 +241,68 @@ func (x *GetProfileByIdResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetProfileByIdResponse.ProtoReflect.Descriptor instead.
-func (*GetProfileByIdResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UserDetail.ProtoReflect.Descriptor instead.
+func (*UserDetail) Descriptor() ([]byte, []int) {
 	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetProfileByIdResponse) GetID() int64 {
+func (x *UserDetail) GetID() int64 {
 	if x != nil {
 		return x.ID
 	}
 	return 0
 }
 
-func (x *GetProfileByIdResponse) GetNickname() string {
+func (x *UserDetail) GetNickname() string {
 	if x != nil {
 		return x.Nickname
 	}
 	return ""
 }
 
-func (x *GetProfileByIdResponse) GetAvatar() string {
+func (x *UserDetail) GetAvatar() string {
 	if x != nil {
 		return x.Avatar
 	}
 	return ""
 }
 
-func (x *GetProfileByIdResponse) GetBio() string {
+func (x *UserDetail) GetBio() string {
 	if x != nil {
 		return x.Bio
 	}
 	return ""
 }
 
-func (x *GetProfileByIdResponse) GetGender() uint32 {
+func (x *UserDetail) GetGender() uint32 {
 	if x != nil {
 		return x.Gender
 	}
 	return 0
 }
 
-func (x *GetProfileByIdResponse) GetBirthday() string {
+func (x *UserDetail) GetBirthday() string {
 	if x != nil {
 		return x.Birthday
 	}
 	return ""
 }
 
-func (x *GetProfileByIdResponse) GetLocation() string {
+func (x *UserDetail) GetLocation() string {
 	if x != nil {
 		return x.Location
 	}
 	return ""
 }
 
-func (x *GetProfileByIdResponse) GetCountry() string {
+func (x *UserDetail) GetCountry() string {
 	if x != nil {
 		return x.Country
 	}
 	return ""
 }
 
-func (x *GetProfileByIdResponse) GetLastLoginIP() string {
+func (x *UserDetail) GetLastLoginIP() string {
 	if x != nil {
 		return x.LastLoginIP
 	}
@@ -525,6 +525,250 @@ func (x *TopResponse) GetTopUsers() []*TopUser {
 	return nil
 }
 
+type FollowCommonRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FollowerID    int64                  `protobuf:"varint,1,opt,name=FollowerID,proto3" json:"FollowerID,omitempty"` // 关注者 ID
+	FolloweeID    int64                  `protobuf:"varint,2,opt,name=FolloweeID,proto3" json:"FolloweeID,omitempty"` // 被关注者 ID
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FollowCommonRequest) Reset() {
+	*x = FollowCommonRequest{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FollowCommonRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FollowCommonRequest) ProtoMessage() {}
+
+func (x *FollowCommonRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FollowCommonRequest.ProtoReflect.Descriptor instead.
+func (*FollowCommonRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FollowCommonRequest) GetFollowerID() int64 {
+	if x != nil {
+		return x.FollowerID
+	}
+	return 0
+}
+
+func (x *FollowCommonRequest) GetFolloweeID() int64 {
+	if x != nil {
+		return x.FolloweeID
+	}
+	return 0
+}
+
+type FollowEmptyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FollowEmptyResponse) Reset() {
+	*x = FollowEmptyResponse{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FollowEmptyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FollowEmptyResponse) ProtoMessage() {}
+
+func (x *FollowEmptyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FollowEmptyResponse.ProtoReflect.Descriptor instead.
+func (*FollowEmptyResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{9}
+}
+
+type IfFollowResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Result        int32                  `protobuf:"varint,1,opt,name=Result,proto3" json:"Result,omitempty"` // 0 互不关注, 1 a 关注 b, 2 b 关注 a, 3 互相关注
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IfFollowResponse) Reset() {
+	*x = IfFollowResponse{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IfFollowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IfFollowResponse) ProtoMessage() {}
+
+func (x *IfFollowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IfFollowResponse.ProtoReflect.Descriptor instead.
+func (*IfFollowResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *IfFollowResponse) GetResult() int32 {
+	if x != nil {
+		return x.Result
+	}
+	return 0
+}
+
+type ListFollowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
+	PageNo        uint32                 `protobuf:"varint,2,opt,name=PageNo,proto3" json:"PageNo,omitempty"`
+	PageSize      uint32                 `protobuf:"varint,3,opt,name=PageSize,proto3" json:"PageSize,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFollowRequest) Reset() {
+	*x = ListFollowRequest{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFollowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFollowRequest) ProtoMessage() {}
+
+func (x *ListFollowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFollowRequest.ProtoReflect.Descriptor instead.
+func (*ListFollowRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListFollowRequest) GetUserID() int64 {
+	if x != nil {
+		return x.UserID
+	}
+	return 0
+}
+
+func (x *ListFollowRequest) GetPageNo() uint32 {
+	if x != nil {
+		return x.PageNo
+	}
+	return 0
+}
+
+func (x *ListFollowRequest) GetPageSize() uint32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type ListFollowResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Count         uint64                 `protobuf:"varint,1,opt,name=Count,proto3" json:"Count,omitempty"`
+	UserBriefs    []*UserBrief           `protobuf:"bytes,2,rep,name=UserBriefs,proto3" json:"UserBriefs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFollowResponse) Reset() {
+	*x = ListFollowResponse{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFollowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFollowResponse) ProtoMessage() {}
+
+func (x *ListFollowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFollowResponse.ProtoReflect.Descriptor instead.
+func (*ListFollowResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListFollowResponse) GetCount() uint64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *ListFollowResponse) GetUserBriefs() []*UserBrief {
+	if x != nil {
+		return x.UserBriefs
+	}
+	return nil
+}
+
 var File_api_proto_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_api_proto_user_v1_user_proto_rawDesc = "" +
@@ -541,8 +785,9 @@ const file_api_proto_user_v1_user_proto_rawDesc = "" +
 	"\x03Bio\x18\x04 \x01(\tR\x03Bio\x12\x14\n" +
 	"\x05Score\x18\x05 \x01(\x02R\x05Score\"'\n" +
 	"\x15GetProfileByIdRequest\x12\x0e\n" +
-	"\x02ID\x18\x01 \x01(\x03R\x02ID\"\xfa\x01\n" +
-	"\x16GetProfileByIdResponse\x12\x0e\n" +
+	"\x02ID\x18\x01 \x01(\x03R\x02ID\"\xee\x01\n" +
+	"\n" +
+	"UserDetail\x12\x0e\n" +
 	"\x02ID\x18\x01 \x01(\x03R\x02ID\x12\x1a\n" +
 	"\bNickname\x18\x02 \x01(\tR\bNickname\x12\x16\n" +
 	"\x06Avatar\x18\x03 \x01(\tR\x06Avatar\x12\x10\n" +
@@ -565,11 +810,35 @@ const file_api_proto_user_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"TopRequest\";\n" +
 	"\vTopResponse\x12,\n" +
-	"\bTopUsers\x18\x01 \x03(\v2\x10.user.v1.TopUserR\bTopUsers2\xe2\x01\n" +
-	"\vUserService\x12Q\n" +
-	"\x0eGetProfileById\x12\x1e.user.v1.GetProfileByIdRequest\x1a\x1f.user.v1.GetProfileByIdResponse\x12N\n" +
+	"\bTopUsers\x18\x01 \x03(\v2\x10.user.v1.TopUserR\bTopUsers\"U\n" +
+	"\x13FollowCommonRequest\x12\x1e\n" +
+	"\n" +
+	"FollowerID\x18\x01 \x01(\x03R\n" +
+	"FollowerID\x12\x1e\n" +
+	"\n" +
+	"FolloweeID\x18\x02 \x01(\x03R\n" +
+	"FolloweeID\"\x15\n" +
+	"\x13FollowEmptyResponse\"*\n" +
+	"\x10IfFollowResponse\x12\x16\n" +
+	"\x06Result\x18\x01 \x01(\x05R\x06Result\"_\n" +
+	"\x11ListFollowRequest\x12\x16\n" +
+	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x16\n" +
+	"\x06PageNo\x18\x02 \x01(\rR\x06PageNo\x12\x1a\n" +
+	"\bPageSize\x18\x03 \x01(\rR\bPageSize\"^\n" +
+	"\x12ListFollowResponse\x12\x14\n" +
+	"\x05Count\x18\x01 \x01(\x04R\x05Count\x122\n" +
+	"\n" +
+	"UserBriefs\x18\x02 \x03(\v2\x12.user.v1.UserBriefR\n" +
+	"UserBriefs2\xc9\x04\n" +
+	"\vUserService\x12E\n" +
+	"\x0eGetProfileById\x12\x1e.user.v1.GetProfileByIdRequest\x1a\x13.user.v1.UserDetail\x12N\n" +
 	"\rUpdateProfile\x12\x1d.user.v1.UpdateProfileRequest\x1a\x1e.user.v1.UpdateProfileResponse\x120\n" +
-	"\x03Top\x12\x13.user.v1.TopRequest\x1a\x14.user.v1.TopResponseB<Z:github.com/yzletter/go-postery/api/proto/user/v1;user_grpcb\x06proto3"
+	"\x03Top\x12\x13.user.v1.TopRequest\x1a\x14.user.v1.TopResponse\x12D\n" +
+	"\x06Follow\x12\x1c.user.v1.FollowCommonRequest\x1a\x1c.user.v1.FollowEmptyResponse\x12F\n" +
+	"\bUnFollow\x12\x1c.user.v1.FollowCommonRequest\x1a\x1c.user.v1.FollowEmptyResponse\x12C\n" +
+	"\bIfFollow\x12\x1c.user.v1.FollowCommonRequest\x1a\x19.user.v1.IfFollowResponse\x12N\n" +
+	"\x13ListFollowersByPage\x12\x1a.user.v1.ListFollowRequest\x1a\x1b.user.v1.ListFollowResponse\x12N\n" +
+	"\x13ListFolloweesByPage\x12\x1a.user.v1.ListFollowRequest\x1a\x1b.user.v1.ListFollowResponseB<Z:github.com/yzletter/go-postery/api/proto/user/v1;user_grpcb\x06proto3"
 
 var (
 	file_api_proto_user_v1_user_proto_rawDescOnce sync.Once
@@ -583,30 +852,46 @@ func file_api_proto_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_api_proto_user_v1_user_proto_rawDescData
 }
 
-var file_api_proto_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_api_proto_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_api_proto_user_v1_user_proto_goTypes = []any{
-	(*UserBrief)(nil),              // 0: user.v1.UserBrief
-	(*TopUser)(nil),                // 1: user.v1.TopUser
-	(*GetProfileByIdRequest)(nil),  // 2: user.v1.GetProfileByIdRequest
-	(*GetProfileByIdResponse)(nil), // 3: user.v1.GetProfileByIdResponse
-	(*UpdateProfileRequest)(nil),   // 4: user.v1.UpdateProfileRequest
-	(*UpdateProfileResponse)(nil),  // 5: user.v1.UpdateProfileResponse
-	(*TopRequest)(nil),             // 6: user.v1.TopRequest
-	(*TopResponse)(nil),            // 7: user.v1.TopResponse
+	(*UserBrief)(nil),             // 0: user.v1.UserBrief
+	(*TopUser)(nil),               // 1: user.v1.TopUser
+	(*GetProfileByIdRequest)(nil), // 2: user.v1.GetProfileByIdRequest
+	(*UserDetail)(nil),            // 3: user.v1.UserDetail
+	(*UpdateProfileRequest)(nil),  // 4: user.v1.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil), // 5: user.v1.UpdateProfileResponse
+	(*TopRequest)(nil),            // 6: user.v1.TopRequest
+	(*TopResponse)(nil),           // 7: user.v1.TopResponse
+	(*FollowCommonRequest)(nil),   // 8: user.v1.FollowCommonRequest
+	(*FollowEmptyResponse)(nil),   // 9: user.v1.FollowEmptyResponse
+	(*IfFollowResponse)(nil),      // 10: user.v1.IfFollowResponse
+	(*ListFollowRequest)(nil),     // 11: user.v1.ListFollowRequest
+	(*ListFollowResponse)(nil),    // 12: user.v1.ListFollowResponse
 }
 var file_api_proto_user_v1_user_proto_depIdxs = []int32{
-	1, // 0: user.v1.TopResponse.TopUsers:type_name -> user.v1.TopUser
-	2, // 1: user.v1.UserService.GetProfileById:input_type -> user.v1.GetProfileByIdRequest
-	4, // 2: user.v1.UserService.UpdateProfile:input_type -> user.v1.UpdateProfileRequest
-	6, // 3: user.v1.UserService.Top:input_type -> user.v1.TopRequest
-	3, // 4: user.v1.UserService.GetProfileById:output_type -> user.v1.GetProfileByIdResponse
-	5, // 5: user.v1.UserService.UpdateProfile:output_type -> user.v1.UpdateProfileResponse
-	7, // 6: user.v1.UserService.Top:output_type -> user.v1.TopResponse
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1,  // 0: user.v1.TopResponse.TopUsers:type_name -> user.v1.TopUser
+	0,  // 1: user.v1.ListFollowResponse.UserBriefs:type_name -> user.v1.UserBrief
+	2,  // 2: user.v1.UserService.GetProfileById:input_type -> user.v1.GetProfileByIdRequest
+	4,  // 3: user.v1.UserService.UpdateProfile:input_type -> user.v1.UpdateProfileRequest
+	6,  // 4: user.v1.UserService.Top:input_type -> user.v1.TopRequest
+	8,  // 5: user.v1.UserService.Follow:input_type -> user.v1.FollowCommonRequest
+	8,  // 6: user.v1.UserService.UnFollow:input_type -> user.v1.FollowCommonRequest
+	8,  // 7: user.v1.UserService.IfFollow:input_type -> user.v1.FollowCommonRequest
+	11, // 8: user.v1.UserService.ListFollowersByPage:input_type -> user.v1.ListFollowRequest
+	11, // 9: user.v1.UserService.ListFolloweesByPage:input_type -> user.v1.ListFollowRequest
+	3,  // 10: user.v1.UserService.GetProfileById:output_type -> user.v1.UserDetail
+	5,  // 11: user.v1.UserService.UpdateProfile:output_type -> user.v1.UpdateProfileResponse
+	7,  // 12: user.v1.UserService.Top:output_type -> user.v1.TopResponse
+	9,  // 13: user.v1.UserService.Follow:output_type -> user.v1.FollowEmptyResponse
+	9,  // 14: user.v1.UserService.UnFollow:output_type -> user.v1.FollowEmptyResponse
+	10, // 15: user.v1.UserService.IfFollow:output_type -> user.v1.IfFollowResponse
+	12, // 16: user.v1.UserService.ListFollowersByPage:output_type -> user.v1.ListFollowResponse
+	12, // 17: user.v1.UserService.ListFolloweesByPage:output_type -> user.v1.ListFollowResponse
+	10, // [10:18] is the sub-list for method output_type
+	2,  // [2:10] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_user_v1_user_proto_init() }
@@ -620,7 +905,7 @@ func file_api_proto_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_user_v1_user_proto_rawDesc), len(file_api_proto_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

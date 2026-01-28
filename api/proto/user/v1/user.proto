@@ -22,7 +22,7 @@ message GetProfileByIdRequest {
   int64 ID = 1;
 }
 
-message GetProfileByIdResponse {
+message UserDetail {
   int64 ID = 1;
   string Nickname = 2;
   string Avatar = 3;
@@ -53,13 +53,42 @@ message TopResponse {
   repeated TopUser TopUsers = 1;
 }
 
+message FollowCommonRequest {
+  int64 FollowerID = 1; // 关注者 ID
+  int64 FolloweeID = 2; // 被关注者 ID
+}
+
+message FollowEmptyResponse {}
+
+message IfFollowResponse {
+  int32 Result = 1;  // 0 互不关注, 1 a 关注 b, 2 b 关注 a, 3 互相关注
+}
+
+message ListFollowRequest {
+  int64 UserID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message ListFollowResponse {
+  uint64 Count = 1;
+  repeated UserBrief UserBriefs = 2;
+}
+
 service UserService {
   // 根据用户 ID 获取用户资料
-  rpc GetProfileById(GetProfileByIdRequest) returns(GetProfileByIdResponse);
+  rpc GetProfileById(GetProfileByIdRequest) returns (UserDetail);
   // 更新用户资料
-  rpc UpdateProfile(UpdateProfileRequest) returns(UpdateProfileResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
   // 返回推荐用户
-  rpc Top(TopRequest) returns(TopResponse);
+  rpc Top(TopRequest) returns (TopResponse);
+  rpc Follow(FollowCommonRequest) returns (FollowEmptyResponse);
+  rpc UnFollow(FollowCommonRequest) returns (FollowEmptyResponse);
+  rpc IfFollow(FollowCommonRequest) returns (IfFollowResponse);
+  // 按页查找粉丝
+  rpc ListFollowersByPage(ListFollowRequest) returns (ListFollowResponse);
+  // 按页查找关注的人
+  rpc ListFolloweesByPage(ListFollowRequest) returns (ListFollowResponse);
 }
 
 /*

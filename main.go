@@ -23,7 +23,6 @@ import (
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/snowflake"
-	"github.com/yzletter/go-postery/infra/tokenizer"
 	"github.com/yzletter/go-postery/infra/viper"
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository"
@@ -45,7 +44,6 @@ func main() {
 	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
-	FollowKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "follow", "follow")    // 初始化 Follow 模块 Kafka 消费方
 	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
 	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent_document")
 
@@ -54,7 +52,6 @@ func main() {
 	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
 
 	// DAO 层
-	FollowDAO := dao.NewFollowDAO(MySQLGormDB)
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
 	SessionDAO := dao.NewSessionDAO(MySQLGormDB)
 	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
@@ -64,7 +61,6 @@ func main() {
 
 	// Cache 层
 	CommentCache := cache.NewCommentCache(RedisClient)
-	FollowCache := cache.NewFollowCache(RedisClient)
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
 	OrderCache := cache.NewOrderCache(RedisClient)
@@ -73,7 +69,6 @@ func main() {
 
 	// Repository 层
 	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
-	FollowRepo := repository.NewFollowRepository(FollowDAO, FollowCache)     // 注册 FollowRepository
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
@@ -85,9 +80,7 @@ func main() {
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
-	FollowSvc := service.NewFollowService(FollowRepo, UserRepo, FollowKafkaConsumer, IDGenerator)                            // 注册 FollowService
 	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                    // 注册 commentService
-	TagSvc := service.NewTagService(TagRepo, IDGenerator)                                                                    // 注册 TagService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
@@ -98,7 +91,6 @@ func main() {
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
 	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
 	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启向量数据库协程
-	go FollowSvc.StartInitUserScoreConsumer(ctx)    // 开启修改用户分数的消息协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程核查临时订单进行库存回流
 	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存

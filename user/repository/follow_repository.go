@@ -3,18 +3,16 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/user/model"
+	"github.com/yzletter/go-postery/user/repository/dao"
 )
 
 type followRepository struct {
-	dao   dao.FollowDAO
-	cache cache.FollowCache
+	dao dao.FollowDAO
 }
 
-func NewFollowRepository(followDAO dao.FollowDAO, followCache cache.FollowCache) FollowRepository {
-	return &followRepository{dao: followDAO, cache: followCache}
+func NewFollowRepository(followDAO dao.FollowDAO) FollowRepository {
+	return &followRepository{dao: followDAO}
 }
 
 func (repo *followRepository) Create(ctx context.Context, follow *model.Follow) error {

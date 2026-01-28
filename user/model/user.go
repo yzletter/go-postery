@@ -37,3 +37,7 @@ type UserProfile struct {
 func (u UserProfile) TableName() string {
 	return "user_profiles"
 }
+
+type InitUserScoreEventPayload struct {
+	UserID int64 `json:"user_id,string"`
+}

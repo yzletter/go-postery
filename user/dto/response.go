@@ -28,9 +28,9 @@ func ToTopUser(userProfile *model.UserProfile, score float64) *user_grpc.TopUser
 	return res
 }
 
-// ToGetProfileByIdResponse model.UserProfile 转 user_grpc.GetProfileByIdResponse
-func ToGetProfileByIdResponse(profile *model.UserProfile) *user_grpc.GetProfileByIdResponse {
-	var res = &user_grpc.GetProfileByIdResponse{
+// ToUserDetail model.UserProfile 转 user_grpc.UserDetail
+func ToUserDetail(profile *model.UserProfile) *user_grpc.UserDetail {
+	var res = &user_grpc.UserDetail{
 		ID:          profile.UserID,
 		Nickname:    profile.Nickname,
 		Avatar:      "",
@@ -57,6 +57,20 @@ func ToGetProfileByIdResponse(profile *model.UserProfile) *user_grpc.GetProfileB
 	if profile.Bio != nil {
 		res.Bio = *profile.Bio
 	}
+	if profile.Avatar != nil {
+		res.Avatar = *profile.Avatar
+	}
+	return res
+}
+
+// ToUserBrief model.UserProfile 转 user_grpc.UserBrief
+func ToUserBrief(profile *model.UserProfile) *user_grpc.UserBrief {
+	var res = &user_grpc.UserBrief{
+		ID:       profile.UserID,
+		Nickname: profile.Nickname,
+		Avatar:   "",
+	}
+
 	if profile.Avatar != nil {
 		res.Avatar = *profile.Avatar
 	}

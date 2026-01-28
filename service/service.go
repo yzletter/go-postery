@@ -11,9 +11,8 @@ import (
 	orderdto "github.com/yzletter/go-postery/dto/order"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
-	"github.com/yzletter/go-postery/model"
-	postdto "github.com/yzletter/go-postery/post/dto"
 	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/user/model"
 )
 
 // 定义 Service 层所有接口
@@ -38,15 +37,6 @@ type CommentService interface {
 	List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []commentdto.DTO, error)
 	ListReplies(ctx context.Context, ids int64, pageNo, pageSize int) (int, []commentdto.DTO, error)
 	CheckAuth(ctx context.Context, cid, uid int64) bool
-}
-
-type FollowService interface {
-	StartInitUserScoreConsumer(ctx context.Context)
-	Follow(ctx context.Context, ferId, feeId int64) error
-	UnFollow(ctx context.Context, ferId, feeId int64) error
-	IfFollow(ctx context.Context, ferId, feeId int64) (model.FollowType, error)
-	ListFollowersByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
-	ListFolloweesByPage(ctx context.Context, uid int64, pageNo, pageSize int) (int, []userdto.BriefDTO, error)
 }
 
 type SessionService interface {

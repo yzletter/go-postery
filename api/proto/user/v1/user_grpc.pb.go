@@ -19,9 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_GetProfileById_FullMethodName = "/user.v1.UserService/GetProfileById"
-	UserService_UpdateProfile_FullMethodName  = "/user.v1.UserService/UpdateProfile"
-	UserService_Top_FullMethodName            = "/user.v1.UserService/Top"
+	UserService_GetProfileById_FullMethodName      = "/user.v1.UserService/GetProfileById"
+	UserService_UpdateProfile_FullMethodName       = "/user.v1.UserService/UpdateProfile"
+	UserService_Top_FullMethodName                 = "/user.v1.UserService/Top"
+	UserService_Follow_FullMethodName              = "/user.v1.UserService/Follow"
+	UserService_UnFollow_FullMethodName            = "/user.v1.UserService/UnFollow"
+	UserService_IfFollow_FullMethodName            = "/user.v1.UserService/IfFollow"
+	UserService_ListFollowersByPage_FullMethodName = "/user.v1.UserService/ListFollowersByPage"
+	UserService_ListFolloweesByPage_FullMethodName = "/user.v1.UserService/ListFolloweesByPage"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -29,11 +34,18 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	// 根据用户 ID 获取用户资料
-	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
+	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*UserDetail, error)
 	// 更新用户资料
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error)
 	// 返回推荐用户
 	Top(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopResponse, error)
+	Follow(ctx context.Context, in *FollowCommonRequest, opts ...grpc.CallOption) (*FollowEmptyResponse, error)
+	UnFollow(ctx context.Context, in *FollowCommonRequest, opts ...grpc.CallOption) (*FollowEmptyResponse, error)
+	IfFollow(ctx context.Context, in *FollowCommonRequest, opts ...grpc.CallOption) (*IfFollowResponse, error)
+	// 按页查找粉丝
+	ListFollowersByPage(ctx context.Context, in *ListFollowRequest, opts ...grpc.CallOption) (*ListFollowResponse, error)
+	// 按页查找关注的人
+	ListFolloweesByPage(ctx context.Context, in *ListFollowRequest, opts ...grpc.CallOption) (*ListFollowResponse, error)
 }
 
 type userServiceClient struct {
@@ -44,9 +56,9 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error) {
+func (c *userServiceClient) GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*UserDetail, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProfileByIdResponse)
+	out := new(UserDetail)
 	err := c.cc.Invoke(ctx, UserService_GetProfileById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -74,16 +86,73 @@ func (c *userServiceClient) Top(ctx context.Context, in *TopRequest, opts ...grp
 	return out, nil
 }
 
+func (c *userServiceClient) Follow(ctx context.Context, in *FollowCommonRequest, opts ...grpc.CallOption) (*FollowEmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FollowEmptyResponse)
+	err := c.cc.Invoke(ctx, UserService_Follow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UnFollow(ctx context.Context, in *FollowCommonRequest, opts ...grpc.CallOption) (*FollowEmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FollowEmptyResponse)
+	err := c.cc.Invoke(ctx, UserService_UnFollow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) IfFollow(ctx context.Context, in *FollowCommonRequest, opts ...grpc.CallOption) (*IfFollowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IfFollowResponse)
+	err := c.cc.Invoke(ctx, UserService_IfFollow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ListFollowersByPage(ctx context.Context, in *ListFollowRequest, opts ...grpc.CallOption) (*ListFollowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFollowResponse)
+	err := c.cc.Invoke(ctx, UserService_ListFollowersByPage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ListFolloweesByPage(ctx context.Context, in *ListFollowRequest, opts ...grpc.CallOption) (*ListFollowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFollowResponse)
+	err := c.cc.Invoke(ctx, UserService_ListFolloweesByPage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
 	// 根据用户 ID 获取用户资料
-	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
+	GetProfileById(context.Context, *GetProfileByIdRequest) (*UserDetail, error)
 	// 更新用户资料
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error)
 	// 返回推荐用户
 	Top(context.Context, *TopRequest) (*TopResponse, error)
+	Follow(context.Context, *FollowCommonRequest) (*FollowEmptyResponse, error)
+	UnFollow(context.Context, *FollowCommonRequest) (*FollowEmptyResponse, error)
+	IfFollow(context.Context, *FollowCommonRequest) (*IfFollowResponse, error)
+	// 按页查找粉丝
+	ListFollowersByPage(context.Context, *ListFollowRequest) (*ListFollowResponse, error)
+	// 按页查找关注的人
+	ListFolloweesByPage(context.Context, *ListFollowRequest) (*ListFollowResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -94,7 +163,7 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
-func (UnimplementedUserServiceServer) GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error) {
+func (UnimplementedUserServiceServer) GetProfileById(context.Context, *GetProfileByIdRequest) (*UserDetail, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetProfileById not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error) {
@@ -102,6 +171,21 @@ func (UnimplementedUserServiceServer) UpdateProfile(context.Context, *UpdateProf
 }
 func (UnimplementedUserServiceServer) Top(context.Context, *TopRequest) (*TopResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Top not implemented")
+}
+func (UnimplementedUserServiceServer) Follow(context.Context, *FollowCommonRequest) (*FollowEmptyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Follow not implemented")
+}
+func (UnimplementedUserServiceServer) UnFollow(context.Context, *FollowCommonRequest) (*FollowEmptyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnFollow not implemented")
+}
+func (UnimplementedUserServiceServer) IfFollow(context.Context, *FollowCommonRequest) (*IfFollowResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IfFollow not implemented")
+}
+func (UnimplementedUserServiceServer) ListFollowersByPage(context.Context, *ListFollowRequest) (*ListFollowResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFollowersByPage not implemented")
+}
+func (UnimplementedUserServiceServer) ListFolloweesByPage(context.Context, *ListFollowRequest) (*ListFollowResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFolloweesByPage not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -178,6 +262,96 @@ func _UserService_Top_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_Follow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FollowCommonRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).Follow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_Follow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).Follow(ctx, req.(*FollowCommonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UnFollow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FollowCommonRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UnFollow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UnFollow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UnFollow(ctx, req.(*FollowCommonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_IfFollow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FollowCommonRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).IfFollow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_IfFollow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).IfFollow(ctx, req.(*FollowCommonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ListFollowersByPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFollowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListFollowersByPage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListFollowersByPage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListFollowersByPage(ctx, req.(*ListFollowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ListFolloweesByPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFollowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListFolloweesByPage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListFolloweesByPage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListFolloweesByPage(ctx, req.(*ListFollowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +370,26 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Top",
 			Handler:    _UserService_Top_Handler,
+		},
+		{
+			MethodName: "Follow",
+			Handler:    _UserService_Follow_Handler,
+		},
+		{
+			MethodName: "UnFollow",
+			Handler:    _UserService_UnFollow_Handler,
+		},
+		{
+			MethodName: "IfFollow",
+			Handler:    _UserService_IfFollow_Handler,
+		},
+		{
+			MethodName: "ListFollowersByPage",
+			Handler:    _UserService_ListFollowersByPage_Handler,
+		},
+		{
+			MethodName: "ListFolloweesByPage",
+			Handler:    _UserService_ListFolloweesByPage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

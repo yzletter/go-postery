@@ -30,14 +30,6 @@ type CommentDAO interface {
 	GetRepliesByParentID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
 }
 
-type FollowDAO interface {
-	Create(ctx context.Context, follow *model.Follow) error
-	Delete(ctx context.Context, ferID, feeID int64) error
-	Exists(ctx context.Context, ferID, feeID int64) (model.FollowType, error)
-	GetFollowers(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
-	GetFollowees(ctx context.Context, id int64, pageNo, pageSize int) (int64, []int64, error)
-}
-
 type MessageDAO interface {
 	Create(ctx context.Context, message *model.Message) error
 	GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
