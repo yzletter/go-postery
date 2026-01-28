@@ -18,11 +18,6 @@ import (
 	"github.com/yzletter/go-postery/service/ports"
 )
 
-var (
-	pongWait   = 5 * time.Second // 等待 pong 的超时时间
-	pingPeriod = 3 * time.Second // 发送 ping 的周期，必须短于 pongWait
-)
-
 type sessionService struct {
 	sessionRepo   repository.SessionRepository
 	messageRepo   repository.MessageRepository

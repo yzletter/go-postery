@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/qdrant/go-client/qdrant"
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/agent/model"
+	"github.com/yzletter/go-postery/agent/repository/dao"
 )
 
 type agentRepository struct {

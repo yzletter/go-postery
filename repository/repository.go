@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 
-	"github.com/qdrant/go-client/qdrant"
 	"github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/model"
 )
@@ -39,11 +38,4 @@ type MessageRepository interface {
 	Create(ctx context.Context, message *model.Message) error
 	GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
 	GetByPage(ctx context.Context, id int64, targetID int64, pageNo, pageSize int) (int, []*model.Message, error)
-}
-
-type AgentRepository interface {
-	Retrieve(ctx context.Context, query string, scoreThreshold float64, limit int) ([]string, error)
-	CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error
-	UpsertVectorPoints(ctx context.Context, points []*qdrant.PointStruct) error
-	GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model.Chunk, error)
 }

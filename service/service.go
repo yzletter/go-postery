@@ -44,6 +44,5 @@ type WebsocketService interface {
 type AgentService interface {
 	StartChunkDocConsumer(ctx context.Context)
 	StartUpsertQdrantConsumer(ctx context.Context)
-	ConsumeMessage(ctx context.Context, BatchID int64) error
 	Chat(ctx context.Context, uid int64, sessionID int64, query string) (agentdto.DTO, error)
 }

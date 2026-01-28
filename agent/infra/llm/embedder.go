@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
-	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/agent/service/ports"
 )
 
 type ArkEmbedder struct {

@@ -1,0 +1,66 @@
+package post
+
+import (
+	"time"
+
+	userdto "github.com/yzletter/go-postery/dto/user"
+	"github.com/yzletter/go-postery/model"
+)
+
+type DetailDTO struct {
+	ID           int64            `json:"id,string"`
+	ViewCount    int              `json:"view_count"`
+	LikeCount    int              `json:"like_count"`
+	CommentCount int              `json:"comment_count"`
+	Title        string           `json:"title"`
+	Content      string           `json:"content"`
+	ContentType  int              `json:"content_type"`
+	CreatedAt    string           `json:"created_at"`
+	Author       userdto.BriefDTO `json:"author"`
+	Tags         []string         `json:"tags"`
+}
+
+type BriefDTO struct {
+	ID        int64            `json:"id,string"`
+	Title     string           `json:"title"`
+	CreatedAt string           `json:"created_at"`
+	Author    userdto.BriefDTO `json:"author"`
+}
+
+type TopDTO struct {
+	ID    int64   `json:"id,string"`
+	Title string  `json:"title"`
+	Score float64 `json:"score"`
+}
+
+func ToDetailDTO(post *model.Post, userProfile *model.UserProfile) DetailDTO {
+	return DetailDTO{
+		ID:           post.ID,
+		Title:        post.Title,
+		Content:      post.Content,
+		CreatedAt:    post.CreatedAt.Format(time.RFC3339),
+		Author:       userdto.ToBriefDTO(userProfile),
+		ContentType:  post.ContentType,
+		ViewCount:    post.ViewCount,
+		CommentCount: post.CommentCount,
+		LikeCount:    post.LikeCount,
+		Tags:         nil,
+	}
+}
+
+func ToBriefDTO(post *model.Post, userProfile *model.UserProfile) BriefDTO {
+	return BriefDTO{
+		ID:        post.ID,
+		Title:     post.Title,
+		CreatedAt: post.CreatedAt.Format(time.RFC3339),
+		Author:    userdto.ToBriefDTO(userProfile),
+	}
+}
+
+func ToTopDTO(post *model.Post, score float64) TopDTO {
+	return TopDTO{
+		ID:    post.ID,
+		Title: post.Title,
+		Score: score,
+	}
+}

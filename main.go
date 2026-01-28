@@ -9,14 +9,16 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/yzletter/go-postery/agent/infra/llm"
+	infraQdarant "github.com/yzletter/go-postery/agent/infra/qdrant"
+	repository2 "github.com/yzletter/go-postery/agent/repository"
+	dao3 "github.com/yzletter/go-postery/agent/repository/dao"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
 	"github.com/yzletter/go-postery/infra/graceful_stop"
 	infraKafka "github.com/yzletter/go-postery/infra/kafka"
-	infraLLM "github.com/yzletter/go-postery/infra/llm"
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
-	infraQdarant "github.com/yzletter/go-postery/infra/qdrant"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
 	"github.com/yzletter/go-postery/infra/security"
@@ -24,9 +26,6 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
-	repository2 "github.com/yzletter/go-postery/lottery/repository"
-	cache2 "github.com/yzletter/go-postery/lottery/repository/cache"
-	dao2 "github.com/yzletter/go-postery/lottery/repository/dao"
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
@@ -38,16 +37,11 @@ func main() {
 	// Infra 层
 	slog.InitSlog(conf.LogFilePath) // 初始化 slog
 
-	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                                 // 初始化 MySQL
-	QdrantClient := infraQdarant.Init("./conf", "db", viper.YAML)                                                        // 初始化 Qdrant
-	ArkEmbedder := infraLLM.NewArkEmbedder(context.Background(), "doubao-embedding-vision-250615", os.Getenv("ARK_KEY")) // 初始化火山引擎向量模型
-	ArkChatModel := infraLLM.NewArkModel(context.Background(), "doubao-seed-1-8-251228", os.Getenv("ARK_KEY"))
+	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                // 初始化 MySQL
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
-	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
-	AgentKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "index_document", "agent_document")
 
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
 	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
@@ -57,18 +51,14 @@ func main() {
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
 	SessionDAO := dao.NewSessionDAO(MySQLGormDB)
 	AuthDAO := dao.NewAuthDAO(MySQLGormDB)
-	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 
 	// Cache 层
-	MessageCache := cache.NewMessageCache(RedisClient)
-	SessionCache := cache.NewSessionCache(RedisClient)
 	AuthCache := cache.NewAuthCache(RedisClient)
 
 	// Repository 层
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
 	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
-	AgentRepo := repository.NewAgentRepository(AgentDAO)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
@@ -76,13 +66,11 @@ func main() {
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
-	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
 
 	// 开启协程
 	ctx, cancel := context.WithCancel(context.Background())
-	go infraMySQL.ScanOutbox(ctx, KafkaProducer)    // 开启扫表发消息协程
-	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
-	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启向量数据库协程
+	go infraMySQL.ScanOutbox(ctx, KafkaProducer) // 开启扫表发消息协程
+
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 
 	// Handler 层

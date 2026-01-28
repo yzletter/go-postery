@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/qdrant/go-client/qdrant"
-	"github.com/yzletter/go-postery/infra/viper"
+	"github.com/yzletter/go-postery/agent/infra/viper"
 )
 
 var (
