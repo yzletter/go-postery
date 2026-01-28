@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package session.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/session/v1;session_grpc";
+
+import "google/protobuf/timestamp.proto";
+
+message UserID {
+  int64 UserID = 1;
+}
+
+message Session {
+  int64 SessionID = 1;
+  int64 TargetID = 2;
+  int64 LastMessageID = 3;
+  string LastMessage = 4;
+  string LastMessageTime = 5;
+  int64 UnreadCount = 6;
+}
+
+message Sessions {
+  repeated Session Sessions = 1;
+}
+
+message BothUserID {
+  int64 UserID = 1;
+  int64 TargetID = 2;
+}
+
+message SessionEmptyResponse {}
+
+message GetHistoryMessagesByPageRequest {
+  int64 UserID = 1;
+  int64 TargetID = 2;
+  uint32 PageNo = 3;
+  uint32 PageSize = 4;
+}
+
+message GetHistoryMessagesByPageResponse {
+  uint64 Count = 1;
+  repeated Message Messages = 2;
+}
+
+message DeleteRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+}
+
+message Message {
+  int64 ID = 1;
+  int64 SessionID = 2;
+  int32 SessionType = 3;
+  int64 MessageFrom = 4;
+  int64 MessageTo = 5;
+  string Content = 6;
+  google.protobuf.Timestamp CreatedAt = 8;
+  google.protobuf.Timestamp UpdatedAt = 9;
+  google.protobuf.Timestamp DeletedAt = 10;
+}
+
+message UpdateUnreadRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+  int64 LastMessageID = 3;
+  string LastMessage = 4;
+  google.protobuf.Timestamp LastMessageTime = 5;
+  int64 Delta = 6;
+}
+
+message ClearUnreadRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+}
+
+service SessionService {
+  rpc ListByUID(UserID) returns (Sessions);
+  rpc GetSession(BothUserID) returns (Session);
+  rpc GetHistoryMessagesByPage(GetHistoryMessagesByPageRequest) returns (GetHistoryMessagesByPageResponse);
+  rpc Delete(DeleteRequest) returns (SessionEmptyResponse);
+  rpc UpdateUnread(UpdateUnreadRequest) returns (SessionEmptyResponse);
+  rpc ClearUnread(ClearUnreadRequest) returns (SessionEmptyResponse);
+  rpc CreateMessage(Message) returns (SessionEmptyResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/session/v1/session.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

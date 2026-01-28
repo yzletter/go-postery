@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	giftdto "github.com/yzletter/go-postery/dto/gift"
+	giftdto "github.com/yzletter/go-postery/bff/dto/gift"
 )
 
 const url = "http://localhost:8765/api/v1/lottery/lucky" // 压测接口

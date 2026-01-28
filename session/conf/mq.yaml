@@ -1,0 +1,5 @@
+RabbitMQ:
+  host: localhost
+  port: 5672
+  user: yzletter   # 用户名
+  password: 123456 # 密码
