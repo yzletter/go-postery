@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
-	orderdto "github.com/yzletter/go-postery/dto/order"
 	"github.com/yzletter/go-postery/errno"
+	orderdto "github.com/yzletter/go-postery/lottery/dto/order"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"

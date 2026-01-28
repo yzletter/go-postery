@@ -8,6 +8,7 @@ import (
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
 	qdrant_retriever "github.com/cloudwego/eino-ext/components/retriever/qdrant"
 	"github.com/go-sql-driver/mysql"
+	dao2 "github.com/yzletter/go-postery/lottery/repository/dao"
 
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/yzletter/go-postery/model"
@@ -40,14 +41,14 @@ func (dao *agentDAO) Retrieve(ctx context.Context, query string, scoreThreshold 
 	})
 	if err != nil {
 		slog.Error("Qdrant New Retriever Failed", "error", err)
-		return nil, ErrServerInternal
+		return nil, dao2.ErrServerInternal
 	}
 
 	// 进行召回
 	neighbors, err := retriever.Retrieve(ctx, query)
 	if err != nil {
 		slog.Error("Qdrant Retrieve Failed", "error", err)
-		return nil, ErrServerInternal
+		return nil, dao2.ErrServerInternal
 	}
 
 	ids := make([]string, 0, len(neighbors))
@@ -61,7 +62,7 @@ func (dao *agentDAO) Retrieve(ctx context.Context, query string, scoreThreshold 
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return []string{}, nil
 		}
-		return []string{}, ErrServerInternal
+		return []string{}, dao2.ErrServerInternal
 	}
 
 	res := make([]string, 0, len(neighbors))
@@ -89,10 +90,10 @@ func (dao *agentDAO) CreateChunksWithOutbox(ctx context.Context, chunkModels []*
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return ErrUniqueKey
+			return dao2.ErrUniqueKey
 		}
 		slog.Error("Create Chunks Error", "error", err)
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 
 	return nil
@@ -104,7 +105,7 @@ func (dao *agentDAO) UpsertVectorPoints(ctx context.Context, points []*qdrant.Po
 	exist, err := dao.embeddingDB.CollectionExists(ctx, "knowledge")
 	if err != nil {
 		slog.Error("Qdrant Check Collection Exist Failed", "error", err)
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 	if !exist {
 		// 不存在，建表
@@ -120,7 +121,7 @@ func (dao *agentDAO) UpsertVectorPoints(ctx context.Context, points []*qdrant.Po
 			},
 		}); err != nil {
 			slog.Error("Qdrant Create Collection Failed", "error", err)
-			return ErrServerInternal
+			return dao2.ErrServerInternal
 		}
 	}
 
@@ -130,7 +131,7 @@ func (dao *agentDAO) UpsertVectorPoints(ctx context.Context, points []*qdrant.Po
 		Points:         points,
 	}); err != nil {
 		slog.Error("Qdrant Upsert Vectors Failed", "error", err)
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 
 	return nil
@@ -141,11 +142,11 @@ func (dao *agentDAO) GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*
 	result := dao.db.WithContext(ctx).Where("batch_id = ?", BatchID).Find(&chunks)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
 
-		slog.Error(FindFailed, "batch_id", BatchID, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "batch_id", BatchID, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return chunks, nil

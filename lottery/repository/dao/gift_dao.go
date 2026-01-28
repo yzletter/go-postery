@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/lottery/model"
 	"gorm.io/gorm"
 )
 

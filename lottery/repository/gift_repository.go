@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/lottery/model"
+	"github.com/yzletter/go-postery/lottery/repository/cache"
+	"github.com/yzletter/go-postery/lottery/repository/dao"
 )
 
 type giftRepository struct {

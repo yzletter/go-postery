@@ -19,13 +19,15 @@ import (
 	infraQdarant "github.com/yzletter/go-postery/infra/qdrant"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
-	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
 	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
+	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
+	repository2 "github.com/yzletter/go-postery/lottery/repository"
+	cache2 "github.com/yzletter/go-postery/lottery/repository/cache"
+	dao2 "github.com/yzletter/go-postery/lottery/repository/dao"
 	"github.com/yzletter/go-postery/middleware"
-	repository2 "github.com/yzletter/go-postery/post/repository"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
@@ -42,7 +44,6 @@ func main() {
 	ArkChatModel := infraLLM.NewArkModel(context.Background(), "doubao-seed-1-8-251228", os.Getenv("ARK_KEY"))
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
-	RocketMQ := infraRocketMQ.Init(conf.RocketProxyEndpoint)                                            // 初始化 RocketMQ
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
 	QdrantKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "upsert_qdrant", "agent_qdrant")
@@ -55,23 +56,17 @@ func main() {
 	// DAO 层
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
 	SessionDAO := dao.NewSessionDAO(MySQLGormDB)
-	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
-	GiftDAO := dao.NewGiftDAO(MySQLGormDB)
 	AuthDAO := dao.NewAuthDAO(MySQLGormDB)
 	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 
 	// Cache 层
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
-	OrderCache := cache.NewOrderCache(RedisClient)
-	GiftCache := cache.NewGiftCache(RedisClient)
 	AuthCache := cache.NewAuthCache(RedisClient)
 
 	// Repository 层
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
-	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
-	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)             // 注册 GiftRepository
 	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
 	AgentRepo := repository.NewAgentRepository(AgentDAO)
 
@@ -81,7 +76,6 @@ func main() {
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
-	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService
 	AgentSvc := service.NewAgentService(AgentRepo, PostRepo, CommentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
 
 	// 开启协程
@@ -90,8 +84,6 @@ func main() {
 	go AgentSvc.StartChunkDocConsumer(ctx)          // 开启切分文档协程
 	go AgentSvc.StartUpsertQdrantConsumer(ctx)      // 开启向量数据库协程
 	go SessionSvc.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
-	go LotterySvc.StartLotteryOrderConsumer(ctx)    // 开启协程核查临时订单进行库存回流
-	LotterySvc.InitCacheInventory(ctx)              // 初始化缓存库存
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthSvc)                            // 注册 AuthHandler

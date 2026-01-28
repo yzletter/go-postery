@@ -5,17 +5,15 @@ import (
 	"net/http"
 
 	agentdto "github.com/yzletter/go-postery/dto/agent"
-	giftdto "github.com/yzletter/go-postery/dto/gift"
 	messagedto "github.com/yzletter/go-postery/dto/message"
-	orderdto "github.com/yzletter/go-postery/dto/order"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
-	commentdto "github.com/yzletter/go-postery/post/dto/comment"
+	giftdto "github.com/yzletter/go-postery/lottery/dto/gift"
+	orderdto "github.com/yzletter/go-postery/lottery/dto/order"
 	"github.com/yzletter/go-postery/service/ports"
 )
 
 // 定义 Service 层所有接口
-
 type AuthService interface {
 	LoginByPassword(ctx context.Context, identifier, password string) (userdto.BriefDTO, error) // 手机号码/邮箱 + 密码登录
 	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)             // 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
@@ -41,16 +39,6 @@ type SessionService interface {
 
 type WebsocketService interface {
 	Connect(ctx context.Context, w http.ResponseWriter, r *http.Request, uid int64) error
-}
-
-type LotteryService interface {
-	GetAllGifts(ctx context.Context) ([]giftdto.DTO, error)
-	Lottery(ctx context.Context, uid int64) (giftdto.DTO, error)
-	Pay(ctx context.Context, uid, gid int64) error
-	GiveUp(ctx context.Context, uid, gid int64) error
-	Result(ctx context.Context, uid int64) (orderdto.DTO, error)
-	StartLotteryOrderConsumer(ctx context.Context)
-	InitCacheInventory(ctx context.Context)
 }
 
 type AgentService interface {

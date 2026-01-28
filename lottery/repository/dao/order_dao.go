@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/lottery/model"
 	"gorm.io/gorm"
 )
 

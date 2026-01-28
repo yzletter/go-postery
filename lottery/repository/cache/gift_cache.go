@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/lottery/model"
 )
 
 const (

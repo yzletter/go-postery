@@ -25,13 +25,6 @@ type AuthRepository interface {
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)                                       // 查看 SSID 是否被拉黑
 }
 
-type UserRepository interface {
-	GetProfileByID(ctx context.Context, uid int64) (*model.UserProfile, error) // 根据 ID 查找用户资料
-	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error // 根据 ID 修改用户资料的多个字段
-	Top(ctx context.Context) ([]*model.UserProfile, []float64, error)          // 返回热门推荐用户
-	ChangeScore(ctx context.Context, uid int64, delta int) error               // 修改用户分数
-}
-
 type SessionRepository interface {
 	Create(ctx context.Context, session *model.Session) error
 	ListByUid(ctx context.Context, uid int64) ([]*model.Session, error)
@@ -46,23 +39,6 @@ type MessageRepository interface {
 	Create(ctx context.Context, message *model.Message) error
 	GetByIDAndTargetID(ctx context.Context, id, targetID int64) ([]*model.Message, error)
 	GetByPage(ctx context.Context, id int64, targetID int64, pageNo, pageSize int) (int, []*model.Message, error)
-}
-
-type OrderRepository interface {
-	CreateTempOrder(ctx context.Context, uid, gid int64) error
-	DeleteTempOrder(ctx context.Context, uid int64) error
-	GetTempOrder(ctx context.Context, uid int64) (int64, error)
-	CreateOrder(ctx context.Context, order *model.Order) error
-	GetOrder(ctx context.Context, uid int64) (*model.Order, error)
-}
-
-type GiftRepository interface {
-	GetAllGifts(ctx context.Context) ([]*model.Gift, error)
-	GetCacheInventory(ctx context.Context) ([]*model.Gift, error)
-	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
-	ReduceCacheInventory(ctx context.Context, gid int64) error
-	IncreaseCacheInventory(ctx context.Context, gid int64) error
-	InitCacheInventory(ctx context.Context)
 }
 
 type AgentRepository interface {

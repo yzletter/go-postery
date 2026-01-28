@@ -5,41 +5,41 @@ import (
 	"errors"
 	"log"
 	"log/slog"
-	"math/rand/v2"
+	"math/rand"
 	"time"
 
 	rmq_client "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/bytedance/sonic"
-	"github.com/yzletter/go-postery/conf"
-	giftdto "github.com/yzletter/go-postery/dto/gift"
-	orderdto "github.com/yzletter/go-postery/dto/order"
+	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/errno"
-	infraRocketMQ "github.com/yzletter/go-postery/infra/rocketmq"
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/lottery/conf"
+	"github.com/yzletter/go-postery/lottery/dto"
+	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
+	"github.com/yzletter/go-postery/lottery/model"
+	"github.com/yzletter/go-postery/lottery/repository"
+	"github.com/yzletter/go-postery/lottery/service/ports"
 )
 
 type lotteryService struct {
 	giftRepo  repository.GiftRepository
 	orderRepo repository.OrderRepository
-	userRepo  repository.UserRepository
 	mq        *infraRocketMQ.RocketMQ
 	idGen     ports.IDGenerator
+	lottery_grpc.UnimplementedLotteryServiceServer
 }
 
-func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, userRepo repository.UserRepository, mq *infraRocketMQ.RocketMQ, idGen ports.IDGenerator) LotteryService {
+func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository.GiftRepository, mq *infraRocketMQ.RocketMQ, idGen ports.IDGenerator) LotteryService {
 	return &lotteryService{
-		orderRepo: orderRepo,
-		giftRepo:  giftRepo,
-		userRepo:  userRepo,
-		mq:        mq,
-		idGen:     idGen,
+		orderRepo:                         orderRepo,
+		giftRepo:                          giftRepo,
+		idGen:                             idGen,
+		mq:                                mq,
+		UnimplementedLotteryServiceServer: lottery_grpc.UnimplementedLotteryServiceServer{},
 	}
 }
 
-func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]giftdto.DTO, error) {
-	var empty []giftdto.DTO
+func (svc *lotteryService) GetAllGifts(ctx context.Context, req *lottery_grpc.EmptyRequest) (*lottery_grpc.Gifts, error) {
+	var empty = new(lottery_grpc.Gifts)
 	gifts, err := svc.giftRepo.GetAllGifts(ctx)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -48,15 +48,16 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]giftdto.DTO, erro
 		return empty, errno.ErrServerInternal
 	}
 
+	respGifts := make([]*lottery_grpc.Gift, 0, len(gifts))
 	for _, gift := range gifts {
-		giftDTO := giftdto.ToDTO(gift)
-		empty = append(empty, giftDTO)
+		giftDTO := dto.ToGift(gift)
+		respGifts = append(respGifts, giftDTO)
 	}
 
-	return empty, nil
+	return &lottery_grpc.Gifts{Gifts: respGifts}, nil
 }
 
-func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO, error) {
+func (svc *lotteryService) Lottery(ctx context.Context, id *lottery_grpc.UserID) (*lottery_grpc.Gift, error) {
 	for try := 1; try <= 10; try++ {
 		// 获取缓存中的库存
 		gifts, err := svc.giftRepo.GetCacheInventory(ctx)
@@ -81,7 +82,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 				ID:   0,
 				Name: "奖品已抽完",
 			}
-			return giftdto.ToDTO(empty), nil
+			return dto.ToGift(empty), nil
 		}
 
 		// 进行抽奖
@@ -93,8 +94,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 		gid := ids[idx]
 
 		// 扣减缓存库存
-		err = svc.giftRepo.ReduceCacheInventory(ctx, gid)
-		if err != nil {
+		if err := svc.giftRepo.ReduceCacheInventory(ctx, gid); err != nil {
 			// 扣减失败
 			continue
 		}
@@ -107,26 +107,25 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 			continue
 		} else if gift.Name == "谢谢参与" {
 			// 不用创建临时订单
-			return giftdto.ToDTO(gift), nil
+			return dto.ToGift(gift), nil
 		}
 
 		// 创建临时订单
-		err = svc.orderRepo.CreateTempOrder(ctx, uid, gid)
-		if err != nil {
+		if err := svc.orderRepo.CreateTempOrder(ctx, id.UserID, gid); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 			continue
 		}
 
 		// 发送延迟消息
-		err = svc.produce(ctx, &model.Order{UserID: uid, GiftID: gid}, conf.RocketLotteryPayDelay)
+		err = svc.produce(ctx, &model.Order{UserID: id.UserID, GiftID: gid}, conf.RocketLotteryPayDelay)
 		if err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-			_ = svc.orderRepo.DeleteTempOrder(ctx, uid)
+			_ = svc.orderRepo.DeleteTempOrder(ctx, id.UserID)
 			continue
 		}
 
 		// 返回数据
-		return giftdto.ToDTO(gift), nil
+		return dto.ToGift(gift), nil
 	}
 
 	empty := &model.Gift{
@@ -134,90 +133,66 @@ func (svc *lotteryService) Lottery(ctx context.Context, uid int64) (giftdto.DTO,
 		Name: "谢谢参与",
 	}
 	slog.Error("Lottery Nothing")
-	return giftdto.ToDTO(empty), nil
+	return dto.ToGift(empty), nil
 }
 
-func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {
-	// 序列化 Order
-	body, err := sonic.Marshal(order)
-	if err != nil {
-		return errno.ErrServerInternal
-	}
-
-	// 构造 Message
-	message := &rmq_client.Message{
-		Topic: conf.RocketLotteryTopic,
-		Body:  body,
-	}
-	message.SetDelayTimestamp(time.Now().Add(time.Duration(delay) * time.Second))
-
-	// 发送消息
-	_, err = svc.mq.RocketProducer.Send(ctx, message)
-	if err != nil {
-		return errno.ErrServerInternal
-	}
-	return nil
-}
-
-func (svc *lotteryService) GiveUp(ctx context.Context, uid, gid int64) error {
+func (svc *lotteryService) Pay(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
 	// 获取临时订单
-	tempID, err := svc.orderRepo.GetTempOrder(ctx, uid)
-	if err != nil || tempID != gid {
-		return errno.ErrNotLottery
-	}
-
-	_ = svc.orderRepo.DeleteTempOrder(ctx, uid)
-	_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-	return nil
-}
-
-func (svc *lotteryService) Pay(ctx context.Context, uid, gid int64) error {
-	// 获取临时订单
-	tempID, err := svc.orderRepo.GetTempOrder(ctx, uid)
-	if err != nil || tempID != gid {
-		return errno.ErrNotLottery
+	tempID, err := svc.orderRepo.GetTempOrder(ctx, req.UserID)
+	if err != nil || tempID != req.GiftID {
+		return &lottery_grpc.EmptyResponse{}, errno.ErrNotLottery
 	}
 
 	// 正式订单落库
 	order := &model.Order{
 		ID:     svc.idGen.NextID(),
-		UserID: uid,
-		GiftID: gid,
+		UserID: req.UserID,
+		GiftID: req.GiftID,
 		Count:  1,
 	}
 
-	err = svc.orderRepo.CreateOrder(ctx, order)
-	if err != nil {
-		_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+	if err := svc.orderRepo.CreateOrder(ctx, order); err != nil {
+		_ = svc.giftRepo.IncreaseCacheInventory(ctx, req.GiftID)
 		if errors.Is(err, repository.ErrUniqueKey) {
 			slog.Error("Create Order Failed", "error", err)
-			return errno.ErrServerInternal
+			return &lottery_grpc.EmptyResponse{}, errno.ErrServerInternal
 		}
-		return errno.ErrServerInternal
+		return &lottery_grpc.EmptyResponse{}, errno.ErrServerInternal
 	}
 
 	// 删除临时订单
-	_ = svc.orderRepo.DeleteTempOrder(ctx, uid)
-	return nil
+	_ = svc.orderRepo.DeleteTempOrder(ctx, req.UserID)
+	return &lottery_grpc.EmptyResponse{}, nil
 }
 
-func (svc *lotteryService) Result(ctx context.Context, uid int64) (orderdto.DTO, error) {
-	var empty orderdto.DTO
-	order, err := svc.orderRepo.GetOrder(ctx, uid)
+func (svc *lotteryService) GiveUp(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
+	// 获取临时订单
+	tempID, err := svc.orderRepo.GetTempOrder(ctx, req.UserID)
+	if err != nil || tempID != req.GiftID {
+		return &lottery_grpc.EmptyResponse{}, errno.ErrNotLottery
+	}
+
+	_ = svc.orderRepo.DeleteTempOrder(ctx, req.UserID)
+	_ = svc.giftRepo.IncreaseCacheInventory(ctx, req.GiftID)
+	return &lottery_grpc.EmptyResponse{}, nil
+}
+
+func (svc *lotteryService) Result(ctx context.Context, id *lottery_grpc.UserID) (*lottery_grpc.Order, error) {
+	var empty = new(lottery_grpc.Order)
+
+	// 获取订单
+	order, err := svc.orderRepo.GetOrder(ctx, id.UserID)
 	if err != nil {
 		return empty, errno.ErrOrderNotFound
 	}
 
+	// 获取 Gift
 	gift, err := svc.giftRepo.GetByID(ctx, order.GiftID)
 	if err != nil {
 		gift = &model.Gift{}
 	}
-	userProfile, err := svc.userRepo.GetProfileByID(ctx, uid)
-	if err != nil {
-		userProfile = &model.UserProfile{}
-	}
 
-	return orderdto.ToDTO(order, userProfile, gift), nil
+	return dto.ToOrder(order, gift), nil
 }
 
 func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
@@ -256,8 +231,30 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 	}
 }
 
+// InitCacheInventory 初始化库存
 func (svc *lotteryService) InitCacheInventory(ctx context.Context) {
 	svc.giftRepo.InitCacheInventory(ctx)
+}
+
+func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {
+	// 序列化 Order
+	body, err := sonic.Marshal(order)
+	if err != nil {
+		return errno.ErrServerInternal
+	}
+
+	// 构造 Message
+	message := &rmq_client.Message{
+		Topic: conf.RocketLotteryTopic,
+		Body:  body,
+	}
+	message.SetDelayTimestamp(time.Now().Add(time.Duration(delay) * time.Second))
+
+	// 发送消息
+	if _, err = svc.mq.RocketProducer.Send(ctx, message); err != nil {
+		return errno.ErrServerInternal
+	}
+	return nil
 }
 
 // 抽奖算法

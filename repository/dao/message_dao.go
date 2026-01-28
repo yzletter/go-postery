@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	dao2 "github.com/yzletter/go-postery/lottery/repository/dao"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -18,7 +19,7 @@ func NewMessageDAO(db *gorm.DB) MessageDAO {
 func (dao *gormMessageDAO) Create(ctx context.Context, message *model.Message) error {
 	result := dao.db.WithContext(ctx).Create(message)
 	if result.Error != nil {
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 
 	return nil
@@ -32,8 +33,8 @@ func (dao *gormMessageDAO) GetByIDAndTargetID(ctx context.Context, id, targetID 
 		Or("message_from = ? AND message_to = ? AND deleted_at IS NULL", targetID, id).Order("created_at DESC").Find(&messages)
 	if result.Error != nil {
 		// 系统层面错误
-		slog.Error(FindFailed, "message_from", id, "message_to", targetID, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "message_from", id, "message_to", targetID, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return messages, nil
@@ -49,8 +50,8 @@ func (dao *gormMessageDAO) GetByPage(ctx context.Context, id int64, targetID int
 	result := base.Count(&total)
 	if result.Error != nil {
 		// 系统层面错误
-		slog.Error(FindFailed, "message_from", id, "message_to", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "message_from", id, "message_to", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
+		return 0, nil, dao2.ErrServerInternal
 	} else if total == 0 {
 		return 0, messages, nil
 	}
@@ -60,8 +61,8 @@ func (dao *gormMessageDAO) GetByPage(ctx context.Context, id int64, targetID int
 	result.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&messages)
 	if result.Error != nil {
 		// 系统层面错误
-		slog.Error(FindFailed, "message_from", id, "message_to", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
-		return 0, nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "message_from", id, "message_to", id, "pageNo", pageNo, "pageSize", pageSize, "error", result.Error)
+		return 0, nil, dao2.ErrServerInternal
 	}
 
 	return total, messages, nil

@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/dto/session"
+	dao2 "github.com/yzletter/go-postery/lottery/repository/dao"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -25,9 +26,9 @@ func (dao *gormSessionDAO) Create(ctx context.Context, session *model.Session) e
 	if result.Error != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) {
-			return ErrUniqueKey
+			return dao2.ErrUniqueKey
 		}
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 
 	return nil
@@ -38,10 +39,10 @@ func (dao *gormSessionDAO) GetByUidAndTargetID(ctx context.Context, uid, targetI
 	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND target_id = ? AND deleted_at IS NULL", uid, targetID).First(&session)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
-		slog.Error(FindFailed, "user_id", uid, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "user_id", uid, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return session, nil
@@ -51,8 +52,8 @@ func (dao *gormSessionDAO) GetByUid(ctx context.Context, uid int64) ([]*model.Se
 	var sessions []*model.Session
 	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND deleted_at IS NULL", uid).Order("updated_at DESC").Find(&sessions)
 	if result.Error != nil {
-		slog.Error(FindFailed, "user_id", uid, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "user_id", uid, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return sessions, nil
@@ -64,11 +65,11 @@ func (dao *gormSessionDAO) GetByID(ctx context.Context, uid, sid int64) (*model.
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
 		// 系统层面错误
-		slog.Error(FindFailed, "user_id", uid, "session_id", sid, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "user_id", uid, "session_id", sid, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return session, nil
@@ -79,10 +80,10 @@ func (dao *gormSessionDAO) Delete(ctx context.Context, uid, sid int64) error {
 	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).Update("deleted_at", &now)
 	if result.Error != nil {
 		// 系统层面错误
-		slog.Error(DeleteFailed, "user_id", uid, "session_id", sid, "error", result.Error)
-		return ErrServerInternal
+		slog.Error(dao2.DeleteFailed, "user_id", uid, "session_id", sid, "error", result.Error)
+		return dao2.ErrServerInternal
 	} else if result.RowsAffected == 0 {
-		return ErrRecordNotFound
+		return dao2.ErrRecordNotFound
 	}
 	return nil
 }
@@ -91,8 +92,8 @@ func (dao *gormSessionDAO) UpdateUnread(ctx context.Context, uid int64, sid int6
 	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).
 		Updates(updates.Updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", updates.Delta))
 	if result.Error != nil {
-		slog.Error(UpdateFailed, "error", result.Error)
-		return ErrServerInternal
+		slog.Error(dao2.UpdateFailed, "error", result.Error)
+		return dao2.ErrServerInternal
 	}
 
 	if result.RowsAffected == 0 {
@@ -100,8 +101,8 @@ func (dao *gormSessionDAO) UpdateUnread(ctx context.Context, uid int64, sid int6
 		result2 := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NOT NULL", uid, sid).
 			Update("deleted_at", nil).Updates(updates.Updates).UpdateColumn("unread_count", gorm.Expr("unread_count + ?", updates.Delta))
 		if result2.Error != nil {
-			slog.Error(UpdateFailed, "error", result2.Error)
-			return ErrServerInternal
+			slog.Error(dao2.UpdateFailed, "error", result2.Error)
+			return dao2.ErrServerInternal
 		}
 	}
 
@@ -112,10 +113,10 @@ func (dao *gormSessionDAO) ClearUnread(ctx context.Context, uid int64, sid int64
 	result := dao.db.WithContext(ctx).Model(&model.Session{}).Where("user_id = ? AND session_id = ? AND deleted_at IS NULL", uid, sid).
 		Update("unread_count", 0)
 	if result.Error != nil {
-		slog.Error(UpdateFailed, "error", result.Error)
-		return ErrServerInternal
+		slog.Error(dao2.UpdateFailed, "error", result.Error)
+		return dao2.ErrServerInternal
 	} else if result.RowsAffected == 0 {
-		return ErrRecordNotFound
+		return dao2.ErrRecordNotFound
 	}
 
 	return nil

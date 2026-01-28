@@ -38,16 +38,6 @@ type SessionDAO interface {
 	ClearUnread(ctx context.Context, uid int64, sid int64) error
 }
 
-type OrderDAO interface {
-	Create(ctx context.Context, order *model.Order) error
-	Get(ctx context.Context, uid int64) (*model.Order, error)
-}
-
-type GiftDAO interface {
-	GetAll(ctx context.Context) ([]*model.Gift, error)
-	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
-}
-
 type AgentDAO interface {
 	Retrieve(ctx context.Context, query string, scoreThreshold float64, limit int) ([]string, error)
 	CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error

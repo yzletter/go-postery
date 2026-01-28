@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/errno"
+	dao2 "github.com/yzletter/go-postery/lottery/repository/dao"
 	"github.com/yzletter/go-postery/model"
 	"gorm.io/gorm"
 )
@@ -53,9 +54,9 @@ func (dao *gormAuthDAO) CreateUser(ctx context.Context, authAggregate *model.Aut
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return ErrUniqueKey
+			return dao2.ErrUniqueKey
 		}
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 	return nil
 }
@@ -66,11 +67,11 @@ func (dao *gormAuthDAO) GetAuthIdentity(ctx context.Context, authType int, ident
 	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("auth_type = ? AND identifier = ?", authType, identifier).First(&authIdentity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
 
-		slog.Error(FindFailed, "auth_type", authType, "identifier", identifier, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "auth_type", authType, "identifier", identifier, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return &authIdentity, nil
@@ -82,11 +83,11 @@ func (dao *gormAuthDAO) GetAuthIdentityByIdentifier(ctx context.Context, identif
 	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("identifier = ? AND is_verified = ?", identifier, 1).First(&authIdentity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
 
-		slog.Error(FindFailed, "identifier", identifier, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "identifier", identifier, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return &authIdentity, nil
@@ -98,11 +99,11 @@ func (dao *gormAuthDAO) GetAuthIdentityByAuthType(ctx context.Context, uid int64
 	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("user_id = ? AND auth_type = ? AND is_verified = ?", uid, authType, 1).First(&authIdentity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
 
-		slog.Error(FindFailed, "uid", uid, "auth_type", authType, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "uid", uid, "auth_type", authType, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return &authIdentity, nil
@@ -114,11 +115,11 @@ func (dao *gormAuthDAO) GetAuthIdentityByUID(ctx context.Context, uid int64) ([]
 	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("user_id = ? AND is_verified = ?", uid, 1).Find(&authIdentity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, dao2.ErrRecordNotFound
 		}
 
-		slog.Error(FindFailed, "uid", uid, "error", result.Error)
-		return nil, ErrServerInternal
+		slog.Error(dao2.FindFailed, "uid", uid, "error", result.Error)
+		return nil, dao2.ErrServerInternal
 	}
 
 	return authIdentity, nil
@@ -130,11 +131,11 @@ func (dao *gormAuthDAO) GetPasswordHash(ctx context.Context, uid int64) (string,
 	result := dao.db.WithContext(ctx).Model(&model.AuthPassword{}).Where("user_id = ?", uid).First(&authPassword)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return "", ErrRecordNotFound
+			return "", dao2.ErrRecordNotFound
 		}
 
-		slog.Error(FindFailed, "uid", uid, "error", result.Error)
-		return "", ErrServerInternal
+		slog.Error(dao2.FindFailed, "uid", uid, "error", result.Error)
+		return "", dao2.ErrServerInternal
 	}
 
 	return authPassword.PasswordHash, nil
@@ -145,7 +146,7 @@ func (dao *gormAuthDAO) HasPassword(ctx context.Context, uid int64) (bool, error
 	var cnt int64
 	result := dao.db.Model(&model.AuthPassword{}).WithContext(ctx).Where("user_id = ?", uid).Count(&cnt)
 	if result.Error != nil {
-		slog.Error(FindFailed, "uid", uid, "error", result.Error)
+		slog.Error(dao2.FindFailed, "uid", uid, "error", result.Error)
 		return false, errno.ErrServerInternal
 	}
 
@@ -158,9 +159,9 @@ func (dao *gormAuthDAO) SetPassword(ctx context.Context, authPassword *model.Aut
 	if result.Error != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return ErrUniqueKey
+			return dao2.ErrUniqueKey
 		}
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 
 	return nil
@@ -171,16 +172,16 @@ func (dao *gormAuthDAO) UpdatePasswordHash(ctx context.Context, uid int64, passw
 	// 先查是否有密码
 	var cnt int64
 	if err := dao.db.WithContext(ctx).Model(&model.AuthPassword{}).Where("user_id = ?", uid).Count(&cnt).Error; err != nil {
-		return ErrServerInternal
+		return dao2.ErrServerInternal
 	}
 	if cnt == 0 {
-		return ErrRecordNotFound
+		return dao2.ErrRecordNotFound
 	}
 
 	result := dao.db.WithContext(ctx).Model(&model.AuthPassword{}).Where("user_id = ?", uid).Update("password_hash", passwordHash)
 	if result.Error != nil {
-		slog.Error(UpdateFailed, "uid", uid, "error", result.Error)
-		return ErrServerInternal
+		slog.Error(dao2.UpdateFailed, "uid", uid, "error", result.Error)
+		return dao2.ErrServerInternal
 	}
 
 	return nil
