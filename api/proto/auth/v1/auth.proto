@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/auth/v1;auth_grpc";
+
+import "google/protobuf/timestamp.proto";
+
+message UserID {
+  int64 UserID = 1;
+}
+
+message LoginByPasswordRequest {
+  string Identifier = 1;
+  string Password = 2;
+}
+
+message LoginByPhoneRequest {
+  string Phone = 1;
+  string Code = 2;
+}
+
+message UpdatePasswordRequest {
+  int64 UserID = 1;
+  string OldPassword = 2;
+  string NewPassword = 3;
+}
+
+message SetPasswordRequest {
+  int64 UserID = 1;
+  string Code = 2;
+  string Password = 3;
+}
+
+message HasPasswordResponse {
+  bool Result = 1;
+}
+
+message AuthEmptyResponse {}
+
+message AuthIdentity {
+  string Phone = 1;
+  string Email = 2;
+}
+
+message IssueTokenRequest {
+  int64 UserID = 1;
+  int32 Role = 2;
+  string UserAgent = 3;
+}
+
+message DualTokens {
+  string AccessToken = 1;
+  string RefreshToken = 2;
+}
+
+message AccessToken {
+  string AccessToken = 1;
+}
+
+message RefreshToken {
+  string RefreshToken = 1;
+}
+
+message JWTTokenClaims {
+  // 用户字段
+  int64  UserID = 1;
+  string SSID = 2;
+  int32 Role = 3;
+  string UserAgent = 4;
+
+  // JWT 字段
+  string Issuer = 5;
+  string Subject = 6;
+  repeated string Audience = 7;
+  google.protobuf.Timestamp ExpiresAt = 8;
+  google.protobuf.Timestamp NotBefore = 9;
+  google.protobuf.Timestamp IssuedAt = 10;
+  string ID = 11;
+}
+
+message GetInfoByRefreshTokenResponse {
+  int64 UserID = 1;
+  int32 Role = 2;
+  string SSID = 3;
+}
+
+message CheckBlackListRequest {
+  string SSID = 1;
+}
+
+message CheckBlackListResponse {
+  bool Result = 1;
+}
+
+service AuthService {
+  rpc LoginByPassword(LoginByPasswordRequest) returns (UserID);
+  rpc LoginByPhone(LoginByPhoneRequest) returns (UserID);
+  rpc HasPassword(UserID) returns (HasPasswordResponse);
+  rpc SetPassword(SetPasswordRequest) returns (AuthEmptyResponse);
+  rpc UpdatePassword(UpdatePasswordRequest) returns (AuthEmptyResponse);
+  rpc GetAuthIdentityByUID(UserID) returns (AuthIdentity);
+  rpc IssueTokens(IssueTokenRequest) returns (DualTokens);
+  rpc ClearTokens(DualTokens) returns (AuthEmptyResponse);
+  rpc VerifyAccessToken(AccessToken) returns (JWTTokenClaims);
+  rpc GetInfoByRefreshToken(RefreshToken) returns (GetInfoByRefreshTokenResponse);
+  rpc CheckBlackList(CheckBlackListRequest) returns (CheckBlackListResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/auth/v1/auth.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

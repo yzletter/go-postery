@@ -3,6 +3,7 @@ package comment
 import (
 	"time"
 
+	model2 "github.com/yzletter/go-postery/auth/model"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/model"
 )
@@ -17,7 +18,7 @@ type DTO struct {
 	Author    userdto.BriefDTO `json:"author"`
 }
 
-func ToDTO(comment *model.Comment, userProfile *model.UserProfile) DTO {
+func ToDTO(comment *model.Comment, userProfile *model2.UserProfile) DTO {
 	return DTO{
 		ID:        comment.ID,
 		PostID:    comment.PostID,

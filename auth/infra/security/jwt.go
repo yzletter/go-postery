@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/auth/service/ports"
 )
 
 type jwtManager struct {

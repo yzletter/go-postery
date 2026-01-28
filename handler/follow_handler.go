@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/auth/conf"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"

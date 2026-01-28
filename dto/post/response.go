@@ -3,6 +3,7 @@ package post
 import (
 	"time"
 
+	model2 "github.com/yzletter/go-postery/auth/model"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/model"
 )
@@ -33,7 +34,7 @@ type TopDTO struct {
 	Score float64 `json:"score"`
 }
 
-func ToDetailDTO(post *model.Post, userProfile *model.UserProfile) DetailDTO {
+func ToDetailDTO(post *model.Post, userProfile *model2.UserProfile) DetailDTO {
 	return DetailDTO{
 		ID:           post.ID,
 		Title:        post.Title,
@@ -48,7 +49,7 @@ func ToDetailDTO(post *model.Post, userProfile *model.UserProfile) DetailDTO {
 	}
 }
 
-func ToBriefDTO(post *model.Post, userProfile *model.UserProfile) BriefDTO {
+func ToBriefDTO(post *model.Post, userProfile *model2.UserProfile) BriefDTO {
 	return BriefDTO{
 		ID:        post.ID,
 		Title:     post.Title,

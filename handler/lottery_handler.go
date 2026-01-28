@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/auth/conf"
 	"github.com/yzletter/go-postery/errno"
 	orderdto "github.com/yzletter/go-postery/lottery/dto/order"
 	"github.com/yzletter/go-postery/service"

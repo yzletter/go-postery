@@ -3,7 +3,7 @@ package security
 import (
 	"errors"
 
-	"github.com/yzletter/go-postery/service/ports"
+	"github.com/yzletter/go-postery/auth/service/ports"
 	"golang.org/x/crypto/bcrypt"
 )
 

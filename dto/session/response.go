@@ -3,6 +3,7 @@ package session
 import (
 	"time"
 
+	model2 "github.com/yzletter/go-postery/auth/model"
 	"github.com/yzletter/go-postery/model"
 )
 
@@ -18,7 +19,7 @@ type DTO struct {
 	UnreadCount     int    `json:"unread_count"`           // 未读消息数
 }
 
-func ToDTO(session *model.Session, userProfile *model.UserProfile) DTO {
+func ToDTO(session *model.Session, userProfile *model2.UserProfile) DTO {
 	var res = DTO{
 		//ID:              session.ID,
 		SessionID:       session.SessionID,

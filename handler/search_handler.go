@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/auth/conf"
 	"github.com/yzletter/go-postery/dto/search"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"

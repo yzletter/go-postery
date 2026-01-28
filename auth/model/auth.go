@@ -2,8 +2,6 @@ package model
 
 import (
 	"time"
-
-	"github.com/yzletter/go-postery/code/model"
 )
 
 // User 用户最小单位
@@ -70,11 +68,11 @@ func (u AuthPassword) TableName() string {
 	return "auth_passwords"
 }
 
-func AuthTypeFromBiz(biz model.CodeBiz) int {
+func AuthTypeFromBiz(biz CodeBiz) int {
 	switch biz {
-	case model.SMSCode:
+	case SMSCode:
 		return 1
-	case model.EmailCode:
+	case EmailCode:
 		return 2
 	default:
 		return 0

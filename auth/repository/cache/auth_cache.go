@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/auth/conf"
 )
 
 type redisAuthCache struct {

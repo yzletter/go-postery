@@ -17,49 +17,37 @@ import (
 	infraMySQL "github.com/yzletter/go-postery/infra/mysql"
 	infraRabbitMQ "github.com/yzletter/go-postery/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/infra/redis"
-	"github.com/yzletter/go-postery/infra/security"
 	"github.com/yzletter/go-postery/infra/slog"
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
 	"github.com/yzletter/go-postery/middleware"
 	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
 	"github.com/yzletter/go-postery/service"
 )
 
 func main() {
 	// Infra 层
-	slog.InitSlog(conf.LogFilePath) // 初始化 slog
-
+	slog.InitSlog(conf.LogFilePath)                                                                     // 初始化 slog
 	MySQLGormDB := infraMySQL.Init("./conf", "db", viper.YAML, "./logs")                                // 初始化 MySQL
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML)                                       // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)                                          // 初始化 RabbitMQ
 	KafkaProducer := infraKafka.InitProducer([]string{conf.KafkaEndpoint})                              // 初始化 Kafka 生产方
 	SessionKafkaConsumer := infraKafka.InitConsumer([]string{conf.KafkaEndpoint}, "session", "session") // 初始化 Session 模块 Kafka 消费方
-
-	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
-	PasswordHasher := security.NewBcryptPasswordHasher(0) // 初始化 密码哈希器
-	JwtManager := security.NewJwtManager(conf.JwtTokenKey)
+	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)                                                 // 初始化 雪花算法
 
 	// DAO 层
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
 	SessionDAO := dao.NewSessionDAO(MySQLGormDB)
-	AuthDAO := dao.NewAuthDAO(MySQLGormDB)
-
-	// Cache 层
-	AuthCache := cache.NewAuthCache(RedisClient)
 
 	// Repository 层
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
-	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
-	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 

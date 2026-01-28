@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/yzletter/go-postery/conf"
+	"github.com/yzletter/go-postery/auth/conf"
 	"github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/service"

@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/auth/model"
 )
 
 // BriefDTO 后端返回简要 User 信息

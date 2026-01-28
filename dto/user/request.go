@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/model"
+	"github.com/yzletter/go-postery/auth/model"
 )
 
 type ModifyProfileRequest struct {

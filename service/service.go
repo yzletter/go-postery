@@ -14,19 +14,6 @@ import (
 )
 
 // 定义 Service 层所有接口
-type AuthService interface {
-	LoginByPassword(ctx context.Context, identifier, password string) (userdto.BriefDTO, error) // 手机号码/邮箱 + 密码登录
-	LoginByPhone(ctx context.Context, phone, code string) (userdto.BriefDTO, error)             // 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
-	HasPassword(ctx context.Context, uid int64) (bool, error)                                   // 查询密码状态
-	SetPassword(ctx context.Context, uid int64, code, newPass string) error                     // 初始化密码
-	UpdatePassword(ctx context.Context, uid int64, oldPass, newPass string) error               // 修改密码
-	GetAuthIdentityByUID(ctx context.Context, uid int64) (string, string, error)                // 获取用户身份认证
-	IssueTokens(ctx context.Context, id int64, role int, agent string) (string, string, error)  // 签发双 Token
-	ClearTokens(ctx context.Context, accessToken, refreshToken string) error                    // 清除双 Token
-	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)                        // 校验 AccessToken
-	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) // 根据 RefreshToken 获取用户信息, 用于重新签发双 Token
-	CheckBlackList(ctx context.Context, ssid string) (bool, error)                              // 根据 SSID 检查黑名单, 检查用户是否被拉黑
-}
 
 type SessionService interface {
 	ListByUid(ctx context.Context, uid int64) ([]sessiondto.DTO, error)
@@ -39,10 +26,4 @@ type SessionService interface {
 
 type WebsocketService interface {
 	Connect(ctx context.Context, w http.ResponseWriter, r *http.Request, uid int64) error
-}
-
-type AgentService interface {
-	StartChunkDocConsumer(ctx context.Context)
-	StartUpsertQdrantConsumer(ctx context.Context)
-	Chat(ctx context.Context, uid int64, sessionID int64, query string) (agentdto.DTO, error)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
+	model2 "github.com/yzletter/go-postery/auth/model"
 	messagedto "github.com/yzletter/go-postery/dto/message"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/errno"
@@ -101,7 +102,7 @@ func (svc *sessionService) GetSession(ctx context.Context, uid, targetID int64) 
 	var empty sessiondto.DTO
 	userProfile, err := svc.userRepo.GetProfileByID(ctx, targetID)
 	if err != nil {
-		userProfile = &model.UserProfile{}
+		userProfile = &model2.UserProfile{}
 	}
 
 	session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, uid, targetID)
@@ -183,7 +184,7 @@ func (svc *sessionService) ListByUid(ctx context.Context, uid int64) ([]sessiond
 			// 私聊
 			targetUserProfile, err := svc.userRepo.GetProfileByID(ctx, session.TargetID)
 			if err != nil {
-				targetUserProfile = &model.UserProfile{}
+				targetUserProfile = &model2.UserProfile{}
 			}
 			sessionDTO := sessiondto.ToDTO(session, targetUserProfile)
 			sessionDTOs = append(sessionDTOs, sessionDTO)

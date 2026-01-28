@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/auth/model"
+	"github.com/yzletter/go-postery/auth/repository/cache"
+	"github.com/yzletter/go-postery/auth/repository/dao"
 )
 
 type authRepository struct {

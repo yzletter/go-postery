@@ -3,6 +3,7 @@ package order
 import (
 	"time"
 
+	model2 "github.com/yzletter/go-postery/auth/model"
 	giftdto "github.com/yzletter/go-postery/dto/gift"
 	userdto "github.com/yzletter/go-postery/dto/user"
 	"github.com/yzletter/go-postery/model"
@@ -16,7 +17,7 @@ type DTO struct {
 	CreatedAt string           `json:"created_at"` // 创建时间
 }
 
-func ToDTO(order *model.Order, userProfile *model.UserProfile, gift *model.Gift) DTO {
+func ToDTO(order *model.Order, userProfile *model2.UserProfile, gift *model.Gift) DTO {
 	return DTO{
 		ID:        order.ID,
 		User:      userdto.ToBriefDTO(userProfile),
