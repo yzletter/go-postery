@@ -20,5 +20,10 @@ type PostService interface {
 	Like(context.Context, *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error)                     // 点赞帖子
 	Unlike(context.Context, *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error)                   // 取消点赞帖子
 	IfLike(context.Context, *post_grpc.PostCommonRequest) (*post_grpc.IfLikeResponse, error)                      // 查询用户是否点过赞
+	CreateComment(context.Context, *post_grpc.CreateCommentRequest) (*post_grpc.Comment, error)
+	DeleteComment(context.Context, *post_grpc.DeleteCommentRequest) (*post_grpc.PostEmptyResponse, error)
+	ListCommentByPage(context.Context, *post_grpc.ListCommentByPageRequest) (*post_grpc.CommentsResponse, error) // 根据 PostID 按页获取文章主评论
+	ListRepliesByPage(context.Context, *post_grpc.ListReplyByPageRequest) (*post_grpc.CommentsResponse, error)   // 根据 CommentID 按页获取评论的回复
+	CheckCommentDeleteAuth(context.Context, *post_grpc.CommentBelongRequest) (*post_grpc.BelongResponse, error)  // 用户是否有评论删除权限
 	post_grpc.UnsafePostServiceServer
 }

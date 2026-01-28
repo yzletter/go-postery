@@ -31,3 +31,11 @@ type TagDAO interface {
 	DeleteBind(ctx context.Context, pid, tid int64) error
 	FindTagsByPostID(ctx context.Context, pid int64) ([]string, error)
 }
+
+type CommentDAO interface {
+	Create(ctx context.Context, comment *model.Comment) error
+	Delete(ctx context.Context, id int64) (int, error)
+	GetByID(ctx context.Context, id int64) (*model.Comment, error)
+	GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
+	GetRepliesByParentID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
+}

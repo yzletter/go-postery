@@ -103,6 +103,51 @@ message IfLikeResponse {
   bool Result = 1;
 }
 
+message ListCommentByPageRequest {
+  int64 PostID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message ListReplyByPageRequest {
+  int64 CommentID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message Comment {
+  int64 ID = 1;
+  int64 PostID = 2;
+  int64 ParentID = 3;
+  int64 ReplyID = 4;
+  int64 UserID = 5;
+  string Content = 6;
+  string CreatedAt = 7;
+}
+
+message CommentsResponse {
+  uint64 Count = 1;
+  repeated Comment Comments = 2;
+}
+
+message CreateCommentRequest {
+  int64 PostID = 2;
+  int64 ParentID = 3;
+  int64 ReplyID = 4;
+  int64 UserID = 5;
+  string Content = 6;
+}
+
+message DeleteCommentRequest {
+  int64 UserID = 1;
+  int64 CommentID = 2;
+}
+
+message CommentBelongRequest {
+  int64 UserID = 1;
+  int64 CommentID = 2;
+}
+
 service PostService {
   // 创建帖子
   rpc Create(CreatePostRequest) returns (PostDetail);
@@ -116,20 +161,32 @@ service PostService {
   rpc Update(UpdateRequest) returns (PostEmptyResponse);
   // 按页查询帖子
   rpc ListByPage(ListByPageRequest) returns (PostDetailsResponse);
+
   // 按页 + 用户 ID 查询用户发表的帖子
   rpc ListByPageAndUid(ListByPageAndUidRequest) returns (PostBriefsResponse);
   // 按页 + Tag 查询该 Tag 的帖子
   rpc ListByPageAndTag(ListByPageAndTagRequest) returns (PostDetailsResponse);
+
   // 查询帖子是否属于用户
   rpc Belong(PostCommonRequest) returns (BelongResponse);
   // 删除帖子
   rpc Delete(PostCommonRequest) returns (PostEmptyResponse);
+
   // 点赞帖子
   rpc Like(PostCommonRequest) returns (PostEmptyResponse);
   // 取消点赞帖子
   rpc Unlike(PostCommonRequest) returns (PostEmptyResponse);
   // 查询用户是否点过赞
   rpc IfLike(PostCommonRequest) returns (IfLikeResponse);
+
+  rpc CreateComment(CreateCommentRequest) returns (Comment);
+  rpc DeleteComment(DeleteCommentRequest) returns (PostEmptyResponse);
+  // 根据 PostID 按页获取文章主评论
+  rpc ListCommentByPage(ListCommentByPageRequest) returns (CommentsResponse);
+  // 根据 CommentID 按页获取评论的回复
+  rpc ListRepliesByPage(ListReplyByPageRequest) returns (CommentsResponse);
+  // 评论是否属于用户
+  rpc CheckCommentDeleteAuth(CommentBelongRequest) returns (BelongResponse);
 }
 
 /*

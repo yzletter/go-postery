@@ -5,14 +5,13 @@ import (
 	"net/http"
 
 	agentdto "github.com/yzletter/go-postery/dto/agent"
-	commentdto "github.com/yzletter/go-postery/dto/comment"
 	giftdto "github.com/yzletter/go-postery/dto/gift"
 	messagedto "github.com/yzletter/go-postery/dto/message"
 	orderdto "github.com/yzletter/go-postery/dto/order"
 	sessiondto "github.com/yzletter/go-postery/dto/session"
 	userdto "github.com/yzletter/go-postery/dto/user"
+	commentdto "github.com/yzletter/go-postery/post/dto/comment"
 	"github.com/yzletter/go-postery/service/ports"
-	"github.com/yzletter/go-postery/user/model"
 )
 
 // 定义 Service 层所有接口
@@ -29,14 +28,6 @@ type AuthService interface {
 	VerifyAccessToken(tokenString string) (*ports.JWTTokenClaims, error)                        // 校验 AccessToken
 	GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) // 根据 RefreshToken 获取用户信息, 用于重新签发双 Token
 	CheckBlackList(ctx context.Context, ssid string) (bool, error)                              // 根据 SSID 检查黑名单, 检查用户是否被拉黑
-}
-
-type CommentService interface {
-	Create(ctx context.Context, pid int64, uid int64, parentId int64, replyId int64, content string) (commentdto.DTO, error)
-	Delete(ctx context.Context, uid, cid int64) error
-	List(ctx context.Context, pid int64, pageNo, pageSize int) (int, []commentdto.DTO, error)
-	ListReplies(ctx context.Context, ids int64, pageNo, pageSize int) (int, []commentdto.DTO, error)
-	CheckAuth(ctx context.Context, cid, uid int64) bool
 }
 
 type SessionService interface {

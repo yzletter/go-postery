@@ -25,6 +25,7 @@ import (
 	"github.com/yzletter/go-postery/infra/snowflake"
 	"github.com/yzletter/go-postery/infra/viper"
 	"github.com/yzletter/go-postery/middleware"
+	repository2 "github.com/yzletter/go-postery/post/repository"
 	"github.com/yzletter/go-postery/repository"
 	"github.com/yzletter/go-postery/repository/cache"
 	"github.com/yzletter/go-postery/repository/dao"
@@ -60,7 +61,6 @@ func main() {
 	AgentDAO := dao.NewAgentDAO(MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 
 	// Cache 层
-	CommentCache := cache.NewCommentCache(RedisClient)
 	MessageCache := cache.NewMessageCache(RedisClient)
 	SessionCache := cache.NewSessionCache(RedisClient)
 	OrderCache := cache.NewOrderCache(RedisClient)
@@ -68,7 +68,6 @@ func main() {
 	AuthCache := cache.NewAuthCache(RedisClient)
 
 	// Repository 层
-	CommentRepo := repository.NewCommentRepository(CommentDAO, CommentCache) // 注册 CommentRepository
 	MessageRepo := repository.NewMessageRepository(MessageDAO, MessageCache) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO, SessionCache) // 注册 SessionRepository
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)         // 注册 OrderRepository
@@ -80,7 +79,6 @@ func main() {
 	MetricSvc := service.NewMetricService()                                                                                  // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate)                     // 注册 RateLimitService
 	AuthSvc := service.NewAuthService(AuthRepo, UserRepo, JwtManager, PasswordHasher, IDGenerator)                           // 注册 AuthService
-	CommentSvc := service.NewCommentService(CommentRepo, UserRepo, PostRepo, IDGenerator)                                    // 注册 commentService
 	SessionSvc := service.NewSessionService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
 	WebsocketSvc := service.NewWebsocketService(SessionRepo, MessageRepo, UserRepo, RabbitMQ, IDGenerator)                   // 注册 WebsocketService
 	LotterySvc := service.NewLotteryService(OrderRepo, GiftRepo, UserRepo, RocketMQ, IDGenerator)                            // 注册 LotteryService

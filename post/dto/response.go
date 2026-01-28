@@ -41,3 +41,16 @@ func ToTopPost(post *model.Post, score float64) *post_grpc.TopPost {
 		Score: float32(score),
 	}
 }
+
+// ToComment model 转 post_grpc.Comment
+func ToComment(comment *model.Comment) *post_grpc.Comment {
+	return &post_grpc.Comment{
+		ID:        comment.ID,
+		PostID:    comment.PostID,
+		ParentID:  comment.ParentID,
+		ReplyID:   comment.ReplyID,
+		UserID:    comment.UserID,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+	}
+}

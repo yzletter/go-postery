@@ -30,12 +30,14 @@ func main() {
 	PostDAO := dao.NewPostDAO(MySQLGormDB)
 	LikeDAO := dao.NewLikeDAO(MySQLGormDB)
 	TagDAO := dao.NewTagDAO(MySQLGormDB)
+	CommentDAO := dao.NewCommentDAO(MySQLGormDB)
 	// Repository 层
 	PostRepo := repository.NewPostRepository(PostDAO, PostCache) // 注册 PostRepository
 	LikeRepo := repository.NewLikeRepository(LikeDAO)            // 注册 LikeRepository
 	TagRepo := repository.NewTagRepository(TagDAO)               // 注册 TagRepository
+	CommentRepo := repository.NewCommentRepository(CommentDAO)   // 注册 CommentRepository
 	// Service 层
-	PostService := service.NewPostService(PostRepo, LikeRepo, TagRepo, IDGenerator) // 注册 postSvc
+	PostService := service.NewPostService(PostRepo, LikeRepo, TagRepo, CommentRepo, IDGenerator) // 注册 postSvc
 
 	// 监听本地端口
 	lis, err := net.Listen("tcp", "localhost:"+conf.Port)

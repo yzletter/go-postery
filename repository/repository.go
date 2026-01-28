@@ -6,7 +6,6 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/yzletter/go-postery/dto/session"
 	"github.com/yzletter/go-postery/model"
-	model2 "github.com/yzletter/go-postery/user/model"
 )
 
 type AuthRepository interface {
@@ -31,14 +30,6 @@ type UserRepository interface {
 	UpdateProfile(ctx context.Context, id int64, updates map[string]any) error // 根据 ID 修改用户资料的多个字段
 	Top(ctx context.Context) ([]*model.UserProfile, []float64, error)          // 返回热门推荐用户
 	ChangeScore(ctx context.Context, uid int64, delta int) error               // 修改用户分数
-}
-
-type CommentRepository interface {
-	Create(ctx context.Context, comment *model.Comment) error
-	GetByID(ctx context.Context, id int64) (*model.Comment, error)
-	Delete(ctx context.Context, id int64) (int, error)
-	GetByPostID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
-	GetRepliesByParentID(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Comment, error)
 }
 
 type SessionRepository interface {

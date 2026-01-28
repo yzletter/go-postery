@@ -27,6 +27,3 @@ type AuthCache interface {
 	SetBlackList(ctx context.Context, ssid string) error
 	SetInfo(ctx context.Context, refreshToken string, mp map[string]any) error
 }
-
-type AgentCache interface {
-}

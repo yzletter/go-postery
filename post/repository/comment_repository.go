@@ -3,18 +3,16 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/model"
-	"github.com/yzletter/go-postery/repository/cache"
-	"github.com/yzletter/go-postery/repository/dao"
+	"github.com/yzletter/go-postery/post/model"
+	"github.com/yzletter/go-postery/post/repository/dao"
 )
 
 type commentRepository struct {
-	dao   dao.CommentDAO
-	cache cache.CommentCache
+	dao dao.CommentDAO
 }
 
-func NewCommentRepository(commentDAO dao.CommentDAO, commentCache cache.CommentCache) CommentRepository {
-	return &commentRepository{dao: commentDAO, cache: commentCache}
+func NewCommentRepository(commentDAO dao.CommentDAO) CommentRepository {
+	return &commentRepository{dao: commentDAO}
 }
 
 func (repo *commentRepository) Create(ctx context.Context, comment *model.Comment) error {

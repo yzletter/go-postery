@@ -16,18 +16,20 @@ import (
 )
 
 type postService struct {
-	postRepo repository.PostRepository
-	likeRepo repository.LikeRepository
-	tagRepo  repository.TagRepository
-	idGen    ports.IDGenerator // 用于生成 ID
+	postRepo    repository.PostRepository
+	likeRepo    repository.LikeRepository
+	tagRepo     repository.TagRepository
+	commentRepo repository.CommentRepository
+	idGen       ports.IDGenerator // 用于生成 ID
 	post_grpc.UnimplementedPostServiceServer
 }
 
-func NewPostService(postRepo repository.PostRepository, likeRepo repository.LikeRepository, tagRepo repository.TagRepository, idGen ports.IDGenerator) PostService {
+func NewPostService(postRepo repository.PostRepository, likeRepo repository.LikeRepository, tagRepo repository.TagRepository, commentRepo repository.CommentRepository, idGen ports.IDGenerator) PostService {
 	return &postService{
 		postRepo:                       postRepo,
 		likeRepo:                       likeRepo,
 		tagRepo:                        tagRepo,
+		commentRepo:                    commentRepo,
 		idGen:                          idGen,
 		UnimplementedPostServiceServer: post_grpc.UnimplementedPostServiceServer{},
 	}
@@ -143,7 +145,7 @@ func (svc *postService) Top(ctx context.Context, req *post_grpc.PostEmptyRequest
 }
 
 // Update 更新帖子
-func (svc *postService) Update(ctx context.Context, req *post_grpc.UpdateRequest) (*post_grpc.PostEmptyResponse, error) { // 判断登录用户是否是作者
+func (svc *postService) Update(ctx context.Context, req *post_grpc.UpdateRequest) (*post_grpc.PostEmptyResponse, error) {
 	// 判断是否是作者
 	post, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
@@ -416,6 +418,135 @@ func (svc *postService) IfLike(ctx context.Context, req *post_grpc.PostCommonReq
 		return &post_grpc.IfLikeResponse{Result: ok}, nil
 	}
 	return &post_grpc.IfLikeResponse{Result: false}, errno.ErrServerInternal
+}
+
+func (svc *postService) CreateComment(ctx context.Context, req *post_grpc.CreateCommentRequest) (*post_grpc.Comment, error) {
+	var empty = new(post_grpc.Comment)
+	// 查询帖子
+	_, err := svc.postRepo.GetByID(ctx, req.PostID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrPostNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 新建评论
+	comment := &model.Comment{
+		ID:       svc.idGen.NextID(),
+		PostID:   req.PostID,
+		ParentID: req.ParentID,
+		ReplyID:  req.ReplyID,
+		UserID:   req.UserID,
+		Content:  req.Content,
+	}
+
+	if err := svc.commentRepo.Create(ctx, comment); err != nil {
+		if errors.Is(err, repository.ErrUniqueKey) {
+			// 雪花 ID 的评论不会已存在, 需要排查
+			slog.Error("Create Comment Failed", "error", err)
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 修改评论数
+	if err := svc.postRepo.UpdateCount(ctx, req.PostID, model.PostCommentCount, 1); err != nil {
+		slog.Error("Update Comment Count Failed", "error", err)
+	}
+
+	return dto.ToComment(comment), err
+}
+
+func (svc *postService) DeleteComment(ctx context.Context, req *post_grpc.DeleteCommentRequest) (*post_grpc.PostEmptyResponse, error) {
+	var empty = new(post_grpc.PostEmptyResponse)
+	// 判断是否有删除权限
+	comment, err := svc.commentRepo.GetByID(ctx, req.CommentID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrCommentNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	if comment.UserID != req.UserID {
+		return empty, errno.ErrUnauthorized
+	}
+
+	// 删除评论
+	cnt, err := svc.commentRepo.Delete(ctx, req.CommentID) // 返回被删除的个数
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrCommentNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	// 改变评论数
+
+	if err := svc.postRepo.UpdateCount(ctx, comment.PostID, model.PostCommentCount, -cnt); err != nil {
+		slog.Error("Update Comment Failed", "error", err)
+	}
+
+	return empty, nil
+}
+
+// ListCommentByPage 根据 PostID 按页获取文章主评论
+func (svc *postService) ListCommentByPage(ctx context.Context, req *post_grpc.ListCommentByPageRequest) (*post_grpc.CommentsResponse, error) {
+	var empty = new(post_grpc.CommentsResponse)
+	total, comments, err := svc.commentRepo.GetByPostID(ctx, req.PostID, int(req.PageNo), int(req.PageSize))
+	if err != nil {
+		return empty, errno.ErrCommentNotFound
+	}
+
+	var respComments []*post_grpc.Comment
+	for _, comment := range comments {
+		commentDTO := dto.ToComment(comment)
+		respComments = append(respComments, commentDTO)
+	}
+
+	return &post_grpc.CommentsResponse{
+		Count:    uint64(total),
+		Comments: respComments,
+	}, nil
+}
+
+// ListRepliesByPage 根据 CommentID 按页获取评论的回复
+func (svc *postService) ListRepliesByPage(ctx context.Context, req *post_grpc.ListReplyByPageRequest) (*post_grpc.CommentsResponse, error) {
+	var empty = new(post_grpc.CommentsResponse)
+	total, comments, err := svc.commentRepo.GetRepliesByParentID(ctx, req.CommentID, int(req.PageNo), int(req.PageSize))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return empty, errno.ErrCommentNotFound
+		}
+		return empty, errno.ErrServerInternal
+	}
+
+	var respComments []*post_grpc.Comment
+	for _, comment := range comments {
+		commentDTO := dto.ToComment(comment)
+		respComments = append(respComments, commentDTO)
+	}
+
+	return &post_grpc.CommentsResponse{
+		Count:    uint64(total),
+		Comments: respComments,
+	}, nil
+}
+
+// CheckCommentDeleteAuth 评论是否属于用户
+func (svc *postService) CheckCommentDeleteAuth(ctx context.Context, req *post_grpc.CommentBelongRequest) (*post_grpc.BelongResponse, error) {
+	comment, err := svc.commentRepo.GetByID(ctx, req.CommentID)
+	if err != nil {
+		return &post_grpc.BelongResponse{Result: false}, nil
+	}
+
+	post, err := svc.postRepo.GetByID(ctx, comment.PostID)
+	if err != nil {
+		return &post_grpc.BelongResponse{Result: false}, nil
+	}
+
+	// 帖子属于当前登录用户，或评论属于当前用户
+	return &post_grpc.BelongResponse{Result: comment.UserID == req.UserID || post.UserID == req.UserID}, nil
 }
 
 // BindTag 将 Tags 绑定到 post

@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/conf"
-	"github.com/yzletter/go-postery/dto/comment"
 	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/post/dto/comment"
 	"github.com/yzletter/go-postery/service"
 	"github.com/yzletter/go-postery/utils"
 	"github.com/yzletter/go-postery/utils/response"
