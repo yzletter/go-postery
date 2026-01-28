@@ -2,17 +2,13 @@ package main
 
 import (
 	"context"
-	"os"
 	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/yzletter/go-postery/agent/infra/llm"
 	infraQdarant "github.com/yzletter/go-postery/agent/infra/qdrant"
-	repository2 "github.com/yzletter/go-postery/agent/repository"
-	dao3 "github.com/yzletter/go-postery/agent/repository/dao"
 	"github.com/yzletter/go-postery/conf"
 	"github.com/yzletter/go-postery/handler"
 	"github.com/yzletter/go-postery/infra/crontab"
