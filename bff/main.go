@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	infraQdarant "github.com/yzletter/go-postery/agent/infra/qdrant"
-	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	"github.com/yzletter/go-postery/bff/conf"
 	"github.com/yzletter/go-postery/bff/handler"
 	"github.com/yzletter/go-postery/bff/infra/crontab"
@@ -22,7 +21,6 @@ import (
 	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
 	infraKafka "github.com/yzletter/go-postery/outbox/infra/kafka"
 	"github.com/yzletter/go-postery/outbox/infra/mysql"
-	"google.golang.org/grpc"
 )
 
 func main() {
@@ -32,6 +30,13 @@ func main() {
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)    // 初始化 RabbitMQ
 
 	// GRPC Service 层
+	CodeGRPCSvc := service.NewCodeService("localhost:" + conf.CodePort)
+	UserGRPCSvc := service.NewUserService("localhost:" + conf.UserPort)
+	SearchGRPCSvc := service.NewSearchService("localhost:" + conf.SearchPort)
+	PostGRPCSvc := service.NewPostService("localhost:" + conf.PostPort)
+	LotteryGRPCSvc := service.NewLotteryService("localhost:" + conf.LotteryPort)
+	AgentGRPCSvc := service.NewAgentService("localhost:" + conf.AgentPort)
+	AuthGRPCSvc := service.NewAuthService("localhost:" + conf.AuthPort)
 	SessionGRPCSvc := service.NewSessionService("localhost:" + conf.SessionPort)
 
 	// Service 层
@@ -40,20 +45,20 @@ func main() {
 	WebsocketSvc := service.NewWebsocketService(SessionGRPCSvc, RabbitMQ)                                // 注册 WebsocketService
 
 	// Handler 层
-	AuthHdl := handler.NewAuthHandler(AuthSvc)                  // 注册 AuthHandler
-	UserHdl := handler.NewUserHandler(UserSvc)                  // 注册 UserHandler
-	PostHdl := handler.NewPostHandler(PostSvc, UserSvc, TagSvc) // 注册 PostHandler
-	SessionHdl := handler.NewSessionHandler(SessionGRPCSvc)     // 注册 SessionHandler
-	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)   // 注册 WebsocketHandler
-	LotteryHdl := handler.NewLotteryHandler(LotterySvc)         // 注册 LotteryHandler
-	AgentHdl := handler.NewAgentHandler(AgentSvc)               // 注册 AgentHandler
-	SearchHdl := handler.NewSearchHandler(SearchSvc)            // 注册 SearchHandler
+	AuthHdl := handler.NewAuthHandler(AuthGRPCSvc, CodeGRPCSvc, UserGRPCSvc) // 注册 AuthHandler
+	UserHdl := handler.NewUserHandler(UserGRPCSvc)                           // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostGRPCSvc, UserGRPCSvc)              // 注册 PostHandler
+	SessionHdl := handler.NewSessionHandler(SessionGRPCSvc)                  // 注册 SessionHandler
+	LotteryHdl := handler.NewLotteryHandler(LotteryGRPCSvc)                  // 注册 LotteryHandler
+	AgentHdl := handler.NewAgentHandler(AgentGRPCSvc)                        // 注册 AgentHandler
+	SearchHdl := handler.NewSearchHandler(SearchGRPCSvc)                     // 注册 SearchHandler
+	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)                // 注册 WebsocketHandler
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthSvc) // AuthRequiredMdl 强制登录中间件
-	MetricMdl := middleware.MetricMiddleware(MetricSvc)           // MetricMdl 用于 Prometheus 监控中间件
-	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)  // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                              // CorsMdl 跨域中间件
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthGRPCSvc) // AuthRequiredMdl 强制登录中间件
+	MetricMdl := middleware.MetricMiddleware(MetricSvc)               // MetricMdl 用于 Prometheus 监控中间件
+	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)      // RateLimitMdl 限流中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -72,7 +77,7 @@ func main() {
 	graceful_stop.NewGracefulStopBuilder().
 		NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
 		AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close). // 关消息队列
-		AddFunc(infra.Close).AddFunc(infraRedis.Close).AddFunc(infraQdarant.Close).          // 关数据库
+		AddFunc(infra.Close).AddFunc(infraRedis.Close).AddFunc(infraQdarant.Close). // 关数据库
 		Build()
 
 	// 初始化 gin

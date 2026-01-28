@@ -5,124 +5,131 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 	conf2 "github.com/yzletter/go-postery/auth/conf"
-	auth2 "github.com/yzletter/go-postery/bff/dto/auth"
-	utils2 "github.com/yzletter/go-postery/bff/utils"
+	authdto "github.com/yzletter/go-postery/bff/dto/auth"
+	userdto "github.com/yzletter/go-postery/bff/dto/user"
+	"github.com/yzletter/go-postery/bff/model"
+	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/bff/utils/response"
 	code_conf "github.com/yzletter/go-postery/code/conf"
-	code_model "github.com/yzletter/go-postery/code/model"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/service"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthHandler struct {
-	authSvc  service.AuthService
-	codeConn *grpc.ClientConn
+	authSvc auth_grpc.AuthServiceClient
+	codeSvc code_grpc.CodeServiceClient
+	userSvc user_grpc.UserServiceClient
 }
 
-func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
-	codeConn := newCodeGrpcConn()
+func NewAuthHandler(authSvc auth_grpc.AuthServiceClient, codeSvc code_grpc.CodeServiceClient, userSvc user_grpc.UserServiceClient) *AuthHandler {
 	return &AuthHandler{
-		authSvc:  authSvc,
-		codeConn: codeConn,
+		authSvc: authSvc,
+		codeSvc: codeSvc,
+		userSvc: userSvc,
 	}
 }
 
 // LoginByPassword 手机号码/邮箱 + 密码登录
 func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.LoginByPasswordRequest
+	var req authdto.LoginByPasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 进行登录
-	userBriefDTO, err := hdl.authSvc.LoginByPassword(ctx, req.Identifier, req.Password)
+	userID, err := hdl.authSvc.LoginByPassword(ctx, &auth_grpc.LoginByPasswordRequest{
+		Identifier: req.Identifier,
+		Password:   req.Password,
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	// 根据 UserID 签发双 Token
-	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	tokens, err := hdl.authSvc.IssueTokens(ctx, &auth_grpc.IssueTokenRequest{
+		UserID:    userID.UserID,
+		Role:      0,
+		UserAgent: ctx.Request.UserAgent(),
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	setTokens(ctx, accessToken, refreshToken)
+	setTokens(ctx, tokens.AccessToken, tokens.RefreshToken)
+
+	// 获取用户
+	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
 
 	// 返回成功响应
-	response.Success(ctx, "登录成功", userBriefDTO)
+	response.Success(ctx, "登录成功", userdto.ToBriefDTO(profile))
 	return
 }
 
 // LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.LoginByPhoneRequest
+	var req authdto.LoginByPhoneRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 进行登录
-	userBriefDTO, err := hdl.authSvc.LoginByPhone(ctx, req.Phone, req.Code)
+	userID, err := hdl.authSvc.LoginByPhone(ctx, &auth_grpc.LoginByPhoneRequest{Phone: req.Phone, Code: req.Code})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	// 根据 UID 签发双 Token
-	accessToken, refreshToken, err := hdl.authSvc.IssueTokens(ctx, userBriefDTO.ID, 0, ctx.Request.UserAgent())
+	// 根据 UserID 签发双 Token
+	tokens, err := hdl.authSvc.IssueTokens(ctx, &auth_grpc.IssueTokenRequest{
+		UserID:    userID.UserID,
+		Role:      0,
+		UserAgent: ctx.Request.UserAgent(),
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	// 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
-	setTokens(ctx, accessToken, refreshToken)
+	setTokens(ctx, tokens.AccessToken, tokens.RefreshToken)
+
+	// 获取用户
+	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
 
 	// 返回成功响应
-	response.Success(ctx, "根据手机号登录成功", userBriefDTO)
+	response.Success(ctx, "登录成功", userdto.ToBriefDTO(profile))
 	return
 }
 
 // SendEmailCode 发送邮箱验证码
 func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.SendEmailCodeRequest
+	var req authdto.SendEmailCodeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
-	// 判断连接是否可复用
-	if !(hdl.codeConn.GetState() == connectivity.Ready || hdl.codeConn.GetState() == connectivity.Connecting) {
-		_ = hdl.codeConn.Close() // 关闭旧连接
-		hdl.codeConn = newCodeGrpcConn()
-	}
-	codeClient := code_grpc.NewCodeServiceClient(hdl.codeConn)
-
 	// 发送邮件
-	grpcReq := code_grpc.SendCodeRequest{
-		Biz:        int64(code_model.EmailCode),
-		Identifier: req.Email,
-	}
-
-	if _, err := codeClient.Send(ctx, &grpcReq); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.EmailCode), Identifier: req.Email}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -133,28 +140,16 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 // SendSMSCode 发送短信验证码
 func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.SendSMSCodeRequest
+	var req authdto.SendSMSCodeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
-	// 判断连接是否可复用
-	if !(hdl.codeConn.GetState() == connectivity.Ready || hdl.codeConn.GetState() == connectivity.Connecting) {
-		_ = hdl.codeConn.Close() // 关闭旧连接
-		hdl.codeConn = newCodeGrpcConn()
-	}
-	codeClient := code_grpc.NewCodeServiceClient(hdl.codeConn)
-
-	// 发送邮件
-	grpcReq := code_grpc.SendCodeRequest{
-		Biz:        int64(code_model.SMSCode),
-		Identifier: req.Phone,
-	}
-
-	if _, err := codeClient.Send(ctx, &grpcReq); err != nil {
+	// 发送短信
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.SMSCode), Identifier: req.Phone}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -164,10 +159,10 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 
 func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.UpdatePassRequest
+	var req authdto.UpdatePassRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -178,14 +173,14 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf2.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
-	err = hdl.authSvc.UpdatePassword(ctx, uid, req.OldPass, req.NewPass)
-	if err != nil {
+	if _, err = hdl.authSvc.UpdatePassword(ctx, &auth_grpc.UpdatePasswordRequest{
+		UserID: uid, NewPassword: req.NewPass, OldPassword: req.OldPass}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -197,22 +192,22 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 // SetPassword 初始化密码
 func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.SetPassRequest
+	var req authdto.SetPassRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf2.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
-	if err := hdl.authSvc.SetPassword(ctx, uid, req.Code, req.NewPass); err != nil {
+	if _, err := hdl.authSvc.SetPassword(ctx, &auth_grpc.SetPasswordRequest{UserID: uid, Password: req.NewPass, Code: req.Code}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -223,41 +218,41 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 // HasPassword 查询密码状态
 func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf2.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
 	// 查询是否有密码
-	has, err := hdl.authSvc.HasPassword(ctx, uid)
+	has, err := hdl.authSvc.HasPassword(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.Success(ctx, "获取密码状态成功", auth2.PassStatusResponse{HasPassword: has})
+	response.Success(ctx, "获取密码状态成功", authdto.PassStatusResponse{HasPassword: has.Result})
 	return
 }
 
 // GetAuthIdentity 获取用户身份认证
 func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf2.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
-	phone, email, err := hdl.authSvc.GetAuthIdentityByUID(ctx, uid)
+	authIdentity, err := hdl.authSvc.GetAuthIdentityByUID(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.Success(ctx, "获取用户身份认证成功", auth2.AuthIdentityResponse{
-		Phone: phone,
-		Email: email,
+	response.Success(ctx, "获取用户身份认证成功", authdto.AuthIdentityResponse{
+		Phone: authIdentity.Phone,
+		Email: authIdentity.Email,
 	})
 	return
 }
@@ -265,7 +260,7 @@ func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 // Logout 退出登录
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	_, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	_, err := utils.GetUidFromCTX(ctx, conf2.UserIDInContext)
 	if err != nil {
 		slog.Error("Get Uid From CTX Failed", "error", err)
 		response.Error(ctx, errno.ErrUserNotLogin)
@@ -274,10 +269,10 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 
 	// 从 Header 中获取 AccessToken, 从 Cookie 中获取 RefreshToken
 	accessToken := ExtractToken(ctx)
-	refreshToken := utils2.GetValueFromCookie(ctx, conf2.RefreshTokenInCookie)
+	refreshToken := utils.GetValueFromCookie(ctx, conf2.RefreshTokenInCookie)
 
 	// 服务端清理双 Token
-	if err := hdl.authSvc.ClearTokens(ctx, accessToken, refreshToken); err != nil {
+	if _, err := hdl.authSvc.ClearTokens(ctx, &auth_grpc.DualTokens{AccessToken: accessToken, RefreshToken: refreshToken}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -292,11 +287,10 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 // Status 检查登录状态
 func (hdl *AuthHandler) Status(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	if _, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext); err != nil {
+	if _, err := utils.GetUidFromCTX(ctx, conf2.UserIDInContext); err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
-
 	response.Success(ctx, "登录状态检查成功", nil)
 }
 

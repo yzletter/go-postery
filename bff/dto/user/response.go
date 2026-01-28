@@ -1,9 +1,7 @@
 package user
 
 import (
-	"time"
-
-	"github.com/yzletter/go-postery/auth/model"
+	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 )
 
 // BriefDTO 后端返回简要 User 信息
@@ -35,71 +33,38 @@ type TopDTO struct {
 	Score    float64 `json:"score"`
 }
 
-// ToBriefDTO model.UserProfile 转 BriefDTO
-func ToBriefDTO(userProfile *model.UserProfile) BriefDTO {
+// ToBriefDTO user_grpc.UserDetail 转 BriefDTO
+func ToBriefDTO(profile *user_grpc.UserDetail) BriefDTO {
 	var res = BriefDTO{
-		ID:       userProfile.UserID,
-		Nickname: userProfile.Nickname,
-		Avatar:   "",
-	}
-
-	if userProfile.Avatar != nil {
-		res.Avatar = *userProfile.Avatar
+		ID:       profile.ID,
+		Nickname: profile.Nickname,
+		Avatar:   profile.Avatar,
 	}
 	return res
 }
 
-// ToTopDTO model.UserProfile 转 ToTopDTO
-func ToTopDTO(userProfile *model.UserProfile, score float64) TopDTO {
-	var res = TopDTO{
-		ID:       userProfile.UserID,
-		Nickname: userProfile.Nickname,
-		Bio:      "",
-		Avatar:   "",
+// ToTopDTO user_grpc.UserDetail 转 ToTopDTO
+func ToTopDTO(profile *user_grpc.UserDetail, score float64) TopDTO {
+	return TopDTO{
+		ID:       profile.ID,
+		Nickname: profile.Nickname,
+		Bio:      profile.Bio,
+		Avatar:   profile.Avatar,
 		Score:    score,
 	}
-
-	if userProfile.Bio != nil {
-		res.Bio = *userProfile.Bio
-	}
-	if userProfile.Avatar != nil {
-		res.Avatar = *userProfile.Avatar
-	}
-
-	return res
 }
 
-// ToDetailDTO model.UserProfile 转 DetailDTO
-func ToDetailDTO(userProfile *model.UserProfile) DetailDTO {
-	var res = DetailDTO{
-		ID:          userProfile.UserID,
-		Nickname:    userProfile.Nickname,
-		Gender:      userProfile.Gender,
-		Avatar:      "",
-		Bio:         "",
-		BirthDay:    "",
-		Location:    "",
-		Country:     "",
-		LastLoginIP: "",
+// ToDetailDTO user_grpc.UserDetail 转 DetailDTO
+func ToDetailDTO(profile *user_grpc.UserDetail) DetailDTO {
+	return DetailDTO{
+		ID:          profile.ID,
+		Nickname:    profile.Nickname,
+		Gender:      int(profile.Gender),
+		Avatar:      profile.Avatar,
+		Bio:         profile.Bio,
+		BirthDay:    profile.Birthday,
+		Location:    profile.Location,
+		Country:     profile.Country,
+		LastLoginIP: profile.LastLoginIP,
 	}
-
-	if userProfile.Country != nil {
-		res.Country = *userProfile.Country
-	}
-	if userProfile.LastLoginIP != nil {
-		res.LastLoginIP = *userProfile.LastLoginIP
-	}
-	if userProfile.Location != nil {
-		res.Location = *userProfile.Location
-	}
-	if userProfile.BirthDay != nil {
-		res.BirthDay = userProfile.BirthDay.Format(time.RFC3339)
-	}
-	if userProfile.Bio != nil {
-		res.Bio = *userProfile.Bio
-	}
-	if userProfile.Avatar != nil {
-		res.Avatar = *userProfile.Avatar
-	}
-	return res
 }
