@@ -1,14 +1,13 @@
 # go-postery
-
 <p align="center">
-  <a href="https://github.com/w8t-io/WatchAlert"> 
-    <img src="imgs/logo.png" alt="cloud native monitoring" width="150" height="auto" /></a>
+  <a> 
+    <img src="imgs/logo.png" alt="cloud native monitoring" width="150" height="auto" />
+</a>
 </p>
 
 <p align="center">
   <b>📖 Go-Postery —— 现代化论坛 Web 项目</b>
 </p>
-
 
 ## 简介
 
