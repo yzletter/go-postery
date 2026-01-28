@@ -1,2 +1,0 @@
-time="2026-01-28 10:19:49.751" level=INFO source=/Users/yzletter/go_project/go-postery/user/infra/redis/redis.go:41 msg="初始化 Redis 成功 ..."
-time="2026-01-28 10:19:49.771" level=INFO source=/Users/yzletter/go_project/go-postery/user/infra/mysql/mysql.go:69 msg="初始化 MySQL 成功 ..."
