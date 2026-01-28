@@ -13,7 +13,7 @@ type SessionService interface {
 	Delete(context.Context, *session_grpc.DeleteRequest) (*session_grpc.SessionEmptyResponse, error)
 	UpdateUnread(context.Context, *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
 	ClearUnread(context.Context, *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
-	CreateMessage(context.Context, *session_grpc.Message) (*session_grpc.SessionEmptyResponse, error)
+	CreateMessage(context.Context, *session_grpc.Message) (*session_grpc.Message, error)
 	StartSessionRegisterConsumer(ctx context.Context)
 	session_grpc.UnsafeSessionServiceServer
 }

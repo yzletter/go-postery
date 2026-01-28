@@ -5,7 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/yzletter/go-postery/bff/service/ports"
+	"github.com/yzletter/go-postery/user/service/ports"
 )
 
 type snowflakeIDGenerator struct {

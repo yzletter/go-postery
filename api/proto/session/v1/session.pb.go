@@ -751,7 +751,7 @@ const file_api_proto_session_v1_session_proto_rawDesc = "" +
 	"\x05Delta\x18\x06 \x01(\x03R\x05Delta\"J\n" +
 	"\x12ClearUnreadRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
-	"\tSessionID\x18\x02 \x01(\x03R\tSessionID2\xac\x04\n" +
+	"\tSessionID\x18\x02 \x01(\x03R\tSessionID2\x9f\x04\n" +
 	"\x0eSessionService\x125\n" +
 	"\tListByUID\x12\x12.session.v1.UserID\x1a\x14.session.v1.Sessions\x129\n" +
 	"\n" +
@@ -759,8 +759,8 @@ const file_api_proto_session_v1_session_proto_rawDesc = "" +
 	"\x18GetHistoryMessagesByPage\x12+.session.v1.GetHistoryMessagesByPageRequest\x1a,.session.v1.GetHistoryMessagesByPageResponse\x12E\n" +
 	"\x06Delete\x12\x19.session.v1.DeleteRequest\x1a .session.v1.SessionEmptyResponse\x12Q\n" +
 	"\fUpdateUnread\x12\x1f.session.v1.UpdateUnreadRequest\x1a .session.v1.SessionEmptyResponse\x12O\n" +
-	"\vClearUnread\x12\x1e.session.v1.ClearUnreadRequest\x1a .session.v1.SessionEmptyResponse\x12F\n" +
-	"\rCreateMessage\x12\x13.session.v1.Message\x1a .session.v1.SessionEmptyResponseBBZ@github.com/yzletter/go-postery/api/proto/session/v1;session_grpcb\x06proto3"
+	"\vClearUnread\x12\x1e.session.v1.ClearUnreadRequest\x1a .session.v1.SessionEmptyResponse\x129\n" +
+	"\rCreateMessage\x12\x13.session.v1.Message\x1a\x13.session.v1.MessageBBZ@github.com/yzletter/go-postery/api/proto/session/v1;session_grpcb\x06proto3"
 
 var (
 	file_api_proto_session_v1_session_proto_rawDescOnce sync.Once
@@ -809,7 +809,7 @@ var file_api_proto_session_v1_session_proto_depIdxs = []int32{
 	4,  // 16: session.v1.SessionService.Delete:output_type -> session.v1.SessionEmptyResponse
 	4,  // 17: session.v1.SessionService.UpdateUnread:output_type -> session.v1.SessionEmptyResponse
 	4,  // 18: session.v1.SessionService.ClearUnread:output_type -> session.v1.SessionEmptyResponse
-	4,  // 19: session.v1.SessionService.CreateMessage:output_type -> session.v1.SessionEmptyResponse
+	8,  // 19: session.v1.SessionService.CreateMessage:output_type -> session.v1.Message
 	13, // [13:20] is the sub-list for method output_type
 	6,  // [6:13] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name

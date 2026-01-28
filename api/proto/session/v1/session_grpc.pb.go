@@ -38,7 +38,7 @@ type SessionServiceClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
 	UpdateUnread(ctx context.Context, in *UpdateUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
 	ClearUnread(ctx context.Context, in *ClearUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
-	CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
+	CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
 }
 
 type sessionServiceClient struct {
@@ -109,9 +109,9 @@ func (c *sessionServiceClient) ClearUnread(ctx context.Context, in *ClearUnreadR
 	return out, nil
 }
 
-func (c *sessionServiceClient) CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*SessionEmptyResponse, error) {
+func (c *sessionServiceClient) CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SessionEmptyResponse)
+	out := new(Message)
 	err := c.cc.Invoke(ctx, SessionService_CreateMessage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ type SessionServiceServer interface {
 	Delete(context.Context, *DeleteRequest) (*SessionEmptyResponse, error)
 	UpdateUnread(context.Context, *UpdateUnreadRequest) (*SessionEmptyResponse, error)
 	ClearUnread(context.Context, *ClearUnreadRequest) (*SessionEmptyResponse, error)
-	CreateMessage(context.Context, *Message) (*SessionEmptyResponse, error)
+	CreateMessage(context.Context, *Message) (*Message, error)
 	mustEmbedUnimplementedSessionServiceServer()
 }
 
@@ -158,7 +158,7 @@ func (UnimplementedSessionServiceServer) UpdateUnread(context.Context, *UpdateUn
 func (UnimplementedSessionServiceServer) ClearUnread(context.Context, *ClearUnreadRequest) (*SessionEmptyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ClearUnread not implemented")
 }
-func (UnimplementedSessionServiceServer) CreateMessage(context.Context, *Message) (*SessionEmptyResponse, error) {
+func (UnimplementedSessionServiceServer) CreateMessage(context.Context, *Message) (*Message, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateMessage not implemented")
 }
 func (UnimplementedSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {}

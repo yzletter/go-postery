@@ -14,12 +14,11 @@ import (
 
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
+	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	message2 "github.com/yzletter/go-postery/bff/dto/message"
-	sessiondto "github.com/yzletter/go-postery/bff/dto/session"
-	"github.com/yzletter/go-postery/bff/service/ports"
+	"github.com/yzletter/go-postery/bff/model"
+	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/repository"
-	"github.com/yzletter/go-postery/session/model"
 )
 
 var (
@@ -66,21 +65,14 @@ type wsWriteRequest struct {
 }
 
 type websocketService struct {
-	sessionRepo repository.SessionRepository
-	messageRepo repository.MessageRepository
-	userRepo    repository.UserRepository
-	mqConn      *amqp.Connection
-	idGen       ports.IDGenerator
+	sessionSvc session_grpc.SessionServiceClient
+	mqConn     *amqp.Connection
 }
 
-func NewWebsocketService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, userRepo repository.UserRepository,
-	mq *amqp.Connection, idGen ports.IDGenerator) WebsocketService {
+func NewWebsocketService(sessionSvc session_grpc.SessionServiceClient, mq *amqp.Connection) WebsocketService {
 	return &websocketService{
-		sessionRepo: sessionRepo,
-		messageRepo: messageRepo,
-		userRepo:    userRepo,
-		mqConn:      mq,
-		idGen:       idGen,
+		sessionSvc: sessionSvc,
+		mqConn:     mq,
 	}
 }
 
@@ -166,7 +158,10 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			if err != nil {
 				continue
 			}
-			svc.sessionRepo.ClearUnread(ctx, uid, ssid)
+
+			if _, err = svc.sessionSvc.ClearUnread(ctx, &session_grpc.ClearUnreadRequest{UserID: uid, SessionID: ssid}); err != nil {
+				slog.Error("Clear Unread Failed", "error", err)
+			}
 		} else if messageReq.Type == "message" {
 			// 是消息
 			ssid, err := strconv.ParseInt(messageReq.SessionID, 10, 64)
@@ -185,7 +180,6 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			}
 
 			message := model.Message{
-				ID:          svc.idGen.NextID(),
 				SessionID:   ssid,
 				SessionType: messageReq.SessionType,
 				MessageFrom: messageFrom,
@@ -199,16 +193,27 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 				continue
 			}
 
-			// 落库
-			message.ID = svc.idGen.NextID()                                          // 补全 ID
-			session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, uid, messageTo) // 查找 session
+			session, err := svc.sessionSvc.GetSession(ctx, &session_grpc.BothUserID{
+				UserID:   uid,
+				TargetID: messageTo,
+			})
 			if err != nil || session.SessionID != ssid {
 				continue
 			}
 
-			err = svc.messageRepo.Create(ctx, &message)
+			// 调用 grpc 消息落库
+			messageBack, err := svc.sessionSvc.CreateMessage(ctx, &session_grpc.Message{
+				SessionID:   message.SessionID,
+				SessionType: int32(message.SessionType),
+				MessageFrom: message.MessageFrom,
+				MessageTo:   message.MessageTo,
+				Content:     message.Content,
+			})
+
+			message = toModel(messageBack) // 得到数据库返回的时间
+
 			if err != nil {
-				slog.Error("Connect Store Failed", "message", message)
+				slog.Error("Create Message Failed", "message", message)
 				continue
 			}
 
@@ -217,30 +222,39 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			if len(contentBrief) > 5 {
 				contentBrief = contentBrief[:5]
 			}
-			updates := sessiondto.Updates{
-				LastMessageID:   message.ID,
-				LastMessage:     string(contentBrief),
-				LastMessageTime: message.CreatedAt,
-			}
 
 			// 更新对方会话信息, 增加未读
-			err = svc.sessionRepo.UpdateUnread(ctx, message.MessageTo, message.SessionID, sessiondto.UpdateUnreadRequest{Updates: updates, Delta: 1})
+			_, err = svc.sessionSvc.UpdateUnread(ctx, &session_grpc.UpdateUnreadRequest{
+				UserID:          message.MessageTo,
+				SessionID:       message.SessionID,
+				LastMessageID:   message.ID,
+				LastMessage:     string(contentBrief),
+				LastMessageTime: utils.GoTimeToRPCTime(&message.CreatedAt),
+				Delta:           1,
+			})
 			if err != nil {
 				slog.Error("Update Unread Failed", "user_id", message.MessageTo, "error", err)
 			}
+
 			// 更新己方会话信息, 不增加未读
-			err = svc.sessionRepo.UpdateUnread(ctx, message.MessageFrom, message.SessionID, sessiondto.UpdateUnreadRequest{Updates: updates, Delta: 0})
+			_, err = svc.sessionSvc.UpdateUnread(ctx, &session_grpc.UpdateUnreadRequest{
+				UserID:          message.MessageFrom,
+				SessionID:       message.SessionID,
+				LastMessageID:   message.ID,
+				LastMessage:     string(contentBrief),
+				LastMessageTime: utils.GoTimeToRPCTime(&message.CreatedAt),
+				Delta:           0,
+			})
 			if err != nil {
 				slog.Error("Update Unread Failed", "user_id", message.MessageFrom, "error", err)
 			}
 
 			// 发给 MQ
-			err = produceMQ(ctx, svc.mqConn, message, message.MessageTo)
-			if err != nil {
+			if err = produceMQ(ctx, svc.mqConn, message, message.MessageTo); err != nil {
 				slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
 			}
-			err = produceMQ(ctx, svc.mqConn, message, message.MessageFrom)
-			if err != nil {
+
+			if err = produceMQ(ctx, svc.mqConn, message, message.MessageFrom); err != nil {
 				slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
 			}
 		}
@@ -363,4 +377,16 @@ func produceMQ(ctx context.Context, conn *amqp.Connection, message model.Message
 	}
 
 	return nil
+}
+
+func toModel(grpcMessage *session_grpc.Message) model.Message {
+	return model.Message{
+		ID:          grpcMessage.ID,
+		SessionID:   grpcMessage.SessionID,
+		SessionType: int(grpcMessage.SessionType),
+		MessageFrom: grpcMessage.MessageFrom,
+		MessageTo:   grpcMessage.MessageTo,
+		Content:     grpcMessage.Content,
+		CreatedAt:   utils.RPCTimeToGoTime(grpcMessage.CreatedAt),
+	}
 }

@@ -304,22 +304,27 @@ func (svc *sessionService) ClearUnread(ctx context.Context, req *session_grpc.Cl
 	return &session_grpc.SessionEmptyResponse{}, nil
 }
 
-func (svc *sessionService) CreateMessage(ctx context.Context, message *session_grpc.Message) (*session_grpc.SessionEmptyResponse, error) {
+func (svc *sessionService) CreateMessage(ctx context.Context, message *session_grpc.Message) (*session_grpc.Message, error) {
 	messageModel := &model.Message{
-		ID:          message.ID,
+		ID:          svc.idGen.NextID(), // 补充 ID
 		SessionID:   message.SessionID,
 		SessionType: int(message.SessionType),
 		MessageFrom: message.MessageFrom,
 		MessageTo:   message.MessageTo,
 		Content:     message.Content,
-		CreatedAt:   utils.RPCTimeToGoTime(message.CreatedAt),
-		UpdatedAt:   utils.RPCTimeToGoTime(message.UpdatedAt),
-		DeletedAt:   nil,
 	}
 
 	if err := svc.messageRepo.Create(ctx, messageModel); err != nil {
-		return &session_grpc.SessionEmptyResponse{}, errno.ErrServerInternal
+		return &session_grpc.Message{}, errno.ErrServerInternal
 	}
 
-	return &session_grpc.SessionEmptyResponse{}, nil
+	return &session_grpc.Message{
+		ID:          messageModel.ID,
+		SessionID:   messageModel.SessionID,
+		SessionType: int32(messageModel.SessionType),
+		MessageFrom: messageModel.MessageFrom,
+		MessageTo:   messageModel.MessageTo,
+		Content:     messageModel.Content,
+		CreatedAt:   utils.GoTimeToRPCTime(&messageModel.CreatedAt),
+	}, nil
 }

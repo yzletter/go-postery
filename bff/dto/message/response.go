@@ -3,7 +3,7 @@ package message
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/session/model"
+	"github.com/yzletter/go-postery/bff/model"
 )
 
 type DTO struct {

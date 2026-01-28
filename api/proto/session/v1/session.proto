@@ -80,7 +80,7 @@ service SessionService {
   rpc Delete(DeleteRequest) returns (SessionEmptyResponse);
   rpc UpdateUnread(UpdateUnreadRequest) returns (SessionEmptyResponse);
   rpc ClearUnread(ClearUnreadRequest) returns (SessionEmptyResponse);
-  rpc CreateMessage(Message) returns (SessionEmptyResponse);
+  rpc CreateMessage(Message) returns (Message);
 }
 
 /*
