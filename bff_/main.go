@@ -23,17 +23,14 @@ func main() {
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML) // 初始化 RabbitMQ
 
 	// GRPC Service 层
-	PostGRPCSvc := service.NewPostService("localhost:" + conf.PostPort)
-	LotteryGRPCSvc := service.NewLotteryService("localhost:" + conf.LotteryPort)
-	SessionGRPCSvc := service.NewSessionService("localhost:" + conf.SessionPort)
+	SessionServiceClient := service.NewSessionService("localhost:" + conf.SessionPort)
 
 	// Service 层
-	WebsocketSvc := service.NewWebsocketService(SessionGRPCSvc, RabbitMQ) // 注册 WebsocketService
+	WebsocketSvc := service.NewWebsocketService(SessionServiceClient, RabbitMQ) // 注册 WebsocketService
 
 	// Handler 层
-	SessionHdl := handler.NewSessionHandler(SessionGRPCSvc)   // 注册 SessionHandler
-	LotteryHdl := handler.NewLotteryHandler(LotteryGRPCSvc)   // 注册 LotteryHandler
-	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc) // 注册 WebsocketHandler
+	SessionHdl := handler.NewSessionHandler(SessionServiceClient) // 注册 SessionHandler
+	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)     // 注册 WebsocketHandler
 
 	// 中间件层
 
@@ -63,17 +60,6 @@ func main() {
 	im.Use(AuthRequiredMdl)
 	{
 		im.GET("", WebsocketHdl.Connect) // GET /api/v1/ws
-	}
-
-	// 抽奖模块
-	v1.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/gifts 获取所有奖品信息
-	lottery := v1.Group("/lottery")
-	lottery.Use(AuthRequiredMdl)
-	{
-		lottery.GET("/lucky", LotteryHdl.Lottery)  // GET /api/v1/lottery/lucky 抽奖
-		lottery.POST("/giveup", LotteryHdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
-		lottery.POST("/pay", LotteryHdl.Pay)       // POST /api/v1/lottery/pay 支付
-		lottery.GET("/result", LotteryHdl.Result)  // GET /api/v1/lottery/result 查询结果
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

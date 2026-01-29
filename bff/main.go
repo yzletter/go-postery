@@ -27,6 +27,7 @@ func main() {
 	PostServiceClient := service.NewPostService("localhost:" + conf.PostPort)
 	SearchServiceClient := service.NewSearchService("localhost:" + conf.SearchPort)
 	AgentServiceClient := service.NewAgentService("localhost:" + conf.AgentPort)
+	LotteryServiceClient := service.NewLotteryService("localhost:" + conf.LotteryPort)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
@@ -38,6 +39,7 @@ func main() {
 	UserHdl := handler.NewUserHandler(UserServiceClient)                                             // 注册 UserHandler
 	SearchHdl := handler.NewSearchHandler(SearchServiceClient, PostServiceClient, UserServiceClient) // 注册 SearchHandler
 	AgentHdl := handler.NewAgentHandler(AgentServiceClient)                                          // 注册 AgentHandler
+	LotteryHdl := handler.NewLotteryHandler(LotteryServiceClient, UserServiceClient)                 // 注册 LotteryHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
@@ -159,6 +161,17 @@ func main() {
 	agent.Use(AuthRequiredMdl)
 	{
 		agent.POST("/chat", AgentHdl.Chat) // POST /api/v1/agent/chat
+	}
+
+	// 抽奖模块
+	v1.GET("/gifts", LotteryHdl.GetAllGifts) // GET /api/v1/gifts 获取所有奖品信息
+	lottery := v1.Group("/lottery")
+	lottery.Use(AuthRequiredMdl)
+	{
+		lottery.GET("/lucky", LotteryHdl.Lottery)  // GET /api/v1/lottery/lucky 抽奖
+		lottery.POST("/giveup", LotteryHdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
+		lottery.POST("/pay", LotteryHdl.Pay)       // POST /api/v1/lottery/pay 支付
+		lottery.GET("/result", LotteryHdl.Result)  // GET /api/v1/lottery/result 查询结果
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

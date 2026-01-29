@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	"github.com/yzletter/go-postery/auth/conf"
 	"github.com/yzletter/go-postery/bff/errno"
 	"github.com/yzletter/go-postery/bff_/utils"
@@ -12,10 +13,10 @@ import (
 )
 
 type SessionHandler struct {
-	sessionSvc service.SessionService
+	sessionSvc session_grpc.SessionServiceClient
 }
 
-func NewSessionHandler(sessionSvc service.SessionService) *SessionHandler {
+func NewSessionHandler(sessionSvc session_grpc.SessionServiceClient) *SessionHandler {
 
 	return &SessionHandler{
 		sessionSvc: sessionSvc,
