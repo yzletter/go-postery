@@ -130,6 +130,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 
 	// 发送邮件
 	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.EmailCode), Identifier: req.Email}); err != nil {
+		slog.Error("发送邮箱验证码失败", "error", err)
 		response.Error(ctx, err)
 		return
 	}

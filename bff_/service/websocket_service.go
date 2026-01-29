@@ -15,9 +15,9 @@ import (
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	message2 "github.com/yzletter/go-postery/bff/dto/message"
-	"github.com/yzletter/go-postery/bff/model"
-	"github.com/yzletter/go-postery/bff/utils"
+	message2 "github.com/yzletter/go-postery/bff_/dto/message"
+	"github.com/yzletter/go-postery/bff_/model"
+	"github.com/yzletter/go-postery/bff_/utils"
 	"github.com/yzletter/go-postery/errno"
 )
 

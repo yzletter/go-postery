@@ -113,7 +113,7 @@ func NewAgentService(endpoint string) agent_grpc.AgentServiceClient {
 		slog.Error("Connect To grpc Failed", "service", "AgentService", "error", err)
 		return nil
 	}
-	
+	w
 	client := agent_grpc.NewAgentServiceClient(conn)
 	return client
 }

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	model2 "github.com/yzletter/go-postery/auth/model"
-	userdto "github.com/yzletter/go-postery/bff/dto/user"
+	userdto "github.com/yzletter/go-postery/bff_/dto/user"
 	"github.com/yzletter/go-postery/model"
 )
 

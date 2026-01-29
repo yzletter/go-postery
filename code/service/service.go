@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 
 	"github.com/yzletter/go-postery/api/proto/code/v1"
@@ -37,9 +38,10 @@ func (svc *codeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest
 	// 检查是否能发送
 	if err := svc.repository.Allow(ctx, model.CodeBiz(req.Biz), req.Identifier, newCode); err != nil {
 		if errors.Is(err, repository.ErrResourceConflict) {
+			slog.Error("Send Code Too Frequent", "error", err)
 			return nil, errno.ErrSendToFrequent
 		}
-		// todo 日志
+		slog.Error("Send Code Failed", "error", err)
 		return nil, errno.ErrServerInternal
 	}
 
@@ -47,16 +49,19 @@ func (svc *codeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest
 	switch req.Biz {
 	case int64(model.EmailCode):
 		if err := svc.emailManager.Send(req.Identifier, newCode); err != nil {
+			slog.Error("Send Email Failed", "error", err)
 			return nil, errno.ErrServerInternal
 		}
 	case int64(model.SMSCode):
 		if err := svc.smsClient.SendSms(ctx, req.Identifier, newCode); err != nil {
+			slog.Error("Send SMS Failed", "error", err)
 			return nil, errno.ErrServerInternal
 		}
 	default:
 		return nil, errno.ErrInvalidParam
 	}
 
+	slog.Info("Send Code Success")
 	return &code_grpc.SendCodeResponse{}, nil
 }
 

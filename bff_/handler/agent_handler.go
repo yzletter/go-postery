@@ -5,11 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/auth/conf"
-	agentdto "github.com/yzletter/go-postery/bff/dto/agent"
-	"github.com/yzletter/go-postery/bff/utils"
-	"github.com/yzletter/go-postery/bff/utils/response"
+	agentdto "github.com/yzletter/go-postery/bff_/dto/agent"
+	"github.com/yzletter/go-postery/bff_/utils"
+	"github.com/yzletter/go-postery/bff_/utils/response"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/service"
 )
 
 type AgentHandler struct {

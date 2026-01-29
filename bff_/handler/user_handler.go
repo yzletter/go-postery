@@ -6,11 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/auth/conf"
-	"github.com/yzletter/go-postery/bff/dto/user"
-	utils2 "github.com/yzletter/go-postery/bff/utils"
-	"github.com/yzletter/go-postery/bff/utils/response"
+	"github.com/yzletter/go-postery/bff_/dto/user"
+	utils2 "github.com/yzletter/go-postery/bff_/utils"
+	"github.com/yzletter/go-postery/bff_/utils/response"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/service"
 )
 
 type UserHandler struct {

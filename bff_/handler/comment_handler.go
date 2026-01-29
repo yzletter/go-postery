@@ -6,11 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/auth/conf"
-	utils2 "github.com/yzletter/go-postery/bff/utils"
-	"github.com/yzletter/go-postery/bff/utils/response"
+	utils2 "github.com/yzletter/go-postery/bff_/utils"
+	"github.com/yzletter/go-postery/bff_/utils/response"
 	"github.com/yzletter/go-postery/errno"
-	"github.com/yzletter/go-postery/post/dto/comment"
-	"github.com/yzletter/go-postery/service"
 )
 
 type CommentHandler struct {
