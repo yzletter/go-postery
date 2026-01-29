@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/bff/errno"
 )
 
 // Response 统一定义后端返回数据格式

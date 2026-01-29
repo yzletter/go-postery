@@ -3,10 +3,10 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/auth/conf"
+	"github.com/yzletter/go-postery/bff/errno"
 	"github.com/yzletter/go-postery/bff_/service"
 	"github.com/yzletter/go-postery/bff_/utils"
 	"github.com/yzletter/go-postery/bff_/utils/response"
-	"github.com/yzletter/go-postery/errno"
 )
 
 type WebsocketHandler struct {

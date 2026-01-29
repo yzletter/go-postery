@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/errno"
+	"github.com/yzletter/go-postery/bff/errno"
 )
 
 // Post 定义数据库模型

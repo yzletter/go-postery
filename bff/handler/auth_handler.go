@@ -11,12 +11,13 @@ import (
 	"github.com/yzletter/go-postery/bff/conf"
 	authdto "github.com/yzletter/go-postery/bff/dto/auth"
 	userdto "github.com/yzletter/go-postery/bff/dto/user"
+	"github.com/yzletter/go-postery/bff/errno"
 	"github.com/yzletter/go-postery/bff/model"
 	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/bff/utils/response"
 	code_conf "github.com/yzletter/go-postery/code/conf"
-	"github.com/yzletter/go-postery/errno"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -51,7 +52,9 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 		Password:   req.Password,
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidCredential,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -62,7 +65,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 		UserAgent: ctx.Request.UserAgent(),
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -71,6 +74,13 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 
 	// 获取用户
 	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
+	if err != nil {
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal))
+		return
+	}
 
 	// 返回成功响应
 	response.Success(ctx, "登录成功", userdto.ToBriefDTO(profile))
@@ -91,7 +101,9 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	// 进行登录
 	userID, err := hdl.authSvc.LoginByPhone(ctx, &auth_grpc.LoginByPhoneRequest{Phone: req.Phone, Code: req.Code})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrPhoneCodeInvalid,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -102,7 +114,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 		UserAgent: ctx.Request.UserAgent(),
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -111,6 +123,13 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 
 	// 获取用户
 	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
+	if err != nil {
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal))
+		return
+	}
 
 	// 返回成功响应
 	response.Success(ctx, "登录成功", userdto.ToBriefDTO(profile))
@@ -131,7 +150,10 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	// 发送邮件
 	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.EmailCode), Identifier: req.Email}); err != nil {
 		slog.Error("发送邮箱验证码失败", "error", err)
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.AlreadyExists:   errno.ErrSendToFrequent,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -151,7 +173,10 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 
 	// 发送短信
 	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.SMSCode), Identifier: req.Phone}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.AlreadyExists:   errno.ErrSendToFrequent,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -182,7 +207,10 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 
 	if _, err = hdl.authSvc.UpdatePassword(ctx, &auth_grpc.UpdatePasswordRequest{
 		UserID: uid, NewPassword: req.NewPass, OldPassword: req.OldPass}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrOldPasswordInvalid,
+			codes.NotFound:        errno.ErrNotSetPassword,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -209,7 +237,10 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	}
 
 	if _, err := hdl.authSvc.SetPassword(ctx, &auth_grpc.SetPasswordRequest{UserID: uid, Password: req.NewPass, Code: req.Code}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidCode,
+			codes.Unauthenticated: errno.ErrPhoneNotBound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -228,7 +259,7 @@ func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 查询是否有密码
 	has, err := hdl.authSvc.HasPassword(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -247,7 +278,7 @@ func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 
 	authIdentity, err := hdl.authSvc.GetAuthIdentityByUID(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -274,7 +305,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 
 	// 服务端清理双 Token
 	if _, err := hdl.authSvc.ClearTokens(ctx, &auth_grpc.DualTokens{AccessToken: accessToken, RefreshToken: refreshToken}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrLogoutFailed))
 		return
 	}
 
@@ -317,6 +348,25 @@ func ExtractToken(ctx *gin.Context) string {
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	ctx.Header("Authorization", "Bearer "+accessToken)
 	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+}
+
+func mapGRPCErr(err error, mapping map[codes.Code]*errno.Error, fallback *errno.Error) *errno.Error {
+	if err == nil {
+		return nil
+	}
+
+	code := errno.GetGRPCErrCode(err)
+	if mapping != nil {
+		if mapped, ok := mapping[code]; ok && mapped != nil {
+			return mapped
+		}
+	}
+
+	if fallback != nil {
+		return fallback
+	}
+
+	return errno.ErrServerInternal
 }
 
 func newCodeGrpcConn() *grpc.ClientConn {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/auth/model"
-	"github.com/yzletter/go-postery/errno"
 	"gorm.io/gorm"
 )
 
@@ -146,7 +145,7 @@ func (dao *gormAuthDAO) HasPassword(ctx context.Context, uid int64) (bool, error
 	result := dao.db.Model(&model.AuthPassword{}).WithContext(ctx).Where("user_id = ?", uid).Count(&cnt)
 	if result.Error != nil {
 		slog.Error(FindFailed, "uid", uid, "error", result.Error)
-		return false, errno.ErrServerInternal
+		return false, ErrServerInternal
 	}
 
 	return cnt > 0, nil

@@ -8,9 +8,10 @@ import (
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 	"github.com/yzletter/go-postery/bff/conf"
 	userdto "github.com/yzletter/go-postery/bff/dto/user"
+	"github.com/yzletter/go-postery/bff/errno"
 	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/bff/utils/response"
-	"github.com/yzletter/go-postery/errno"
+	"google.golang.org/grpc/codes"
 )
 
 type UserHandler struct {
@@ -34,7 +35,10 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 
 	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: uid})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -70,7 +74,10 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		Country:  modifyProfileReq.Country,
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -82,7 +89,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 func (hdl *UserHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.userSvc.Top(ctx, &user_grpc.TopRequest{})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -117,7 +124,9 @@ func (hdl *UserHandler) Follow(ctx *gin.Context) {
 
 	// 关注
 	if _, err = hdl.userSvc.Follow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.AlreadyExists: errno.ErrDuplicatedFollow,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -146,7 +155,9 @@ func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 
 	// 取消关注
 	if _, err = hdl.userSvc.UnFollow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.AlreadyExists: errno.ErrDuplicatedUnFollow,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -175,7 +186,7 @@ func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.IfFollow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -200,7 +211,7 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.ListFollowersByPage(ctx, &user_grpc.ListFollowRequest{UserID: uid, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -232,7 +243,7 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.ListFolloweesByPage(ctx, &user_grpc.ListFollowRequest{UserID: uid, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
