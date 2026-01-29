@@ -10,19 +10,19 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	giftdto "github.com/yzletter/go-postery/bff_/dto/gift"
+	"github.com/yzletter/go-postery/bff/dto/lottery"
 )
 
 const url = "http://localhost:8765/api/v1/lottery/lucky" // 压测接口
 const P = 200                                            // 模拟 200 个用户在疯狂抽奖
 
 type Response struct {
-	Code int         `json:"code"`           // 业务状态码，0 表示成功，非 0 表示失败
-	Msg  string      `json:"msg"`            // 提示信息
-	Data giftdto.DTO `json:"data,omitempty"` // 具体数据，失败时可以为空
+	Code int             `json:"code"`           // 业务状态码，0 表示成功，非 0 表示失败
+	Msg  string          `json:"msg"`            // 提示信息
+	Data lottery.GiftDTO `json:"data,omitempty"` // 具体数据，失败时可以为空
 }
 
-const token = "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJVaWQiOjIwMTI3MTYxOTI1NjA1Nzg1NjAsIlNTaWQiOiJjNDZlNDYyOC05NjlkLTQ0YmUtODBkYy0yMThiODM1NTI0MDIiLCJSb2xlIjowLCJVc2VyQWdlbnQiOiJBcGlmb3gvMS4wLjAgKGh0dHBzOi8vYXBpZm94LmNvbSkiLCJpc3MiOiJnby1wb3N0ZXJ5IiwiZXhwIjoxNzY4NzE5OTYzfQ.juJY9NCuElTM3jGnUsE1vC5Sny-k4uPKYskEFlfbl9Lf9EkJ7Aci7IPOXz7_-IszJvJQVH6dKJ61006tNHAbuA"
+const token = "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJVaWQiOjIwMTIxNjI0MDcxNDA0MjU3MjgsIlNTaWQiOiI1OTBkMDk2ZC05Njk4LTRhZDktODUyZi1lNTc1YjQ1MDc1MjkiLCJSb2xlIjowLCJVc2VyQWdlbnQiOiJBcGlmb3gvMS4wLjAgKGh0dHBzOi8vYXBpZm94LmNvbSkiLCJpc3MiOiJnby1wb3N0ZXJ5IiwiZXhwIjoxNzY5NzEyMjM5fQ.EsTz45L93lORmUate_utOAXgXPlKScLWYDxHmP-EewYgyHypXYgvrc6DcM6CBiyftZKu8kf2Zmksx1CZhU2EGA"
 
 func TestLottery(t *testing.T) {
 	hitMap := make(map[string]int, 10) // 每个奖品被抽中的次数
@@ -108,7 +108,7 @@ func TestLottery(t *testing.T) {
 	}
 }
 
-// go test -v ./test -run=^TestLottery$ -count=1
+// go test -v ./bff/test -run=^TestLottery$ -count=1
 /*
 	QPS 3160, avg time 73ms
 	论坛定制马克杯  500
