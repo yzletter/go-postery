@@ -12,16 +12,16 @@ import (
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	"github.com/yzletter/go-postery/auth/conf"
+	"github.com/yzletter/go-postery/auth/errs"
 	"github.com/yzletter/go-postery/auth/model"
 	"github.com/yzletter/go-postery/auth/repository"
 	"github.com/yzletter/go-postery/auth/service/ports"
+	"github.com/yzletter/go-postery/auth/utils"
 	code_conf "github.com/yzletter/go-postery/code/conf"
 	code_model "github.com/yzletter/go-postery/code/model"
-	"github.com/yzletter/go-postery/errno"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type authService struct {
@@ -55,10 +55,12 @@ func (svc *authService) LoginByPassword(ctx context.Context, req *auth_grpc.Logi
 	// 获取登录认证
 	authIdentity, err := svc.authRepo.GetAuthIdentityByIdentifier(ctx, req.Identifier)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
+		if errors.Is(err, repository.ErrRecordNotFound) { // 邮箱或者手机号没有认证过
+			slog.Error("Invalid Identifier")
+			return empty, errs.ErrInvalidArgument
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	// 得到用户 ID
@@ -68,18 +70,23 @@ func (svc *authService) LoginByPassword(ctx context.Context, req *auth_grpc.Logi
 	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, uid)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrInvalidCredential
+			// 不应该发生的错误
+			slog.Error("Get Password Failed", "error", err)
+			return empty, errs.ErrInvalidArgument
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	// 比较密码
 	err = svc.passHasher.Compare(passwordHash, req.Password)
 	if err != nil {
-		if errors.Is(err, ports.ErrInvalidPassword) { // 密码错误, 返回为账号或密码错误
-			return empty, errno.ErrInvalidCredential
+		if errors.Is(err, ports.ErrInvalidPassword) { // 密码错误, 返回为请求参数错误
+			slog.Error("Invalid Password")
+			return empty, errs.ErrInvalidArgument
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	return &auth_grpc.UserID{UserID: authIdentity.UserID}, nil
@@ -104,10 +111,12 @@ func (svc *authService) LoginByPhone(ctx context.Context, req *auth_grpc.LoginBy
 	}
 	resp, err := codeClient.Verify(ctx, &verifyReq)
 	if err != nil {
-		slog.Error("Check Code Failed", "biz", code_model.SMSCode)
-		return empty, errno.ErrServerInternal
-	} else if !resp.Result {
-		return empty, errno.ErrPhoneCodeInvalid
+		// 下游挂了
+		slog.Error("Code Service Unavailable", "error", err)
+		return empty, errs.ErrInternal
+	} else if !resp.Result { // 验证码错误
+		slog.Error("Invalid Code")
+		return empty, errs.ErrInvalidArgument
 	}
 
 	// 获取登录认证
@@ -163,16 +172,19 @@ func (svc *authService) LoginByPhone(ctx context.Context, req *auth_grpc.LoginBy
 			}
 			if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
 				if errors.Is(err, repository.ErrUniqueKey) {
-					return empty, errno.ErrUserDuplicated
+					// 不应该出现的错误
+					slog.Error("Create User Failed", "error", err)
+					return empty, errs.ErrAlreadyExits
 				}
-				return empty, errno.ErrServerInternal
+				slog.Error("Server Internal Error", "error", err)
+				return empty, errs.ErrInternal
 			}
 
 			return &auth_grpc.UserID{UserID: authIdentity.UserID}, nil
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
-
 	return &auth_grpc.UserID{UserID: authIdentity.UserID}, nil
 }
 
@@ -180,9 +192,10 @@ func (svc *authService) LoginByPhone(ctx context.Context, req *auth_grpc.LoginBy
 func (svc *authService) HasPassword(ctx context.Context, id *auth_grpc.UserID) (*auth_grpc.HasPasswordResponse, error) {
 	has, err := svc.authRepo.HasPassword(ctx, id.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) { // 未设置密码, 不是错误
 			return &auth_grpc.HasPasswordResponse{Result: false}, nil
 		}
+		slog.Error("Server Internal Error", "error", err)
 		return &auth_grpc.HasPasswordResponse{Result: false}, repository.ErrServerInternal
 	}
 	return &auth_grpc.HasPasswordResponse{Result: has}, nil
@@ -194,10 +207,12 @@ func (svc *authService) SetPassword(ctx context.Context, req *auth_grpc.SetPassw
 	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, req.UserID, model.AuthTypeFromBiz(model.SMSCode))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			slog.Error("Set Pass Without AuthIdentity", "error", err)
-			return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+			// 不应该出现的错误
+			slog.Error("Set Password Without AuthIdentity", "error", err)
+			return &auth_grpc.AuthEmptyResponse{}, errs.ErrUnauthenticated
 		}
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 判断连接是否可复用
@@ -215,16 +230,19 @@ func (svc *authService) SetPassword(ctx context.Context, req *auth_grpc.SetPassw
 	}
 	resp, err := codeClient.Verify(ctx, &verifyReq)
 	if err != nil {
-		slog.Error("Check Code Failed", "biz", model.SMSCode)
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
-	} else if !resp.Result {
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrPhoneCodeInvalid
+		// 下游挂了
+		slog.Error("Code Service Unavailable", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
+	} else if !resp.Result { // 验证码错误
+		slog.Error("Invalid Code")
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInvalidArgument
 	}
 
 	// 对密码进行哈希
 	passwordHash, err := svc.passHasher.Hash(req.Password)
 	if err != nil {
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 初始化密码
@@ -234,10 +252,12 @@ func (svc *authService) SetPassword(ctx context.Context, req *auth_grpc.SetPassw
 	}
 	if err := svc.authRepo.SetPassword(ctx, &authPassword); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
+			// 不应该出现的错误
 			slog.Error("Set Password Failed", "error", err)
-			return &auth_grpc.AuthEmptyResponse{}, errno.ErrSetPassword
+			return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 		}
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	return &auth_grpc.AuthEmptyResponse{}, nil
@@ -249,31 +269,40 @@ func (svc *authService) UpdatePassword(ctx context.Context, req *auth_grpc.Updat
 	oldPasswordHash, err := svc.authRepo.GetPasswordHash(ctx, req.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &auth_grpc.AuthEmptyResponse{}, errno.ErrUserNotFound
+			slog.Error("User Not Found")
+			return &auth_grpc.AuthEmptyResponse{}, errs.ErrNotFound
 		}
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 判断旧密码是否正确
 	if err := svc.passHasher.Compare(oldPasswordHash, req.OldPassword); err != nil {
 		if errors.Is(err, ports.ErrInvalidPassword) {
-			return &auth_grpc.AuthEmptyResponse{}, errno.ErrOldPasswordInvalid
+			// 旧密码错误
+			slog.Error("Invalid Old Password")
+			return &auth_grpc.AuthEmptyResponse{}, errs.ErrInvalidArgument
 		}
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 对新密码进行加密
 	newPassHash, err := svc.passHasher.Hash(req.NewPassword)
 	if err != nil {
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 改新密码
 	if err := svc.authRepo.UpdatePasswordHash(ctx, req.UserID, newPassHash); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &auth_grpc.AuthEmptyResponse{}, errno.ErrUserNotFound
+			// 不应该出现的错误
+			slog.Error("User Not Found")
+			return &auth_grpc.AuthEmptyResponse{}, errs.ErrNotFound
 		}
-		return &auth_grpc.AuthEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 	}
 
 	return &auth_grpc.AuthEmptyResponse{}, nil
@@ -283,7 +312,8 @@ func (svc *authService) UpdatePassword(ctx context.Context, req *auth_grpc.Updat
 func (svc *authService) GetAuthIdentityByUID(ctx context.Context, id *auth_grpc.UserID) (*auth_grpc.AuthIdentity, error) {
 	phone, email, err := svc.authRepo.GetAuthIdentityByUID(ctx, id.UserID)
 	if err != nil {
-		return &auth_grpc.AuthIdentity{Phone: "", Email: ""}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.AuthIdentity{Phone: "", Email: ""}, errs.ErrInternal
 	}
 	return &auth_grpc.AuthIdentity{Phone: phone, Email: email}, nil
 }
@@ -310,7 +340,8 @@ func (svc *authService) IssueTokens(ctx context.Context, req *auth_grpc.IssueTok
 	// 生成 AccessToken
 	accessToken, err := svc.jwtManager.GenToken(accessClaims)
 	if err != nil {
-		return &auth_grpc.DualTokens{AccessToken: "", RefreshToken: ""}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.DualTokens{AccessToken: "", RefreshToken: ""}, errs.ErrInternal
 	}
 
 	// 生成 RefreshToken
@@ -324,7 +355,8 @@ func (svc *authService) IssueTokens(ctx context.Context, req *auth_grpc.IssueTok
 	}
 	err = svc.authRepo.SetInfo(ctx, refreshToken, mp)
 	if err != nil {
-		return &auth_grpc.DualTokens{AccessToken: "", RefreshToken: ""}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.DualTokens{AccessToken: "", RefreshToken: ""}, errs.ErrInternal
 
 	}
 	return &auth_grpc.DualTokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
@@ -335,7 +367,8 @@ func (svc *authService) ClearTokens(ctx context.Context, tokens *auth_grpc.DualT
 	// 删除 refreshToken
 	if tokens.RefreshToken != "" {
 		if err := svc.authRepo.DelRefreshToken(ctx, tokens.RefreshToken); err != nil {
-			return &auth_grpc.AuthEmptyResponse{}, errno.ErrLogoutFailed
+			slog.Error("Server Internal Error", "error", err)
+			return &auth_grpc.AuthEmptyResponse{}, errs.ErrInternal
 		}
 	}
 	// 拉黑 ssid
@@ -352,8 +385,9 @@ func (svc *authService) ClearTokens(ctx context.Context, tokens *auth_grpc.DualT
 // VerifyAccessToken 校验 AccessToken
 func (svc *authService) VerifyAccessToken(ctx context.Context, token *auth_grpc.AccessToken) (*auth_grpc.JWTTokenClaims, error) {
 	claim, err := svc.jwtManager.VerifyToken(token.AccessToken)
-	if err != nil {
-		return &auth_grpc.JWTTokenClaims{}, errno.ErrUnauthorized
+	if err != nil { // AccessToken 校验失败
+		slog.Error("Invalid Access Token", "error", err)
+		return &auth_grpc.JWTTokenClaims{}, errs.ErrUnauthenticated
 	}
 	return &auth_grpc.JWTTokenClaims{
 		UserID:    claim.Uid,
@@ -363,9 +397,9 @@ func (svc *authService) VerifyAccessToken(ctx context.Context, token *auth_grpc.
 		Issuer:    claim.Issuer,
 		Subject:   claim.Subject,
 		Audience:  claim.Audience,
-		ExpiresAt: TimeToPB(claim.ExpiresAt),
-		NotBefore: TimeToPB(claim.NotBefore),
-		IssuedAt:  TimeToPB(claim.IssuedAt),
+		ExpiresAt: utils.GoTimeToRPCTime(claim.ExpiresAt),
+		NotBefore: utils.GoTimeToRPCTime(claim.NotBefore),
+		IssuedAt:  utils.GoTimeToRPCTime(claim.IssuedAt),
 		ID:        claim.ID,
 	}, nil
 }
@@ -374,7 +408,8 @@ func (svc *authService) VerifyAccessToken(ctx context.Context, token *auth_grpc.
 func (svc *authService) GetInfoByRefreshToken(ctx context.Context, token *auth_grpc.RefreshToken) (*auth_grpc.GetInfoByRefreshTokenResponse, error) {
 	uid, role, ssid, err := svc.authRepo.GetInfoByRefreshToken(ctx, token.RefreshToken)
 	if err != nil {
-		return &auth_grpc.GetInfoByRefreshTokenResponse{UserID: 0, Role: 0, SSID: ""}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.GetInfoByRefreshTokenResponse{UserID: 0, Role: 0, SSID: ""}, errs.ErrInternal
 	}
 	return &auth_grpc.GetInfoByRefreshTokenResponse{UserID: uid, Role: int32(role), SSID: ssid}, nil
 }
@@ -383,7 +418,8 @@ func (svc *authService) GetInfoByRefreshToken(ctx context.Context, token *auth_g
 func (svc *authService) CheckBlackList(ctx context.Context, req *auth_grpc.CheckBlackListRequest) (*auth_grpc.CheckBlackListResponse, error) {
 	exist, err := svc.authRepo.CheckBlackList(ctx, req.SSID)
 	if err != nil {
-		return &auth_grpc.CheckBlackListResponse{Result: false}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &auth_grpc.CheckBlackListResponse{Result: false}, errs.ErrInternal
 	}
 	return &auth_grpc.CheckBlackListResponse{Result: exist}, nil
 }
@@ -403,11 +439,4 @@ func newCodeGrpcConn() *grpc.ClientConn {
 	}
 
 	return conn
-}
-
-func TimeToPB(t *time.Time) *timestamppb.Timestamp {
-	if t == nil || t.IsZero() {
-		return nil
-	}
-	return timestamppb.New(*t)
 }
