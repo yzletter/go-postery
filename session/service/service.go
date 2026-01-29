@@ -11,8 +11,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/session/dto"
+	"github.com/yzletter/go-postery/session/errs"
 	"github.com/yzletter/go-postery/session/model"
 	"github.com/yzletter/go-postery/session/repository"
 	"github.com/yzletter/go-postery/session/service/ports"
@@ -95,7 +95,8 @@ func (svc *sessionService) ListByUID(ctx context.Context, id *session_grpc.UserI
 	var empty = new(session_grpc.Sessions)
 	sessions, err := svc.sessionRepo.ListByUid(ctx, id.UserID)
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	var respSessions []*session_grpc.Session
@@ -115,7 +116,8 @@ func (svc *sessionService) GetSession(ctx context.Context, id *session_grpc.Both
 	if err != nil {
 		// 系统层面错误
 		if !errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrServerInternal
+			slog.Error("Server Internal Error", "error", err)
+			return empty, errs.ErrInternal
 		}
 
 		// 查找对方 session
@@ -123,7 +125,8 @@ func (svc *sessionService) GetSession(ctx context.Context, id *session_grpc.Both
 		if err != nil {
 			// 系统层面错误
 			if !errors.Is(err, repository.ErrRecordNotFound) {
-				return empty, errno.ErrServerInternal
+				slog.Error("Server Internal Error", "error", err)
+				return empty, errs.ErrInternal
 			}
 
 			// 双边都没找到，新建会话
@@ -146,12 +149,14 @@ func (svc *sessionService) GetSession(ctx context.Context, id *session_grpc.Both
 
 			err = svc.sessionRepo.Create(ctx, newSession1)
 			if err != nil {
-				return empty, errno.ErrServerInternal
+				slog.Error("Server Internal Error", "error", err)
+				return empty, errs.ErrInternal
 			}
 
 			err = svc.sessionRepo.Create(ctx, newSession2)
 			if err != nil {
-				return empty, errno.ErrServerInternal
+				slog.Error("Server Internal Error", "error", err)
+				return empty, errs.ErrInternal
 			}
 			return dto.ToSession(newSession1), nil
 		} else {
@@ -167,7 +172,8 @@ func (svc *sessionService) GetSession(ctx context.Context, id *session_grpc.Both
 
 			err = svc.sessionRepo.Create(ctx, newSession1)
 			if err != nil {
-				return empty, errno.ErrServerInternal
+				slog.Error("Server Internal Error", "error", err)
+				return empty, errs.ErrInternal
 			}
 			return dto.ToSession(newSession1), nil
 		}
@@ -187,7 +193,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 
 	ch, err := svc.mqConn.Channel()
 	if err != nil {
-		return errno.ErrServerInternal
+		return errs.ErrInternal
 	}
 	defer ch.Close()
 
@@ -203,7 +209,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 
 	if err != nil {
 		slog.Error("Exchange Declare Failed", "uid", uid)
-		return errno.ErrServerInternal
+		return errs.ErrInternal
 	}
 
 	args := amqp.Table{
@@ -214,7 +220,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 		// 申明队列
 		if _, err := ch.QueueDeclare(queueName, true, false, false, false, args); err != nil {
 			slog.Error("Queue Declare Failed", "uid", uid)
-			return errno.ErrServerInternal
+			return errs.ErrInternal
 		}
 
 		// 将队列绑定到交换机
@@ -228,7 +234,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 
 		if err != nil {
 			slog.Error("Queue BindTag Failed", "queue_name", queueName)
-			return errno.ErrServerInternal
+			return errs.ErrInternal
 		}
 	}
 
@@ -239,7 +245,8 @@ func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, req *se
 	var empty = new(session_grpc.GetHistoryMessagesByPageResponse)
 	total, messages, err := svc.messageRepo.GetByPage(ctx, req.UserID, req.TargetID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	var respMessages []*session_grpc.Message
@@ -259,24 +266,29 @@ func (svc *sessionService) Delete(ctx context.Context, req *session_grpc.DeleteR
 	if err != nil {
 		// 幂等
 		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("Sesison Not Found", "error", err)
 			return &session_grpc.SessionEmptyResponse{}, nil
 		}
 		// 系统层面错误
-		return &session_grpc.SessionEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
 	}
 
 	if session.UserID != req.UserID {
-		return &session_grpc.SessionEmptyResponse{}, errno.ErrUnauthorized
+		slog.Error("Unauthenticated")
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrUnauthenticated
 	}
 
 	// 删除当前用户这边的会话, 要传 uid
 	if err := svc.sessionRepo.Delete(ctx, req.UserID, req.SessionID); err != nil {
 		// 幂等
 		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("Sesison Not Found", "error", err)
 			return &session_grpc.SessionEmptyResponse{}, nil
 		}
 		// 系统层面错误
-		return &session_grpc.SessionEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
 	}
 
 	return &session_grpc.SessionEmptyResponse{}, nil
@@ -292,14 +304,16 @@ func (svc *sessionService) UpdateUnread(ctx context.Context, req *session_grpc.U
 		Delta: int(req.Delta),
 	}
 	if err := svc.sessionRepo.UpdateUnread(ctx, req.UserID, req.SessionID, updates); err != nil {
-		return &session_grpc.SessionEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
 	}
 	return &session_grpc.SessionEmptyResponse{}, nil
 }
 
 func (svc *sessionService) ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
 	if err := svc.sessionRepo.ClearUnread(ctx, req.UserID, req.SessionID); err != nil {
-		return &session_grpc.SessionEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
 	}
 	return &session_grpc.SessionEmptyResponse{}, nil
 }
@@ -315,7 +329,8 @@ func (svc *sessionService) CreateMessage(ctx context.Context, message *session_g
 	}
 
 	if err := svc.messageRepo.Create(ctx, messageModel); err != nil {
-		return &session_grpc.Message{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &session_grpc.Message{}, errs.ErrInternal
 	}
 
 	return &session_grpc.Message{
