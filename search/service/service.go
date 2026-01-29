@@ -12,6 +12,7 @@ import (
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	post_conf "github.com/yzletter/go-postery/post/conf"
+	"github.com/yzletter/go-postery/search/errs"
 	"github.com/yzletter/go-postery/search/model"
 	"github.com/yzletter/go-postery/search/service/index_service"
 	"github.com/yzletter/go-postery/search/service/ports"
@@ -83,7 +84,11 @@ func (svc *searchService) DeleteDoc(ctx context.Context, req *search_grpc.DocID)
 
 func (svc *searchService) AddDoc(ctx context.Context, req *model.Document) (*search_grpc.AffectedCount, error) {
 	affectedCount, err := svc.indexer.AddDoc(req)
-	return &search_grpc.AffectedCount{Count: int32(affectedCount)}, err
+	if err != nil {
+		slog.Error("Server Internal Error", "error", err)
+		return &search_grpc.AffectedCount{Count: int32(affectedCount)}, errs.ErrInternal
+	}
+	return &search_grpc.AffectedCount{Count: int32(affectedCount)}, nil
 }
 
 func (svc *searchService) Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error) {
@@ -160,8 +165,8 @@ func (svc *searchService) Index(ctx context.Context, postID int64) error {
 		AddViewCnt: false,
 	})
 	if err != nil {
-		slog.Error("获取文本失败", "pid", postID, "error", err)
-		return err
+		slog.Error("Post Service Unavailable", "error", err)
+		return errs.ErrUnavailable
 	}
 
 	// 对标题分词
