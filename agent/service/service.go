@@ -18,12 +18,12 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/agent/dto"
+	"github.com/yzletter/go-postery/agent/errs"
 	"github.com/yzletter/go-postery/agent/model"
 	"github.com/yzletter/go-postery/agent/repository"
 	"github.com/yzletter/go-postery/agent/service/ports"
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	"github.com/yzletter/go-postery/errno"
 	post_conf "github.com/yzletter/go-postery/post/conf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -58,7 +58,7 @@ func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) 
 	//messages, errs := svc.agentRepo.GetMessagesBySessionID(ctx, sessionID)
 	//if errs != nil {
 	//	if errors.Is(errs, repository.ErrServerInternal) {
-	//		return empty, errno.ErrServerInternal
+	//		return empty, errs.ErrInternal
 	//	}
 	//}
 
@@ -67,7 +67,8 @@ func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) 
 	// RAG 召回
 	knowledge, err := svc.agentRepo.Retrieve(ctx, req.Query, 0.5, 3) // 召回分数 > 0.5 的三条
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	//// 聚合信息
@@ -94,7 +95,8 @@ func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) 
 		CheckPointStore: nil,
 	})
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	// 进行询问
