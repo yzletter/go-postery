@@ -17,6 +17,7 @@ import (
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	"github.com/yzletter/go-postery/bff/errno"
 	message2 "github.com/yzletter/go-postery/bff_/dto/message"
+	"github.com/yzletter/go-postery/bff_/dto/session"
 	"github.com/yzletter/go-postery/bff_/model"
 	"github.com/yzletter/go-postery/bff_/utils"
 )
@@ -145,7 +146,7 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			break
 		}
 
-		var messageReq message2.Request
+		var messageReq session.Request
 		err = json.Unmarshal(messageBody, &messageReq)
 		if err != nil {
 			// BadRequest

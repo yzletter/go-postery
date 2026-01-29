@@ -24,12 +24,14 @@ func main() {
 	AuthAuthServiceClient := service.NewAuthService("localhost:" + conf.AuthPort)
 	CodeServiceClient := service.NewCodeService("localhost:" + conf.CodePort)
 	UserServiceClient := service.NewUserService("localhost:" + conf.UserPort)
+	PostServiceClient := service.NewPostService("localhost:" + conf.PostPort)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
 
 	// Handler 层
+	PostHdl := handler.NewPostHandler(PostServiceClient, UserServiceClient)                        // 注册 PostHandler
 	AuthHdl := handler.NewAuthHandler(AuthAuthServiceClient, CodeServiceClient, UserServiceClient) // 注册 AuthHandler
 	UserHdl := handler.NewUserHandler(UserServiceClient)                                           // 注册 UserHandler
 
@@ -88,9 +90,9 @@ func main() {
 	// 用户模块
 	users := v1.Group("/users")
 	{
-		users.GET("/:id", UserHdl.Profile) // GET /api/v1/users/:id									获取个人资料
-		//users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
-		users.GET("/top", UserHdl.Top) // GET /api/v1/users/top 									获取推荐关注
+		users.GET("/:id", UserHdl.Profile)                // GET /api/v1/users/:id									获取个人资料
+		users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
+		users.GET("/top", UserHdl.Top)                    // GET /api/v1/users/top 									获取推荐关注
 
 		// 个人模块
 		me := users.Group("/me")
@@ -115,6 +117,30 @@ func main() {
 			//chat.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
 			//chat.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
 		}
+	}
+
+	// 帖子模块
+	posts := v1.Group("/posts")
+	{
+		posts.GET("", PostHdl.List)                           // POST /api/v1/posts?pageNo=1&pageSize=10				按页获取帖子列表
+		posts.GET("/top", PostHdl.Top)                        // GET /api/v1/posts/top								获取热门帖子榜单
+		posts.GET("/tags", PostHdl.ListByTagAndPage)          // POST /api/v1/posts/tags?pageNo=1&pageSize=10&tag=go 根据标签按页获取帖子列表
+		posts.GET("/:id", PostHdl.Detail)                     // GET /api/v1/posts/:id								获取帖子详情
+		posts.GET("/:id/comments", PostHdl.ListCommentByPage) // GET /api/v1/posts/:id/comments?pageNo=1&pageSize=10	按页获取帖子评论
+		posts.GET("/:id/comments/:cid", PostHdl.ListReplies)  // GET /api/v1/posts/:pid/comments/:cid?pageNo=1&pageSize=10	按页获取主评论回复
+
+		//todo
+		authedPosts := posts.Group("")
+		authedPosts.Use(AuthRequiredMdl)
+		authedPosts.POST("", PostHdl.CreatePost)            // POST /api/v1/posts 			创建帖子
+		authedPosts.POST("/:id", PostHdl.Update)            // POST /api/v1/posts/:id 		更新帖子
+		authedPosts.POST("/:id/delete", PostHdl.DeletePost) // POST /api/v1/posts/:id/delete	删除帖子
+
+		authedPosts.POST("/:id/comments", PostHdl.CreateComment)             // POST /api/v1/posts/:id/comments 				创建评论
+		authedPosts.POST("/:id/comments/:cid/delete", PostHdl.DeleteComment) // POST /api/v1/posts/:id/comments/:cid/delete 	删除评论
+		authedPosts.GET("/:id/like", PostHdl.IfLike)                         // GET /api/v1/posts/:id/like					查询是否点赞了帖子
+		authedPosts.POST("/:id/like", PostHdl.Like)                          // POST /api/v1/posts/:id/like					点赞帖子
+		authedPosts.POST("/:id/unlike", PostHdl.Unlike)                      // POST /api/v1/posts/:id/unlike 				取消点赞帖子
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

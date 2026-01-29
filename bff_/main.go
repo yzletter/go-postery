@@ -2,12 +2,9 @@ package main
 
 import (
 	"syscall"
-	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	infraQdarant "github.com/yzletter/go-postery/agent/infra/qdrant"
+	handler2 "github.com/yzletter/go-postery/bff/handler"
 	infraRedis "github.com/yzletter/go-postery/bff/infra/redis"
 	"github.com/yzletter/go-postery/bff/infra/viper"
 	"github.com/yzletter/go-postery/bff_/conf"
@@ -15,8 +12,6 @@ import (
 	"github.com/yzletter/go-postery/bff_/infra/crontab"
 	"github.com/yzletter/go-postery/bff_/infra/graceful_stop"
 	infraRabbitMQ "github.com/yzletter/go-postery/bff_/infra/rabbitmq"
-	"github.com/yzletter/go-postery/bff_/infra/slog"
-	"github.com/yzletter/go-postery/bff_/middleware"
 	"github.com/yzletter/go-postery/bff_/service"
 	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
 	infraKafka "github.com/yzletter/go-postery/outbox/infra/kafka"
@@ -38,13 +33,11 @@ func main() {
 	WebsocketSvc := service.NewWebsocketService(SessionGRPCSvc, RabbitMQ) // 注册 WebsocketService
 
 	// Handler 层
-
-	PostHdl := handler.NewPostHandler(PostGRPCSvc, UserGRPCSvc) // 注册 PostHandler
-	SessionHdl := handler.NewSessionHandler(SessionGRPCSvc)     // 注册 SessionHandler
-	LotteryHdl := handler.NewLotteryHandler(LotteryGRPCSvc)     // 注册 LotteryHandler
-	AgentHdl := handler.NewAgentHandler(AgentGRPCSvc)           // 注册 AgentHandler
-	SearchHdl := handler.NewSearchHandler(SearchGRPCSvc)        // 注册 SearchHandler
-	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)   // 注册 WebsocketHandler
+	SessionHdl := handler.NewSessionHandler(SessionGRPCSvc)   // 注册 SessionHandler
+	LotteryHdl := handler.NewLotteryHandler(LotteryGRPCSvc)   // 注册 LotteryHandler
+	AgentHdl := handler.NewAgentHandler(AgentGRPCSvc)         // 注册 AgentHandler
+	SearchHdl := handler.NewSearchHandler(SearchGRPCSvc)      // 注册 SearchHandler
+	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc) // 注册 WebsocketHandler
 
 	// 中间件层
 
@@ -60,30 +53,6 @@ func main() {
 		AddFunc(infraRabbitMQ.Close).AddFunc(infraRocketMQ.Close).AddFunc(infraKafka.Close). // 关消息队列
 		AddFunc(infra.Close).AddFunc(infraRedis.Close).AddFunc(infraQdarant.Close).          // 关数据库
 		Build()
-
-	// 帖子模块
-	posts := v1.Group("/posts")
-	{
-		posts.GET("", PostHdl.List)                             // POST /api/v1/posts?pageNo=1&pageSize=10				按页获取帖子列表
-		posts.GET("/top", PostHdl.Top)                          // GET /api/v1/posts/top								获取热门帖子榜单
-		posts.GET("/tags", PostHdl.ListByTagAndPage)            // POST /api/v1/posts/tags?pageNo=1&pageSize=10&tag=go 根据标签按页获取帖子列表
-		posts.GET("/:id", PostHdl.Detail)                       // GET /api/v1/posts/:id								获取帖子详情
-		posts.GET("/:id/comments", CommentHdl.ListByPage)       // GET /api/v1/posts/:id/comments?pageNo=1&pageSize=10	按页获取帖子评论
-		posts.GET("/:id/comments/:cid", CommentHdl.ListReplies) // GET /api/v1/posts/:pid/comments/:cid?pageNo=1&pageSize=10	按页获取主评论回复
-
-		//todo
-		authedPosts := posts.Group("")
-		authedPosts.Use(AuthRequiredMdl)
-		authedPosts.POST("", PostHdl.Create)       // POST /api/v1/posts 		创建帖子
-		authedPosts.POST("/:id", PostHdl.Update)   // POST /api/v1/posts/:id 	更新帖子
-		authedPosts.DELETE("/:id", PostHdl.Delete) // DELETE /api/v1/posts/:id 	删除帖子
-
-		authedPosts.POST("/:id/comments", CommentHdl.Create)        // POST /api/v1/posts/:id/comments 创建评论
-		authedPosts.DELETE("/:id/comments/:cid", CommentHdl.Delete) // DELETE /api/v1/posts/:id/comments/:cid 删除评论
-		authedPosts.GET("/:id/likes", PostHdl.IfLike)               // GET /api/v1/posts/:id/likes	查询是否点赞了帖子
-		authedPosts.POST("/:id/likes", PostHdl.Like)                // POST /api/v1/posts/:id/likes	点赞帖子
-		authedPosts.DELETE("/:id/likes", PostHdl.Unlike)            // DELETE /api/v1/posts/:id/likes 取消点赞帖子
-	}
 
 	// 私信模块
 	sessions := v1.Group("/sessions")

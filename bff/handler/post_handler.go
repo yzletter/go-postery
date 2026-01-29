@@ -5,26 +5,25 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/auth/conf"
+	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
+	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/bff/conf"
+	postdto "github.com/yzletter/go-postery/bff/dto/post"
 	"github.com/yzletter/go-postery/bff/errno"
-	"github.com/yzletter/go-postery/bff_/dto/comment"
-	utils2 "github.com/yzletter/go-postery/bff_/utils"
-	"github.com/yzletter/go-postery/bff_/utils/response"
+	"github.com/yzletter/go-postery/bff/utils"
+	"github.com/yzletter/go-postery/bff/utils/response"
 	"github.com/yzletter/go-postery/post/dto"
-	"github.com/yzletter/go-postery/post/service"
 )
 
 type PostHandler struct {
-	postSvc service.PostService
-	userSvc service.UserService
-	tagSvc  service.TagService
+	postSvc post_grpc.PostServiceClient
+	userSvc user_grpc.UserServiceClient
 }
 
-func NewPostHandler(postService service.PostService, userService service.UserService, tagSvc service.TagService) *PostHandler {
+func NewPostHandler(postSvc post_grpc.PostServiceClient, userSvc user_grpc.UserServiceClient) *PostHandler {
 	return &PostHandler{
-		postSvc: postService,
-		userSvc: userService,
-		tagSvc:  tagSvc,
+		postSvc: postSvc,
+		userSvc: userSvc,
 	}
 }
 
@@ -40,27 +39,36 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs, err := hdl.postSvc.ListByPage(ctx, pageNo, pageSize)
+	resp, err := hdl.postSvc.ListByPage(ctx, &post_grpc.ListByPageRequest{
+		PageNo:   uint32(pageNo),
+		PageSize: uint32(pageSize),
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	for k := range postDTOs {
-		res, err := hdl.tagSvc.FindTagsByPostID(ctx, postDTOs[k].ID)
+	userDetails := make([]*user_grpc.UserDetail, len(resp.PostDetails)) // 用户切片
+	for k := range resp.PostDetails {
+		userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.PostDetails[k].UserID})
 		if err != nil {
-			continue
+			userDetail = &user_grpc.UserDetail{}
 		}
-		postDTOs[k].Tags = res
+		userDetails[k] = userDetail
 	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := pageNo*pageSize < total
+	hasMore := pageNo*pageSize < int(resp.Count)
+
+	posts := make([]postdto.DetailDTO, 0, len(resp.PostDetails))
+	for k := range resp.PostDetails {
+		posts = append(posts, postdto.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
+	}
 
 	// 返回
 	response.Success(ctx, "获取帖子列表成功", gin.H{
-		"posts":   postDTOs,
-		"total":   total,
+		"posts":   posts,
+		"total":   resp.Count,
 		"hasMore": hasMore,
 	})
 	return
@@ -80,27 +88,33 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	}
 
 	// 获取帖子总数和当前页帖子列表
-	total, postDTOs, err := hdl.postSvc.ListByPageAndTag(ctx, name, pageNo, pageSize)
+	resp, err := hdl.postSvc.ListByPageAndTag(ctx, &post_grpc.ListByPageAndTagRequest{Tag: name, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	for k := range postDTOs {
-		res, err := hdl.tagSvc.FindTagsByPostID(ctx, postDTOs[k].ID)
+	userDetails := make([]*user_grpc.UserDetail, len(resp.PostDetails)) // 用户切片
+	for k := range resp.PostDetails {
+		userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.PostDetails[k].UserID})
 		if err != nil {
-			continue
+			userDetail = &user_grpc.UserDetail{}
 		}
-		postDTOs[k].Tags = res
+		userDetails[k] = userDetail
 	}
 
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := pageNo*pageSize < total
+	hasMore := pageNo*pageSize < int(resp.Count)
+
+	posts := make([]postdto.DetailDTO, 0, len(resp.PostDetails))
+	for k := range resp.PostDetails {
+		posts = append(posts, postdto.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
+	}
 
 	// 返回
 	response.Success(ctx, "获取帖子列表成功", gin.H{
-		"posts":   postDTOs,
-		"total":   total,
+		"posts":   posts,
+		"total":   resp.Count,
 		"hasMore": hasMore,
 	})
 	return
@@ -117,25 +131,26 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	}
 
 	// 根据 pid 查找帖子详情
-	postDTO, err := hdl.postSvc.GetDetailById(ctx, pid, true)
+	postDetail, err := hdl.postSvc.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{PostID: pid, AddViewCnt: true})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	postDTO.Tags, err = hdl.tagSvc.FindTagsByPostID(ctx, postDTO.ID)
+	// 查询用户
+	userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: postDetail.UserID})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.Success(ctx, "获取帖子详情成功", postDTO)
+	response.Success(ctx, "获取帖子详情成功", postdto.ToDetailDTO(postDetail, userDetail))
 }
 
-// Create 创建帖子
-func (hdl *PostHandler) Create(ctx *gin.Context) {
+// CreatePost 创建帖子
+func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -144,32 +159,38 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	// 参数绑定
 	var createRequest dto.CreateRequest
 	if err = ctx.ShouldBindJSON(&createRequest); err != nil {
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 创建帖子
-	postDTO, err := hdl.postSvc.Create(ctx, uid, createRequest.Title, createRequest.Content, createRequest.ContentType)
+	postDetail, err := hdl.postSvc.Create(ctx, &post_grpc.CreatePostRequest{
+		UserID:      uid,
+		Title:       createRequest.Title,
+		Content:     createRequest.Content,
+		ContentType: uint32(createRequest.ContentType),
+		Tags:        nil,
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	// 建立标签
-	err = hdl.tagSvc.Bind(ctx, postDTO.ID, createRequest.Tags)
+	// 查询用户
+	userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: postDetail.UserID})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.Success(ctx, "帖子创建成功", postDTO)
+	response.Success(ctx, "帖子创建成功", postdto.ToDetailDTO(postDetail, userDetail))
 }
 
-// Delete 删除帖子
-func (hdl *PostHandler) Delete(ctx *gin.Context) {
+// DeletePost 删除帖子
+func (hdl *PostHandler) DeletePost(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -183,7 +204,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 进行删除
-	err = hdl.postSvc.Delete(ctx, pid, uid)
+	_, err = hdl.postSvc.Delete(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -195,7 +216,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -213,14 +234,19 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	err = ctx.ShouldBindJSON(&updateRequest)
 
 	if err != nil {
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 修改
-	err = hdl.postSvc.Update(ctx, pid, uid, updateRequest.Title, updateRequest.Content, updateRequest.Tags)
-	if err != nil {
+	if _, err = hdl.postSvc.Update(ctx, &post_grpc.UpdateRequest{
+		PostID:  pid,
+		UserID:  uid,
+		Title:   updateRequest.Title,
+		Content: updateRequest.Content,
+		Tags:    updateRequest.Tags,
+	}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -232,7 +258,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 // Belong 查询帖子作者是否为当前登录用户
 func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -246,8 +272,11 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	}
 
 	// 判断登录用户是否是作者
-	ok := hdl.postSvc.Belong(ctx, pid, uid)
-	if !ok {
+	ok, err := hdl.postSvc.Belong(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
+	if err != nil {
+		response.Error(ctx, errno.ErrServerInternal)
+		return
+	} else if !ok.Result {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}
@@ -272,25 +301,44 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 		return
 	}
 
-	total, postDTOs, err := hdl.postSvc.ListByPageAndUid(ctx, uid, pageNo, pageSize)
+	resp, err := hdl.postSvc.ListByPageAndUid(ctx, &post_grpc.ListByPageAndUidRequest{
+		UserID:   uid,
+		PageNo:   uint32(pageNo),
+		PageSize: uint32(pageSize),
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
+
+	userDetails := make([]*user_grpc.UserDetail, len(resp.PostBriefs)) // 用户切片
+	for k := range resp.PostBriefs {
+		userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.PostBriefs[k].UserID})
+		if err != nil {
+			userDetail = &user_grpc.UserDetail{}
+		}
+		userDetails[k] = userDetail
+	}
+
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
-	hasMore := pageNo*pageSize < total
+	hasMore := pageNo*pageSize < int(resp.Count)
+
+	posts := make([]postdto.BriefDTO, 0, len(resp.PostBriefs))
+	for k := range resp.PostBriefs {
+		posts = append(posts, postdto.ToBriefDTO(resp.PostBriefs[k], userDetails[k]))
+	}
 
 	// 返回
 	response.Success(ctx, "获取帖子列表成功", gin.H{
-		"posts":   postDTOs,
-		"total":   total,
+		"posts":   posts,
+		"total":   resp.Count,
 		"hasMore": hasMore,
 	})
 }
 
 func (hdl *PostHandler) Like(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -303,8 +351,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.postSvc.Like(ctx, pid, uid)
-	if err != nil {
+	if _, err = hdl.postSvc.Like(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -314,7 +361,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 
 func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -327,8 +374,7 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 		return
 	}
 
-	err = hdl.postSvc.Unlike(ctx, pid, uid)
-	if err != nil {
+	if _, err = hdl.postSvc.Unlike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid}); err != nil {
 		response.Error(ctx, err)
 		return
 	}
@@ -338,7 +384,7 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 
 func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -351,27 +397,33 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 		return
 	}
 
-	ok, err := hdl.postSvc.IfLike(ctx, pid, uid)
+	ok, err := hdl.postSvc.IfLike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
-	response.Success(ctx, "", ok)
+
+	response.Success(ctx, "", ok.Result)
 }
 
 func (hdl *PostHandler) Top(ctx *gin.Context) {
-	postDTOs, err := hdl.postSvc.Top(ctx)
+	resp, err := hdl.postSvc.Top(ctx, &post_grpc.PostEmptyRequest{})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.Success(ctx, "获取热门帖子榜单成功", postDTOs)
+	res := make([]postdto.TopDTO, 0, len(resp.TopPosts))
+	for _, topPost := range resp.TopPosts {
+		res = append(res, postdto.ToTopDTO(topPost))
+	}
+
+	response.Success(ctx, "获取热门帖子榜单成功", res)
 }
 
-func (hdl *PostHandler) Create(ctx *gin.Context) {
+func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -385,15 +437,21 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	}
 
 	// 获取参数并校验
-	var createReq comment.CreateRequest
+	var createReq postdto.CreateCommentRequest
 	if err := ctx.ShouldBindJSON(&createReq); err != nil || createReq.ParentID < 0 {
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 调用 service 层创建评论
-	commentDTO, err := hdl.commentSvc.Create(ctx, pid, uid, createReq.ParentID, createReq.ReplyID, createReq.Content)
+	commentDTO, err := hdl.postSvc.CreateComment(ctx, &post_grpc.CreateCommentRequest{
+		PostID:   pid,
+		ParentID: createReq.ParentID,
+		ReplyID:  createReq.ReplyID,
+		UserID:   uid,
+		Content:  createReq.Content,
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -402,9 +460,9 @@ func (hdl *PostHandler) Create(ctx *gin.Context) {
 	response.Success(ctx, "评论成功", commentDTO)
 }
 
-func (hdl *PostHandler) Delete(ctx *gin.Context) {
+func (hdl *PostHandler) DeleteComment(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -425,7 +483,10 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	}
 
 	// 调用 Service 层
-	err = hdl.commentSvc.Delete(ctx, uid, cid)
+	_, err = hdl.postSvc.DeleteComment(ctx, &post_grpc.DeleteCommentRequest{
+		UserID:    uid,
+		CommentID: cid,
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -434,7 +495,7 @@ func (hdl *PostHandler) Delete(ctx *gin.Context) {
 	response.Success(ctx, "评论删除成功", nil)
 }
 
-func (hdl *PostHandler) ListByPage(ctx *gin.Context) {
+func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 	// 获取参数
 	pid, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -449,17 +510,35 @@ func (hdl *PostHandler) ListByPage(ctx *gin.Context) {
 		return
 	}
 
-	total, commentDTOs, err := hdl.commentSvc.List(ctx, pid, pageNo, pageSize)
+	resp, err := hdl.postSvc.ListCommentByPage(ctx, &post_grpc.ListCommentByPageRequest{
+		PostID:   pid,
+		PageNo:   uint32(pageNo),
+		PageSize: uint32(pageSize),
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	hasMore := pageNo*pageSize < total
+	hasMore := pageNo*pageSize < int(resp.Count)
+
+	userDetails := make([]*user_grpc.UserDetail, len(resp.Comments)) // 用户切片
+	for k := range resp.Comments {
+		userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.Comments[k].UserID})
+		if err != nil {
+			userDetail = &user_grpc.UserDetail{}
+		}
+		userDetails[k] = userDetail
+	}
+
+	comments := make([]postdto.CommentDTO, 0, len(resp.Comments))
+	for k := range resp.Comments {
+		comments = append(comments, postdto.ToCommentDTO(resp.Comments[k], userDetails[k]))
+	}
 
 	response.Success(ctx, "获取评论列表成功", gin.H{
-		"comments": commentDTOs,
-		"total":    total,
+		"comments": comments,
+		"total":    resp.Count,
 		"hasMore":  hasMore,
 	})
 }
@@ -489,24 +568,42 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 		return
 	}
 
-	total, commentDTOs, err := hdl.commentSvc.ListReplies(ctx, cid, pageNo, pageSize)
+	resp, err := hdl.postSvc.ListRepliesByPage(ctx, &post_grpc.ListReplyByPageRequest{
+		CommentID: cid,
+		PageNo:    uint32(pageNo),
+		PageSize:  uint32(pageSize),
+	})
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	hasMore := pageNo*pageSize < total
+	hasMore := pageNo*pageSize < int(resp.Count)
+
+	userDetails := make([]*user_grpc.UserDetail, len(resp.Comments)) // 用户切片
+	for k := range resp.Comments {
+		userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.Comments[k].UserID})
+		if err != nil {
+			userDetail = &user_grpc.UserDetail{}
+		}
+		userDetails[k] = userDetail
+	}
+
+	comments := make([]postdto.CommentDTO, 0, len(resp.Comments))
+	for k := range resp.Comments {
+		comments = append(comments, postdto.ToCommentDTO(resp.Comments[k], userDetails[k]))
+	}
 
 	response.Success(ctx, "获取评论回复列表成功", gin.H{
-		"comments": commentDTOs,
-		"total":    total,
+		"comments": comments,
+		"total":    resp.Count,
 		"hasMore":  hasMore,
 	})
 }
 
-func (hdl *PostHandler) CheckAuth(ctx *gin.Context) {
+func (hdl *PostHandler) CheckCommentDeleteAuth(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -520,8 +617,13 @@ func (hdl *PostHandler) CheckAuth(ctx *gin.Context) {
 	}
 
 	// 查询是否属于
-	ok := hdl.commentSvc.CheckAuth(ctx, cid, uid)
-	if !ok {
+	resp, err := hdl.postSvc.CheckCommentDeleteAuth(ctx, &post_grpc.CommentBelongRequest{UserID: uid, CommentID: cid})
+	if err != nil {
+		response.Error(ctx, errno.ErrServerInternal)
+		return
+	}
+
+	if !resp.Result {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}

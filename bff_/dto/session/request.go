@@ -1,4 +1,4 @@
-package message
+package session
 
 type Request struct {
 	Type        string `json:"type"`

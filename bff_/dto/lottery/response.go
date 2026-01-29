@@ -1,13 +1,30 @@
-package order
+package lottery
 
 import (
 	"time"
 
 	model2 "github.com/yzletter/go-postery/auth/model"
-	giftdto "github.com/yzletter/go-postery/bff_/dto/gift"
-	userdto "github.com/yzletter/go-postery/bff_/dto/user"
-	"github.com/yzletter/go-postery/model"
+	userdto "github.com/yzletter/go-postery/bff/dto/user"
+	"github.com/yzletter/go-postery/lottery/model"
 )
+
+type DTO struct {
+	ID          int64  `json:"id,string"`
+	Name        string `json:"name"`
+	Avatar      string `json:"avatar"`
+	Description string `json:"description"`
+	Prize       int    `json:"prize"`
+}
+
+func ToDTO(gift *model.Gift) DTO {
+	return DTO{
+		ID:          gift.ID,
+		Name:        gift.Name,
+		Avatar:      gift.Avatar,
+		Description: gift.Description,
+		Prize:       gift.Prize,
+	}
+}
 
 type DTO struct {
 	ID        int64            `json:"id,string"` // 订单 ID
