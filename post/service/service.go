@@ -7,8 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/post/dto"
+	"github.com/yzletter/go-postery/post/errs"
 	"github.com/yzletter/go-postery/post/model"
 	"github.com/yzletter/go-postery/post/repository"
 	"github.com/yzletter/go-postery/post/service/ports"
@@ -75,7 +75,8 @@ func (svc *postService) Create(ctx context.Context, req *post_grpc.CreatePostReq
 			// 雪花 ID 的帖子不会已存在, 需要排查
 			slog.Error("Create Post Failed", "error", err)
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	_ = svc.BindTag(ctx, post.ID, req.Tags)
@@ -90,9 +91,11 @@ func (svc *postService) GetDetailByID(ctx context.Context, req *post_grpc.GetDet
 	post, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrPostNotFound
+			slog.Error("Post Not Found", "error", err)
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	if req.AddViewCnt {
@@ -119,9 +122,11 @@ func (svc *postService) GetBriefByID(ctx context.Context, req *post_grpc.GetBrie
 	post, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrPostNotFound
+			slog.Error("Post Not Found", "error", err)
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	return dto.ToPostBrief(post), nil
@@ -132,7 +137,8 @@ func (svc *postService) Top(ctx context.Context, req *post_grpc.PostEmptyRequest
 
 	posts, scores, err := svc.postRepo.Top(ctx)
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	var topPosts []*post_grpc.TopPost
@@ -150,17 +156,20 @@ func (svc *postService) Update(ctx context.Context, req *post_grpc.UpdateRequest
 	post, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &post_grpc.PostEmptyResponse{}, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrNotFound
 		}
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
-	} else if post.UserID != req.UserID {
-		return &post_grpc.PostEmptyResponse{}, errno.ErrUnauthorized
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
+	} else if post.UserID != req.UserID { // 没有权利修改
+		slog.Error("Unauthenticated")
+		return &post_grpc.PostEmptyResponse{}, errs.ErrUnauthenticated
 	}
 
 	tagsBefore, err := svc.tagRepo.FindTagsByPostID(ctx, req.PostID)
 	if err != nil {
-		slog.Error("Get Tags_Before Failed", "error", err)
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 
 	tagsNow := req.Tags
@@ -228,9 +237,11 @@ func (svc *postService) Update(ctx context.Context, req *post_grpc.UpdateRequest
 	// 更新标题和正文
 	if err = svc.postRepo.Update(ctx, req.PostID, updates); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &post_grpc.PostEmptyResponse{}, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrNotFound
 		}
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 
 	return &post_grpc.PostEmptyResponse{}, nil
@@ -243,7 +254,8 @@ func (svc *postService) ListByPage(ctx context.Context, req *post_grpc.ListByPag
 	// 获取帖子总数和当前页帖子列表
 	total, posts, err := svc.postRepo.GetByPage(ctx, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrPostNotFound
+		slog.Error("Post Not Found")
+		return empty, errs.ErrNotFound
 	}
 
 	// todo 避免性能问题，优化 SQL
@@ -266,7 +278,8 @@ func (svc *postService) ListByPageAndUid(ctx context.Context, req *post_grpc.Lis
 	var empty = new(post_grpc.PostBriefsResponse)
 	total, posts, err := svc.postRepo.GetByUid(ctx, req.UserID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrPostNotFound
+		slog.Error("Post Not Found")
+		return empty, errs.ErrNotFound
 	}
 
 	// 转化 Post
@@ -290,14 +303,16 @@ func (svc *postService) ListByPageAndTag(ctx context.Context, req *post_grpc.Lis
 
 	tag, err := svc.tagRepo.GetByName(ctx, req.Tag)
 	if err != nil {
-		return empty, errno.ErrPostNotFound
+		slog.Error("Post Not Found")
+		return empty, errs.ErrNotFound
 	}
 
 	// todo 避免性能问题，优化 SQL
 	// 获取帖子总数和当前页帖子列表
 	total, posts, err := svc.postRepo.GetByPageAndTag(ctx, tag.ID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrPostNotFound
+		slog.Error("Post Not Found")
+		return empty, errs.ErrNotFound
 	}
 
 	// 转化
@@ -321,9 +336,11 @@ func (svc *postService) Belong(ctx context.Context, req *post_grpc.PostCommonReq
 	post, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &post_grpc.BelongResponse{Result: false}, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return &post_grpc.BelongResponse{Result: false}, errs.ErrNotFound
 		}
-		return &post_grpc.BelongResponse{Result: false}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.BelongResponse{Result: false}, errs.ErrInternal
 	} else if post.UserID != req.UserID {
 		return &post_grpc.BelongResponse{Result: false}, nil
 	}
@@ -336,16 +353,20 @@ func (svc *postService) Delete(ctx context.Context, req *post_grpc.PostCommonReq
 	post, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &post_grpc.PostEmptyResponse{}, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrNotFound
 		}
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	} else if post.UserID != req.UserID {
-		return &post_grpc.PostEmptyResponse{}, errno.ErrUnauthorized
+		slog.Error("Unauthenticated")
+		return &post_grpc.PostEmptyResponse{}, errs.ErrUnauthenticated
 	}
 
 	// 删除帖子
 	if err := svc.postRepo.Delete(ctx, req.PostID); err != nil {
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 	return &post_grpc.PostEmptyResponse{}, nil
 }
@@ -354,9 +375,11 @@ func (svc *postService) Like(ctx context.Context, req *post_grpc.PostCommonReque
 	// 查找帖子
 	if _, err := svc.postRepo.GetByID(ctx, req.PostID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &post_grpc.PostEmptyResponse{}, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrNotFound
 		}
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 创建点赞记录
@@ -369,10 +392,12 @@ func (svc *postService) Like(ctx context.Context, req *post_grpc.PostCommonReque
 	if err := svc.likeRepo.Like(ctx, like); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 重复点赞
-			return &post_grpc.PostEmptyResponse{}, errno.ErrDuplicatedLike
+			slog.Error("Duplicated Like")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrAlreadyExits
 		}
 		// 系统内部错误
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 修改分数
@@ -389,19 +414,23 @@ func (svc *postService) Unlike(ctx context.Context, req *post_grpc.PostCommonReq
 	// 查找帖子
 	if _, err := svc.postRepo.GetByID(ctx, req.PostID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return &post_grpc.PostEmptyResponse{}, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrNotFound
 		}
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 删除点赞记录
 	if err := svc.likeRepo.UnLike(ctx, req.UserID, req.PostID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 重复删除
-			return &post_grpc.PostEmptyResponse{}, errno.ErrDuplicatedUnLike
+			slog.Error("Duplicated Unlike")
+			return &post_grpc.PostEmptyResponse{}, errs.ErrAlreadyExits
 		}
 		// 系统内部错误
-		return &post_grpc.PostEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.PostEmptyResponse{}, errs.ErrInternal
 	}
 
 	// 修改分数
@@ -416,8 +445,10 @@ func (svc *postService) Unlike(ctx context.Context, req *post_grpc.PostCommonReq
 func (svc *postService) IfLike(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.IfLikeResponse, error) {
 	if ok, err := svc.likeRepo.HasLiked(ctx, req.UserID, req.PostID); err == nil {
 		return &post_grpc.IfLikeResponse{Result: ok}, nil
+	} else {
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.IfLikeResponse{Result: false}, errs.ErrInternal
 	}
-	return &post_grpc.IfLikeResponse{Result: false}, errno.ErrServerInternal
 }
 
 func (svc *postService) CreateComment(ctx context.Context, req *post_grpc.CreateCommentRequest) (*post_grpc.Comment, error) {
@@ -426,9 +457,11 @@ func (svc *postService) CreateComment(ctx context.Context, req *post_grpc.Create
 	_, err := svc.postRepo.GetByID(ctx, req.PostID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrPostNotFound
+			slog.Error("Post Not Found")
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	// 新建评论
@@ -446,7 +479,8 @@ func (svc *postService) CreateComment(ctx context.Context, req *post_grpc.Create
 			// 雪花 ID 的评论不会已存在, 需要排查
 			slog.Error("Create Comment Failed", "error", err)
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	// 修改评论数
@@ -463,22 +497,27 @@ func (svc *postService) DeleteComment(ctx context.Context, req *post_grpc.Delete
 	comment, err := svc.commentRepo.GetByID(ctx, req.CommentID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrCommentNotFound
+			slog.Error("Comment Not Found")
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	if comment.UserID != req.UserID {
-		return empty, errno.ErrUnauthorized
+		slog.Error("ErrUnauthenticated")
+		return empty, errs.ErrUnauthenticated
 	}
 
 	// 删除评论
 	cnt, err := svc.commentRepo.Delete(ctx, req.CommentID) // 返回被删除的个数
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrCommentNotFound
+			slog.Error("Comment Not Found")
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	// 改变评论数
@@ -495,7 +534,8 @@ func (svc *postService) ListCommentByPage(ctx context.Context, req *post_grpc.Li
 	var empty = new(post_grpc.CommentsResponse)
 	total, comments, err := svc.commentRepo.GetByPostID(ctx, req.PostID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrCommentNotFound
+		slog.Error("Comment Not Found")
+		return empty, errs.ErrNotFound
 	}
 
 	var respComments []*post_grpc.Comment
@@ -516,9 +556,11 @@ func (svc *postService) ListRepliesByPage(ctx context.Context, req *post_grpc.Li
 	total, comments, err := svc.commentRepo.GetRepliesByParentID(ctx, req.CommentID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrCommentNotFound
+			slog.Error("Comment Not Found")
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	var respComments []*post_grpc.Comment
@@ -537,12 +579,22 @@ func (svc *postService) ListRepliesByPage(ctx context.Context, req *post_grpc.Li
 func (svc *postService) CheckCommentDeleteAuth(ctx context.Context, req *post_grpc.CommentBelongRequest) (*post_grpc.BelongResponse, error) {
 	comment, err := svc.commentRepo.GetByID(ctx, req.CommentID)
 	if err != nil {
-		return &post_grpc.BelongResponse{Result: false}, nil
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("Comment Not Found")
+			return &post_grpc.BelongResponse{Result: false}, errs.ErrNotFound
+		}
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.BelongResponse{Result: false}, errs.ErrInternal
 	}
 
 	post, err := svc.postRepo.GetByID(ctx, comment.PostID)
 	if err != nil {
-		return &post_grpc.BelongResponse{Result: false}, nil
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("Post Not Found")
+			return &post_grpc.BelongResponse{Result: false}, errs.ErrNotFound
+		}
+		slog.Error("Server Internal Error", "error", err)
+		return &post_grpc.BelongResponse{Result: false}, errs.ErrInternal
 	}
 
 	// 帖子属于当前登录用户，或评论属于当前用户
@@ -576,9 +628,11 @@ func (svc *postService) BindTag(ctx context.Context, pid int64, tags []string) e
 		if err = svc.tagRepo.Bind(ctx, postTag); err != nil {
 			slog.Error("BindTag Post Tag Failed", "error", err)
 			if errors.Is(err, repository.ErrUniqueKey) {
-				return errno.ErrTagDuplicatedBind
+				slog.Error("Duplicated Tag Bind")
+				return errs.ErrAlreadyExits
 			}
-			return errno.ErrServerInternal
+			slog.Error("Server Internal Error", "error", err)
+			return errs.ErrInternal
 		}
 	}
 
@@ -597,10 +651,10 @@ func (svc *postService) CreateTag(ctx context.Context, name string) (int64, erro
 		Slug: slug,
 	}
 
-	err := svc.tagRepo.Create(ctx, tag)
-	if err != nil {
+	if err := svc.tagRepo.Create(ctx, tag); err != nil {
 		if !errors.Is(err, repository.ErrUniqueKey) {
-			return 0, errno.ErrServerInternal
+			slog.Error("Server Internal Error", "error", err)
+			return 0, errs.ErrInternal
 		}
 	}
 	return tag.ID, nil
@@ -611,8 +665,8 @@ func (svc *postService) FindTagsByPostID(ctx context.Context, pid int64) ([]stri
 	var empty []string
 	res, err := svc.tagRepo.FindTagsByPostID(ctx, pid)
 	if err != nil {
-		slog.Error("Find Tags By Post ID Failed", "error", err)
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 	return res, nil
 }
