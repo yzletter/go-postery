@@ -11,9 +11,9 @@ import (
 	rmq_client "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/bytedance/sonic"
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
-	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/lottery/conf"
 	"github.com/yzletter/go-postery/lottery/dto"
+	"github.com/yzletter/go-postery/lottery/errs"
 	infraRocketMQ "github.com/yzletter/go-postery/lottery/infra/rocketmq"
 	"github.com/yzletter/go-postery/lottery/model"
 	"github.com/yzletter/go-postery/lottery/repository"
@@ -43,9 +43,11 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context, req *lottery_grpc.Em
 	gifts, err := svc.giftRepo.GetAllGifts(ctx)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrGiftNotFound
+			slog.Error("Gift Not Found", "error", err)
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	respGifts := make([]*lottery_grpc.Gift, 0, len(gifts))
@@ -140,7 +142,8 @@ func (svc *lotteryService) Pay(ctx context.Context, req *lottery_grpc.LotteryCom
 	// 获取临时订单
 	tempID, err := svc.orderRepo.GetTempOrder(ctx, req.UserID)
 	if err != nil || tempID != req.GiftID {
-		return &lottery_grpc.EmptyResponse{}, errno.ErrNotLottery
+		slog.Error("No Available Order")
+		return &lottery_grpc.EmptyResponse{}, errs.ErrNotFound
 	}
 
 	// 正式订单落库
@@ -154,10 +157,11 @@ func (svc *lotteryService) Pay(ctx context.Context, req *lottery_grpc.LotteryCom
 	if err := svc.orderRepo.CreateOrder(ctx, order); err != nil {
 		_ = svc.giftRepo.IncreaseCacheInventory(ctx, req.GiftID)
 		if errors.Is(err, repository.ErrUniqueKey) {
-			slog.Error("Create Order Failed", "error", err)
-			return &lottery_grpc.EmptyResponse{}, errno.ErrServerInternal
+			slog.Error("Server Internal Error", "error", err)
+			return &lottery_grpc.EmptyResponse{}, errs.ErrInternal
 		}
-		return &lottery_grpc.EmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &lottery_grpc.EmptyResponse{}, errs.ErrInternal
 	}
 
 	// 删除临时订单
@@ -169,7 +173,8 @@ func (svc *lotteryService) GiveUp(ctx context.Context, req *lottery_grpc.Lottery
 	// 获取临时订单
 	tempID, err := svc.orderRepo.GetTempOrder(ctx, req.UserID)
 	if err != nil || tempID != req.GiftID {
-		return &lottery_grpc.EmptyResponse{}, errno.ErrNotLottery
+		slog.Error("No Available Order")
+		return &lottery_grpc.EmptyResponse{}, errs.ErrNotFound
 	}
 
 	_ = svc.orderRepo.DeleteTempOrder(ctx, req.UserID)
@@ -183,7 +188,8 @@ func (svc *lotteryService) Result(ctx context.Context, id *lottery_grpc.UserID) 
 	// 获取订单
 	order, err := svc.orderRepo.GetOrder(ctx, id.UserID)
 	if err != nil {
-		return empty, errno.ErrOrderNotFound
+		slog.Error("No Available Order")
+		return empty, errs.ErrNotFound
 	}
 
 	// 获取 Gift
@@ -240,7 +246,7 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 	// 序列化 Order
 	body, err := sonic.Marshal(order)
 	if err != nil {
-		return errno.ErrServerInternal
+		return errs.ErrInternal
 	}
 
 	// 构造 Message
@@ -252,7 +258,7 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 
 	// 发送消息
 	if _, err = svc.mq.RocketProducer.Send(ctx, message); err != nil {
-		return errno.ErrServerInternal
+		return errs.ErrInternal
 	}
 	return nil
 }
