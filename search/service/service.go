@@ -121,7 +121,7 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 			// 解析 JSON
 			var payload model.IndexPayload
 			if err = sonic.Unmarshal(message.Value, &payload); err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
 				// 脏消息 Commit 掉
 				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
 				continue
@@ -136,7 +136,7 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 
 			// 消费成功, 把消息 Commit 掉
 			if err = svc.kafkaConsumer.CommitMessages(ctx, message); err != nil {
-				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}

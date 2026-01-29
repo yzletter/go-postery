@@ -21,8 +21,8 @@ type ModifyProfileRequest struct {
 //		Country:  &request.Country,
 //	}
 //
-//	t, err := time.Parse("2006-01-02", request.BirthDay)
-//	if err == nil {
+//	t, errs := time.Parse("2006-01-02", request.BirthDay)
+//	if errs == nil {
 //		userProfile.BirthDay = &t
 //	}
 //

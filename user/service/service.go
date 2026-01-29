@@ -9,8 +9,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/errno"
 	"github.com/yzletter/go-postery/user/dto"
+	"github.com/yzletter/go-postery/user/errs"
 	"github.com/yzletter/go-postery/user/model"
 	"github.com/yzletter/go-postery/user/repository"
 	"github.com/yzletter/go-postery/user/service/ports"
@@ -38,20 +38,24 @@ func (svc *userService) GetProfileById(ctx context.Context, req *user_grpc.GetPr
 	empty := new(user_grpc.UserDetail)
 
 	if req.ID <= 0 {
-		return empty, errno.ErrInvalidParam
+		slog.Error("Invalid User ID")
+		return empty, errs.ErrInvalidArgument
 	}
 
 	// 获取用户
 	profile, err := svc.userRepository.GetProfileByID(ctx, req.ID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
+			slog.Error("User Not Found", "error", err)
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	if profile == nil {
-		return empty, errno.ErrUserNotFound
+		slog.Error("User Not Found", "error", err)
+		return empty, errs.ErrNotFound
 	}
 
 	return dto.ToUserDetail(profile), nil
@@ -61,7 +65,8 @@ func (svc *userService) UpdateProfile(ctx context.Context, req *user_grpc.Update
 	empty := new(user_grpc.UpdateProfileResponse)
 
 	if req.ID <= 0 {
-		return empty, errno.ErrInvalidParam
+		slog.Error("Invalid User ID")
+		return empty, errs.ErrInvalidArgument
 	}
 
 	// 将 Request 转为 Model, 主要是 Birthday 从 RFC3339 string 转为 Time.time
@@ -79,9 +84,11 @@ func (svc *userService) UpdateProfile(ctx context.Context, req *user_grpc.Update
 
 	if err := svc.userRepository.UpdateProfile(ctx, req.ID, updates); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			return empty, errno.ErrUserNotFound
+			slog.Error("User Not Found", "error", err)
+			return empty, errs.ErrNotFound
 		}
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	return &user_grpc.UpdateProfileResponse{}, nil
@@ -91,7 +98,8 @@ func (svc *userService) Top(ctx context.Context, req *user_grpc.TopRequest) (*us
 	empty := new(user_grpc.TopResponse)
 	profiles, scores, err := svc.userRepository.Top(ctx)
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	var topUsers []*user_grpc.TopUser
@@ -106,14 +114,13 @@ func (svc *userService) Top(ctx context.Context, req *user_grpc.TopRequest) (*us
 func (svc *userService) Follow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error) {
 	res, err := svc.followRepository.Exists(ctx, req.FollowerID, req.FolloweeID)
 	if err != nil {
-		slog.Error("Exist Failed", "error", err)
-		return &user_grpc.FollowEmptyResponse{}, errno.ErrServerInternal // 数据库内部错误
+		slog.Error("Server Internal Error", "error", err)
+		return &user_grpc.FollowEmptyResponse{}, errs.ErrInternal
 	}
 
-	slog.Error("Exist Failed", "error", err)
-	
 	if res == 1 || res == 3 { // 已经关注过了
-		return &user_grpc.FollowEmptyResponse{}, errno.ErrDuplicatedFollow
+		slog.Error("Duplicated Follow")
+		return &user_grpc.FollowEmptyResponse{}, errs.ErrAlreadyExits
 	}
 
 	follow := &model.Follow{
@@ -122,13 +129,12 @@ func (svc *userService) Follow(ctx context.Context, req *user_grpc.FollowCommonR
 		FolloweeID: req.FolloweeID,
 	}
 	if err = svc.followRepository.Create(ctx, follow); err != nil {
-		if errors.Is(err, repository.ErrUniqueKey) {
-			// 检查过仍冲突
-			slog.Error("Follow Failed", "error", err)
-			return &user_grpc.FollowEmptyResponse{}, errno.ErrDuplicatedFollow
+		if errors.Is(err, repository.ErrUniqueKey) { // 检查过仍冲突
+			slog.Error("Duplicated Follow")
+			return &user_grpc.FollowEmptyResponse{}, errs.ErrAlreadyExits
 		}
-		slog.Error("Follow Failed", "error", err)
-		return &user_grpc.FollowEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &user_grpc.FollowEmptyResponse{}, errs.ErrInternal
 	}
 	_ = svc.userRepository.ChangeScore(ctx, req.FolloweeID, 1)
 	return &user_grpc.FollowEmptyResponse{}, nil
@@ -138,20 +144,22 @@ func (svc *userService) Follow(ctx context.Context, req *user_grpc.FollowCommonR
 func (svc *userService) UnFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error) {
 	res, err := svc.followRepository.Exists(ctx, req.FollowerID, req.FolloweeID)
 	if err != nil {
-		return &user_grpc.FollowEmptyResponse{}, errno.ErrServerInternal // 数据库内部错误
+		slog.Error("Server Internal Error", "error", err)
+		return &user_grpc.FollowEmptyResponse{}, errs.ErrInternal
 	}
 
 	if res == 2 || res == 0 { // 只有对方关注了我，或者互不关注
-		return &user_grpc.FollowEmptyResponse{}, errno.ErrDuplicatedUnFollow
+		slog.Error("Duplicated UnFollow")
+		return &user_grpc.FollowEmptyResponse{}, errs.ErrAlreadyExits
 	}
 
-	err = svc.followRepository.Delete(ctx, req.FollowerID, req.FolloweeID)
-	if err != nil {
+	if err := svc.followRepository.Delete(ctx, req.FollowerID, req.FolloweeID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			slog.Error("检查过还出错", "error", err)
-			return &user_grpc.FollowEmptyResponse{}, errno.ErrDuplicatedUnFollow
+			slog.Error("Duplicated UnFollow")
+			return &user_grpc.FollowEmptyResponse{}, errs.ErrAlreadyExits
 		}
-		return &user_grpc.FollowEmptyResponse{}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &user_grpc.FollowEmptyResponse{}, errs.ErrInternal
 	}
 
 	_ = svc.userRepository.ChangeScore(ctx, req.FolloweeID, -1)
@@ -163,7 +171,8 @@ func (svc *userService) UnFollow(ctx context.Context, req *user_grpc.FollowCommo
 func (svc *userService) IfFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.IfFollowResponse, error) {
 	res, err := svc.followRepository.Exists(ctx, req.FollowerID, req.FolloweeID)
 	if err != nil {
-		return &user_grpc.IfFollowResponse{Result: -1}, errno.ErrServerInternal // 数据库内部错误
+		slog.Error("Server Internal Error", "error", err)
+		return &user_grpc.IfFollowResponse{Result: -1}, errs.ErrInternal // 数据库内部错误
 	}
 	return &user_grpc.IfFollowResponse{Result: int32(res)}, nil
 }
@@ -173,7 +182,8 @@ func (svc *userService) ListFollowersByPage(ctx context.Context, req *user_grpc.
 	var empty = new(user_grpc.ListFollowResponse)
 	total, followersId, err := svc.followRepository.GetFollowers(ctx, req.UserID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	userBriefs := make([]*user_grpc.UserBrief, 0)
@@ -195,7 +205,8 @@ func (svc *userService) ListFolloweesByPage(ctx context.Context, req *user_grpc.
 	var empty = new(user_grpc.ListFollowResponse)
 	total, followeesId, err := svc.followRepository.GetFollowees(ctx, req.UserID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
-		return empty, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return empty, errs.ErrInternal
 	}
 
 	userBriefs := make([]*user_grpc.UserBrief, 0)
@@ -217,7 +228,7 @@ func (svc *userService) StartInitUserScoreConsumer(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("关闭 Score Init Consumer 成功 ...")
+			slog.Info("Close Init Score Consumer Success ...")
 			return
 		default:
 			// Fetch 消息
@@ -227,7 +238,7 @@ func (svc *userService) StartInitUserScoreConsumer(ctx context.Context) {
 					return
 				}
 
-				slog.Error("Fetch Message From Kafka Failed", "Kafka", "SessionKafka", "error", err)
+				slog.Error("Fetch Message Failed", "Topic", "Session", "error", err)
 
 				// 简单退避，避免狂刷日志
 				time.Sleep(backoff)
@@ -242,7 +253,7 @@ func (svc *userService) StartInitUserScoreConsumer(ctx context.Context) {
 			// 解析 JSON
 			var payload model.InitUserScoreEventPayload
 			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
 				// 脏消息 Commit 掉
 				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
 				continue
@@ -257,7 +268,7 @@ func (svc *userService) StartInitUserScoreConsumer(ctx context.Context) {
 
 			// 初始化用户分数成功, 把消息 Commit 掉
 			if err := svc.kafkaConsumer.CommitMessages(ctx, message); err != nil {
-				slog.Error("Commit Kafka Message Failed", "uid", payload.UserID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+				slog.Error("Commit Kafka Message Failed", "uid", payload.UserID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}

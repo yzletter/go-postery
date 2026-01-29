@@ -55,9 +55,9 @@ func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) 
 	var empty = new(agent_grpc.ChatResponse)
 
 	// todo 拉取历史记录
-	//messages, err := svc.agentRepo.GetMessagesBySessionID(ctx, sessionID)
-	//if err != nil {
-	//	if errors.Is(err, repository.ErrServerInternal) {
+	//messages, errs := svc.agentRepo.GetMessagesBySessionID(ctx, sessionID)
+	//if errs != nil {
+	//	if errors.Is(errs, repository.ErrServerInternal) {
 	//		return empty, errno.ErrServerInternal
 	//	}
 	//}
@@ -160,7 +160,7 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			var payload model.ChunkDocumentEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
 				// 脏消息 Commit 掉
 				_ = svc.agentKafkaConsumer.CommitMessages(ctx, message)
 				continue
@@ -177,7 +177,7 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			// 消费成功, 把消息 Commit 掉
 			err = svc.agentKafkaConsumer.CommitMessages(ctx, message)
 			if err != nil {
-				slog.Error("Commit Kafka Message Failed", "id", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+				slog.Error("Commit Kafka Message Failed", "id", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}
@@ -216,7 +216,7 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 			var payload model.UpsertQdrantEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "err", err)
+				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
 				// 脏消息 Commit 掉
 				_ = svc.qdrantKafkaConsumer.CommitMessages(ctx, message)
 				continue
@@ -233,7 +233,7 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 			// 消费成功, 把消息 Commit 掉
 			err = svc.qdrantKafkaConsumer.CommitMessages(ctx, message)
 			if err != nil {
-				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "err", err)
+				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}
