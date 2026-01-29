@@ -13,6 +13,7 @@ import (
 	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/bff/utils/response"
 	"github.com/yzletter/go-postery/post/dto"
+	"google.golang.org/grpc/codes"
 )
 
 type PostHandler struct {
@@ -44,7 +45,9 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 		PageSize: uint32(pageSize),
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrPostNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -90,7 +93,9 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	// 获取帖子总数和当前页帖子列表
 	resp, err := hdl.postSvc.ListByPageAndTag(ctx, &post_grpc.ListByPageAndTagRequest{Tag: name, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrPostNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -133,14 +138,19 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	// 根据 pid 查找帖子详情
 	postDetail, err := hdl.postSvc.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{PostID: pid, AddViewCnt: true})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrPostNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
 	// 查询用户
 	userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: postDetail.UserID})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -173,14 +183,17 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		Tags:        nil,
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
 	// 查询用户
 	userDetail, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: postDetail.UserID})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -206,7 +219,10 @@ func (hdl *PostHandler) DeletePost(ctx *gin.Context) {
 	// 进行删除
 	_, err = hdl.postSvc.Delete(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound:        errno.ErrPostNotFound,
+			codes.Unauthenticated: errno.ErrUnauthorized,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -247,7 +263,10 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 		Content: updateRequest.Content,
 		Tags:    updateRequest.Tags,
 	}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound:        errno.ErrPostNotFound,
+			codes.Unauthenticated: errno.ErrUnauthorized,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -274,7 +293,9 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	// 判断登录用户是否是作者
 	ok, err := hdl.postSvc.Belong(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
 	if err != nil {
-		response.Error(ctx, errno.ErrServerInternal)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrPostNotFound,
+		}, errno.ErrServerInternal))
 		return
 	} else if !ok.Result {
 		response.Error(ctx, errno.ErrUnauthorized)
@@ -307,7 +328,9 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 		PageSize: uint32(pageSize),
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrPostNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -352,7 +375,10 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 	}
 
 	if _, err = hdl.postSvc.Like(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound:      errno.ErrPostNotFound,
+			codes.AlreadyExists: errno.ErrDuplicatedLike,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -375,7 +401,10 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 	}
 
 	if _, err = hdl.postSvc.Unlike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid}); err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound:      errno.ErrPostNotFound,
+			codes.AlreadyExists: errno.ErrDuplicatedUnLike,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -399,7 +428,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 
 	ok, err := hdl.postSvc.IfLike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -409,7 +438,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 func (hdl *PostHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.postSvc.Top(ctx, &post_grpc.PostEmptyRequest{})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
 		return
 	}
 
@@ -453,7 +482,9 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 		Content:  createReq.Content,
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrPostNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -488,7 +519,10 @@ func (hdl *PostHandler) DeleteComment(ctx *gin.Context) {
 		CommentID: cid,
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound:        errno.ErrCommentNotFound,
+			codes.Unauthenticated: errno.ErrUnauthorized,
+		}, errno.ErrServerInternal))
 		return
 	}
 	// 返回数据
@@ -516,7 +550,9 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 		PageSize: uint32(pageSize),
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrCommentNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -574,7 +610,9 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 		PageSize:  uint32(pageSize),
 	})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrCommentNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 
@@ -619,7 +657,9 @@ func (hdl *PostHandler) CheckCommentDeleteAuth(ctx *gin.Context) {
 	// 查询是否属于
 	resp, err := hdl.postSvc.CheckCommentDeleteAuth(ctx, &post_grpc.CommentBelongRequest{UserID: uid, CommentID: cid})
 	if err != nil {
-		response.Error(ctx, errno.ErrServerInternal)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound: errno.ErrCommentNotFound,
+		}, errno.ErrServerInternal))
 		return
 	}
 

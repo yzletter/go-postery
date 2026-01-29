@@ -4,18 +4,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/auth/conf"
+	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
+	"github.com/yzletter/go-postery/bff/conf"
+	agentdto "github.com/yzletter/go-postery/bff/dto/agent"
 	"github.com/yzletter/go-postery/bff/errno"
-	agentdto "github.com/yzletter/go-postery/bff_/dto/agent"
-	"github.com/yzletter/go-postery/bff_/utils"
-	"github.com/yzletter/go-postery/bff_/utils/response"
+	"github.com/yzletter/go-postery/bff/utils"
+	"github.com/yzletter/go-postery/bff/utils/response"
+	"google.golang.org/grpc/codes"
 )
 
 type AgentHandler struct {
-	agentSvc service.AgentService
+	agentSvc agent_grpc.AgentServiceClient
 }
 
-func NewAgentHandler(agentSvc service.AgentService) *AgentHandler {
+func NewAgentHandler(agentSvc agent_grpc.AgentServiceClient) *AgentHandler {
 	return &AgentHandler{
 		agentSvc: agentSvc,
 	}
@@ -43,13 +45,15 @@ func (hdl *AgentHandler) Chat(ctx *gin.Context) {
 	}
 
 	// 询问 Agent
-	resp, err := hdl.agentSvc.Chat(ctx, uid, ssid, req.Query)
+	resp, err := hdl.agentSvc.Chat(ctx, &agent_grpc.ChatRequest{UserID: uid, SessionID: ssid, Query: req.Query})
 	if err != nil {
-		response.Error(ctx, err)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.Internal: errno.ErrServerInternal,
+		}, errno.ErrServerInternal))
 		return
 	}
 
 	// 返回响应
-	response.Success(ctx, "success", resp)
+	response.Success(ctx, "success", agentdto.ToDTO(resp))
 	return
 }

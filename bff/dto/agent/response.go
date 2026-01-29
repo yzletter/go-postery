@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/cloudwego/eino/adk"
+	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 )
 
 type DTO struct {
@@ -10,9 +10,10 @@ type DTO struct {
 	Documents []string `json:"documents"`
 }
 
-func ToDTO(message adk.Message, ssid int64) DTO {
+func ToDTO(message *agent_grpc.ChatResponse) DTO {
 	return DTO{
-		SessionID: ssid,
+		SessionID: message.SessionID,
 		Content:   message.Content,
+		Documents: message.Documents,
 	}
 }

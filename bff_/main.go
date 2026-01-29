@@ -23,10 +23,8 @@ func main() {
 	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML) // 初始化 RabbitMQ
 
 	// GRPC Service 层
-	SearchGRPCSvc := service.NewSearchService("localhost:" + conf.SearchPort)
 	PostGRPCSvc := service.NewPostService("localhost:" + conf.PostPort)
 	LotteryGRPCSvc := service.NewLotteryService("localhost:" + conf.LotteryPort)
-	AgentGRPCSvc := service.NewAgentService("localhost:" + conf.AgentPort)
 	SessionGRPCSvc := service.NewSessionService("localhost:" + conf.SessionPort)
 
 	// Service 层
@@ -35,8 +33,6 @@ func main() {
 	// Handler 层
 	SessionHdl := handler.NewSessionHandler(SessionGRPCSvc)   // 注册 SessionHandler
 	LotteryHdl := handler.NewLotteryHandler(LotteryGRPCSvc)   // 注册 LotteryHandler
-	AgentHdl := handler.NewAgentHandler(AgentGRPCSvc)         // 注册 AgentHandler
-	SearchHdl := handler.NewSearchHandler(SearchGRPCSvc)      // 注册 SearchHandler
 	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc) // 注册 WebsocketHandler
 
 	// 中间件层
@@ -78,18 +74,6 @@ func main() {
 		lottery.POST("/giveup", LotteryHdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
 		lottery.POST("/pay", LotteryHdl.Pay)       // POST /api/v1/lottery/pay 支付
 		lottery.GET("/result", LotteryHdl.Result)  // GET /api/v1/lottery/result 查询结果
-	}
-
-	agent := v1.Group("/agent")
-	agent.Use(AuthRequiredMdl)
-	{
-		agent.POST("/chat", AgentHdl.Chat) // POST /api/v1/agent/chat
-	}
-
-	search := v1.Group("/search")
-	search.Use(AuthRequiredMdl)
-	{
-		search.POST("", SearchHdl.Search)
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

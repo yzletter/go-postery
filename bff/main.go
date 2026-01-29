@@ -21,25 +21,29 @@ func main() {
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML) // 初始化 Redis
 
 	// GRPC Service 层
-	AuthAuthServiceClient := service.NewAuthService("localhost:" + conf.AuthPort)
+	AuthServiceClient := service.NewAuthService("localhost:" + conf.AuthPort)
 	CodeServiceClient := service.NewCodeService("localhost:" + conf.CodePort)
 	UserServiceClient := service.NewUserService("localhost:" + conf.UserPort)
 	PostServiceClient := service.NewPostService("localhost:" + conf.PostPort)
+	SearchServiceClient := service.NewSearchService("localhost:" + conf.SearchPort)
+	AgentServiceClient := service.NewAgentService("localhost:" + conf.AgentPort)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
 
 	// Handler 层
-	PostHdl := handler.NewPostHandler(PostServiceClient, UserServiceClient)                        // 注册 PostHandler
-	AuthHdl := handler.NewAuthHandler(AuthAuthServiceClient, CodeServiceClient, UserServiceClient) // 注册 AuthHandler
-	UserHdl := handler.NewUserHandler(UserServiceClient)                                           // 注册 UserHandler
+	PostHdl := handler.NewPostHandler(PostServiceClient, UserServiceClient)                          // 注册 PostHandler
+	AuthHdl := handler.NewAuthHandler(AuthServiceClient, CodeServiceClient, UserServiceClient)       // 注册 AuthHandler
+	UserHdl := handler.NewUserHandler(UserServiceClient)                                             // 注册 UserHandler
+	SearchHdl := handler.NewSearchHandler(SearchServiceClient, PostServiceClient, UserServiceClient) // 注册 SearchHandler
+	AgentHdl := handler.NewAgentHandler(AgentServiceClient)                                          // 注册 AgentHandler
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthAuthServiceClient) // AuthRequiredMdl 强制登录中间件
-	MetricMdl := middleware.MetricMiddleware(MetricSvc)                         // MetricMdl 用于 Prometheus 监控中间件
-	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)                // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                            // CorsMdl 跨域中间件
+	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
+	MetricMdl := middleware.MetricMiddleware(MetricSvc)                     // MetricMdl 用于 Prometheus 监控中间件
+	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)            // RateLimitMdl 限流中间件
+	CorsMdl := cors.New(cors.Config{                                        // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -141,6 +145,20 @@ func main() {
 		authedPosts.GET("/:id/like", PostHdl.IfLike)                         // GET /api/v1/posts/:id/like					查询是否点赞了帖子
 		authedPosts.POST("/:id/like", PostHdl.Like)                          // POST /api/v1/posts/:id/like					点赞帖子
 		authedPosts.POST("/:id/unlike", PostHdl.Unlike)                      // POST /api/v1/posts/:id/unlike 				取消点赞帖子
+	}
+
+	// 搜索模块
+	search := v1.Group("/search")
+	search.Use(AuthRequiredMdl)
+	{
+		search.POST("", SearchHdl.Search)
+	}
+
+	// 智能体模块
+	agent := v1.Group("/agent")
+	agent.Use(AuthRequiredMdl)
+	{
+		agent.POST("/chat", AgentHdl.Chat) // POST /api/v1/agent/chat
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {
