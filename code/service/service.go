@@ -8,10 +8,10 @@ import (
 	"math/rand/v2"
 
 	"github.com/yzletter/go-postery/api/proto/code/v1"
+	"github.com/yzletter/go-postery/code/errs"
 	"github.com/yzletter/go-postery/code/model"
 	"github.com/yzletter/go-postery/code/repository"
 	"github.com/yzletter/go-postery/code/service/ports"
-	"github.com/yzletter/go-postery/errno"
 )
 
 type codeService struct {
@@ -39,29 +39,29 @@ func (svc *codeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest
 	if err := svc.repository.Allow(ctx, model.CodeBiz(req.Biz), req.Identifier, newCode); err != nil {
 		if errors.Is(err, repository.ErrResourceConflict) {
 			slog.Error("Send Code Too Frequent", "error", err)
-			return nil, errno.ErrSendToFrequent
+			return nil, errs.ErrAlreadyExits
 		}
-		slog.Error("Send Code Failed", "error", err)
-		return nil, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return nil, errs.ErrInternal
 	}
 
 	// 发送验证码
 	switch req.Biz {
 	case int64(model.EmailCode):
 		if err := svc.emailManager.Send(req.Identifier, newCode); err != nil {
-			slog.Error("Send Email Failed", "error", err)
-			return nil, errno.ErrServerInternal
+			slog.Error("Server Internal Error", "error", err)
+			return nil, errs.ErrInternal
 		}
 	case int64(model.SMSCode):
 		if err := svc.smsClient.SendSms(ctx, req.Identifier, newCode); err != nil {
-			slog.Error("Send SMS Failed", "error", err)
-			return nil, errno.ErrServerInternal
+			slog.Error("Server Internal Error", "error", err)
+			return nil, errs.ErrInternal
 		}
 	default:
-		return nil, errno.ErrInvalidParam
+		slog.Error("Invalid Biz Code")
+		return nil, errs.ErrInvalidArgument
 	}
 
-	slog.Info("Send Code Success")
 	return &code_grpc.SendCodeResponse{}, nil
 }
 
@@ -69,7 +69,8 @@ func (svc *codeService) Send(ctx context.Context, req *code_grpc.SendCodeRequest
 func (svc *codeService) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
 	ok, err := svc.repository.CheckCode(ctx, model.CodeBiz(req.Biz), req.Identifier, req.Code)
 	if err != nil {
-		return &code_grpc.CheckCodeResponse{Result: false}, errno.ErrServerInternal
+		slog.Error("Server Internal Error", "error", err)
+		return &code_grpc.CheckCodeResponse{Result: false}, errs.ErrInternal
 	}
 	return &code_grpc.CheckCodeResponse{Result: ok}, nil
 }
