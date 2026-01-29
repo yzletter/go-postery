@@ -106,9 +106,12 @@ func (svc *userService) Top(ctx context.Context, req *user_grpc.TopRequest) (*us
 func (svc *userService) Follow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error) {
 	res, err := svc.followRepository.Exists(ctx, req.FollowerID, req.FolloweeID)
 	if err != nil {
+		slog.Error("Exist Failed", "error", err)
 		return &user_grpc.FollowEmptyResponse{}, errno.ErrServerInternal // 数据库内部错误
 	}
 
+	slog.Error("Exist Failed", "error", err)
+	
 	if res == 1 || res == 3 { // 已经关注过了
 		return &user_grpc.FollowEmptyResponse{}, errno.ErrDuplicatedFollow
 	}
@@ -118,13 +121,13 @@ func (svc *userService) Follow(ctx context.Context, req *user_grpc.FollowCommonR
 		FollowerID: req.FollowerID,
 		FolloweeID: req.FolloweeID,
 	}
-	err = svc.followRepository.Create(ctx, follow)
-	if err != nil {
+	if err = svc.followRepository.Create(ctx, follow); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 检查过仍冲突
 			slog.Error("Follow Failed", "error", err)
 			return &user_grpc.FollowEmptyResponse{}, errno.ErrDuplicatedFollow
 		}
+		slog.Error("Follow Failed", "error", err)
 		return &user_grpc.FollowEmptyResponse{}, errno.ErrServerInternal
 	}
 	_ = svc.userRepository.ChangeScore(ctx, req.FolloweeID, 1)

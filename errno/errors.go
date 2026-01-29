@@ -43,6 +43,7 @@ var (
 var (
 	ErrDuplicatedFollow   = &Error{60001, 409, "已经关注过该用户"}
 	ErrDuplicatedUnFollow = &Error{60002, 409, "尚未关注，无法取消"}
+	ErrFollowYourself     = &Error{60003, 409, "无法对自己进行关注操作"}
 )
 
 // Auth

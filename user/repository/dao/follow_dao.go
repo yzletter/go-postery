@@ -75,7 +75,7 @@ func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (model
 		var cnt int64
 		result := dao.db.WithContext(ctx).Model(&model.Follow{}).Where("follower_id = ? AND followee_id = ? AND deleted_at IS NULL", a, b).Count(&cnt)
 		if result.Error != nil {
-			slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", result.Error)
+			slog.Error(FindFailed, "follower_id", ferID, "followee_id", feeID, "error", result.Error)
 			return false, ErrServerInternal
 		}
 		return cnt > 0, nil
@@ -83,12 +83,12 @@ func (dao *gormFollowDAO) Exists(ctx context.Context, ferID, feeID int64) (model
 
 	condition1, err := exists(ferID, feeID)
 	if err != nil {
-		slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", err.Error)
+		slog.Error(FindFailed, "follower_id", ferID, "followee_id", feeID, "error", err.Error)
 		return 0, ErrServerInternal
 	}
 	condition2, err := exists(feeID, ferID)
 	if err != nil {
-		slog.Error(UpdateFailed, "follower_id", ferID, "followee_id", feeID, "error", err.Error)
+		slog.Error(FindFailed, "follower_id", ferID, "followee_id", feeID, "error", err.Error)
 		return 0, ErrServerInternal
 	}
 

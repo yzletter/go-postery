@@ -43,14 +43,29 @@ func ToBriefDTO(profile *user_grpc.UserDetail) BriefDTO {
 	return res
 }
 
-// ToTopDTO user_grpc.UserDetail 转 ToTopDTO
-func ToTopDTO(profile *user_grpc.UserDetail, score float64) TopDTO {
+// BriefsToDTO []*user_grpc.UserBrief 转 []BriefDTO
+func BriefsToDTO(briefs []*user_grpc.UserBrief) []BriefDTO {
+	res := make([]BriefDTO, 0, len(briefs))
+
+	for _, b := range briefs {
+		briefDTO := BriefDTO{
+			ID:       b.ID,
+			Nickname: b.Nickname,
+			Avatar:   b.Avatar,
+		}
+		res = append(res, briefDTO)
+	}
+	return res
+}
+
+// ToTopDTO user_grpc.TopResponse 转 ToTopDTO
+func ToTopDTO(topUser *user_grpc.TopUser) TopDTO {
 	return TopDTO{
-		ID:       profile.ID,
-		Nickname: profile.Nickname,
-		Bio:      profile.Bio,
-		Avatar:   profile.Avatar,
-		Score:    score,
+		ID:       topUser.ID,
+		Nickname: topUser.Nickname,
+		Bio:      topUser.Bio,
+		Avatar:   topUser.Avatar,
+		Score:    float64(topUser.Score),
 	}
 }
 

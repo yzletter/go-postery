@@ -31,6 +31,7 @@ func main() {
 
 	// Handler 层
 	AuthHdl := handler.NewAuthHandler(AuthAuthServiceClient, CodeServiceClient, UserServiceClient) // 注册 AuthHandler
+	UserHdl := handler.NewUserHandler(UserServiceClient)                                           // 注册 UserHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthAuthServiceClient) // AuthRequiredMdl 强制登录中间件
@@ -82,6 +83,38 @@ func main() {
 		authedAuth.GET("/password/status", AuthHdl.HasPassword)     // GET /api/v1/auth/password/status	查询密码状态
 
 		authedAuth.GET("/auth_identity", AuthHdl.GetAuthIdentity) // GET /api/v1/auth/auth_identity	获取用户的身份认证
+	}
+
+	// 用户模块
+	users := v1.Group("/users")
+	{
+		users.GET("/:id", UserHdl.Profile) // GET /api/v1/users/:id									获取个人资料
+		//users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
+		users.GET("/top", UserHdl.Top) // GET /api/v1/users/top 									获取推荐关注
+
+		// 个人模块
+		me := users.Group("/me")
+		me.Use(AuthRequiredMdl)
+		me.POST("", UserHdl.ModifyProfile)          // POST /api/v1/users/me									修改个人资料
+		me.GET("/followers", UserHdl.ListFollowers) // GET /api/v1/users/me/followers?pageNo=1&pageSize=10		按页获取用户粉丝
+		me.GET("/followees", UserHdl.ListFollowees) // GET /api/v1/users/me/followees?pageNo=1&pageSize=10 	按页获取用户关注的人
+
+		// 关注模块
+		follow := users.Group("/:id")
+		follow.Use(AuthRequiredMdl)
+		{
+			follow.POST("/follow", UserHdl.Follow)     // POST /api/v1/users/:id/follow 	关注
+			follow.POST("/unfollow", UserHdl.UnFollow) // Post /api/v1/users/:id/unfollow 取关
+			follow.GET("/follow", UserHdl.IfFollow)    // GET /api/v1/users/:id/follow 	是否关注
+		}
+
+		// 私信模块
+		chat := users.Group("/:id/sessions")
+		chat.Use(AuthRequiredMdl)
+		{
+			//chat.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
+			//chat.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
+		}
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {
