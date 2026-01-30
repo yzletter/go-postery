@@ -15,11 +15,9 @@ import (
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
+	"github.com/yzletter/go-postery/bff/dto/session"
 	"github.com/yzletter/go-postery/bff/errno"
-	message2 "github.com/yzletter/go-postery/bff_/dto/message"
-	"github.com/yzletter/go-postery/bff_/dto/session"
-	"github.com/yzletter/go-postery/bff_/model"
-	"github.com/yzletter/go-postery/bff_/utils"
+	"github.com/yzletter/go-postery/bff/utils"
 )
 
 var (
@@ -180,9 +178,9 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 				continue
 			}
 
-			message := model.Message{
+			message := &session_grpc.Message{
 				SessionID:   ssid,
-				SessionType: messageReq.SessionType,
+				SessionType: int32(messageReq.SessionType),
 				MessageFrom: messageFrom,
 				MessageTo:   messageTo,
 				Content:     messageReq.Content,
@@ -211,52 +209,51 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 				Content:     message.Content,
 			})
 
-			message = toModel(messageBack) // 得到数据库返回的时间
-
 			if err != nil {
-				slog.Error("Create Message Failed", "message", message)
+				slog.Error("Create Message Failed", "message", messageBack)
 				continue
 			}
 
 			// 更新会话信息
-			contentBrief := []rune(message.Content) // 最后一条消息的摘要
+			contentBrief := []rune(messageBack.Content) // 最后一条消息的摘要
 			if len(contentBrief) > 5 {
 				contentBrief = contentBrief[:5]
 			}
 
 			// 更新对方会话信息, 增加未读
+			_time, _ := time.Parse(time.RFC3339, messageBack.CreatedAt)
 			_, err = svc.sessionSvc.UpdateUnread(ctx, &session_grpc.UpdateUnreadRequest{
-				UserID:          message.MessageTo,
-				SessionID:       message.SessionID,
-				LastMessageID:   message.ID,
+				UserID:          messageBack.MessageTo,
+				SessionID:       messageBack.SessionID,
+				LastMessageID:   messageBack.ID,
 				LastMessage:     string(contentBrief),
-				LastMessageTime: utils.GoTimeToRPCTime(&message.CreatedAt),
+				LastMessageTime: utils.GoTimeToRPCTime(&_time),
 				Delta:           1,
 			})
 			if err != nil {
-				slog.Error("Update Unread Failed", "user_id", message.MessageTo, "error", err)
+				slog.Error("Update Unread Failed", "user_id", messageBack.MessageTo, "error", err)
 			}
 
 			// 更新己方会话信息, 不增加未读
 			_, err = svc.sessionSvc.UpdateUnread(ctx, &session_grpc.UpdateUnreadRequest{
-				UserID:          message.MessageFrom,
-				SessionID:       message.SessionID,
-				LastMessageID:   message.ID,
+				UserID:          messageBack.MessageFrom,
+				SessionID:       messageBack.SessionID,
+				LastMessageID:   messageBack.ID,
 				LastMessage:     string(contentBrief),
-				LastMessageTime: utils.GoTimeToRPCTime(&message.CreatedAt),
+				LastMessageTime: utils.GoTimeToRPCTime(&_time),
 				Delta:           0,
 			})
 			if err != nil {
-				slog.Error("Update Unread Failed", "user_id", message.MessageFrom, "error", err)
+				slog.Error("Update Unread Failed", "user_id", messageBack.MessageFrom, "error", err)
 			}
 
 			// 发给 MQ
-			if err = produceMQ(ctx, svc.mqConn, message, message.MessageTo); err != nil {
-				slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
+			if err = produceMQ(ctx, svc.mqConn, messageBack, messageBack.MessageTo); err != nil {
+				slog.Error("Produce To MQ Failed", "id", messageBack.MessageTo, "error", err)
 			}
 
-			if err = produceMQ(ctx, svc.mqConn, message, message.MessageFrom); err != nil {
-				slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
+			if err = produceMQ(ctx, svc.mqConn, messageBack, messageBack.MessageFrom); err != nil {
+				slog.Error("Produce To MQ Failed", "id", messageBack.MessageFrom, "error", err)
 			}
 		}
 	}
@@ -295,7 +292,7 @@ func heartBeat(ctx context.Context, conn *websocket.Conn, send func(wsWriteReque
 }
 
 // todo 处理消息内容, 正常应进行对非法内容进行拦截。比如机器人消息（发言频率过快）；包含欺诈、涉政等违规内容；涉嫌私下联系/交易等。
-func intercept(message model.Message, uid int64) bool {
+func intercept(message *session_grpc.Message, uid int64) bool {
 	if message.MessageFrom != uid {
 		return false
 	}
@@ -333,14 +330,14 @@ func consumeMQ(ctx context.Context, mqConn *amqp.Connection, id int64, send func
 			if !ok {
 				return nil
 			}
-			var message model.Message
+			var message session_grpc.Message
 			if err := json.Unmarshal(deliver.Body, &message); err != nil {
 				slog.Error("Unmarshal MQ message failed", "error", err)
 				_ = deliver.Nack(false, false)
 				continue
 			}
 
-			msgDTO := message2.ToDTO(&message)
+			msgDTO := session.ToMessageDTO(&message)
 			if !send(wsWriteRequest{isJSON: true, jsonPayload: msgDTO}) {
 				return ctx.Err()
 			}
@@ -352,7 +349,7 @@ func consumeMQ(ctx context.Context, mqConn *amqp.Connection, id int64, send func
 }
 
 // 将消息发给 MQ 的 Exchange
-func produceMQ(ctx context.Context, conn *amqp.Connection, message model.Message, id int64) error {
+func produceMQ(ctx context.Context, conn *amqp.Connection, message *session_grpc.Message, id int64) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -378,16 +375,4 @@ func produceMQ(ctx context.Context, conn *amqp.Connection, message model.Message
 	}
 
 	return nil
-}
-
-func toModel(grpcMessage *session_grpc.Message) model.Message {
-	return model.Message{
-		ID:          grpcMessage.ID,
-		SessionID:   grpcMessage.SessionID,
-		SessionType: int(grpcMessage.SessionType),
-		MessageFrom: grpcMessage.MessageFrom,
-		MessageTo:   grpcMessage.MessageTo,
-		Content:     grpcMessage.Content,
-		CreatedAt:   utils.RPCTimeToGoTime(grpcMessage.CreatedAt),
-	}
 }

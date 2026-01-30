@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/bff/conf"
 	"github.com/yzletter/go-postery/bff/handler"
+	infraRabbitMQ "github.com/yzletter/go-postery/bff/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/bff/infra/redis"
 	"github.com/yzletter/go-postery/bff/infra/slog"
 	"github.com/yzletter/go-postery/bff/infra/viper"
@@ -19,6 +20,7 @@ func main() {
 	// Infra 层
 	slog.InitSlog(conf.LogFilePath)                               // 初始化 slog
 	RedisClient := infraRedis.Init("./conf", "cache", viper.YAML) // 初始化 Redis
+	RabbitMQ := infraRabbitMQ.Init("./conf", "mq", viper.YAML)    // 初始化 RabbitMQ
 
 	// GRPC Service 层
 	AuthServiceClient := service.NewAuthService("localhost:" + conf.AuthPort)
@@ -28,10 +30,12 @@ func main() {
 	SearchServiceClient := service.NewSearchService("localhost:" + conf.SearchPort)
 	AgentServiceClient := service.NewAgentService("localhost:" + conf.AgentPort)
 	LotteryServiceClient := service.NewLotteryService("localhost:" + conf.LotteryPort)
+	SessionServiceClient := service.NewSessionService("localhost:" + conf.SessionPort)
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
 	RateLimitSvc := service.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
+	WebsocketSvc := service.NewWebsocketService(SessionServiceClient, RabbitMQ)                          // 注册 WebsocketService
 
 	// Handler 层
 	PostHdl := handler.NewPostHandler(PostServiceClient, UserServiceClient)                          // 注册 PostHandler
@@ -40,6 +44,8 @@ func main() {
 	SearchHdl := handler.NewSearchHandler(SearchServiceClient, PostServiceClient, UserServiceClient) // 注册 SearchHandler
 	AgentHdl := handler.NewAgentHandler(AgentServiceClient)                                          // 注册 AgentHandler
 	LotteryHdl := handler.NewLotteryHandler(LotteryServiceClient, UserServiceClient)                 // 注册 LotteryHandler
+	SessionHdl := handler.NewSessionHandler(SessionServiceClient, UserServiceClient)                 // 注册 SessionHandler
+	WebsocketHdl := handler.NewWebsocketHandler(WebsocketSvc)                                        // 注册 WebsocketHandler
 
 	// 中间件层
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
@@ -120,9 +126,17 @@ func main() {
 		chat := users.Group("/:id/sessions")
 		chat.Use(AuthRequiredMdl)
 		{
-			//chat.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
-			//chat.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
+			chat.GET("", SessionHdl.GetSession)                 // GET /api/v1/users/:id/sessions									获取会话
+			chat.GET("/messages", SessionHdl.GetHistoryMessage) // GET /api/v1/users/:id/sessions/messages?pageNo=1&pageSize=5		按页获取历史记录
 		}
+	}
+
+	// 私信模块
+	sessions := v1.Group("/sessions")
+	sessions.Use(AuthRequiredMdl)
+	{
+		sessions.GET("", SessionHdl.List)               // GET /api/v1/sessions							获取当前登录用户会话列表
+		sessions.POST("/:id/delete", SessionHdl.Delete) // DELETE /api/v1/sessions/:id						删除当前会话
 	}
 
 	// 帖子模块
@@ -172,6 +186,13 @@ func main() {
 		lottery.POST("/giveup", LotteryHdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
 		lottery.POST("/pay", LotteryHdl.Pay)       // POST /api/v1/lottery/pay 支付
 		lottery.GET("/result", LotteryHdl.Result)  // GET /api/v1/lottery/result 查询结果
+	}
+
+	// 即时聊天模块
+	im := v1.Group("/ws")
+	im.Use(AuthRequiredMdl)
+	{
+		im.GET("", WebsocketHdl.Connect) // GET /api/v1/ws
 	}
 
 	if err := engine.Run("localhost:8765"); err != nil {

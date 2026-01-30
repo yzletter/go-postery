@@ -462,7 +462,7 @@ type Message struct {
 	MessageFrom   int64                  `protobuf:"varint,4,opt,name=MessageFrom,proto3" json:"MessageFrom,omitempty"`
 	MessageTo     int64                  `protobuf:"varint,5,opt,name=MessageTo,proto3" json:"MessageTo,omitempty"`
 	Content       string                 `protobuf:"bytes,6,opt,name=Content,proto3" json:"Content,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,8,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=UpdatedAt,proto3" json:"UpdatedAt,omitempty"`
 	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=DeletedAt,proto3" json:"DeletedAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -541,11 +541,11 @@ func (x *Message) GetContent() string {
 	return ""
 }
 
-func (x *Message) GetCreatedAt() *timestamppb.Timestamp {
+func (x *Message) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return nil
+	return ""
 }
 
 func (x *Message) GetUpdatedAt() *timestamppb.Timestamp {
@@ -730,15 +730,15 @@ const file_api_proto_session_v1_session_proto_rawDesc = "" +
 	"\bMessages\x18\x02 \x03(\v2\x13.session.v1.MessageR\bMessages\"E\n" +
 	"\rDeleteRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
-	"\tSessionID\x18\x02 \x01(\x03R\tSessionID\"\xe1\x02\n" +
+	"\tSessionID\x18\x02 \x01(\x03R\tSessionID\"\xc5\x02\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02ID\x18\x01 \x01(\x03R\x02ID\x12\x1c\n" +
 	"\tSessionID\x18\x02 \x01(\x03R\tSessionID\x12 \n" +
 	"\vSessionType\x18\x03 \x01(\x05R\vSessionType\x12 \n" +
 	"\vMessageFrom\x18\x04 \x01(\x03R\vMessageFrom\x12\x1c\n" +
 	"\tMessageTo\x18\x05 \x01(\x03R\tMessageTo\x12\x18\n" +
-	"\aContent\x18\x06 \x01(\tR\aContent\x128\n" +
-	"\tCreatedAt\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tCreatedAt\x128\n" +
+	"\aContent\x18\x06 \x01(\tR\aContent\x12\x1c\n" +
+	"\tCreatedAt\x18\b \x01(\tR\tCreatedAt\x128\n" +
 	"\tUpdatedAt\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tUpdatedAt\x128\n" +
 	"\tDeletedAt\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tDeletedAt\"\xef\x01\n" +
@@ -792,29 +792,28 @@ var file_api_proto_session_v1_session_proto_goTypes = []any{
 var file_api_proto_session_v1_session_proto_depIdxs = []int32{
 	1,  // 0: session.v1.Sessions.Sessions:type_name -> session.v1.Session
 	8,  // 1: session.v1.GetHistoryMessagesByPageResponse.Messages:type_name -> session.v1.Message
-	11, // 2: session.v1.Message.CreatedAt:type_name -> google.protobuf.Timestamp
-	11, // 3: session.v1.Message.UpdatedAt:type_name -> google.protobuf.Timestamp
-	11, // 4: session.v1.Message.DeletedAt:type_name -> google.protobuf.Timestamp
-	11, // 5: session.v1.UpdateUnreadRequest.LastMessageTime:type_name -> google.protobuf.Timestamp
-	0,  // 6: session.v1.SessionService.ListByUID:input_type -> session.v1.UserID
-	3,  // 7: session.v1.SessionService.GetSession:input_type -> session.v1.BothUserID
-	5,  // 8: session.v1.SessionService.GetHistoryMessagesByPage:input_type -> session.v1.GetHistoryMessagesByPageRequest
-	7,  // 9: session.v1.SessionService.Delete:input_type -> session.v1.DeleteRequest
-	9,  // 10: session.v1.SessionService.UpdateUnread:input_type -> session.v1.UpdateUnreadRequest
-	10, // 11: session.v1.SessionService.ClearUnread:input_type -> session.v1.ClearUnreadRequest
-	8,  // 12: session.v1.SessionService.CreateMessage:input_type -> session.v1.Message
-	2,  // 13: session.v1.SessionService.ListByUID:output_type -> session.v1.Sessions
-	1,  // 14: session.v1.SessionService.GetSession:output_type -> session.v1.Session
-	6,  // 15: session.v1.SessionService.GetHistoryMessagesByPage:output_type -> session.v1.GetHistoryMessagesByPageResponse
-	4,  // 16: session.v1.SessionService.Delete:output_type -> session.v1.SessionEmptyResponse
-	4,  // 17: session.v1.SessionService.UpdateUnread:output_type -> session.v1.SessionEmptyResponse
-	4,  // 18: session.v1.SessionService.ClearUnread:output_type -> session.v1.SessionEmptyResponse
-	8,  // 19: session.v1.SessionService.CreateMessage:output_type -> session.v1.Message
-	13, // [13:20] is the sub-list for method output_type
-	6,  // [6:13] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	11, // 2: session.v1.Message.UpdatedAt:type_name -> google.protobuf.Timestamp
+	11, // 3: session.v1.Message.DeletedAt:type_name -> google.protobuf.Timestamp
+	11, // 4: session.v1.UpdateUnreadRequest.LastMessageTime:type_name -> google.protobuf.Timestamp
+	0,  // 5: session.v1.SessionService.ListByUID:input_type -> session.v1.UserID
+	3,  // 6: session.v1.SessionService.GetSession:input_type -> session.v1.BothUserID
+	5,  // 7: session.v1.SessionService.GetHistoryMessagesByPage:input_type -> session.v1.GetHistoryMessagesByPageRequest
+	7,  // 8: session.v1.SessionService.Delete:input_type -> session.v1.DeleteRequest
+	9,  // 9: session.v1.SessionService.UpdateUnread:input_type -> session.v1.UpdateUnreadRequest
+	10, // 10: session.v1.SessionService.ClearUnread:input_type -> session.v1.ClearUnreadRequest
+	8,  // 11: session.v1.SessionService.CreateMessage:input_type -> session.v1.Message
+	2,  // 12: session.v1.SessionService.ListByUID:output_type -> session.v1.Sessions
+	1,  // 13: session.v1.SessionService.GetSession:output_type -> session.v1.Session
+	6,  // 14: session.v1.SessionService.GetHistoryMessagesByPage:output_type -> session.v1.GetHistoryMessagesByPageResponse
+	4,  // 15: session.v1.SessionService.Delete:output_type -> session.v1.SessionEmptyResponse
+	4,  // 16: session.v1.SessionService.UpdateUnread:output_type -> session.v1.SessionEmptyResponse
+	4,  // 17: session.v1.SessionService.ClearUnread:output_type -> session.v1.SessionEmptyResponse
+	8,  // 18: session.v1.SessionService.CreateMessage:output_type -> session.v1.Message
+	12, // [12:19] is the sub-list for method output_type
+	5,  // [5:12] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_session_v1_session_proto_init() }

@@ -5,3 +5,10 @@ const (
 	PhoneCodePrefix = "phone:code:"
 	EmailCodePrefix = "email:code:"
 )
+
+type CodeBiz int
+
+const (
+	SMSCode CodeBiz = iota + 1
+	EmailCode
+)

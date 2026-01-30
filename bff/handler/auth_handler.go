@@ -12,7 +12,6 @@ import (
 	authdto "github.com/yzletter/go-postery/bff/dto/auth"
 	userdto "github.com/yzletter/go-postery/bff/dto/user"
 	"github.com/yzletter/go-postery/bff/errno"
-	"github.com/yzletter/go-postery/bff/model"
 	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/bff/utils/response"
 	code_conf "github.com/yzletter/go-postery/code/conf"
@@ -148,7 +147,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	}
 
 	// 发送邮件
-	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.EmailCode), Identifier: req.Email}); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf.EmailCode), Identifier: req.Email}); err != nil {
 		slog.Error("发送邮箱验证码失败", "error", err)
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -172,7 +171,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	}
 
 	// 发送短信
-	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(model.SMSCode), Identifier: req.Phone}); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf.SMSCode), Identifier: req.Phone}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.AlreadyExists:   errno.ErrSendToFrequent,

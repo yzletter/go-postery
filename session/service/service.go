@@ -340,6 +340,6 @@ func (svc *sessionService) CreateMessage(ctx context.Context, message *session_g
 		MessageFrom: messageModel.MessageFrom,
 		MessageTo:   messageModel.MessageTo,
 		Content:     messageModel.Content,
-		CreatedAt:   utils.GoTimeToRPCTime(&messageModel.CreatedAt),
+		CreatedAt:   messageModel.CreatedAt.Format(time.RFC3339),
 	}, nil
 }

@@ -5,7 +5,6 @@ import (
 
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	"github.com/yzletter/go-postery/session/model"
-	"github.com/yzletter/go-postery/session/utils"
 )
 
 type DTO struct {
@@ -27,7 +26,7 @@ func ToMessage(message *model.Message) *session_grpc.Message {
 		MessageFrom: message.MessageFrom,
 		MessageTo:   message.MessageTo,
 		Content:     message.Content,
-		CreatedAt:   utils.GoTimeToRPCTime(&message.CreatedAt),
+		CreatedAt:   message.CreatedAt.Format(time.RFC3339),
 	}
 }
 

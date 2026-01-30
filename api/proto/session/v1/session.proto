@@ -54,7 +54,7 @@ message Message {
   int64 MessageFrom = 4;
   int64 MessageTo = 5;
   string Content = 6;
-  google.protobuf.Timestamp CreatedAt = 8;
+  string CreatedAt = 8;
   google.protobuf.Timestamp UpdatedAt = 9;
   google.protobuf.Timestamp DeletedAt = 10;
 }
