@@ -1,6 +1,7 @@
 package main
 
 import (
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -8,6 +9,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/bff/conf"
 	"github.com/yzletter/go-postery/bff/handler"
+	"github.com/yzletter/go-postery/bff/infra/crontab"
+	"github.com/yzletter/go-postery/bff/infra/graceful_stop"
 	infraRabbitMQ "github.com/yzletter/go-postery/bff/infra/rabbitmq"
 	infraRedis "github.com/yzletter/go-postery/bff/infra/redis"
 	"github.com/yzletter/go-postery/bff/infra/slog"
@@ -51,7 +54,7 @@ func main() {
 	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware.MetricMiddleware(MetricSvc)                     // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)            // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                        // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{conf.FrontendEndPoint}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -59,6 +62,15 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length", "Authorization"},
 		MaxAge:           12 * time.Hour,
 	})
+
+	// 初始化 Crontab
+	crontab.NewCrontabBuilder().
+		AddFuncWithSpec("*/10 * * * *", infraRedis.Ping).
+		Build()
+
+	// 初始化 GracefulStop
+	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
+		Build()
 
 	// 初始化 gin
 	engine := gin.Default()
