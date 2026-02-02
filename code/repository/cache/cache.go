@@ -6,14 +6,13 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/code/conf"
-	"github.com/yzletter/go-postery/code/model"
 )
 
-//go:embed lua/allow_send_code.lua
-var allowSendCodeScript string
+//go:embed lua/allow.lua
+var allowScript string // 用于检查发送验证码的 Lua 脚本
 
-//go:embed lua/check_code.lua
-var checkCodeScript string
+//go:embed lua/verify.lua
+var verifyScript string // 用于校验验证码的 Lua 脚本
 
 type redisCodeCache struct {
 	client redis.UniversalClient
@@ -23,43 +22,44 @@ func NewCodeCache(client redis.UniversalClient) CodeCache {
 	return &redisCodeCache{client: client}
 }
 
-// Allow 是否允许发送 Code
-func (cache *redisCodeCache) Allow(ctx context.Context, biz model.CodeBiz, field string, code string) (int, error) {
+// Allow 检查发送验证码
+func (cache *redisCodeCache) Allow(ctx context.Context, biz int, identifier string, code string) (int, error) {
 	var interval int
 	var key string
 	var validTime int
 
 	switch biz {
-	case model.EmailCode:
-		key = conf.EmailCodePrefix + field
-		interval = conf.SendEmailInterval
-		validTime = conf.EmailValidTime
-	case model.SMSCode:
-		key = conf.PhoneCodePrefix + field
+	case 1:
+		key = conf.PhoneCodePrefix + identifier
 		interval = conf.SendSMSInterval
 		validTime = conf.SMSValidTime
+	case 2:
+		key = conf.EmailCodePrefix + identifier
+		interval = conf.SendEmailInterval
+		validTime = conf.EmailValidTime
 	default:
 		return -1, nil
 	}
 
-	result, err := cache.client.Eval(ctx, allowSendCodeScript, []string{key}, code, interval, validTime).Int()
+	result, err := cache.client.Eval(ctx, allowScript, []string{key}, code, interval, validTime).Int()
 	return result, err
 }
 
-func (cache *redisCodeCache) CheckCode(ctx context.Context, biz model.CodeBiz, field string, code string) (bool, error) {
+// Verify 校验验证码
+func (cache *redisCodeCache) Verify(ctx context.Context, biz int, identifier string, code string) (bool, error) {
 	var key string
 	switch biz {
-	case model.EmailCode:
-		key = conf.EmailCodePrefix + field
-	case model.SMSCode:
-		key = conf.PhoneCodePrefix + field
+	case 1:
+		key = conf.PhoneCodePrefix + identifier
+	case 2:
+		key = conf.EmailCodePrefix + identifier
 	default:
 		return false, nil
 	}
 
-	ok, err := cache.client.Eval(ctx, checkCodeScript, []string{key}, code).Bool()
-	if err != nil {
+	if ok, err := cache.client.Eval(ctx, verifyScript, []string{key}, code).Bool(); err != nil {
 		return false, err
+	} else {
+		return ok, nil
 	}
-	return ok, nil
 }

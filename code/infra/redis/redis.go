@@ -2,11 +2,12 @@ package infra
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sync"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/code/infra/viper"
+	"github.com/yzletter/go-postery/code/config"
 )
 
 var (
@@ -15,23 +16,18 @@ var (
 )
 
 // Init 连接到 Redis 数据库, 生成一个 *redis.Client 赋给全局数据库变量 globalRedisClient
-func Init(confDir, confFileName, confFileType string) redis.UniversalClient {
-	// 初始化 Viper 进行配置读取
-	viper := viper.InitViper(confDir, confFileName, confFileType)
-	host := viper.GetString("redis.host")
-	port := viper.GetString("redis.port")
-	db := viper.GetInt("redis.db")
-
-	redisAddr := host + ":" + port // 拼接地址
+func Init(config config.RedisConfig) redis.UniversalClient {
 	redisOption := &redis.Options{
-		Addr: redisAddr,
-		DB:   db,
+		Addr: config.Addr,
+		DB:   config.DB,
 	}
 
 	// 连接到数据库
 	redisOnce.Do(func() {
 		globalRedisClient = redis.NewClient(redisOption)
 	})
+
+	fmt.Println(config.Addr, config.DB)
 
 	// 尝试 ping 通
 	if err := globalRedisClient.Ping(context.Background()).Err(); err != nil { // 须加上.Err(), 否则会报 ping 通错

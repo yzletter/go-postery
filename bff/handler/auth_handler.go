@@ -14,7 +14,6 @@ import (
 	"github.com/yzletter/go-postery/bff/errno"
 	"github.com/yzletter/go-postery/bff/utils"
 	"github.com/yzletter/go-postery/bff/utils/response"
-	code_conf "github.com/yzletter/go-postery/code/conf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -370,7 +369,7 @@ func mapGRPCErr(err error, mapping map[codes.Code]*errno.Error, fallback *errno.
 
 func newCodeGrpcConn() *grpc.ClientConn {
 	conn, err := grpc.NewClient(
-		"localhost:"+code_conf.Port,
+		"localhost:"+"9001",
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
 	)
 	if err != nil {

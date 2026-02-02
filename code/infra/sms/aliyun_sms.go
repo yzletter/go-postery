@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	dypnsapi20170525 "github.com/alibabacloud-go/dypnsapi-20170525/v3/client"
@@ -11,6 +12,7 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 	credential "github.com/aliyun/credentials-go/credentials"
 	"github.com/yzletter/go-postery/code/conf"
+	"github.com/yzletter/go-postery/code/config"
 	"github.com/yzletter/go-postery/code/service/ports"
 )
 
@@ -18,15 +20,19 @@ type AliyunSmsClient struct {
 	internalClient *dypnsapi20170525.Client
 }
 
-func NewAliyunSmsClient(AccessKeyId, AccessKeySecret string) ports.SmsClient {
-	config := openapi.Config{
+func NewAliyunSmsClient(config config.SMSConfig) ports.CodeClient {
+
+	AccessKeyId := os.Getenv(config.AccessKeyID)
+	AccessKeySecret := os.Getenv(config.AccessKeySecret)
+
+	smsConfig := openapi.Config{
 		AccessKeyId:     tea.String(AccessKeyId),
 		AccessKeySecret: tea.String(AccessKeySecret),
 		Endpoint:        tea.String("dypnsapi.aliyuncs.com"), // 不同服务域名不同
 		Credential:      credential.Credential(nil),
 	}
 
-	client, err := dypnsapi20170525.NewClient(&config)
+	client, err := dypnsapi20170525.NewClient(&smsConfig)
 	if err != nil {
 		slog.Error("Aliyun SMS Client New Failed", "error", err)
 		return nil
@@ -37,7 +43,7 @@ func NewAliyunSmsClient(AccessKeyId, AccessKeySecret string) ports.SmsClient {
 	}
 }
 
-func (client *AliyunSmsClient) SendSms(ctx context.Context, phoneNumber string, code string) error {
+func (client *AliyunSmsClient) Send(ctx context.Context, phoneNumber string, code string) error {
 	runtime := &util.RuntimeOptions{}
 
 	req := &dypnsapi20170525.SendSmsVerifyCodeRequest{
@@ -55,23 +61,7 @@ func (client *AliyunSmsClient) SendSms(ctx context.Context, phoneNumber string, 
 	resp, err := client.internalClient.SendSmsVerifyCodeWithContext(ctx, req, runtime)
 	if err != nil {
 		slog.Error(err.Error())
-		return ports.ErrSendSMSFailed
-	}
-
-	slog.Info(resp.Body.String())
-	return nil
-}
-
-func (client *AliyunSmsClient) CheckSms(ctx context.Context, phoneNumber string, code string) error {
-	runtime := &util.RuntimeOptions{}
-	req := &dypnsapi20170525.CheckSmsVerifyCodeRequest{
-		PhoneNumber: tea.String(phoneNumber),
-		VerifyCode:  tea.String(code),
-	}
-	resp, err := client.internalClient.CheckSmsVerifyCodeWithContext(ctx, req, runtime)
-	if err != nil {
-		slog.Error(err.Error())
-		return ports.ErrCheckSMSFailed
+		return ports.ErrSendCodeFailed
 	}
 
 	slog.Info(resp.Body.String())

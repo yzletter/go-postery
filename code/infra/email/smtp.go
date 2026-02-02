@@ -2,9 +2,12 @@ package email
 
 import (
 	"bytes"
+	"context"
 	"html/template"
 	"log/slog"
+	"os"
 
+	"github.com/yzletter/go-postery/code/config"
 	"github.com/yzletter/go-postery/code/service/ports"
 	"gopkg.in/gomail.v2"
 )
@@ -19,23 +22,32 @@ type QQEmailSMTPManager struct {
 	address   string // 公司地址
 }
 
-func NewEmailManager(from string, authCode string, subject string, expireMin int, appName string, year int, address string) ports.EmailManager {
+type VerifyEmailData struct {
+	AppName   string
+	Email     string
+	Code      string
+	ExpireMin int
+	Year      int
+	Address   string
+}
+
+func NewSMTPEmailClient(config config.EmailConfig) ports.CodeClient {
 	return &QQEmailSMTPManager{
-		from:      from,
-		authCode:  authCode,
-		subject:   subject,
-		expireMin: expireMin,
-		appName:   appName,
-		year:      year,
-		address:   address,
+		from:      config.From,
+		authCode:  os.Getenv(config.AuthCode),
+		subject:   config.Subject,
+		expireMin: config.ExpireMin,
+		appName:   config.AppName,
+		year:      config.Year,
+		address:   config.Address,
 	}
 }
 
-func (m *QQEmailSMTPManager) Send(to string, code string) error {
-	data := ports.VerifyEmailData{
-		AppName:   m.appName,
-		Email:     to,
+func (m *QQEmailSMTPManager) Send(ctx context.Context, identifier string, code string) error {
+	data := VerifyEmailData{
+		Email:     identifier,
 		Code:      code,
+		AppName:   m.appName,
 		ExpireMin: m.expireMin,
 		Year:      m.year,
 		Address:   m.address,
@@ -43,12 +55,12 @@ func (m *QQEmailSMTPManager) Send(to string, code string) error {
 	htmlBody, err := renderVerifyEmailHTML(data)
 	if err != nil {
 		slog.Error("Render Email HTML Failed", "error", err)
-		return ports.ErrRenderEmailHTMLFailed
+		return ports.ErrSendCodeFailed
 	}
 
 	message := gomail.NewMessage()
 	message.SetHeader("From", m.from)
-	message.SetHeader("To", to)
+	message.SetHeader("To", identifier)
 	message.SetHeader("Subject", m.subject)
 	message.SetBody("text/html", htmlBody) // 关键：HTML
 
@@ -57,12 +69,12 @@ func (m *QQEmailSMTPManager) Send(to string, code string) error {
 
 	if err := d.DialAndSend(message); err != nil {
 		slog.Error("Send Email Failed", "error", err)
-		return ports.ErrSendEmailFailed
+		return ports.ErrSendCodeFailed
 	}
 	return nil
 }
 
-func renderVerifyEmailHTML(data ports.VerifyEmailData) (string, error) {
+func renderVerifyEmailHTML(data VerifyEmailData) (string, error) {
 	tpl, err := template.ParseFiles("./infra/email/verify_email.html")
 	if err != nil {
 		return "", err

@@ -2,12 +2,9 @@ package service
 
 import (
 	"context"
-
-	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 )
 
 type CodeService interface {
-	Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error)     // 发送验证码
-	Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) // 校验验证码
-	code_grpc.UnsafeCodeServiceServer
+	Send(ctx context.Context, biz int, identifier string) error                        // 发送验证码
+	Verify(ctx context.Context, biz int, identifier string, code string) (bool, error) // 校验验证码
 }

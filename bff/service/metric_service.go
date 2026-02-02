@@ -25,5 +25,4 @@ func (svc *MetricService) CounterAdd(path string) {
 
 func (svc *MetricService) TimerSet(path string, start time.Time) {
 	svc.requestTimer.WithLabelValues("gopostery", path).Set(float64(time.Since(start).Milliseconds())) // 计时器记录从 start 到现在过了多久
-
 }
