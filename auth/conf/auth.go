@@ -1,6 +1,0 @@
-package conf
-
-const (
-	PhoneCodePrefix = "phone:code:"
-	EmailCodePrefix = "email:code:"
-)

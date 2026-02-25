@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -14,24 +15,32 @@ import (
 	"github.com/yzletter/go-postery/code/infra/email"
 	infraEtcd "github.com/yzletter/go-postery/code/infra/etcd"
 	"github.com/yzletter/go-postery/code/infra/graceful_stop"
+	infraJaeger "github.com/yzletter/go-postery/code/infra/jaeger"
 	infraRedis "github.com/yzletter/go-postery/code/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/code/infra/slog"
 	"github.com/yzletter/go-postery/code/infra/sms"
 	"github.com/yzletter/go-postery/code/repository"
 	"github.com/yzletter/go-postery/code/repository/cache"
 	"github.com/yzletter/go-postery/code/service"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
+
+const ConfigPrefix = "code_service_"
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{"172.16.150.246:2379"}) // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient)
+	//EtcdClient := infraEtcd.Init([]string{"172.16.131.223:2379"})    // Init Etcd
+	EtcdClient := infraEtcd.Init([]string{"localhost:12379"})        // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, ConfigPrefix) // Get Config From Remote Config Center
+	fmt.Printf("Init Config Success %v\n", Config)
 
 	// Infra
-	infraSlog.InitSlog(Config.Log)                        // Init Slog
+	infraSlog.InitSlog(Config.Log)                                         // Init Slog
+	shutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, "code-service") // Init JaegerTracer
+	defer shutdown()
 	RedisClient := infraRedis.Init(Config.Redis)          // Init Redis
 	SmsClient := sms.NewAliyunSmsClient(Config.SMS)       // Init SMS
 	EmailClient := email.NewSMTPEmailClient(Config.Email) // Init Email
@@ -45,7 +54,8 @@ func main() {
 	// gRPC Server
 	CodeServiceServer := grpc_server.NewCodeServiceServer(CodeService)
 	server := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()),
+		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
 	code_grpc.RegisterCodeServiceServer(server, CodeServiceServer) // Register gRPC Service
 

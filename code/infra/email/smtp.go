@@ -5,7 +5,6 @@ import (
 	"context"
 	"html/template"
 	"log/slog"
-	"os"
 
 	"github.com/yzletter/go-postery/code/config"
 	"github.com/yzletter/go-postery/code/service/ports"
@@ -34,7 +33,7 @@ type VerifyEmailData struct {
 func NewSMTPEmailClient(config config.EmailConfig) ports.CodeClient {
 	return &QQEmailSMTPManager{
 		from:      config.From,
-		authCode:  os.Getenv(config.AuthCode),
+		authCode:  config.AuthCode,
 		subject:   config.Subject,
 		expireMin: config.ExpireMin,
 		appName:   config.AppName,

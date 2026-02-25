@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	dypnsapi20170525 "github.com/alibabacloud-go/dypnsapi-20170525/v3/client"
@@ -21,9 +20,8 @@ type AliyunSmsClient struct {
 }
 
 func NewAliyunSmsClient(config config.SMSConfig) ports.CodeClient {
-
-	AccessKeyId := os.Getenv(config.AccessKeyID)
-	AccessKeySecret := os.Getenv(config.AccessKeySecret)
+	AccessKeyId := config.AccessKeyID
+	AccessKeySecret := config.AccessKeySecret
 
 	smsConfig := openapi.Config{
 		AccessKeyId:     tea.String(AccessKeyId),

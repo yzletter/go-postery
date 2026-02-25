@@ -1,8 +1,10 @@
 package config
 
+// Config 需要的所有配置
 type Config struct {
 	Redis  RedisConfig
 	Metric MetricConfig
+	Jaeger JaegerConfig
 	GRPC   GRPCConfig
 	Email  EmailConfig
 	SMS    SMSConfig
@@ -16,6 +18,10 @@ type RedisConfig struct {
 
 type MetricConfig struct {
 	Addr string
+}
+
+type JaegerConfig struct {
+	Addr string // Jaeger 地址
 }
 
 type EmailConfig struct {
