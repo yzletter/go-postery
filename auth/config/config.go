@@ -2,135 +2,188 @@ package config
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
+	"sync"
 
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
-const ConfigPrefix = "auth_service_"
+var (
+	watchKeys = make(map[string]struct{})
+	conce     sync.Once
+	config    Config
+)
 
-var watchKeys = make(map[string]struct{})
+// LoadGlobalConfig 加载远程配置
+//
+// client 依赖注入 etcd Client
+//
+// prefix 业务配置 Key 的前缀
+func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string) Config {
+	conce.Do(func() {
+		// 加载 MySQL 配置
+		config.MySQL = loadMySQLConfig(ctx, client, prefix)
+		// 加载 Redis 配置
+		config.Redis = loadRedisConfig(ctx, client, prefix)
+		// 加载 Metric 配置
+		config.Metric = loadPrometheusConfig(ctx, client, prefix)
+		// 加载 Jaeger 配置
+		config.Jaeger = loadJaegerConfig(ctx, client, prefix)
+		// 加载 gRPC 配置
+		config.GRPC = loadGRPCConfig(ctx, client, prefix)
+		// 加载 Log 配置
+		config.Log = loadLogConfig(ctx, client, prefix)
 
-func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client) Config {
-	var config Config
-	// 加载 Redis 配置
-	config.Redis = loadRedisConfig(ctx, client)
-	// 加载 MySQL 配置
-	config.MySQL = loadMySQLConfig(ctx, client)
-	// 加载 Log 配置
-	config.Log = loadLogConfig(ctx, client)
-	// 加载 Metric 配置
-	config.Metric = loadPrometheusConfig(ctx, client)
-	// 加载 gRPC 配置
-	config.GRPC = loadGRPCConfig(ctx, client)
+		go watch(ctx, client, prefix, watchKeys)
+	})
 
 	return config
 }
 
-func loadRedisConfig(ctx context.Context, client *etcdv3.Client) RedisConfig {
+// 监听配置变化
+func watch(ctx context.Context, client *etcdv3.Client, prefix string, keys map[string]struct{}) {
+	ch := client.Watch(ctx, prefix, etcdv3.WithPrefix())
+	for resp := range ch {
+		for _, event := range resp.Events {
+			// 只关心 PUT 即数据更新
+			if event.Type == etcdv3.EventTypePut {
+				key := string(event.Kv.Key)
+				value := string(event.Kv.Value)
+				if _, exists := keys[key]; exists {
+					slog.Info("Config Has Changed", "name", key, "change", value)
+				}
+			}
+		}
+	}
+}
+
+func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) RedisConfig {
 	var config RedisConfig
 
 	// 获取地址
-	if resp, err := client.Get(ctx, ConfigPrefix+"Redis_Addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"redis_addr"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"Redis_Addr"] = struct{}{}
+			watchKeys[prefix+"redis_addr"] = struct{}{}
 		}
 	}
 
 	// 获取数据库号
-	if resp, err := client.Get(ctx, ConfigPrefix+"Redis_DB"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"redis_db"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.DB, _ = strconv.Atoi(string(resp.Kvs[0].Value))
-			watchKeys[ConfigPrefix+"Redis_DB"] = struct{}{}
+			watchKeys[prefix+"redis_db"] = struct{}{}
 		}
 	}
 
 	return config
 }
 
-func loadMySQLConfig(ctx context.Context, client *etcdv3.Client) MySQLConfig {
+func loadPrometheusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MetricConfig {
+	var config MetricConfig
+
+	// 获取地址
+	if resp, err := client.Get(ctx, prefix+"prometheus_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Addr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"prometheus_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadJaegerConfig(ctx context.Context, client *etcdv3.Client, prefix string) JaegerConfig {
+	var config JaegerConfig
+
+	// 获取地址
+	if resp, err := client.Get(ctx, prefix+"jaeger_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Addr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"jaeger_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadLogConfig(ctx context.Context, client *etcdv3.Client, prefix string) LogConfig {
+	var config LogConfig
+
+	// 获取日志文件路径
+	if resp, err := client.Get(ctx, prefix+"log_filepath"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.FilePath = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"log_filepath"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) GRPCConfig {
+	var config GRPCConfig
+
+	// 获取 gRPC 端口
+	if resp, err := client.Get(ctx, prefix+"grpc_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Addr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"grpc_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadMySQLConfig(ctx context.Context, client *etcdv3.Client, prefix string) MySQLConfig {
 	var config MySQLConfig
 
 	// 获取 Addr
-	if resp, err := client.Get(ctx, ConfigPrefix+"MySQL_Addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"mysql_addr"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"MySQL_Host"] = struct{}{}
+			watchKeys[prefix+"mysql_addr"] = struct{}{}
 		}
 	}
 
 	// 获取 User
-	if resp, err := client.Get(ctx, ConfigPrefix+"MySQL_User"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"mysql_user"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.User = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"MySQL_User"] = struct{}{}
+			watchKeys[prefix+"mysql_user"] = struct{}{}
 		}
 	}
 
 	// 获取 Password
-	if resp, err := client.Get(ctx, ConfigPrefix+"MySQL_Password"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"mysql_password"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Password = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"MySQL_Password"] = struct{}{}
+			watchKeys[prefix+"mysql_password"] = struct{}{}
 		}
 	}
 
 	// 获取 DBName
-	if resp, err := client.Get(ctx, ConfigPrefix+"MySQL_DBName"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"mysql_db_name"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.DBName = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"MySQL_DBName"] = struct{}{}
+			watchKeys[prefix+"mysql_db_name"] = struct{}{}
+		}
+	}
+
+	// 获取 LogFileDir
+	if resp, err := client.Get(ctx, prefix+"mysql_log_file_dir"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.LogFileDir = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"mysql_log_file_dir"] = struct{}{}
 		}
 	}
 
 	// 获取 LogFileName
-	if resp, err := client.Get(ctx, ConfigPrefix+"MySQL_LogFilePath"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"mysql_log_filename"); err == nil {
 		if len(resp.Kvs) > 0 {
-			config.LogFilePath = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"MySQL_LogFileName"] = struct{}{}
-		}
-	}
-
-	return config
-}
-
-func loadLogConfig(ctx context.Context, client *etcdv3.Client) LogConfig {
-	var config LogConfig
-
-	// 获取日志文件路径
-	if resp, err := client.Get(ctx, ConfigPrefix+"Log_FilePath"); err == nil {
-		if len(resp.Kvs) > 0 {
-			config.FilePath = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"Log_FilePath"] = struct{}{}
-		}
-	}
-
-	return config
-}
-
-func loadPrometheusConfig(ctx context.Context, client *etcdv3.Client) MetricConfig {
-	var config MetricConfig
-
-	// 获取地址
-	if resp, err := client.Get(ctx, ConfigPrefix+"Prometheus_Addr"); err == nil {
-		if len(resp.Kvs) > 0 {
-			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"Prometheus_Addr"] = struct{}{}
-		}
-	}
-
-	return config
-}
-
-func loadGRPCConfig(ctx context.Context, client *etcdv3.Client) GRPCConfig {
-	var config GRPCConfig
-
-	// 获取 gRPC 端口
-	if resp, err := client.Get(ctx, ConfigPrefix+"GRPC_Port"); err == nil {
-		if len(resp.Kvs) > 0 {
-			config.Port = string(resp.Kvs[0].Value)
-			watchKeys[ConfigPrefix+"GRPC_Port"] = struct{}{}
+			config.LogFilename = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"mysql_log_filename"] = struct{}{}
 		}
 	}
 

@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path"
 	"time"
 
 	"github.com/yzletter/go-postery/auth/config"
@@ -37,7 +38,7 @@ func Init(config config.MySQLConfig) *gorm.DB {
 		LogLevel:                  logger.Info,            // 日志最低阈值
 	}
 	// 初始化 MySQl Logger
-	DBlogger := initDBLogger(config.LogFilePath, loggerConfig)
+	DBlogger := initDBLogger(config.LogFileDir, config.LogFilename, loggerConfig)
 
 	// 设置 gorm 相关配置
 	gormConfig := &gorm.Config{
@@ -108,14 +109,14 @@ func Close() {
 func getDataSourceName(user string, password string, addr string, dbName string) string {
 	// 拼接完整的请求路径 user:password@tcp(host:port)/dbName?charset=utf8mb4&parseTime=True&loc=Local
 	// 使用 UTF-8mb4 编码, 解析时间为 Go 语言的时间类型, 按系统时区解析时间字段
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, addr, dbName)
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, addr, dbName)
 }
 
 // 初始化 MySQL 日志
-func initDBLogger(filepath string, loggerConfig logger.Config) logger.Interface {
+func initDBLogger(logDir string, logFileName string, loggerConfig logger.Config) logger.Interface {
 	// 打开 logger 文件
-	_ = os.MkdirAll(filepath, os.ModePerm)
-	logFile, err := os.OpenFile(filepath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
+	_ = os.MkdirAll(logDir, os.ModePerm)
+	logFile, err := os.OpenFile(path.Join(logDir, logFileName), os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}

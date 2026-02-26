@@ -35,15 +35,14 @@ func main() {
 	//EtcdClient := infraEtcd.Init([]string{"172.16.131.223:2379"})    // Init Etcd
 	EtcdClient := infraEtcd.Init([]string{"localhost:12379"})        // Init Etcd
 	Config := config.LoadGlobalConfig(ctx, EtcdClient, ConfigPrefix) // Get Config From Remote Config Center
-	fmt.Printf("Init Config Success %v\n", Config)
+	fmt.Printf("Code Service Init Config Success %+v\n", Config)
 
 	// Infra
-	infraSlog.InitSlog(Config.Log)                                         // Init Slog
-	shutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, "code-service") // Init JaegerTracer
-	defer shutdown()
-	RedisClient := infraRedis.Init(Config.Redis)          // Init Redis
-	SmsClient := sms.NewAliyunSmsClient(Config.SMS)       // Init SMS
-	EmailClient := email.NewSMTPEmailClient(Config.Email) // Init Email
+	infraSlog.InitSlog(Config.Log)                                               // Init Slog
+	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, "code-service") // Init JaegerTracer
+	RedisClient := infraRedis.Init(Config.Redis)                                 // Init Redis
+	SmsClient := sms.NewAliyunSmsClient(Config.SMS)                              // Init SMS
+	EmailClient := email.NewSMTPEmailClient(Config.Email)                        // Init Email
 	// Cache
 	CodeCache := cache.NewCodeCache(RedisClient)
 	// Repository
@@ -71,7 +70,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(cancel).
+		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		Build()
 
 	// Start gRPC Server

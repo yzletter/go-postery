@@ -3,9 +3,14 @@ package config
 type Config struct {
 	Redis  RedisConfig
 	MySQL  MySQLConfig
+	Jaeger JaegerConfig
 	Log    LogConfig
 	Metric MetricConfig
 	GRPC   GRPCConfig
+}
+
+type JaegerConfig struct {
+	Addr string // Jaeger 地址
 }
 
 type RedisConfig struct {
@@ -18,7 +23,8 @@ type MySQLConfig struct {
 	User        string
 	Password    string
 	DBName      string
-	LogFilePath string
+	LogFileDir  string
+	LogFilename string
 }
 
 type LogConfig struct {
@@ -30,5 +36,5 @@ type MetricConfig struct {
 }
 
 type GRPCConfig struct {
-	Port string
+	Addr string
 }

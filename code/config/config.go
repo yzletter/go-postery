@@ -67,18 +67,18 @@ func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 	var config RedisConfig
 
 	// 获取地址
-	if resp, err := client.Get(ctx, prefix+"Redis_Addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"redis_addr"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Redis_Addr"] = struct{}{}
+			watchKeys[prefix+"redis_addr"] = struct{}{}
 		}
 	}
 
 	// 获取数据库号
-	if resp, err := client.Get(ctx, prefix+"Redis_DB"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"redis_db"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.DB, _ = strconv.Atoi(string(resp.Kvs[0].Value))
-			watchKeys[prefix+"Redis_DB"] = struct{}{}
+			watchKeys[prefix+"redis_db"] = struct{}{}
 		}
 	}
 
@@ -89,10 +89,10 @@ func loadPrometheusConfig(ctx context.Context, client *etcdv3.Client, prefix str
 	var config MetricConfig
 
 	// 获取地址
-	if resp, err := client.Get(ctx, prefix+"Prometheus_Addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"prometheus_addr"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Prometheus_Addr"] = struct{}{}
+			watchKeys[prefix+"prometheus_addr"] = struct{}{}
 		}
 	}
 
@@ -103,10 +103,10 @@ func loadJaegerConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 	var config JaegerConfig
 
 	// 获取地址
-	if resp, err := client.Get(ctx, prefix+"Jaeger_Addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"jaeger_addr"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Jaeger_Addr"] = struct{}{}
+			watchKeys[prefix+"jaeger_addr"] = struct{}{}
 		}
 	}
 
@@ -117,58 +117,58 @@ func loadEmailConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 	var config EmailConfig
 
 	// 获取发信方
-	if resp, err := client.Get(ctx, prefix+"Email_From"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_from"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.From = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Email_From"] = struct{}{}
+			watchKeys[prefix+"email_from"] = struct{}{}
 		}
 	}
 
 	// 获取授权码
-	if resp, err := client.Get(ctx, prefix+"Email_AuthCode"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_auth_code"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.AuthCode = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Email_AuthCode"] = struct{}{}
+			watchKeys[prefix+"email_auth_code"] = struct{}{}
 		}
 	}
 
 	// 获取主题
-	if resp, err := client.Get(ctx, prefix+"Email_Subject"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_subject"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Subject = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Email_Subject"] = struct{}{}
+			watchKeys[prefix+"email_subject"] = struct{}{}
 		}
 	}
 
 	// 获取应用名称
-	if resp, err := client.Get(ctx, prefix+"Email_AppName"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_app_name"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.AppName = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Email_AppName"] = struct{}{}
+			watchKeys[prefix+"email_app_name"] = struct{}{}
 		}
 	}
 
 	// 获取有效时间
-	if resp, err := client.Get(ctx, prefix+"Email_ExpireMin"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_expire_min"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.ExpireMin, _ = strconv.Atoi(string(resp.Kvs[0].Value))
-			watchKeys[prefix+"Email_ExpireMin"] = struct{}{}
+			watchKeys[prefix+"email_expire_min"] = struct{}{}
 		}
 	}
 
 	// 获取年份
-	if resp, err := client.Get(ctx, prefix+"Email_Year"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_year"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Year, _ = strconv.Atoi(string(resp.Kvs[0].Value))
-			watchKeys[prefix+"Email_Year"] = struct{}{}
+			watchKeys[prefix+"email_year"] = struct{}{}
 		}
 	}
 
 	// 获取公司地址
-	if resp, err := client.Get(ctx, prefix+"Email_Address"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"email_address"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Address = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Email_Address"] = struct{}{}
+			watchKeys[prefix+"email_address"] = struct{}{}
 		}
 	}
 
@@ -179,18 +179,18 @@ func loadSMSConfig(ctx context.Context, client *etcdv3.Client, prefix string) SM
 	var config SMSConfig
 
 	// 获取 AccessKeyID
-	if resp, err := client.Get(ctx, prefix+"SMS_AccessKeyID"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"sms_access_key_id"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.AccessKeyID = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"SMS_AccessKeyID"] = struct{}{}
+			watchKeys[prefix+"sms_access_key_id"] = struct{}{}
 		}
 	}
 
 	// 获取 AccessKeySecret
-	if resp, err := client.Get(ctx, prefix+"SMS_AccessKeySecret"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"sms_access_key_secret"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.AccessKeySecret = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"SMS_AccessKeySecret"] = struct{}{}
+			watchKeys[prefix+"sms_access_key_secret"] = struct{}{}
 		}
 	}
 
@@ -201,10 +201,10 @@ func loadLogConfig(ctx context.Context, client *etcdv3.Client, prefix string) Lo
 	var config LogConfig
 
 	// 获取日志文件路径
-	if resp, err := client.Get(ctx, prefix+"Log_FilePath"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"log_filepath"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.FilePath = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"Log_FilePath"] = struct{}{}
+			watchKeys[prefix+"log_filepath"] = struct{}{}
 		}
 	}
 
@@ -215,10 +215,10 @@ func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) G
 	var config GRPCConfig
 
 	// 获取 gRPC 端口
-	if resp, err := client.Get(ctx, prefix+"GRPC_Addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"grpc_addr"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"GRPC_Addr"] = struct{}{}
+			watchKeys[prefix+"grpc_addr"] = struct{}{}
 		}
 	}
 
