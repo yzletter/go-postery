@@ -8,6 +8,7 @@ import (
 	rmq_client "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/apache/rocketmq-clients/golang/v5/credentials"
 	"github.com/yzletter/go-postery/lottery/conf"
+	"github.com/yzletter/go-postery/lottery/config"
 )
 
 var (
@@ -22,14 +23,14 @@ type RocketMQ struct {
 	RocketConsumer rmq_client.SimpleConsumer
 }
 
-func Init(proxyEndpoint string) *RocketMQ {
+func Init(config config.RocketMQConfig) *RocketMQ {
 	// 初始化 RocketMQ 日志
 	os.Setenv(rmq_client.CLIENT_LOG_ROOT, "./logs")
 	os.Setenv(rmq_client.CLIENT_LOG_FILENAME, "rocketmq.log") // 封装的是 Zap log
 	rmq_client.ResetLogger()
 
-	rocketProducer := newProducer(proxyEndpoint)
-	rocketConsumer := newConsumer(proxyEndpoint)
+	rocketProducer := newProducer(config.Addr)
+	rocketConsumer := newConsumer(config.Addr)
 	return &RocketMQ{
 		RocketProducer: rocketProducer,
 		RocketConsumer: rocketConsumer,

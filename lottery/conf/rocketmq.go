@@ -5,7 +5,6 @@ import "time"
 const (
 	RocketLotteryTopic             = "GO_POSTERY_CANCEL_ORDER"
 	RocketLotteryConsumerGroup     = "go_postery"
-	RocketProxyEndpoint            = "127.0.0.1:8081"
 	RocketAwaitDuration            = 5 * time.Second
 	RocketLotteryPayDelay          = 600
 	RocketLotteryInvisibleDuration = 10 * time.Second

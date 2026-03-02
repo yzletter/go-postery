@@ -239,7 +239,6 @@ CREATE TABLE IF NOT EXISTS session
     UNIQUE KEY uq_user_target_type (user_id, target_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '会话表';
 
-
 # todo 群聊表
 
 # Order 表
