@@ -1,0 +1,17 @@
+package service
+
+import (
+	"context"
+
+	model2 "github.com/yzletter/go-postery/microservice-backend/lottery/model"
+)
+
+type LotteryService interface {
+	GetAllGifts(ctx context.Context) ([]*model2.Gift, error)                       // 获取索引奖品
+	Lottery(ctx context.Context, userID int64) (*model2.Gift, error)               // 进行抽奖
+	Pay(ctx context.Context, userID int64, giftID int64) error                     // 支付
+	GiveUp(ctx context.Context, userID int64, giftID int64) error                  // 放弃
+	Result(ctx context.Context, userID int64) (*model2.Order, *model2.Gift, error) // 查询结果
+	StartLotteryOrderConsumer(ctx context.Context)                                 // 开启协程核查临时订单进行库存回流
+	InitCacheInventory(ctx context.Context)                                        // 初始化库存
+}
