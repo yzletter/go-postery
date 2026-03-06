@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/code/config"
+	"github.com/yzletter/go-postery/microservice-backend/code/config"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	_ "embed"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/code/conf"
+	"github.com/yzletter/go-postery/microservice-backend/code/conf"
 )
 
 //go:embed lua/allow.lua

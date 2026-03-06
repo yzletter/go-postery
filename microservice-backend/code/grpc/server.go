@@ -4,7 +4,7 @@ import (
 	"context"
 
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
-	"github.com/yzletter/go-postery/code/service"
+	"github.com/yzletter/go-postery/microservice-backend/code/service"
 )
 
 // CodeServiceServer gRPC 服务端

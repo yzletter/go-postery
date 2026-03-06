@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/code/repository/cache"
+	"github.com/yzletter/go-postery/microservice-backend/code/repository/cache"
 )
 
 type codeRepository struct {
