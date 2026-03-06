@@ -8,7 +8,7 @@ import (
 
 	"log/slog"
 
-	"github.com/yzletter/go-postery/search/model"
+	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,7 +21,7 @@ type Sentinel struct {
 }
 
 // AddDoc 根据负载均衡算法选中一个 Worker 进行添加文档
-func (sentinel *Sentinel) AddDoc(doc *model.Document) (int, error) {
+func (sentinel *Sentinel) AddDoc(doc *model2.Document) (int, error) {
 	// 根据负载均衡算法选中一个 Worker
 	endpoint := sentinel.hub.GetServiceEndpoint(INDEX_SERVICE)
 	if len(endpoint) <= 0 {
@@ -46,7 +46,7 @@ func (sentinel *Sentinel) AddDoc(doc *model.Document) (int, error) {
 }
 
 // UpdateDoc 更新文档, 删除旧文档, 添加新文档
-func (sentinel *Sentinel) UpdateDoc(doc *model.Document) (int, error) {
+func (sentinel *Sentinel) UpdateDoc(doc *model2.Document) (int, error) {
 	sentinel.DeleteDoc(doc.DocID)
 	return sentinel.AddDoc(doc)
 }
@@ -91,7 +91,7 @@ func (sentinel *Sentinel) DeleteDoc(docID string) int {
 }
 
 // Search 向所有 Worker 发出搜索请求, 最后合并
-func (sentinel *Sentinel) Search(query *model.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []*model.Document {
+func (sentinel *Sentinel) Search(query *model2.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []*model2.Document {
 	// 获取所有 Endpoint
 	endpoints := sentinel.hub.GetServiceEndpoints(INDEX_SERVICE)
 	if len(endpoints) <= 0 {
@@ -101,8 +101,8 @@ func (sentinel *Sentinel) Search(query *model.TermQuery, onFlag uint64, offFlag 
 	wg := sync.WaitGroup{}
 	wg.Add(len(endpoints))
 
-	res := make([]*model.Document, 0, 1000)
-	resultCh := make(chan *model.Document, 1000)
+	res := make([]*model2.Document, 0, 1000)
+	resultCh := make(chan *model2.Document, 1000)
 
 	// 开启协程异步从每个 Worker 上进行计数
 	for _, endpoint := range endpoints {

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/yzletter/go-postery/microservice-backend/search/conf"
+	"github.com/yzletter/go-postery/microservice-backend/search/config"
 )
 
 var (
@@ -28,11 +30,11 @@ func InitProducer(brokers []string) *kafka.Writer {
 	return producer
 }
 
-func InitConsumer(brokers []string, topic string, groupID string) *kafka.Reader {
+func InitConsumer(config config.KafkaConfig) *kafka.Reader {
 	consumer := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:        brokers, // 支持传入多个broker的ip:port
-		Topic:          topic,
-		GroupID:        groupID,           // 一个Group内消费到的消息不会重复。注意：如果不指定GroupID，则只能消费到1个partition里的数据，所以consumer的个数需要多于partition数据才能把数据消费全
+		Brokers:        []string{config.Addr}, // 支持传入多个broker的ip:port
+		Topic:          conf.KafkaTopic,
+		GroupID:        conf.KafkaGroup,   // 一个Group内消费到的消息不会重复。注意：如果不指定GroupID，则只能消费到1个partition里的数据，所以consumer的个数需要多于partition数据才能把数据消费全
 		CommitInterval: 0,                 // 每隔多长时间自动commit一次offset。即一边读一边向kafka上报读到了哪个位置
 		StartOffset:    kafka.FirstOffset, // 当一个特定的partition没有commited offset时(比如第一次读一个partition，之前没有commit过)，通过StartOffset指定从第一个还是最后一个位置开始消费。StartOffset的取值要么是FirstOffset要么是LastOffset，LastOffset表示Consumer启动之前生成的老数据不管了。仅当指定了GroupID时，StartOffset才生效。
 		// Partition:      0,                 // Partition和GroupID不能同时指定

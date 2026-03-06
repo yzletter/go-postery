@@ -8,8 +8,8 @@ import (
 
 	"log/slog"
 
-	"github.com/yzletter/go-postery/search/model"
-	"github.com/yzletter/go-postery/search/utils"
+	"github.com/yzletter/go-postery/microservice-backend/search/model"
+	"github.com/yzletter/go-postery/microservice-backend/search/utils"
 )
 
 const (

@@ -6,8 +6,8 @@ import (
 
 	"github.com/huandu/skiplist"
 	farmhash "github.com/leemcloughlin/gofarmhash"
-	"github.com/yzletter/go-postery/search/model"
-	"github.com/yzletter/go-postery/search/utils"
+	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
+	"github.com/yzletter/go-postery/microservice-backend/search/utils"
 )
 
 // SkipListReverseIndex 用跳表实现的倒排索引
@@ -37,7 +37,7 @@ func NewSkipListReverseIndex(DocumentNumEstimate int) *SkipListReverseIndex {
 }
 
 // Add 添加倒排索引
-func (index *SkipListReverseIndex) Add(document *model.Document) {
+func (index *SkipListReverseIndex) Add(document *model2.Document) {
 	// 获取文档关键词
 	keywords := document.Keywords
 
@@ -70,7 +70,7 @@ func (index *SkipListReverseIndex) Add(document *model.Document) {
 }
 
 // Del 删除 Keyword 链上的文档
-func (index *SkipListReverseIndex) Del(IndexID uint64, keyword *model.Keyword) {
+func (index *SkipListReverseIndex) Del(IndexID uint64, keyword *model2.Keyword) {
 	key := keyword.ToString()
 	lock := index.getLock(key)
 
@@ -87,7 +87,7 @@ func (index *SkipListReverseIndex) Del(IndexID uint64, keyword *model.Keyword) {
 }
 
 // Search 搜索, 返回文档的 DocID 即业务 ID
-func (index *SkipListReverseIndex) Search(query *model.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []string {
+func (index *SkipListReverseIndex) Search(query *model2.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []string {
 	result := index.search(query, onFlag, offFlag, orFlags)
 	if result == nil {
 		return nil
@@ -127,7 +127,7 @@ func (index *SkipListReverseIndex) filterByDocFeature(docFeature uint64, onFlag 
 	return true
 }
 
-func (index *SkipListReverseIndex) search(query *model.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) *skiplist.SkipList {
+func (index *SkipListReverseIndex) search(query *model2.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) *skiplist.SkipList {
 	if query.Keyword != nil { // 当前 Query 就是一个关键词
 		keyword := query.Keyword.ToString()
 		// 抢锁

@@ -7,16 +7,16 @@ import (
 	"log/slog"
 
 	"github.com/bytedance/sonic"
-	"github.com/yzletter/go-postery/search/internal/forward_index"
-	"github.com/yzletter/go-postery/search/internal/reverse_index"
-	"github.com/yzletter/go-postery/search/model"
+	"github.com/yzletter/go-postery/microservice-backend/search/internal/forward_index"
+	reverse_index2 "github.com/yzletter/go-postery/microservice-backend/search/internal/reverse_index"
+	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
 )
 
 // Indexer 搜索引擎索引
 type Indexer struct {
 	// 正倒排索引结合
 	forwardIndex forward_index.ForwardIndex
-	reverseIndex reverse_index.ReverseIndex
+	reverseIndex reverse_index2.ReverseIndex
 	maxIndexID   uint64
 }
 
@@ -27,7 +27,7 @@ func (indexer *Indexer) Init(DocNumEstimate int, DataDir string) error {
 		return err
 	}
 	indexer.forwardIndex = db
-	indexer.reverseIndex = reverse_index.NewSkipListReverseIndex(DocNumEstimate)
+	indexer.reverseIndex = reverse_index2.NewSkipListReverseIndex(DocNumEstimate)
 	return nil
 }
 
@@ -36,7 +36,7 @@ func (indexer *Indexer) Close() error {
 	return indexer.forwardIndex.Close()
 }
 
-func (indexer *Indexer) AddDoc(doc *model.Document) (int, error) {
+func (indexer *Indexer) AddDoc(doc *model2.Document) (int, error) {
 	// 参数校验
 	docID := strings.TrimSpace(doc.DocID)
 	if len(docID) == 0 {
@@ -59,7 +59,7 @@ func (indexer *Indexer) AddDoc(doc *model.Document) (int, error) {
 	return 1, nil
 }
 
-func (indexer *Indexer) UpdateDoc(doc *model.Document) (int, error) {
+func (indexer *Indexer) UpdateDoc(doc *model2.Document) (int, error) {
 	docID := strings.TrimSpace(doc.DocID)
 	if len(docID) == 0 {
 		return 0, nil
@@ -77,7 +77,7 @@ func (indexer *Indexer) DeleteDoc(docID string) int {
 		return 0
 	}
 
-	var document model.Document
+	var document model2.Document
 	if err = sonic.Unmarshal(docBytes, &document); err != nil {
 		return 0
 	}
@@ -95,7 +95,7 @@ func (indexer *Indexer) DeleteDoc(docID string) int {
 	return 1
 }
 
-func (indexer *Indexer) Search(query *model.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []*model.Document {
+func (indexer *Indexer) Search(query *model2.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []*model2.Document {
 	// 搜倒排
 	docIDs := indexer.reverseIndex.Search(query, onFlag, offFlag, orFlags)
 	if len(docIDs) == 0 {
@@ -114,9 +114,9 @@ func (indexer *Indexer) Search(query *model.TermQuery, onFlag uint64, offFlag ui
 		return nil
 	}
 
-	res := make([]*model.Document, 0, len(docIDs))
+	res := make([]*model2.Document, 0, len(docIDs))
 	for _, docBytes := range docs {
-		var document model.Document
+		var document model2.Document
 		err = sonic.Unmarshal(docBytes, &document)
 		if err != nil {
 			continue
@@ -140,7 +140,7 @@ func (indexer *Indexer) Count() int {
 // LoadFromIndexFile 系统重启时，直接从正排里加载数据
 func (indexer *Indexer) LoadFromIndexFile() int {
 	cnt := indexer.forwardIndex.IterDB(func(k, v []byte) error {
-		var document model.Document
+		var document model2.Document
 		if err := sonic.Unmarshal(v, &document); err != nil {
 			return err
 		}

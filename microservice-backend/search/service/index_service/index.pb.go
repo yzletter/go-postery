@@ -7,12 +7,13 @@
 package index_service
 
 import (
-	model "github.com/yzletter/go-postery/search/model"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -112,7 +113,7 @@ func (x *AffectedCount) GetCount() int32 {
 
 type SearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TermQuery     *model.TermQuery       `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
+	TermQuery     *model2.TermQuery      `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
 	OnFlag        uint64                 `protobuf:"varint,2,opt,name=OnFlag,proto3" json:"OnFlag,omitempty"`
 	OffFlag       uint64                 `protobuf:"varint,3,opt,name=OffFlag,proto3" json:"OffFlag,omitempty"`
 	OrFlags       []uint64               `protobuf:"varint,4,rep,packed,name=OrFlags,proto3" json:"OrFlags,omitempty"`
@@ -150,7 +151,7 @@ func (*SearchRequest) Descriptor() ([]byte, []int) {
 	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SearchRequest) GetTermQuery() *model.TermQuery {
+func (x *SearchRequest) GetTermQuery() *model2.TermQuery {
 	if x != nil {
 		return x.TermQuery
 	}
@@ -180,7 +181,7 @@ func (x *SearchRequest) GetOrFlags() []uint64 {
 
 type SearchResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []*model.Document      `protobuf:"bytes,1,rep,name=Results,proto3" json:"Results,omitempty"`
+	Results       []*model2.Document     `protobuf:"bytes,1,rep,name=Results,proto3" json:"Results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -215,7 +216,7 @@ func (*SearchResult) Descriptor() ([]byte, []int) {
 	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *SearchResult) GetResults() []*model.Document {
+func (x *SearchResult) GetResults() []*model2.Document {
 	if x != nil {
 		return x.Results
 	}
@@ -295,13 +296,13 @@ func file_search_service_index_service_index_proto_rawDescGZIP() []byte {
 
 var file_search_service_index_service_index_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_search_service_index_service_index_proto_goTypes = []any{
-	(*DocID)(nil),           // 0: index_service.DocID
-	(*AffectedCount)(nil),   // 1: index_service.AffectedCount
-	(*SearchRequest)(nil),   // 2: index_service.SearchRequest
-	(*SearchResult)(nil),    // 3: index_service.SearchResult
-	(*CountRequest)(nil),    // 4: index_service.CountRequest
-	(*model.TermQuery)(nil), // 5: model.TermQuery
-	(*model.Document)(nil),  // 6: model.Document
+	(*DocID)(nil),            // 0: index_service.DocID
+	(*AffectedCount)(nil),    // 1: index_service.AffectedCount
+	(*SearchRequest)(nil),    // 2: index_service.SearchRequest
+	(*SearchResult)(nil),     // 3: index_service.SearchResult
+	(*CountRequest)(nil),     // 4: index_service.CountRequest
+	(*model2.TermQuery)(nil), // 5: model.TermQuery
+	(*model2.Document)(nil),  // 6: model.Document
 }
 var file_search_service_index_service_index_proto_depIdxs = []int32{
 	5, // 0: index_service.SearchRequest.TermQuery:type_name -> model.TermQuery

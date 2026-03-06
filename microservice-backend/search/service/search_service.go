@@ -10,31 +10,29 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
-	post_conf "github.com/yzletter/go-postery/post/conf"
-	"github.com/yzletter/go-postery/search/errs"
-	"github.com/yzletter/go-postery/search/model"
-	"github.com/yzletter/go-postery/search/service/index_service"
-	"github.com/yzletter/go-postery/search/service/ports"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/yzletter/go-postery/client"
+	"github.com/yzletter/go-postery/microservice-backend/search/errs"
+	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
+	"github.com/yzletter/go-postery/microservice-backend/search/service/index_service"
+	ports2 "github.com/yzletter/go-postery/microservice-backend/search/service/ports"
 )
 
 type searchService struct {
 	indexer       *index_service.Indexer // 单机模式
 	kafkaConsumer *kafka.Reader
-	tokenizer     ports.Tokenizer
-	idGen         ports.IDGenerator // 用于生成 ID
-	search_grpc.UnimplementedSearchServiceServer
+	tokenizer     ports2.Tokenizer
+	idGen         ports2.IDGenerator // 用于生成 ID
+
+	postClient client.PostClient
 }
 
-func NewSearchService(kafkaConsumer *kafka.Reader, tokenizer ports.Tokenizer, idGen ports.IDGenerator) SearchService {
+func NewSearchService(kafkaConsumer *kafka.Reader, tokenizer ports2.Tokenizer, idGen ports2.IDGenerator, postClient client.PostClient) SearchService {
 	service := &searchService{
-		indexer:                          new(index_service.Indexer),
-		kafkaConsumer:                    kafkaConsumer,
-		tokenizer:                        tokenizer,
-		idGen:                            idGen,
-		UnimplementedSearchServiceServer: search_grpc.UnimplementedSearchServiceServer{},
+		indexer:       new(index_service.Indexer),
+		kafkaConsumer: kafkaConsumer,
+		tokenizer:     tokenizer,
+		idGen:         idGen,
+		postClient:    postClient,
 	}
 
 	if err := service.indexer.Init(5000000, "data/local_db/search"); err != nil {
@@ -46,20 +44,21 @@ func NewSearchService(kafkaConsumer *kafka.Reader, tokenizer ports.Tokenizer, id
 	return service
 }
 
-func (svc *searchService) Search(ctx context.Context, req *search_grpc.SearchRequest) (*search_grpc.SearchResult, error) {
+func (svc *searchService) Search(ctx context.Context, queries []string) ([]string, error) {
+	_ = ctx
 	// 构造搜索语句 不同空格之间的应该是和
-	var searchQuery = new(model.TermQuery)
-	var titleQuery = new(model.TermQuery)
-	var contentQuery = new(model.TermQuery)
+	var searchQuery = new(model2.TermQuery)
+	var titleQuery = new(model2.TermQuery)
+	var contentQuery = new(model2.TermQuery)
 
-	for _, query := range req.Queries {
-		contentQ := new(model.TermQuery)
-		titleQ := new(model.TermQuery)
+	for _, query := range queries {
+		contentQ := new(model2.TermQuery)
+		titleQ := new(model2.TermQuery)
 		querySegments := svc.tokenizer.Cut(query)
 
 		for _, segment := range querySegments {
-			contentQ = contentQ.And(model.NewTermQuery("Content", strings.ToLower(segment)))
-			titleQ = titleQ.And(model.NewTermQuery("Title", strings.ToLower(segment)))
+			contentQ = contentQ.And(model2.NewTermQuery("Content", strings.ToLower(segment)))
+			titleQ = titleQ.And(model2.NewTermQuery("Title", strings.ToLower(segment)))
 		}
 
 		contentQuery = contentQuery.And(contentQ)
@@ -70,30 +69,33 @@ func (svc *searchService) Search(ctx context.Context, req *search_grpc.SearchReq
 
 	// 进行搜索
 	documents := svc.indexer.Search(searchQuery, 0, 0, nil)
-	docIDs := make([]*search_grpc.DocID, 0, len(documents))
+	docIDs := make([]string, 0, len(documents))
 	for _, document := range documents {
-		docIDs = append(docIDs, &search_grpc.DocID{DocID: document.DocID})
+		docIDs = append(docIDs, document.DocID)
 	}
-	return &search_grpc.SearchResult{DocumentIDs: docIDs}, nil
+	return docIDs, nil
 }
 
-func (svc *searchService) DeleteDoc(ctx context.Context, req *search_grpc.DocID) (*search_grpc.AffectedCount, error) {
-	affectedCount := svc.indexer.DeleteDoc(req.DocID)
-	return &search_grpc.AffectedCount{Count: int32(affectedCount)}, nil
+func (svc *searchService) DeleteDoc(ctx context.Context, docID string) (int, error) {
+	_ = ctx
+	affectedCount := svc.indexer.DeleteDoc(docID)
+	return affectedCount, nil
 }
 
-func (svc *searchService) AddDoc(ctx context.Context, req *model.Document) (*search_grpc.AffectedCount, error) {
-	affectedCount, err := svc.indexer.AddDoc(req)
+func (svc *searchService) AddDoc(ctx context.Context, doc *model2.Document) (int, error) {
+	_ = ctx
+	affectedCount, err := svc.indexer.AddDoc(doc)
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return &search_grpc.AffectedCount{Count: int32(affectedCount)}, errs.ErrInternal
+		return affectedCount, errs.ErrInternal
 	}
-	return &search_grpc.AffectedCount{Count: int32(affectedCount)}, nil
+	return affectedCount, nil
 }
 
-func (svc *searchService) Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error) {
+func (svc *searchService) Count(ctx context.Context) int {
+	_ = ctx
 	affectedCount := svc.indexer.Count()
-	return &search_grpc.AffectedCount{Count: int32(affectedCount)}, nil
+	return affectedCount
 }
 
 func (svc *searchService) StartConsumer(ctx context.Context) {
@@ -124,7 +126,7 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model.IndexPayload
+			var payload model2.IndexPayload
 			if err = sonic.Unmarshal(message.Value, &payload); err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
 				// 脏消息 Commit 掉
@@ -151,16 +153,8 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 
 // Index 为新 Post 建立索引
 func (svc *searchService) Index(ctx context.Context, postID int64) error {
-
-	conn, err := grpc.NewClient(
-		"localhost:"+post_conf.Port,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
-	)
-
-	postClient := post_grpc.NewPostServiceClient(conn)
-
 	// 读文本
-	post, err := postClient.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{
+	post, err := svc.postClient.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{
 		PostID:     postID,
 		AddViewCnt: false,
 	})
@@ -177,13 +171,13 @@ func (svc *searchService) Index(ctx context.Context, postID int64) error {
 	contentSegments := svc.tokenizer.Cut(post.Content)
 	contentKeywords := toKeywords("Content", contentSegments)
 
-	keywords := make([]*model.Keyword, 0, len(contentSegments)+len(titleSegments))
+	keywords := make([]*model2.Keyword, 0, len(contentSegments)+len(titleSegments))
 	keywords = append(keywords, titleKeywords...)
 	keywords = append(keywords, contentKeywords...)
 
 	// 建索引
 	bs, _ := sonic.Marshal(post) // todo 用 Protobuf
-	_, err = svc.indexer.AddDoc(&model.Document{
+	_, err = svc.indexer.AddDoc(&model2.Document{
 		IndexID:     svc.idGen.NextIDUint64(),
 		DocID:       strconv.FormatInt(postID, 10),
 		BitsFeature: 0, // todo 完善 Post BitsFeature
@@ -193,11 +187,11 @@ func (svc *searchService) Index(ctx context.Context, postID int64) error {
 	return nil
 }
 
-func toKeywords(field string, segments []string) []*model.Keyword {
-	res := make([]*model.Keyword, 0, len(segments))
+func toKeywords(field string, segments []string) []*model2.Keyword {
+	res := make([]*model2.Keyword, 0, len(segments))
 
 	for _, segment := range segments {
-		res = append(res, &model.Keyword{
+		res = append(res, &model2.Keyword{
 			Field: field,
 			Word:  strings.ToLower(segment),
 		})
