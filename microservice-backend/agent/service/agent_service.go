@@ -17,14 +17,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
-	"github.com/yzletter/go-postery/agent/dto"
-	"github.com/yzletter/go-postery/agent/errs"
-	"github.com/yzletter/go-postery/agent/model"
-	"github.com/yzletter/go-postery/agent/repository"
-	"github.com/yzletter/go-postery/agent/service/ports"
-	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	post_conf "github.com/yzletter/go-postery/post/conf"
+	"github.com/yzletter/go-postery/microservice-backend/agent/errs"
+	model2 "github.com/yzletter/go-postery/microservice-backend/agent/model"
+	"github.com/yzletter/go-postery/microservice-backend/agent/repository"
+	ports2 "github.com/yzletter/go-postery/microservice-backend/agent/service/ports"
+	post_conf "github.com/yzletter/go-postery/microservice-backend/post/conf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -33,42 +31,42 @@ type agentService struct {
 	agentRepo           repository.AgentRepository
 	agentKafkaConsumer  *kafka.Reader
 	qdrantKafkaConsumer *kafka.Reader
-	embedder            ports.Embedder
+	embedder            ports2.Embedder
 	llmModel            eino_model.ToolCallingChatModel
-	idGenerator         ports.IDGenerator
-	agent_grpc.UnimplementedAgentServiceServer
+	idGenerator         ports2.IDGenerator
 }
 
-func NewAgentService(agentRepo repository.AgentRepository, agentKafkaConsumer *kafka.Reader, qdrantKafkaConsumer *kafka.Reader, embedder ports.Embedder, llmModel eino_model.ToolCallingChatModel, idGenerator ports.IDGenerator) AgentService {
+func NewAgentService(agentRepo repository.AgentRepository, agentKafkaConsumer *kafka.Reader, qdrantKafkaConsumer *kafka.Reader, embedder ports2.Embedder, llmModel eino_model.ToolCallingChatModel, idGenerator ports2.IDGenerator) AgentService {
 	return &agentService{
-		agentRepo:                       agentRepo,
-		agentKafkaConsumer:              agentKafkaConsumer,
-		qdrantKafkaConsumer:             qdrantKafkaConsumer,
-		embedder:                        embedder,
-		llmModel:                        llmModel,
-		idGenerator:                     idGenerator,
-		UnimplementedAgentServiceServer: agent_grpc.UnimplementedAgentServiceServer{},
+		agentRepo:           agentRepo,
+		agentKafkaConsumer:  agentKafkaConsumer,
+		qdrantKafkaConsumer: qdrantKafkaConsumer,
+		embedder:            embedder,
+		llmModel:            llmModel,
+		idGenerator:         idGenerator,
 	}
 }
 
-func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) (*agent_grpc.ChatResponse, error) {
-	var empty = new(agent_grpc.ChatResponse)
+func (svc *agentService) Chat(ctx context.Context, userID int64, sessionID int64, query string) (string, []string, error) {
+	const defaultContent = "对不起，这个问题我还在学习中……"
+	_ = userID
+	_ = sessionID
 
 	// todo 拉取历史记录
 	//messages, errs := svc.agentRepo.GetMessagesBySessionID(ctx, sessionID)
 	//if errs != nil {
 	//	if errors.Is(errs, repository.ErrServerInternal) {
-	//		return empty, errs.ErrInternal
+	//		return defaultContent, nil, errs.ErrInternal
 	//	}
 	//}
 
 	//messages := []string{}
 
 	// RAG 召回
-	knowledge, err := svc.agentRepo.Retrieve(ctx, req.Query, 0.5, 3) // 召回分数 > 0.5 的三条
+	knowledge, err := svc.agentRepo.Retrieve(ctx, query, 0.5, 3) // 召回分数 > 0.5 的三条
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return empty, errs.ErrInternal
+		return defaultContent, nil, errs.ErrInternal
 	}
 
 	//// 聚合信息
@@ -96,11 +94,11 @@ func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) 
 	})
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return empty, errs.ErrInternal
+		return defaultContent, nil, errs.ErrInternal
 	}
 
 	// 进行询问
-	iterator := runner.Query(ctx, fmt.Sprintf("资料如下：%s\n用户问题：%s", knowledge, req.Query))
+	iterator := runner.Query(ctx, fmt.Sprintf("资料如下：%s\n用户问题：%s", knowledge, query))
 
 	// 返回结果
 	var lastMsg adk.Message
@@ -119,15 +117,11 @@ func (svc *agentService) Chat(ctx context.Context, req *agent_grpc.ChatRequest) 
 		lastMsg = msg
 	}
 
-	if lastMsg == nil {
-		return dto.ToChatResponse(nil, req.SessionID, nil), nil
-	}
-
 	if lastMsg.Role == schema.Assistant && len(lastMsg.Content) > 0 {
-		return dto.ToChatResponse(lastMsg, req.SessionID, knowledge), nil
+		return lastMsg.Content, knowledge, nil
 	}
 
-	return dto.ToChatResponse(nil, req.SessionID, nil), nil
+	return defaultContent, nil, nil
 }
 
 // 订阅两种消息：1. 文章新建时，进行切分入库 topic 为 index_document，2. 有向量要入 Qdrant upsert_qdrant
@@ -159,7 +153,7 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model.ChunkDocumentEventPayload
+			var payload model2.ChunkDocumentEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
@@ -215,7 +209,7 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model.UpsertQdrantEventPayload
+			var payload model2.UpsertQdrantEventPayload
 			err = sonic.Unmarshal(message.Value, &payload)
 			if err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
@@ -276,7 +270,7 @@ func (svc *agentService) indexDocument(ctx context.Context, postID int64) error 
 		return err
 	}
 
-	chunkModels := make([]*model.Chunk, 0, len(chunks))
+	chunkModels := make([]*model2.Chunk, 0, len(chunks))
 
 	// 指定批次
 	batchID := svc.idGenerator.NextID()
@@ -285,17 +279,17 @@ func (svc *agentService) indexDocument(ctx context.Context, postID int64) error 
 		chunkID := stableChunkID(post.ID, idx) // 根据 PID + idx 生成固定的 ChunkID, 防止重试生成一套新 ID，导致数据库迅速膨胀
 
 		// 用于入 MySQL
-		chunkModels = append(chunkModels, &model.Chunk{
+		chunkModels = append(chunkModels, &model2.Chunk{
 			ID:      chunkID,
 			Content: chunk.Content,
 			BatchID: batchID,
 		})
 	}
 
-	var payload model.UpsertQdrantEventPayload
+	var payload model2.UpsertQdrantEventPayload
 	payload.BatchID = batchID
 	value, _ := sonic.MarshalString(payload)
-	event := &model.Event{
+	event := &model2.Event{
 		ID:           svc.idGenerator.NextID(),
 		Topic:        "upsert_qdrant",
 		MessageKey:   "upsert_vectors",

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/qdrant/go-client/qdrant"
-	"github.com/yzletter/go-postery/agent/model"
-	"github.com/yzletter/go-postery/agent/repository/dao"
+	model2 "github.com/yzletter/go-postery/microservice-backend/agent/model"
+	"github.com/yzletter/go-postery/microservice-backend/agent/repository/dao"
 )
 
 type agentRepository struct {
@@ -25,7 +25,7 @@ func (repo *agentRepository) Retrieve(ctx context.Context, query string, scoreTh
 	return texts, nil
 }
 
-func (repo *agentRepository) CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error {
+func (repo *agentRepository) CreateChunksWithOutbox(ctx context.Context, chunkModels []*model2.Chunk, event *model2.Event) error {
 	err := repo.dao.CreateChunksWithOutbox(ctx, chunkModels, event)
 	if err != nil {
 		return toRepositoryErr(err)
@@ -43,10 +43,10 @@ func (repo *agentRepository) UpsertVectorPoints(ctx context.Context, points []*q
 	return nil
 }
 
-func (repo *agentRepository) GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model.Chunk, error) {
+func (repo *agentRepository) GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model2.Chunk, error) {
 	chunks, err := repo.dao.GetChunksByBatchID(ctx, BatchID)
 	if err != nil {
-		return []*model.Chunk{}, toRepositoryErr(err)
+		return []*model2.Chunk{}, toRepositoryErr(err)
 	}
 
 	return chunks, nil

@@ -12,7 +12,7 @@ func ToChatResponse(message adk.Message, ssid int64, knowledge []string) *agent_
 		Content:   "对不起，这个问题我还在学习中……",
 		Documents: []string{},
 	}
-	
+
 	if message != nil {
 		response.Content = message.Content
 	}

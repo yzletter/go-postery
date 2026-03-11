@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/qdrant/go-client/qdrant"
-	"github.com/yzletter/go-postery/agent/model"
+	model2 "github.com/yzletter/go-postery/microservice-backend/agent/model"
 )
 
 type AgentRepository interface {
 	Retrieve(ctx context.Context, query string, scoreThreshold float64, limit int) ([]string, error)
-	CreateChunksWithOutbox(ctx context.Context, chunkModels []*model.Chunk, event *model.Event) error
+	CreateChunksWithOutbox(ctx context.Context, chunkModels []*model2.Chunk, event *model2.Event) error
 	UpsertVectorPoints(ctx context.Context, points []*qdrant.PointStruct) error
-	GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model.Chunk, error)
+	GetChunksByBatchID(ctx context.Context, BatchID int64) ([]*model2.Chunk, error)
 }

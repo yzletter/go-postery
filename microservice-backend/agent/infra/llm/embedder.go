@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
-	"github.com/yzletter/go-postery/agent/service/ports"
+	"github.com/yzletter/go-postery/microservice-backend/agent/config"
+	"github.com/yzletter/go-postery/microservice-backend/agent/service/ports"
 )
 
 type ArkEmbedder struct {
 	embedder *ark.Embedder
 }
 
-func NewArkEmbedder(ctx context.Context, model, APIKey string) *ArkEmbedder {
+func NewArkEmbedder(ctx context.Context, config config.ArkConfig) *ArkEmbedder {
 	var err error
 	timeout := 3 * time.Second
 	retryTimes := 3
@@ -24,8 +25,8 @@ func NewArkEmbedder(ctx context.Context, model, APIKey string) *ArkEmbedder {
 	embedder, err := ark.NewEmbedder(ctx, &ark.EmbeddingConfig{
 		Timeout:    &timeout,
 		RetryTimes: &retryTimes,
-		APIKey:     APIKey,
-		Model:      model,
+		APIKey:     config.APIKey,
+		Model:      config.EmbedderModel,
 		APIType:    &apiType,
 	})
 	if err != nil {

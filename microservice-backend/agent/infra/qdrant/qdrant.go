@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/qdrant/go-client/qdrant"
-	"github.com/yzletter/go-postery/agent/infra/viper"
+	"github.com/yzletter/go-postery/microservice-backend/agent/config"
 )
 
 var (
@@ -13,17 +13,13 @@ var (
 	once   sync.Once
 )
 
-func Init(confDir, confFileName, confFileType string) *qdrant.Client {
+func Init(config config.QdrantConfig) *qdrant.Client {
 	once.Do(func() {
 		// 读取 Qdrant 相关配置
-		vip := viper.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
-		host := vip.GetString("qdrant.host")
-		port := vip.GetInt("qdrant.port")
-
 		var err error
 		client, err = qdrant.NewClient(&qdrant.Config{
-			Host: host,
-			Port: port,
+			Host: config.Host,
+			Port: config.Port,
 		})
 		if err != nil {
 			slog.Info("初始化 Qdrant 失败 ...", "error", err)

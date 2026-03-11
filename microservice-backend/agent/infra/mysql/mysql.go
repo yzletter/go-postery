@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/yzletter/go-postery/agent/infra/viper"
+	"github.com/yzletter/go-postery/microservice-backend/agent/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -26,18 +26,9 @@ type PoolConfig struct {
 }
 
 // Init 初始化数据库
-func Init(confDir, confFileName, confFileType, logDir string) *gorm.DB {
-	// 读取 MySQL 相关配置
-	vip := viper.InitViper(confDir, confFileName, confFileType) // 初始化一个 Viper 进行配置读取
-	host := vip.GetString("mysql.host")
-	port := vip.GetInt("mysql.port")
-	user := vip.GetString("mysql.user")
-	password := vip.GetString("mysql.password")
-	dbName := vip.GetString("mysql.dbName")
-	logFileName := vip.GetString("mysql.logFileName")
-
+func Init(config config.MySQLConfig) *gorm.DB {
 	// 拼接出 MySQL DataSourceName
-	dataSourceName := getDataSourceName(user, password, host, port, dbName)
+	dataSourceName := getDataSourceName(config.User, config.Password, config.Addr, config.DBName)
 
 	// 设置 logger 相关配置
 	loggerConfig := logger.Config{
@@ -47,7 +38,7 @@ func Init(confDir, confFileName, confFileType, logDir string) *gorm.DB {
 		LogLevel:                  logger.Info,            // 日志最低阈值
 	}
 	// 初始化 MySQl Logger
-	DBlogger := initDBLogger(logDir, logFileName, loggerConfig)
+	DBlogger := initDBLogger(config.LogFileDir, config.LogFilename, loggerConfig)
 
 	// 设置 gorm 相关配置
 	gormConfig := &gorm.Config{
@@ -115,10 +106,10 @@ func Close() {
 */
 
 // 拼接出 MySQL DataSourceName
-func getDataSourceName(user string, password string, host string, port int, dbName string) string {
+func getDataSourceName(user string, password string, addr string, dbName string) string {
 	// 拼接完整的请求路径 user:password@tcp(host:port)/dbName?charset=utf8mb4&parseTime=True&loc=Local
 	// 使用 UTF-8mb4 编码, 解析时间为 Go 语言的时间类型, 按系统时区解析时间字段
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, dbName)
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, addr, dbName)
 }
 
 // 初始化 MySQL 日志

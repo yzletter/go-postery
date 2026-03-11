@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/yzletter/go-postery/microservice-backend/agent/config"
 )
 
 var (
@@ -13,12 +14,12 @@ var (
 	once     sync.Once
 )
 
-func NewArkModel(ctx context.Context, model, apikey string) *ark.ChatModel {
+func NewArkLLMModel(ctx context.Context, config config.ArkConfig) *ark.ChatModel {
 	once.Do(func() {
 		var err error
 		arkModel, err = ark.NewChatModel(ctx, &ark.ChatModelConfig{
-			APIKey: apikey,
-			Model:  model,
+			APIKey: config.APIKey,
+			Model:  config.LLMModel,
 		})
 		if err != nil {
 			slog.Error("New Chat Model Failed", "error", err)
