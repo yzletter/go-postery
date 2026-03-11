@@ -10,25 +10,21 @@ import (
 	"github.com/bytedance/sonic"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
-	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	"github.com/yzletter/go-postery/session/dto"
-	"github.com/yzletter/go-postery/session/errs"
-	"github.com/yzletter/go-postery/session/model"
-	"github.com/yzletter/go-postery/session/repository"
-	"github.com/yzletter/go-postery/session/service/ports"
-	"github.com/yzletter/go-postery/session/utils"
+	"github.com/yzletter/go-postery/microservice-backend/session/errs"
+	model2 "github.com/yzletter/go-postery/microservice-backend/session/model"
+	repository2 "github.com/yzletter/go-postery/microservice-backend/session/repository"
+	"github.com/yzletter/go-postery/microservice-backend/session/service/ports"
 )
 
 type sessionService struct {
-	sessionRepo   repository.SessionRepository
-	messageRepo   repository.MessageRepository
+	sessionRepo   repository2.SessionRepository
+	messageRepo   repository2.MessageRepository
 	mqConn        *amqp.Connection
 	kafkaConsumer *kafka.Reader
 	idGen         ports.IDGenerator
-	session_grpc.UnimplementedSessionServiceServer
 }
 
-func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
+func NewSessionService(sessionRepo repository2.SessionRepository, messageRepo repository2.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
 	return &sessionService{
 		sessionRepo:   sessionRepo,
 		messageRepo:   messageRepo,
@@ -63,7 +59,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 			}
 
 			backoff = time.Second
-			var payload model.RegisterSessionEventPayload
+			var payload model2.RegisterSessionEventPayload
 			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
 				// 脏消息
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
@@ -91,95 +87,85 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 	}
 }
 
-func (svc *sessionService) ListByUID(ctx context.Context, id *session_grpc.UserID) (*session_grpc.Sessions, error) {
-	var empty = new(session_grpc.Sessions)
-	sessions, err := svc.sessionRepo.ListByUid(ctx, id.UserID)
+func (svc *sessionService) ListByUID(ctx context.Context, userID int64) ([]*model2.Session, error) {
+	sessions, err := svc.sessionRepo.ListByUid(ctx, userID)
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return empty, errs.ErrInternal
+		return nil, errs.ErrInternal
 	}
 
-	var respSessions []*session_grpc.Session
-	for _, session := range sessions {
-		// 获取对方字段
-		sessionDTO := dto.ToSession(session)
-		respSessions = append(respSessions, sessionDTO)
-	}
-
-	return &session_grpc.Sessions{Sessions: respSessions}, nil
+	return sessions, nil
 }
 
-func (svc *sessionService) GetSession(ctx context.Context, id *session_grpc.BothUserID) (*session_grpc.Session, error) {
-	var empty = new(session_grpc.Session)
-
-	session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, id.UserID, id.TargetID)
+func (svc *sessionService) GetSession(ctx context.Context, userID int64, targetID int64) (*model2.Session, error) {
+	session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, userID, targetID)
 	if err != nil {
 		// 系统层面错误
-		if !errors.Is(err, repository.ErrRecordNotFound) {
+		if !errors.Is(err, repository2.ErrRecordNotFound) {
 			slog.Error("Server Internal Error", "error", err)
-			return empty, errs.ErrInternal
+			return nil, errs.ErrInternal
 		}
 
 		// 查找对方 session
-		session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, id.TargetID, id.UserID)
+		session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, targetID, userID)
 		if err != nil {
 			// 系统层面错误
-			if !errors.Is(err, repository.ErrRecordNotFound) {
+			if !errors.Is(err, repository2.ErrRecordNotFound) {
 				slog.Error("Server Internal Error", "error", err)
-				return empty, errs.ErrInternal
+				return nil, errs.ErrInternal
 			}
 
 			// 双边都没找到，新建会话
 			ssid := svc.idGen.NextID()
-			newSession1 := &model.Session{
+			newSession1 := &model2.Session{
 				ID:         svc.idGen.NextID(),
 				SessionID:  ssid,
-				UserID:     id.UserID,
-				TargetID:   id.TargetID,
+				UserID:     userID,
+				TargetID:   targetID,
 				TargetType: 1,
 			}
 
-			newSession2 := &model.Session{
+			newSession2 := &model2.Session{
 				ID:         svc.idGen.NextID(),
 				SessionID:  ssid,
-				UserID:     id.TargetID,
-				TargetID:   id.UserID,
+				UserID:     targetID,
+				TargetID:   userID,
 				TargetType: 1,
 			}
 
 			err = svc.sessionRepo.Create(ctx, newSession1)
 			if err != nil {
 				slog.Error("Server Internal Error", "error", err)
-				return empty, errs.ErrInternal
+				return nil, errs.ErrInternal
 			}
 
 			err = svc.sessionRepo.Create(ctx, newSession2)
 			if err != nil {
 				slog.Error("Server Internal Error", "error", err)
-				return empty, errs.ErrInternal
+				return nil, errs.ErrInternal
 			}
-			return dto.ToSession(newSession1), nil
+			return newSession1, nil
 		} else {
 			// 对方的会话有，说明只有我单边删除，同一个 sessionID 单边新建
 			ssid := session.SessionID
-			newSession1 := &model.Session{
+			newSession1 := &model2.Session{
 				ID:         svc.idGen.NextID(),
 				SessionID:  ssid,
-				UserID:     id.UserID,
-				TargetID:   id.TargetID,
+				UserID:     userID,
+				TargetID:   targetID,
 				TargetType: 1,
 			}
 
 			err = svc.sessionRepo.Create(ctx, newSession1)
 			if err != nil {
 				slog.Error("Server Internal Error", "error", err)
-				return empty, errs.ErrInternal
+				return nil, errs.ErrInternal
 			}
-			return dto.ToSession(newSession1), nil
+			return newSession1, nil
 		}
 	}
 
-	return dto.ToSession(session), nil
+	return session, nil
 }
 
 // Register 注册用户的 Exchange 和 Queue
@@ -241,88 +227,71 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 	return nil
 }
 
-func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error) {
-	var empty = new(session_grpc.GetHistoryMessagesByPageResponse)
-	total, messages, err := svc.messageRepo.GetByPage(ctx, req.UserID, req.TargetID, int(req.PageNo), int(req.PageSize))
+func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, userID int64, targetID int64, pageNo int, pageSize int) (int64, []*model2.Message, error) {
+	total, messages, err := svc.messageRepo.GetByPage(ctx, userID, targetID, pageNo, pageSize)
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return empty, errs.ErrInternal
+		return 0, nil, errs.ErrInternal
 	}
 
-	var respMessages []*session_grpc.Message
-	for _, message := range messages {
-		respMessages = append(respMessages, dto.ToMessage(message))
-	}
-
-	return &session_grpc.GetHistoryMessagesByPageResponse{
-		Count:    uint64(total),
-		Messages: respMessages,
-	}, nil
+	return int64(total), messages, nil
 }
 
-func (svc *sessionService) Delete(ctx context.Context, req *session_grpc.DeleteRequest) (*session_grpc.SessionEmptyResponse, error) {
+func (svc *sessionService) Delete(ctx context.Context, userID int64, sessionID int64) error {
 	// 查当前用户这边的会话
-	session, err := svc.sessionRepo.GetByID(ctx, req.UserID, req.SessionID)
+	session, err := svc.sessionRepo.GetByID(ctx, userID, sessionID)
 	if err != nil {
 		// 幂等
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if errors.Is(err, repository2.ErrRecordNotFound) {
 			slog.Error("Sesison Not Found", "error", err)
-			return &session_grpc.SessionEmptyResponse{}, nil
+			return nil
 		}
 		// 系统层面错误
 		slog.Error("Server Internal Error", "error", err)
-		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
+		return errs.ErrInternal
 	}
 
-	if session.UserID != req.UserID {
+	if session.UserID != userID {
 		slog.Error("Unauthenticated")
-		return &session_grpc.SessionEmptyResponse{}, errs.ErrUnauthenticated
+		return errs.ErrUnauthenticated
 	}
 
 	// 删除当前用户这边的会话, 要传 uid
-	if err := svc.sessionRepo.Delete(ctx, req.UserID, req.SessionID); err != nil {
+	if err := svc.sessionRepo.Delete(ctx, userID, sessionID); err != nil {
 		// 幂等
-		if errors.Is(err, repository.ErrRecordNotFound) {
+		if errors.Is(err, repository2.ErrRecordNotFound) {
 			slog.Error("Sesison Not Found", "error", err)
-			return &session_grpc.SessionEmptyResponse{}, nil
+			return nil
 		}
 		// 系统层面错误
 		slog.Error("Server Internal Error", "error", err)
-		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
+		return errs.ErrInternal
 	}
 
-	return &session_grpc.SessionEmptyResponse{}, nil
+	return nil
 }
 
-func (svc *sessionService) UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
-	updates := model.UpdateUnread{
-		Updates: model.Updates{
-			LastMessageID:   req.LastMessageID,
-			LastMessage:     req.LastMessage,
-			LastMessageTime: utils.RPCTimeToGoTime(req.LastMessageTime),
-		},
-		Delta: int(req.Delta),
-	}
-	if err := svc.sessionRepo.UpdateUnread(ctx, req.UserID, req.SessionID, updates); err != nil {
+func (svc *sessionService) UpdateUnread(ctx context.Context, userID int64, sessionID int64, updates model2.UpdateUnread) error {
+	if err := svc.sessionRepo.UpdateUnread(ctx, userID, sessionID, updates); err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
+		return errs.ErrInternal
 	}
-	return &session_grpc.SessionEmptyResponse{}, nil
+	return nil
 }
 
-func (svc *sessionService) ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
-	if err := svc.sessionRepo.ClearUnread(ctx, req.UserID, req.SessionID); err != nil {
+func (svc *sessionService) ClearUnread(ctx context.Context, userID int64, sessionID int64) error {
+	if err := svc.sessionRepo.ClearUnread(ctx, userID, sessionID); err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return &session_grpc.SessionEmptyResponse{}, errs.ErrInternal
+		return errs.ErrInternal
 	}
-	return &session_grpc.SessionEmptyResponse{}, nil
+	return nil
 }
 
-func (svc *sessionService) CreateMessage(ctx context.Context, message *session_grpc.Message) (*session_grpc.Message, error) {
-	messageModel := &model.Message{
+func (svc *sessionService) CreateMessage(ctx context.Context, message *model2.Message) (*model2.Message, error) {
+	messageModel := &model2.Message{
 		ID:          svc.idGen.NextID(), // 补充 ID
 		SessionID:   message.SessionID,
-		SessionType: int(message.SessionType),
+		SessionType: message.SessionType,
 		MessageFrom: message.MessageFrom,
 		MessageTo:   message.MessageTo,
 		Content:     message.Content,
@@ -330,16 +299,8 @@ func (svc *sessionService) CreateMessage(ctx context.Context, message *session_g
 
 	if err := svc.messageRepo.Create(ctx, messageModel); err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return &session_grpc.Message{}, errs.ErrInternal
+		return &model2.Message{}, errs.ErrInternal
 	}
 
-	return &session_grpc.Message{
-		ID:          messageModel.ID,
-		SessionID:   messageModel.SessionID,
-		SessionType: int32(messageModel.SessionType),
-		MessageFrom: messageModel.MessageFrom,
-		MessageTo:   messageModel.MessageTo,
-		Content:     messageModel.Content,
-		CreatedAt:   messageModel.CreatedAt.Format(time.RFC3339),
-	}, nil
+	return messageModel, nil
 }

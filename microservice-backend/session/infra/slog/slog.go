@@ -6,16 +6,17 @@ import (
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/yzletter/go-postery/microservice-backend/session/config"
 )
 
 // InitSlog 初始化 Slog
-func InitSlog(logFileName string) {
+func InitSlog(config config.LogConfig) {
 	// 设置 rotatelogs 滚动日志相关配置
 	logFile, err := rotatelogs.New(
-		logFileName+".%Y%m%d%H",                  // 日志文件路径
-		rotatelogs.WithLinkName(logFileName),     // 创建软链接指向最新的一份日志
+		config.FilePath+".%Y%m%d%H",              // 日志文件路径
+		rotatelogs.WithLinkName(config.FilePath), // 创建软链接指向最新的一份日志
 		rotatelogs.WithRotationTime(1*time.Hour), // 设置滚动时间, 每小时滚动一次
-		rotatelogs.WithMaxAge(1*time.Hour),       // 设置日志保存时间, 或使用 WithRotationCount 只保留最近的几份日志
+		rotatelogs.WithMaxAge(24*time.Hour),      // 设置日志保存时间, 或使用 WithRotationCount 只保留最近的几份日志
 	)
 	if err != nil {
 		panic(fmt.Errorf("go-postery InitSlog : 滚动日志配置出错 %s", err))

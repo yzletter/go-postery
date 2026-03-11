@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/yzletter/go-postery/session/repository/dao"
+	"github.com/yzletter/go-postery/microservice-backend/session/repository/dao"
 )
 
 var (
