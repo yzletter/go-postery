@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/user/model"
-	"github.com/yzletter/go-postery/user/repository/cache"
-	"github.com/yzletter/go-postery/user/repository/dao"
+	"github.com/yzletter/go-postery/microservice-backend/user/model"
+	"github.com/yzletter/go-postery/microservice-backend/user/repository/cache"
+	"github.com/yzletter/go-postery/microservice-backend/user/repository/dao"
 )
 
 type userRepository struct {

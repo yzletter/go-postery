@@ -4,7 +4,7 @@ import (
 	"time"
 
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/user/model"
+	"github.com/yzletter/go-postery/microservice-backend/user/model"
 )
 
 // UpdateProfileRequestToModel user_grpc.UpdateProfileRequest 转 model.UserProfile

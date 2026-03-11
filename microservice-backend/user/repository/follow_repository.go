@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/user/model"
-	"github.com/yzletter/go-postery/user/repository/dao"
+	"github.com/yzletter/go-postery/microservice-backend/user/model"
+	"github.com/yzletter/go-postery/microservice-backend/user/repository/dao"
 )
 
 type followRepository struct {
