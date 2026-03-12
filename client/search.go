@@ -47,7 +47,7 @@ func (client *searchClient) Close() {
 
 func (client *searchClient) Search(ctx context.Context, req *search_grpc.SearchRequest) (*search_grpc.SearchResult, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Search(ctx, req)
@@ -55,7 +55,7 @@ func (client *searchClient) Search(ctx context.Context, req *search_grpc.SearchR
 
 func (client *searchClient) DeleteDoc(ctx context.Context, req *search_grpc.DocID) (*search_grpc.AffectedCount, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.DeleteDoc(ctx, req)
@@ -63,7 +63,7 @@ func (client *searchClient) DeleteDoc(ctx context.Context, req *search_grpc.DocI
 
 func (client *searchClient) AddDoc(ctx context.Context, req *search_model.Document) (*search_grpc.AffectedCount, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.AddDoc(ctx, req)
@@ -71,7 +71,7 @@ func (client *searchClient) AddDoc(ctx context.Context, req *search_model.Docume
 
 func (client *searchClient) Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Count(ctx, req)

@@ -46,7 +46,7 @@ func (client *userClient) Close() {
 
 func (client *userClient) GetProfileById(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.UserDetail, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.GetProfileById(ctx, req)
@@ -54,7 +54,7 @@ func (client *userClient) GetProfileById(ctx context.Context, req *user_grpc.Get
 
 func (client *userClient) UpdateProfile(ctx context.Context, req *user_grpc.UpdateProfileRequest) (*user_grpc.UpdateProfileResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.UpdateProfile(ctx, req)
@@ -62,7 +62,7 @@ func (client *userClient) UpdateProfile(ctx context.Context, req *user_grpc.Upda
 
 func (client *userClient) Top(ctx context.Context, req *user_grpc.TopRequest) (*user_grpc.TopResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Top(ctx, req)
@@ -70,7 +70,7 @@ func (client *userClient) Top(ctx context.Context, req *user_grpc.TopRequest) (*
 
 func (client *userClient) Follow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Follow(ctx, req)
@@ -78,7 +78,7 @@ func (client *userClient) Follow(ctx context.Context, req *user_grpc.FollowCommo
 
 func (client *userClient) UnFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.UnFollow(ctx, req)
@@ -86,7 +86,7 @@ func (client *userClient) UnFollow(ctx context.Context, req *user_grpc.FollowCom
 
 func (client *userClient) IfFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.IfFollowResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.IfFollow(ctx, req)
@@ -94,7 +94,7 @@ func (client *userClient) IfFollow(ctx context.Context, req *user_grpc.FollowCom
 
 func (client *userClient) ListFollowersByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.ListFollowersByPage(ctx, req)
@@ -102,7 +102,7 @@ func (client *userClient) ListFollowersByPage(ctx context.Context, req *user_grp
 
 func (client *userClient) ListFolloweesByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.ListFolloweesByPage(ctx, req)

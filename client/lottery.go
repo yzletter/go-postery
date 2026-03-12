@@ -46,7 +46,7 @@ func (client *lotteryClient) Close() {
 
 func (client *lotteryClient) GetAllGifts(ctx context.Context, req *lottery_grpc.EmptyRequest) (*lottery_grpc.Gifts, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.GetAllGifts(ctx, req)
@@ -54,7 +54,7 @@ func (client *lotteryClient) GetAllGifts(ctx context.Context, req *lottery_grpc.
 
 func (client *lotteryClient) Lottery(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.Gift, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Lottery(ctx, req)
@@ -62,7 +62,7 @@ func (client *lotteryClient) Lottery(ctx context.Context, req *lottery_grpc.User
 
 func (client *lotteryClient) Pay(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Pay(ctx, req)
@@ -70,7 +70,7 @@ func (client *lotteryClient) Pay(ctx context.Context, req *lottery_grpc.LotteryC
 
 func (client *lotteryClient) GiveUp(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.GiveUp(ctx, req)
@@ -78,7 +78,7 @@ func (client *lotteryClient) GiveUp(ctx context.Context, req *lottery_grpc.Lotte
 
 func (client *lotteryClient) Result(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.Order, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Result(ctx, req)

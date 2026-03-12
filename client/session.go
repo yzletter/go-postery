@@ -46,7 +46,7 @@ func (client *sessionClient) Close() {
 
 func (client *sessionClient) ListByUID(ctx context.Context, req *session_grpc.UserID) (*session_grpc.Sessions, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.ListByUID(ctx, req)
@@ -54,7 +54,7 @@ func (client *sessionClient) ListByUID(ctx context.Context, req *session_grpc.Us
 
 func (client *sessionClient) GetSession(ctx context.Context, req *session_grpc.BothUserID) (*session_grpc.Session, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.GetSession(ctx, req)
@@ -62,7 +62,7 @@ func (client *sessionClient) GetSession(ctx context.Context, req *session_grpc.B
 
 func (client *sessionClient) GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.GetHistoryMessagesByPage(ctx, req)
@@ -70,7 +70,7 @@ func (client *sessionClient) GetHistoryMessagesByPage(ctx context.Context, req *
 
 func (client *sessionClient) Delete(ctx context.Context, req *session_grpc.DeleteRequest) (*session_grpc.SessionEmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Delete(ctx, req)
@@ -78,7 +78,7 @@ func (client *sessionClient) Delete(ctx context.Context, req *session_grpc.Delet
 
 func (client *sessionClient) UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.UpdateUnread(ctx, req)
@@ -86,7 +86,7 @@ func (client *sessionClient) UpdateUnread(ctx context.Context, req *session_grpc
 
 func (client *sessionClient) ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.ClearUnread(ctx, req)
@@ -94,7 +94,7 @@ func (client *sessionClient) ClearUnread(ctx context.Context, req *session_grpc.
 
 func (client *sessionClient) CreateMessage(ctx context.Context, req *session_grpc.Message) (*session_grpc.Message, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.CreateMessage(ctx, req)
