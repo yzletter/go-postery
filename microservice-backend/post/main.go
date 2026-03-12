@@ -94,7 +94,7 @@ func main() {
 		panic(err)
 	}
 	if err := server.Serve(lis); err != nil {
-		slog.Error("Code grpc Server Start Failed", "error", err)
+		slog.Error("Service gRPC Server Start Failed", "service", ServiceName, "error", err)
 		panic(err)
 	}
 }
