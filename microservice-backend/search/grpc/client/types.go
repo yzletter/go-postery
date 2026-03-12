@@ -3,10 +3,15 @@ package client
 import (
 	"context"
 
+	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
+	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
+	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
+	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	search_model "github.com/yzletter/go-postery/microservice-backend/search/model"
 )
 
 const (
@@ -14,8 +19,8 @@ const (
 	AuthClientAddr    = "172.16.150.246:9002"
 	LotteryClientAddr = "172.16.150.246:9003"
 	PostClientAddr    = "172.16.150.246:9004"
-	SearchClientAddr  = "172.16.150.246:9005"
-	AgentClientAddr   = "172.16.150.246:9006"
+	SearchClientAddr  = "172.16.52.125:9005"
+	AgentClientAddr   = "172.16.52.125:9006"
 	UserClientAddr    = "172.16.150.246:9007"
 	SessionClientAddr = "172.16.150.246:9008"
 )
@@ -69,5 +74,41 @@ type PostClient interface {
 	ListCommentByPage(ctx context.Context, req *post_grpc.ListCommentByPageRequest) (*post_grpc.CommentsResponse, error)
 	ListRepliesByPage(ctx context.Context, req *post_grpc.ListReplyByPageRequest) (*post_grpc.CommentsResponse, error)
 	CheckCommentDeleteAuth(ctx context.Context, req *post_grpc.CommentBelongRequest) (*post_grpc.BelongResponse, error)
+	Close()
+}
+
+type SearchClient interface {
+	Search(ctx context.Context, req *search_grpc.SearchRequest) (*search_grpc.SearchResult, error)
+	DeleteDoc(ctx context.Context, req *search_grpc.DocID) (*search_grpc.AffectedCount, error)
+	AddDoc(ctx context.Context, req *search_model.Document) (*search_grpc.AffectedCount, error)
+	Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error)
+	Close()
+}
+
+type AgentClient interface {
+	Chat(ctx context.Context, req *agent_grpc.ChatRequest) (*agent_grpc.ChatResponse, error)
+	Close()
+}
+
+type UserClient interface {
+	GetProfileById(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.UserDetail, error)
+	UpdateProfile(ctx context.Context, req *user_grpc.UpdateProfileRequest) (*user_grpc.UpdateProfileResponse, error)
+	Top(ctx context.Context, req *user_grpc.TopRequest) (*user_grpc.TopResponse, error)
+	Follow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error)
+	UnFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error)
+	IfFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.IfFollowResponse, error)
+	ListFollowersByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error)
+	ListFolloweesByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error)
+	Close()
+}
+
+type SessionClient interface {
+	ListByUID(ctx context.Context, req *session_grpc.UserID) (*session_grpc.Sessions, error)
+	GetSession(ctx context.Context, req *session_grpc.BothUserID) (*session_grpc.Session, error)
+	GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error)
+	Delete(ctx context.Context, req *session_grpc.DeleteRequest) (*session_grpc.SessionEmptyResponse, error)
+	UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
+	ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
+	CreateMessage(ctx context.Context, req *session_grpc.Message) (*session_grpc.Message, error)
 	Close()
 }
