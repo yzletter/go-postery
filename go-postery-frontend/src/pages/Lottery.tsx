@@ -203,16 +203,16 @@ export default function Lottery() {
     try {
       const { data } = await apiGet<unknown>('/gifts')
       const payload = data as any
-      const rawList = Array.isArray(payload)
+      const rawList: unknown[] = Array.isArray(payload)
         ? payload
         : Array.isArray(payload?.gifts)
           ? payload.gifts
           : []
       const normalized = rawList
-        .map((item) => normalizeGift(item))
+        .map((item: unknown) => normalizeGift(item))
         .filter((item): item is GiftItem => Boolean(item))
       const uniqueMap = new Map<string, GiftItem>()
-      normalized.forEach(item => {
+      normalized.forEach((item: GiftItem) => {
         if (!uniqueMap.has(item.id)) {
           uniqueMap.set(item.id, item)
         }

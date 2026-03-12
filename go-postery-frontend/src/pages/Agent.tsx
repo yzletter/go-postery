@@ -39,7 +39,7 @@ const asString = (value: unknown) => {
 const normalizeDocuments = (raw: unknown): AgentDocument[] => {
   if (!raw) return []
   const list = Array.isArray(raw) ? raw : [raw]
-  const normalized = list.map((item) => {
+  const normalized: Array<AgentDocument | null> = list.map((item) => {
     if (typeof item === 'string') {
       const title = item.trim()
       return title ? { title } : null
@@ -49,7 +49,7 @@ const normalizeDocuments = (raw: unknown): AgentDocument[] => {
       return title ? { title } : null
     }
     const record = item as Record<string, unknown>
-    return {
+    const doc: AgentDocument = {
       title:
         asString(record.title) ??
         asString(record.name) ??
@@ -65,6 +65,7 @@ const normalizeDocuments = (raw: unknown): AgentDocument[] => {
       source: asString(record.source) ?? asString(record.provider) ?? asString(record.origin),
       id: asString(record.id) ?? asString(record.document_id),
     }
+    return doc.title || doc.url || doc.snippet || doc.source || doc.id ? doc : null
   })
 
   return normalized.filter((doc): doc is AgentDocument => Boolean(doc))

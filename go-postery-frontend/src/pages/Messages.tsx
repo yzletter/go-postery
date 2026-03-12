@@ -7,7 +7,6 @@ import {
   FormEvent,
   type UIEvent,
   type WheelEvent,
-  type TouchEvent,
   type MouseEvent,
 } from 'react'
 import { Link, useLocation } from 'react-router-dom'
