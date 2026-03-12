@@ -61,6 +61,8 @@ func main() {
 	UserService := service2.NewUserService(UserRepo, FollowRepo, FollowKafkaConsumer, IDGenerator) // 注册 userSvc
 	MetricService := service2.NewMetricService(ServiceName)
 
+	go UserService.StartInitUserScoreConsumer(ctx)
+
 	// gRPC Server
 	UserServiceServer := grpc_server.NewUserServiceServer(UserService)
 	server := grpc.NewServer(
