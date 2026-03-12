@@ -8,7 +8,8 @@ package search_grpc
 
 import (
 	context "context"
-	model "github.com/yzletter/go-postery/search/model"
+
+	"github.com/yzletter/go-postery/microservice-backend/search/model"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"

@@ -7,12 +7,13 @@
 package search_grpc
 
 import (
-	model "github.com/yzletter/go-postery/search/model"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -192,7 +193,7 @@ func (x *SearchRequest) GetQueries() []string {
 
 type Query struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TermQuery     *model.TermQuery       `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
+	TermQuery     *model2.TermQuery      `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
 	OnFlag        uint64                 `protobuf:"varint,2,opt,name=OnFlag,proto3" json:"OnFlag,omitempty"`
 	OffFlag       uint64                 `protobuf:"varint,3,opt,name=OffFlag,proto3" json:"OffFlag,omitempty"`
 	OrFlags       []uint64               `protobuf:"varint,4,rep,packed,name=OrFlags,proto3" json:"OrFlags,omitempty"`
@@ -230,7 +231,7 @@ func (*Query) Descriptor() ([]byte, []int) {
 	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *Query) GetTermQuery() *model.TermQuery {
+func (x *Query) GetTermQuery() *model2.TermQuery {
 	if x != nil {
 		return x.TermQuery
 	}
@@ -341,14 +342,14 @@ func file_api_proto_search_v1_search_proto_rawDescGZIP() []byte {
 
 var file_api_proto_search_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_proto_search_v1_search_proto_goTypes = []any{
-	(*DocID)(nil),           // 0: search.v1.DocID
-	(*AffectedCount)(nil),   // 1: search.v1.AffectedCount
-	(*CountRequest)(nil),    // 2: search.v1.CountRequest
-	(*SearchRequest)(nil),   // 3: search.v1.SearchRequest
-	(*Query)(nil),           // 4: search.v1.Query
-	(*SearchResult)(nil),    // 5: search.v1.SearchResult
-	(*model.TermQuery)(nil), // 6: model.TermQuery
-	(*model.Document)(nil),  // 7: model.Document
+	(*DocID)(nil),            // 0: search.v1.DocID
+	(*AffectedCount)(nil),    // 1: search.v1.AffectedCount
+	(*CountRequest)(nil),     // 2: search.v1.CountRequest
+	(*SearchRequest)(nil),    // 3: search.v1.SearchRequest
+	(*Query)(nil),            // 4: search.v1.Query
+	(*SearchResult)(nil),     // 5: search.v1.SearchResult
+	(*model2.TermQuery)(nil), // 6: model.TermQuery
+	(*model2.Document)(nil),  // 7: model.Document
 }
 var file_api_proto_search_v1_search_proto_depIdxs = []int32{
 	6, // 0: search.v1.Query.TermQuery:type_name -> model.TermQuery
