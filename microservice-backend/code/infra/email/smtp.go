@@ -74,7 +74,7 @@ func (m *QQEmailSMTPManager) Send(ctx context.Context, identifier string, code s
 }
 
 func renderVerifyEmailHTML(data VerifyEmailData) (string, error) {
-	tpl, err := template.ParseFiles("./infra/email/verify_email.html")
+	tpl, err := template.ParseFiles("./verify_email.html")
 	if err != nil {
 		return "", err
 	}
