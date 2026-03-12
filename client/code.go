@@ -46,7 +46,7 @@ func (client *codeClient) Close() {
 
 func (client *codeClient) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Send(ctx, req)
@@ -54,7 +54,7 @@ func (client *codeClient) Send(ctx context.Context, req *code_grpc.SendCodeReque
 
 func (client *codeClient) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
 	// 添加超时控制
-	ctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()
 
 	return client.client.Verify(ctx, req)
