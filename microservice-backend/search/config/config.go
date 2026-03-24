@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"sync"
 
 	etcdv3 "go.etcd.io/etcd/client/v3"
@@ -22,6 +23,8 @@ var (
 // prefix 业务配置 Key 的前缀
 func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string) Config {
 	conce.Do(func() {
+		// 加载 Redis 配置
+		config.Redis = loadRedisConfig(ctx, client, prefix)
 		// 加载 Metric 配置
 		config.Metric = loadPrometheusConfig(ctx, client, prefix)
 		// 加载 Jaeger 配置
@@ -37,6 +40,28 @@ func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 
 		go watch(ctx, client, prefix, watchKeys)
 	})
+
+	return config
+}
+
+func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) RedisConfig {
+	var config RedisConfig
+
+	// 获取地址
+	if resp, err := client.Get(ctx, prefix+"redis_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Addr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"redis_addr"] = struct{}{}
+		}
+	}
+
+	// 获取数据库号
+	if resp, err := client.Get(ctx, prefix+"redis_db"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.DB, _ = strconv.Atoi(string(resp.Kvs[0].Value))
+			watchKeys[prefix+"redis_db"] = struct{}{}
+		}
+	}
 
 	return config
 }

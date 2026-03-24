@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
@@ -19,6 +20,7 @@ import (
 	llm2 "github.com/yzletter/go-postery/microservice-backend/agent/infra/llm"
 	infraMySQL "github.com/yzletter/go-postery/microservice-backend/agent/infra/mysql"
 	infraQdarant "github.com/yzletter/go-postery/microservice-backend/agent/infra/qdrant"
+	infraRedis "github.com/yzletter/go-postery/microservice-backend/agent/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/microservice-backend/agent/infra/slog"
 	"github.com/yzletter/go-postery/microservice-backend/agent/infra/snowflake"
 	"github.com/yzletter/go-postery/microservice-backend/agent/repository"
@@ -43,6 +45,7 @@ func main() {
 	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, ServiceName) // Init JaegerTracer
 
 	// Infrastructure 层
+	RedisClient := infraRedis.Init(Config.Redis)        // 初始化 Redis
 	MySQLGormDB := infraMySQL.Init(Config.MySQL)        // 初始化 MySQL
 	QdrantClient := infraQdarant.Init(Config.Qdrant)    // 初始化 Qdrant
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
@@ -59,6 +62,7 @@ func main() {
 	AgentRepo := repository.NewAgentRepository(AgentDAO)
 	// Service 层
 	AgentService := service2.NewAgentService(AgentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
+	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service2.NewMetricService(ServiceName)
 
 	go AgentService.StartChunkDocConsumer(ctx)     // 开启切分文档协程
@@ -67,6 +71,7 @@ func main() {
 	// gRPC Server
 	AgentServiceServer := grpc_server.NewAgentServiceServer(AgentService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -84,7 +89,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		Build()
 
 	// Start gRPC Server

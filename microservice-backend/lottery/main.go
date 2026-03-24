@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
@@ -60,6 +61,7 @@ func main() {
 
 	// Service 层
 	MetricService := service.NewMetricService()
+	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
 	LotteryService := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ, IDGenerator) // 注册 LotteryService
 	LotteryService.InitCacheInventory(context.Background())
 	go LotteryService.StartLotteryOrderConsumer(context.Background()) // 开启协程核查临时订单进行库存回流
@@ -67,6 +69,7 @@ func main() {
 	// gRPC Server
 	LotteryServiceServer := grpc_server.NewLotteryServiceServer(LotteryService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)

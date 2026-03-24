@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
@@ -17,6 +18,7 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/search/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/microservice-backend/search/infra/jaeger"
 	"github.com/yzletter/go-postery/microservice-backend/search/infra/kafka"
+	infraRedis "github.com/yzletter/go-postery/microservice-backend/search/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/microservice-backend/search/infra/slog"
 	"github.com/yzletter/go-postery/microservice-backend/search/infra/snowflake"
 	"github.com/yzletter/go-postery/microservice-backend/search/infra/tokenizer"
@@ -40,6 +42,7 @@ func main() {
 	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, ServiceName) // Init JaegerTracer
 
 	// Infrastructure
+	RedisClient := infraRedis.Init(Config.Redis) // 初始化 Redis
 	KafkaConsumer := kafka.InitConsumer(Config.Kafka)
 	Tokenizer := tokenizer.NewJiebaTokenizer()          // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
@@ -54,11 +57,13 @@ func main() {
 	SearchService := service2.NewSearchService(KafkaConsumer, Tokenizer, IDGenerator, PostClient)
 	go SearchService.StartConsumer(ctx) // 开启协程消费消息对新文章进行索引
 
+	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service2.NewMetricService()
 
 	// gRPC Server
 	SearchServiceServer := grpc_server.NewSearchServiceServer(SearchService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -76,7 +81,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		Build()
 
 	// Start gRPC Server

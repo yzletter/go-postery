@@ -3,6 +3,7 @@ package config
 // Config 需要的所有配置
 type Config struct {
 	RabbitMQ RabbitMQConfig
+	Redis    RedisConfig
 	MySQL    MySQLConfig
 	Kafka    KafkaConfig
 	Jaeger   JaegerConfig

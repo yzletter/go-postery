@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
@@ -66,11 +67,13 @@ func main() {
 
 	// Service 层
 	AuthService := service.NewAuthService(AuthRepo, JwtManager, PasswordHasher, IDGenerator, CodeClient) // 注册 AuthService
+	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service.NewMetricService(ServiceName)
 
 	// gRPC Server
 	AuthServiceServer := grpc_server.NewAuthServiceServer(AuthService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)

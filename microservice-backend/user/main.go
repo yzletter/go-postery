@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
@@ -59,6 +60,7 @@ func main() {
 	FollowRepo := repository2.NewFollowRepository(FollowDAO)      // 注册 FollowRepository
 	// Service 层
 	UserService := service2.NewUserService(UserRepo, FollowRepo, FollowKafkaConsumer, IDGenerator) // 注册 userSvc
+	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service2.NewMetricService(ServiceName)
 
 	go UserService.StartInitUserScoreConsumer(ctx)
@@ -66,6 +68,7 @@ func main() {
 	// gRPC Server
 	UserServiceServer := grpc_server.NewUserServiceServer(UserService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)

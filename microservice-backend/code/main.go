@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
@@ -51,11 +52,13 @@ func main() {
 
 	// Service
 	CodeService := service.NewCodeService(CodeRepository, EmailClient, SmsClient)
+	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service.NewMetricService(ServiceName)
 
 	// gRPC Server
 	CodeServiceServer := grpc_server.NewCodeServiceServer(CodeService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)

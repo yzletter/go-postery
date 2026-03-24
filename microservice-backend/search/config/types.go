@@ -2,11 +2,17 @@ package config
 
 // Config 需要的所有配置
 type Config struct {
+	Redis  RedisConfig
 	Metric MetricConfig
 	Jaeger JaegerConfig
 	Kafka  KafkaConfig
 	GRPC   GRPCConfig
 	Log    LogConfig
+}
+
+type RedisConfig struct {
+	Addr string
+	DB   int
 }
 
 type MetricConfig struct {

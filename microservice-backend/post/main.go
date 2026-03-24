@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
@@ -63,11 +64,13 @@ func main() {
 
 	// Service 层
 	PostService := service.NewPostService(PostRepo, LikeRepo, TagRepo, CommentRepo, IDGenerator) // 注册 PostService
-	MetricService := service.NewMetricService(ServiceName)                                       // 注册 MetricService
+	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
+	MetricService := service.NewMetricService(ServiceName) // 注册 MetricService
 
 	// gRPC Server
 	PostServiceServer := grpc_server.NewPostServiceServer(PostService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)

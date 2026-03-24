@@ -25,6 +25,8 @@ func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 	conce.Do(func() {
 		// 加载 MySQL 配置
 		config.MySQL = loadMySQLConfig(ctx, client, prefix)
+		// 加载 Redis 配置
+		config.Redis = loadRedisConfig(ctx, client, prefix)
 		// 加载 Metric 配置
 		config.Metric = loadPrometheusConfig(ctx, client, prefix)
 		// 加载 Jaeger 配置

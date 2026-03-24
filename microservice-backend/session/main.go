@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
@@ -18,6 +19,7 @@ import (
 	infraKafka "github.com/yzletter/go-postery/microservice-backend/session/infra/kafka"
 	infraMySQL "github.com/yzletter/go-postery/microservice-backend/session/infra/mysql"
 	infraRabbitMQ "github.com/yzletter/go-postery/microservice-backend/session/infra/rabbitmq"
+	infraRedis "github.com/yzletter/go-postery/microservice-backend/session/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/microservice-backend/session/infra/slog"
 	"github.com/yzletter/go-postery/microservice-backend/session/infra/snowflake"
 	repository2 "github.com/yzletter/go-postery/microservice-backend/session/repository"
@@ -42,6 +44,7 @@ func main() {
 	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, ServiceName) // Init JaegerTracer
 
 	// Infrastructure 层
+	RedisClient := infraRedis.Init(Config.Redis)        // 初始化 Redis
 	RabbitMQ := infraRabbitMQ.Init(Config.RabbitMQ)     // 初始化 RabbitMQ
 	MySQLGormDB := infraMySQL.Init(Config.MySQL)        // 初始化 MySQL
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
@@ -56,6 +59,7 @@ func main() {
 	SessionRepo := repository2.NewSessionRepository(SessionDAO) // 注册 SessionRepository
 	// Service 层
 	SessionService := service2.NewSessionService(SessionRepo, MessageRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
+	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service2.NewMetricService(ServiceName)
 
 	go SessionService.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
@@ -63,6 +67,7 @@ func main() {
 	// gRPC Server
 	SessionServiceServer := grpc_server.NewSessionServiceServer(SessionService)
 	server := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -80,7 +85,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		Build()
 
 	// Start gRPC Server
