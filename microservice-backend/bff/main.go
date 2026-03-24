@@ -74,9 +74,9 @@ func main() {
 	CorsMdl := cors.New(cors.Config{                                         // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://" + Config.App.FrontendAddr}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "traceparent", "tracestate", "baggage"},
 		AllowCredentials: true, // 是否允许携带 cookie 之类的用户认证信息
-		ExposeHeaders:    []string{"Content-Length", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length", "Authorization", "traceparent", "tracestate", "baggage"},
 		MaxAge:           6 * time.Hour,
 	})
 
@@ -102,9 +102,11 @@ func main() {
 
 	// 初始化 gin
 	engine := gin.Default()
+	engine.ContextWithFallback = true
 
 	// 注册全局中间件
 	engine.Use(
+		middleware2.TracingMiddleware(ServiceName), // OpenTelemetry tracing 中间件
 		CorsMdl,      // CorsMdl 跨域中间件
 		MetricMdl,    // Prometheus 监控中间件
 		RateLimitMdl, // 限流中间件

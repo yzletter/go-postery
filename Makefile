@@ -12,3 +12,10 @@ build:
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/session_service ./microservice-backend/session
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/outbox_service ./microservice-backend/outbox
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/bff_service ./microservice-backend/bff
+	@scp ./app/linux/code_service myserver1:~/app/code_service
+	@scp ./app/linux/auth_service myserver1:~/app/auth_service
+	@scp ./app/linux/lottery_service myserver1:~/app/lottery_service
+	@scp ./app/linux/agent_service myserver5:~/app/agent_service
+	@scp ./app/linux/user_service myserver1:~/app/user_service
+	@scp ./app/linux/session_service myserver1:~/app/session_service
+	@scp ./app/linux/outbox_service myserver5:~/app/outbox_service

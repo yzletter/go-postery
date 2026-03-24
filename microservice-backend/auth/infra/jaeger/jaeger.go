@@ -8,6 +8,7 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/auth/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
@@ -36,6 +37,12 @@ func InitJaeger(ctx context.Context, config config.JaegerConfig, service string)
 
 	// 设置 Trace Provider
 	otel.SetTracerProvider(provider)
+	otel.SetTextMapPropagator(
+		propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		),
+	)
 
 	// 返回 Shutdown
 	return func() {
