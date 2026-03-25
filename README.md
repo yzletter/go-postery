@@ -19,22 +19,23 @@
 
 
 **Gin + Eino + Gorm + Mysql + Redis + ETCD + Kafka + RabbitMQ + RocketMQ + gRPC + Prometheus + Grafana + Slog + Crontab + Jaeger**
-- 功能:通过 **SnowFlake** 生成分布式ID，实现用户注册登录、帖子发布更新、评论关注私信、热门榜单、抽奖及 AI 助手等功能;
-- 配置:使用 **ETCD** 远程配置读取，使用 **Slog** 日志库
-- 限流:通过 **Redis + Lua 脚本** 实现滑动窗口限流;
-- 登录:通过阿里云 **SMS** 和邮箱 **SMTP** 服务，支持通过短信 / 邮箱验证码进行登录;
-- 运行:通过 **Crontab** 执行定时任务，利用信号机制实现优雅关机;
-- 鉴权:结合 **JWT** 使用长短双 Token 机制;
-- 榜单:采用简化的 **Reddit** 算法，通过 **Redis** 实现热榜功能;
-- 点赞:通过 **Kafka** 实现点赞功能;
-- 搜索:集成 **[Go-Searchery](https://github.com/yzletter/go-searchery)** 手写类 **ElasticSearch** 分布式搜索引擎，实现论坛帖子搜索功能;
-- IM 即时通讯:集成 **[Go-Chatery](https://github.com/yzletter/go-chatery)** 即时通讯系统，利用 **RabbitMQ** 实现论坛用户实时私信功能;
-- 高并发:集成 **[Go-Lottery](https://github.com/yzletter/go-lottery)** 高并发秒杀系统，利用 **RocketMQ** 实现论坛抽奖功能，本地单机测试 **QPS 2850**, 平均接口耗时 **79ms**;
-- AI Agent:集成 **[Go-Agentery](https://github.com/yzletter/go-agentery)** AI Agent 应用，构建 **RAG** 智能体，具备多工具能力 (时间、定位、天气查询(基于高德地图 API )) 和对话记忆功能;
-- 微服务部署与 gRPC:使用 **NGINX** 代理前后端分离部署上线，网址:[gopostery.top](http://gopostery.top);
-- 监控:通过 **Prometheus + Grafana** 统计接口 QPS 和平均耗时，并进行可视化;
-- 链路追踪:**OpenTelemetry + Jaeger** 分布式链路追踪;
-- 性能:pprof 定位 GC 频繁问题;
+- 功能：通过 **SnowFlake** 生成分布式ID，实现用户注册登录、帖子发布更新、评论关注私信、热门榜单、抽奖及 AI 助手等功能；
+- 配置：使用 **ETCD** 远程配置读取，使用 **Slog** 日志库；
+- 限流：通过 **Redis + Lua 脚本** 实现滑动窗口限流；
+- 登录：通过阿里云 **SMS** 和邮箱 **SMTP** 服务，支持通过短信 / 邮箱验证码进行登录；
+- 运行：通过 **Crontab** 执行定时任务，利用信号机制实现优雅关机；
+- 鉴权：结合 **JWT** 使用长短双 Token 机制；
+- 榜单：采用简化的 **Reddit** 算法，通过 **Redis** 实现热榜功能；
+- 点赞：通过 **Kafka** 实现点赞功能；
+- 搜索：集成 **[Go-Searchery](https://github.com/yzletter/go-searchery)** 手写类 **ElasticSearch** 分布式搜索引擎，实现论坛帖子搜索功能；
+- IM 即时通讯：集成 **[Go-Chatery](https://github.com/yzletter/go-chatery)** 即时通讯系统，利用 **RabbitMQ** 实现论坛用户实时私信功能；
+- 高并发：集成 **[Go-Lottery](https://github.com/yzletter/go-lottery)** 高并发秒杀系统，利用 **RocketMQ** 实现论坛抽奖功能，本地单机测试 **QPS 2850**， 平均接口耗时 **79ms**；
+- AI Agent：集成 **[Go-Agentery](https://github.com/yzletter/go-agentery)** AI Agent 应用，构建 **RAG** 智能体，具备多工具能力 (时间、定位、天气查询(基于高德地图 API )) 和对话记忆功能；
+- 监控：通过 **Prometheus + Grafana** 统计接口 QPS 和平均耗时，并进行可视化；
+- grpc 微服务：拆分微服务，对微服务进行限流、熔断、降级治理；
+- 链路追踪：**OpenTelemetry + Jaeger** 分布式链路追踪；
+- 性能：pprof 定位 GC 频繁问题；
+- 部署上线：使用 **NGINX** 代理前后端分离部署上线，网址：[gopostery.top](http://gopostery.top)；
 
 ## 待开发
 
