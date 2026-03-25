@@ -35,6 +35,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/xid v1.6.0
 	github.com/segmentio/kafka-go v0.4.50
+	github.com/sony/gobreaker/v2 v2.4.0
 	github.com/spf13/viper v1.21.0
 	github.com/yanyiwu/gojieba v1.4.6
 	go.etcd.io/bbolt v1.4.3

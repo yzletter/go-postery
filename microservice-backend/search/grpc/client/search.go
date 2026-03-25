@@ -28,7 +28,8 @@ func NewSearchClient() (SearchClient, error) {
 	conn, err := grpc.NewClient(
 		SearchClientAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // 生产用 TLS
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),       // Jaeger
+		CircuitBreakerDialOption(),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()), // Jaeger
 		grpc.WithKeepaliveParams(ka),
 	)
 	if err != nil {

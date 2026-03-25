@@ -19,12 +19,14 @@ import (
 	"github.com/segmentio/kafka-go"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	"github.com/yzletter/go-postery/microservice-backend/agent/errs"
+	agentgrpcclient "github.com/yzletter/go-postery/microservice-backend/agent/grpcclient"
 	model2 "github.com/yzletter/go-postery/microservice-backend/agent/model"
 	"github.com/yzletter/go-postery/microservice-backend/agent/repository"
 	ports2 "github.com/yzletter/go-postery/microservice-backend/agent/service/ports"
 	post_conf "github.com/yzletter/go-postery/microservice-backend/post/conf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 type agentService struct {
@@ -239,10 +241,22 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 
 // 索引文本
 func (svc *agentService) indexDocument(ctx context.Context, postID int64) error {
+	ka := keepalive.ClientParameters{
+		Time:                30 * time.Second,
+		Timeout:             10 * time.Second,
+		PermitWithoutStream: true,
+	}
+
 	conn, err := grpc.NewClient(
 		"localhost:"+post_conf.Port,
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
+		agentgrpcclient.CircuitBreakerDialOption(),
+		grpc.WithKeepaliveParams(ka),
 	)
+	if err != nil {
+		slog.Error("New Post grpc Connection Failed", "postID", postID, "error", err)
+		return err
+	}
 
 	postClient := post_grpc.NewPostServiceClient(conn)
 

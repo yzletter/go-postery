@@ -5,13 +5,16 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"log/slog"
 
+	searchgrpcclient "github.com/yzletter/go-postery/microservice-backend/search/grpc/client"
 	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 // Sentinel 分布式部署哨兵
@@ -228,8 +231,16 @@ func (sentinel *Sentinel) getConn(endpoint string) *grpc.ClientConn {
 	}
 
 	// 新建连接
+	ka := keepalive.ClientParameters{
+		Time:                30 * time.Second,
+		Timeout:             10 * time.Second,
+		PermitWithoutStream: true,
+	}
+
 	conn, err := grpc.NewClient(endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // Credential即使为空，也必须设置
+		searchgrpcclient.CircuitBreakerDialOption(),
+		grpc.WithKeepaliveParams(ka),
 		// grpc.WithBlock(),
 		// grpc.Dial是异步连接的，连接状态为正在连接。但如果你设置了 grpc.WithBlock 选项，就会阻塞等待（等待握手成功）。另外你需要注意，当未设置 grpc.WithBlock 时，ctx 超时控制对其无任何效果。
 	)

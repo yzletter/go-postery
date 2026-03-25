@@ -361,6 +361,11 @@ func mapGRPCErr(err error, mapping map[codes.Code]*errno.Error, fallback *errno.
 		}
 	}
 
+	switch code {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.ResourceExhausted:
+		return errno.ErrServiceUnavailable
+	}
+
 	if fallback != nil {
 		return fallback
 	}
@@ -372,6 +377,7 @@ func newCodeGrpcConn() *grpc.ClientConn {
 	conn, err := grpc.NewClient(
 		"localhost:"+"9001",
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // 设置传输安全
+		grpcclient.CircuitBreakerDialOption(),
 	)
 	if err != nil {
 		return nil

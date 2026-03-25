@@ -15,8 +15,9 @@ func (e *Error) Error() string { return e.Msg }
 
 // 通用错误 Code 1000x
 var (
-	ErrServerInternal = &Error{10001, 500, "系统繁忙，请稍后重试"}
-	ErrInvalidParam   = &Error{10002, 400, "参数错误"}
+	ErrServerInternal     = &Error{10001, 500, "系统繁忙，请稍后重试"}
+	ErrInvalidParam       = &Error{10002, 400, "参数错误"}
+	ErrServiceUnavailable = &Error{10003, 503, "下游服务暂时不可用，请稍后重试"}
 )
 
 // Auth
