@@ -37,7 +37,7 @@ func InitSlog(config config.LogConfig) {
 	}
 
 	// 构造 logger
-	slogHandler := slog.NewTextHandler( // JSON 格式
+	slogHandler := slog.NewJSONHandler(
 		logFile,    // 指定文件
 		slogConfig, // 相关配置
 	)

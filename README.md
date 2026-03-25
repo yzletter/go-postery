@@ -20,7 +20,7 @@
 
 **Gin + Eino + Gorm + Mysql + Redis + ETCD + Kafka + RabbitMQ + RocketMQ + gRPC + Prometheus + Grafana + Slog + Crontab + Jaeger**
 - 功能：通过 **SnowFlake** 生成分布式ID，实现用户注册登录、帖子发布更新、评论关注私信、热门榜单、抽奖及 AI 助手等功能；
-- 配置：使用 **ETCD** 远程配置读取，使用 **Slog** 日志库；
+- 配置：使用 **ETCD** 远程配置中心读取配置，并监测配置变化，使用 **Slog** 日志库进行滚动存储日志；
 - 限流：通过 **Redis + Lua 脚本** 实现滑动窗口限流；
 - 登录：通过阿里云 **SMS** 和邮箱 **SMTP** 服务，支持通过短信 / 邮箱验证码进行登录；
 - 运行：通过 **Crontab** 执行定时任务，利用信号机制实现优雅关机；
