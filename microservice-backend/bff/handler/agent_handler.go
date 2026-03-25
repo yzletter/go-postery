@@ -50,7 +50,7 @@ func (hdl *AgentHandler) Chat(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.Internal: errno.ErrServerInternal,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), agent.DTO{Documents: []string{}})
 		return
 	}
 

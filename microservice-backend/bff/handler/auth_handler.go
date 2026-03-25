@@ -53,7 +53,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidCredential,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), userdto.BriefDTO{})
 		return
 	}
 
@@ -64,7 +64,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 		UserAgent: ctx.Request.UserAgent(),
 	})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), userdto.BriefDTO{})
 		return
 	}
 
@@ -77,7 +77,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), userdto.BriefDTO{})
 		return
 	}
 
@@ -102,7 +102,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrPhoneCodeInvalid,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), userdto.BriefDTO{})
 		return
 	}
 
@@ -113,7 +113,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 		UserAgent: ctx.Request.UserAgent(),
 	})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), userdto.BriefDTO{})
 		return
 	}
 
@@ -126,7 +126,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), userdto.BriefDTO{})
 		return
 	}
 
@@ -152,7 +152,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.AlreadyExists:   errno.ErrSendToFrequent,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -175,7 +175,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.AlreadyExists:   errno.ErrSendToFrequent,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -209,7 +209,7 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrOldPasswordInvalid,
 			codes.NotFound:        errno.ErrNotSetPassword,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -239,7 +239,7 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidCode,
 			codes.Unauthenticated: errno.ErrPhoneNotBound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -258,7 +258,7 @@ func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 查询是否有密码
 	has, err := hdl.authSvc.HasPassword(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), auth.PassStatusResponse{})
 		return
 	}
 
@@ -277,7 +277,7 @@ func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 
 	authIdentity, err := hdl.authSvc.GetAuthIdentityByUID(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), auth.AuthIdentityResponse{})
 		return
 	}
 
@@ -304,7 +304,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 
 	// 服务端清理双 Token
 	if _, err := hdl.authSvc.ClearTokens(ctx, &auth_grpc.DualTokens{AccessToken: accessToken, RefreshToken: refreshToken}); err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrLogoutFailed))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrLogoutFailed), gin.H{})
 		return
 	}
 

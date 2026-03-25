@@ -39,7 +39,7 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), user.DetailDTO{})
 		return
 	}
 
@@ -78,7 +78,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -90,7 +90,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 func (hdl *UserHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.userSvc.Top(ctx, &user_grpc.TopRequest{})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []user.TopDTO{})
 		return
 	}
 
@@ -127,7 +127,7 @@ func (hdl *UserHandler) Follow(ctx *gin.Context) {
 	if _, err = hdl.userSvc.Follow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.AlreadyExists: errno.ErrDuplicatedFollow,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -158,7 +158,7 @@ func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 	if _, err = hdl.userSvc.UnFollow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.AlreadyExists: errno.ErrDuplicatedUnFollow,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -187,7 +187,7 @@ func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.IfFollow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), false)
 		return
 	}
 
@@ -212,7 +212,11 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.ListFollowersByPage(ctx, &user_grpc.ListFollowRequest{UserID: uid, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), gin.H{
+			"followers": []user.BriefDTO{},
+			"total":     0,
+			"hasMore":   false,
+		})
 		return
 	}
 
@@ -244,7 +248,11 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.ListFolloweesByPage(ctx, &user_grpc.ListFollowRequest{UserID: uid, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), gin.H{
+			"followers": []user.BriefDTO{},
+			"total":     0,
+			"hasMore":   false,
+		})
 		return
 	}
 

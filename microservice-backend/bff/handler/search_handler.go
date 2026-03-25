@@ -52,7 +52,7 @@ func (hdl *SearchHandler) Search(ctx *gin.Context) {
 	// 进行搜索
 	resp, err := hdl.searchSvc.Search(ctx, &search_grpc.SearchRequest{Queries: querys})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []postdto.DetailDTO{})
 		return
 	}
 

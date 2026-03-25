@@ -48,7 +48,11 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{
+			"posts":   []post.DetailDTO{},
+			"total":   0,
+			"hasMore": false,
+		})
 		return
 	}
 
@@ -96,7 +100,11 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{
+			"posts":   []post.DetailDTO{},
+			"total":   0,
+			"hasMore": false,
+		})
 		return
 	}
 
@@ -141,7 +149,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
@@ -151,7 +159,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
@@ -184,7 +192,7 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		Tags:        nil,
 	})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
@@ -194,7 +202,7 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
@@ -223,7 +231,7 @@ func (hdl *PostHandler) DeletePost(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:        errno.ErrPostNotFound,
 			codes.Unauthenticated: errno.ErrUnauthorized,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -267,7 +275,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:        errno.ErrPostNotFound,
 			codes.Unauthenticated: errno.ErrUnauthorized,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -296,7 +304,7 @@ func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	} else if !ok.Result {
 		response.Error(ctx, errno.ErrUnauthorized)
@@ -331,7 +339,11 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{
+			"posts":   []post.BriefDTO{},
+			"total":   0,
+			"hasMore": false,
+		})
 		return
 	}
 
@@ -379,7 +391,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:      errno.ErrPostNotFound,
 			codes.AlreadyExists: errno.ErrDuplicatedLike,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -405,7 +417,7 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:      errno.ErrPostNotFound,
 			codes.AlreadyExists: errno.ErrDuplicatedUnLike,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -429,7 +441,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 
 	ok, err := hdl.postSvc.IfLike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), false)
 		return
 	}
 
@@ -439,7 +451,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 func (hdl *PostHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.postSvc.Top(ctx, &post_grpc.PostEmptyRequest{})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []post.TopDTO{})
 		return
 	}
 
@@ -485,7 +497,7 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), post.CommentDTO{})
 		return
 	}
 
@@ -523,7 +535,7 @@ func (hdl *PostHandler) DeleteComment(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:        errno.ErrCommentNotFound,
 			codes.Unauthenticated: errno.ErrUnauthorized,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 	// 返回数据
@@ -553,7 +565,11 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{
+			"comments": []post.CommentDTO{},
+			"total":    0,
+			"hasMore":  false,
+		})
 		return
 	}
 
@@ -613,7 +629,11 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{
+			"comments": []post.CommentDTO{},
+			"total":    0,
+			"hasMore":  false,
+		})
 		return
 	}
 
@@ -660,7 +680,7 @@ func (hdl *PostHandler) CheckCommentDeleteAuth(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 

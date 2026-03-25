@@ -37,10 +37,15 @@ func Success(ctx *gin.Context, msg string, data interface{}) {
 }
 
 // Error 失败
-func Error(ctx *gin.Context, err error) {
+func Error(ctx *gin.Context, err error, data ...interface{}) {
+	var payload interface{} = gin.H{}
+	if len(data) > 0 {
+		payload = data[0]
+	}
+
 	var e *errno.Error
 	if errors.As(err, &e) && e != nil {
-		failWithHTTP(ctx, e.HTTPStatus, e.Code, e.Msg)
+		failWithHTTP(ctx, e.HTTPStatus, e.Code, e.Msg, payload)
 		return
 	}
 
@@ -48,14 +53,14 @@ func Error(ctx *gin.Context, err error) {
 	ctx.JSON(http.StatusInternalServerError, Response{
 		Code: CodeServerError,
 		Msg:  "系统繁忙，请稍后重试",
-		Data: nil,
+		Data: payload,
 	})
 }
 
-func failWithHTTP(ctx *gin.Context, httpCode int, code int, msg string) {
+func failWithHTTP(ctx *gin.Context, httpCode int, code int, msg string, data interface{}) {
 	ctx.JSON(httpCode, Response{
 		Code: code,
 		Msg:  msg,
-		Data: nil,
+		Data: data,
 	})
 }

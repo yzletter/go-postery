@@ -32,7 +32,7 @@ func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrGiftNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), []lottery.GiftDTO{})
 		return
 	}
 
@@ -53,7 +53,7 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 
 	gift, err := hdl.lotterySvc.Lottery(ctx, &lottery_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), lottery.GiftDTO{})
 		return
 	}
 
@@ -82,7 +82,7 @@ func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
 	if _, err := hdl.lotterySvc.GiveUp(ctx, &lottery_grpc.LotteryCommonRequest{UserID: giveReq.UserID, GiftID: giveReq.GiftID}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrNotLottery,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -115,7 +115,7 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 	if _, err := hdl.lotterySvc.Pay(ctx, &lottery_grpc.LotteryCommonRequest{UserID: payReq.UserID, GiftID: payReq.GiftID}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrNotLottery,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -134,7 +134,7 @@ func (hdl *LotteryHandler) Result(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrOrderNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), lottery.OrderDTO{})
 		return
 	}
 
@@ -149,7 +149,7 @@ func (hdl *LotteryHandler) Result(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), lottery.OrderDTO{})
 		return
 	}
 

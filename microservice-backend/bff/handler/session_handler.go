@@ -39,7 +39,7 @@ func (hdl *SessionHandler) List(ctx *gin.Context) {
 	// 列出当前用户的会话列表
 	resp, err := hdl.sessionSvc.ListByUID(ctx, &session_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []sessiondto.SessionDTO{})
 		return
 	}
 
@@ -74,7 +74,7 @@ func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 	// 获取会话
 	session, err := hdl.sessionSvc.GetSession(ctx, &session_grpc.BothUserID{UserID: uid, TargetID: targetID})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), sessiondto.SessionDTO{})
 		return
 	}
 
@@ -108,7 +108,7 @@ func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 	if _, err = hdl.sessionSvc.Delete(ctx, &session_grpc.DeleteRequest{UserID: uid, SessionID: sid}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.Unauthenticated: errno.ErrUnauthorized,
-		}, errno.ErrServerInternal))
+		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
 
@@ -147,7 +147,11 @@ func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 	resp, err := hdl.sessionSvc.GetHistoryMessagesByPage(ctx, &session_grpc.GetHistoryMessagesByPageRequest{
 		UserID: uid, TargetID: targetID, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal))
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), gin.H{
+			"messages": []sessiondto.MessageDTO{},
+			"total":    0,
+			"has_more": false,
+		})
 		return
 	}
 
