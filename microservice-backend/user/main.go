@@ -18,6 +18,7 @@ import (
 	infraJaeger "github.com/yzletter/go-postery/microservice-backend/user/infra/jaeger"
 	infraKafka "github.com/yzletter/go-postery/microservice-backend/user/infra/kafka"
 	infraMySQL "github.com/yzletter/go-postery/microservice-backend/user/infra/mysql"
+	infraOSS "github.com/yzletter/go-postery/microservice-backend/user/infra/oss"
 	infraRedis "github.com/yzletter/go-postery/microservice-backend/user/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/microservice-backend/user/infra/slog"
 	"github.com/yzletter/go-postery/microservice-backend/user/infra/snowflake"
@@ -44,10 +45,10 @@ func main() {
 	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, ServiceName) // Init JaegerTracer
 
 	// Infrastructure 层
-	RedisClient := infraRedis.Init(Config.Redis)        // Init Redis
-	MySQLGormDB := infraMySQL.Init(Config.MySQL)        // 初始化 MySQL
-	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
-
+	RedisClient := infraRedis.Init(Config.Redis)                 // Init Redis
+	MySQLGormDB := infraMySQL.Init(Config.MySQL)                 // 初始化 MySQL
+	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)          // 初始化 雪花算法
+	OSSManager := infraOSS.Init(Config.OSS)                      // 初始化 OSS
 	FollowKafkaConsumer := infraKafka.InitConsumer(Config.Kafka) // 初始化 Follow 模块 Kafka 消费方
 
 	// Cache 层
@@ -59,7 +60,7 @@ func main() {
 	UserRepo := repository2.NewUserRepository(UserDAO, UserCache) // 注册 userRepo
 	FollowRepo := repository2.NewFollowRepository(FollowDAO)      // 注册 FollowRepository
 	// Service 层
-	UserService := service2.NewUserService(UserRepo, FollowRepo, FollowKafkaConsumer, IDGenerator) // 注册 userSvc
+	UserService := service2.NewUserService(UserRepo, FollowRepo, FollowKafkaConsumer, OSSManager, IDGenerator) // 注册 userSvc
 	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service2.NewMetricService(ServiceName)
 

@@ -9,28 +9,34 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/microservice-backend/user/errs"
-	model2 "github.com/yzletter/go-postery/microservice-backend/user/model"
-	repository2 "github.com/yzletter/go-postery/microservice-backend/user/repository"
+	"github.com/yzletter/go-postery/microservice-backend/user/model"
+	"github.com/yzletter/go-postery/microservice-backend/user/repository"
 	"github.com/yzletter/go-postery/microservice-backend/user/service/ports"
 )
 
 type userService struct {
-	userRepository   repository2.UserRepository   // 依赖 UserRepository
-	followRepository repository2.FollowRepository // 依赖 FollowRepository
+	userRepository   repository.UserRepository   // 依赖 UserRepository
+	followRepository repository.FollowRepository // 依赖 FollowRepository
 	kafkaConsumer    *kafka.Reader
+	ossManager       ports.OSSManager
 	idGen            ports.IDGenerator
 }
 
-func NewUserService(userRepository repository2.UserRepository, followRepository repository2.FollowRepository, kafkaConsumer *kafka.Reader, idGen ports.IDGenerator) UserService {
+func NewUserService(userRepository repository.UserRepository, followRepository repository.FollowRepository, kafkaConsumer *kafka.Reader, ossManager ports.OSSManager, idGen ports.IDGenerator) UserService {
 	return &userService{
 		userRepository:   userRepository,
 		followRepository: followRepository,
 		kafkaConsumer:    kafkaConsumer,
+		ossManager:       ossManager,
 		idGen:            idGen,
 	}
 }
 
-func (svc *userService) GetProfileByID(ctx context.Context, id int64) (*model2.UserProfile, error) {
+func (svc *userService) Upload(ctx context.Context, uid int64) {
+
+}
+
+func (svc *userService) GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error) {
 	if id <= 0 {
 		slog.Error("Invalid User ID")
 		return nil, errs.ErrInvalidArgument
@@ -39,7 +45,7 @@ func (svc *userService) GetProfileByID(ctx context.Context, id int64) (*model2.U
 	// 获取用户
 	profile, err := svc.userRepository.GetProfileByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("User Not Found", "error", err)
 			return nil, errs.ErrNotFound
 		}
@@ -55,7 +61,7 @@ func (svc *userService) GetProfileByID(ctx context.Context, id int64) (*model2.U
 	return profile, nil
 }
 
-func (svc *userService) UpdateProfile(ctx context.Context, profile *model2.UserProfile) error {
+func (svc *userService) UpdateProfile(ctx context.Context, profile *model.UserProfile) error {
 	if profile == nil || profile.UserID <= 0 {
 		slog.Error("Invalid User ID")
 		return errs.ErrInvalidArgument
@@ -72,7 +78,7 @@ func (svc *userService) UpdateProfile(ctx context.Context, profile *model2.UserP
 	}
 
 	if err := svc.userRepository.UpdateProfile(ctx, profile.UserID, updates); err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("User Not Found", "error", err)
 			return errs.ErrNotFound
 		}
@@ -83,7 +89,7 @@ func (svc *userService) UpdateProfile(ctx context.Context, profile *model2.UserP
 	return nil
 }
 
-func (svc *userService) Top(ctx context.Context) ([]*model2.UserProfile, []float64, error) {
+func (svc *userService) Top(ctx context.Context) ([]*model.UserProfile, []float64, error) {
 	profiles, scores, err := svc.userRepository.Top(ctx)
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
@@ -106,13 +112,13 @@ func (svc *userService) Follow(ctx context.Context, followerID int64, followeeID
 		return errs.ErrAlreadyExits
 	}
 
-	follow := &model2.Follow{
+	follow := &model.Follow{
 		ID:         svc.idGen.NextID(),
 		FollowerID: followerID,
 		FolloweeID: followeeID,
 	}
 	if err = svc.followRepository.Create(ctx, follow); err != nil {
-		if errors.Is(err, repository2.ErrUniqueKey) { // 检查过仍冲突
+		if errors.Is(err, repository.ErrUniqueKey) { // 检查过仍冲突
 			slog.Error("Duplicated Follow")
 			return errs.ErrAlreadyExits
 		}
@@ -137,7 +143,7 @@ func (svc *userService) UnFollow(ctx context.Context, followerID int64, followee
 	}
 
 	if err := svc.followRepository.Delete(ctx, followerID, followeeID); err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("Duplicated UnFollow")
 			return errs.ErrAlreadyExits
 		}
@@ -161,14 +167,14 @@ func (svc *userService) IfFollow(ctx context.Context, followerID int64, followee
 }
 
 // ListFollowersByPage 按页查找粉丝
-func (svc *userService) ListFollowersByPage(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []*model2.UserProfile, error) {
+func (svc *userService) ListFollowersByPage(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []*model.UserProfile, error) {
 	total, followersId, err := svc.followRepository.GetFollowers(ctx, userID, pageNo, pageSize)
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
 		return 0, nil, errs.ErrInternal
 	}
 
-	userProfiles := make([]*model2.UserProfile, 0)
+	userProfiles := make([]*model.UserProfile, 0)
 	for _, id := range followersId {
 		profile, err := svc.userRepository.GetProfileByID(ctx, id)
 		if err != nil {
@@ -182,14 +188,14 @@ func (svc *userService) ListFollowersByPage(ctx context.Context, userID int64, p
 }
 
 // ListFolloweesByPage 按页查找关注的人
-func (svc *userService) ListFolloweesByPage(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []*model2.UserProfile, error) {
+func (svc *userService) ListFolloweesByPage(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []*model.UserProfile, error) {
 	total, followeesId, err := svc.followRepository.GetFollowees(ctx, userID, pageNo, pageSize)
 	if err != nil {
 		slog.Error("Server Internal Error", "error", err)
 		return 0, nil, errs.ErrInternal
 	}
 
-	userProfiles := make([]*model2.UserProfile, 0)
+	userProfiles := make([]*model.UserProfile, 0)
 	for _, id := range followeesId {
 		profile, err := svc.userRepository.GetProfileByID(ctx, id)
 		if err != nil {
@@ -230,7 +236,7 @@ func (svc *userService) StartInitUserScoreConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model2.InitUserScoreEventPayload
+			var payload model.InitUserScoreEventPayload
 			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
 				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
 				// 脏消息 Commit 掉

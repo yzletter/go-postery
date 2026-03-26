@@ -7,7 +7,8 @@ require (
 	github.com/alibabacloud-go/dypnsapi-20170525/v3 v3.0.0
 	github.com/alibabacloud-go/tea v1.3.14
 	github.com/alibabacloud-go/tea-utils/v2 v2.0.9
-	github.com/aliyun/credentials-go v1.4.10
+	github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.4.0
+	github.com/aliyun/credentials-go v1.4.12
 	github.com/apache/rocketmq-clients/golang/v5 v5.1.3
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/bytedance/sonic v1.15.0

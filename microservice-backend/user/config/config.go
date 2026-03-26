@@ -37,12 +37,42 @@ func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 		config.GRPC = loadGRPCConfig(ctx, client, prefix)
 		// 加载 Log 配置
 		config.Log = loadLogConfig(ctx, client, prefix)
-
+		// 加载 OSS 配置
+		config.OSS = loadOSSConfig(ctx, client, prefix)
 		fmt.Println(config)
 
 		go watch(ctx, client, prefix, watchKeys)
 	})
 
+	return config
+}
+
+func loadOSSConfig(ctx context.Context, client *etcdv3.Client, prefix string) OSSConfig {
+	var config OSSConfig
+
+	// 获取 AccessKeyID
+	if resp, err := client.Get(ctx, prefix+"oss_access_key_id"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.AccessKeyID = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"oss_access_key_id"] = struct{}{}
+		}
+	}
+
+	// 获取 AccessKeySecret
+	if resp, err := client.Get(ctx, prefix+"oss_access_key_secret"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.AccessKeySecret = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"oss_access_key_secret"] = struct{}{}
+		}
+	}
+
+	// 获取 Arn
+	if resp, err := client.Get(ctx, prefix+"oss_arn"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.AccessKeySecret = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"oss_arn"] = struct{}{}
+		}
+	}
 	return config
 }
 

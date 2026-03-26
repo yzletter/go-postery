@@ -8,7 +8,14 @@ type Config struct {
 	Jaeger JaegerConfig
 	Log    LogConfig
 	Metric MetricConfig
+	OSS    OSSConfig
 	GRPC   GRPCConfig
+}
+
+type OSSConfig struct {
+	AccessKeyID     string
+	AccessKeySecret string
+	Arn             string
 }
 
 type RedisConfig struct {
