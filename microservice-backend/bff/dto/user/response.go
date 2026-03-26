@@ -4,6 +4,10 @@ import (
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 )
 
+type OSSSignDTO struct {
+	Response string `json:"response"`
+}
+
 // BriefDTO 后端返回简要 User 信息
 type BriefDTO struct {
 	ID       int64  `json:"id,string"` // ID

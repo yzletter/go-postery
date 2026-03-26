@@ -71,7 +71,7 @@ func main() {
 	AuthRequiredMdl := middleware2.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware2.MetricMiddleware(MetricSvc)                     // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware2.RateLimitMiddleware(RateLimitSvc)            // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                         // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://" + Config.App.FrontendAddr}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "traceparent", "tracestate", "baggage"},
@@ -107,9 +107,9 @@ func main() {
 	// 注册全局中间件
 	engine.Use(
 		middleware2.TracingMiddleware(ServiceName), // OpenTelemetry tracing 中间件
-		CorsMdl,      // CorsMdl 跨域中间件
-		MetricMdl,    // Prometheus 监控中间件
-		RateLimitMdl, // 限流中间件
+		CorsMdl,                                    // CorsMdl 跨域中间件
+		MetricMdl,                                  // Prometheus 监控中间件
+		RateLimitMdl,                               // 限流中间件
 	)
 
 	// 运维接口
@@ -144,15 +144,18 @@ func main() {
 	// 用户模块
 	users := v1.Group("/users")
 	{
-		users.GET("/:id", UserHdl.Profile)                // GET /api/v1/users/:id									获取个人资料
-		users.GET("/:id/posts", PostHdl.ListByPageAndUid) // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
-		users.GET("/top", UserHdl.Top)                    // GET /api/v1/users/top 									获取推荐关注
+		users.GET("/:id", UserHdl.Profile)                    // GET /api/v1/users/:id								获取个人资料
+		users.GET("/:id/posts", PostHdl.ListByPageAndUid)     // GET /api/v1/users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
+		users.GET("/top", UserHdl.Top)                        // GET /api/v1/users/top 								获取推荐关注
+		users.POST("/presign", UserHdl.GetAvatarURL)          // POST /api/v1/users/presign 							预签名
+		users.POST("/callback", UserHdl.UploadAvatarCallback) // POST /api/v1/users/callback 						回调
 
 		// 个人模块
 		me := users.Group("/me")
 		me.Use(AuthRequiredMdl)
 		me.POST("", UserHdl.ModifyProfile)          // POST /api/v1/users/me									修改个人资料
-		me.GET("/followers", UserHdl.ListFollowers) // GET /api/v1/users/me/followers?pageNo=1&pageSize=10		按页获取用户粉丝
+		me.GET("/upload", UserHdl.UploadAvatarSign) // GET /api/v1/users/me/upload							上传头像
+		me.GET("/followers", UserHdl.ListFollowers) // GET /api/v1/users/me/followers?pageNo=1&pageSize=10	按页获取用户粉丝
 		me.GET("/followees", UserHdl.ListFollowees) // GET /api/v1/users/me/followees?pageNo=1&pageSize=10 	按页获取用户关注的人
 
 		// 关注模块

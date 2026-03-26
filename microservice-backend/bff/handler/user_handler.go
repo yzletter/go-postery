@@ -3,6 +3,7 @@ package handler
 import (
 	"log/slog"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
@@ -10,7 +11,7 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/bff/dto/user"
 	"github.com/yzletter/go-postery/microservice-backend/bff/errno"
 	grpcclient "github.com/yzletter/go-postery/microservice-backend/bff/grpc/client"
-	utils2 "github.com/yzletter/go-postery/microservice-backend/bff/utils"
+	"github.com/yzletter/go-postery/microservice-backend/bff/utils"
 	"github.com/yzletter/go-postery/microservice-backend/bff/utils/response"
 	"google.golang.org/grpc/codes"
 )
@@ -52,13 +53,13 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	// 将请求参数绑定到结构体
 	if err := ctx.ShouldBindJSON(&modifyProfileReq); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils2.BindErrMsg(err))
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -105,7 +106,7 @@ func (hdl *UserHandler) Top(ctx *gin.Context) {
 
 func (hdl *UserHandler) Follow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -136,7 +137,7 @@ func (hdl *UserHandler) Follow(ctx *gin.Context) {
 
 func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -167,7 +168,7 @@ func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 
 func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -197,7 +198,7 @@ func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 // ListFollowers 返回关注我的人
 func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -233,7 +234,7 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 // ListFollowees 返回我关注的人
 func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -264,4 +265,101 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 			"total":     resp.Count,
 			"hasMore":   hasMore,
 		})
+}
+
+// GetAvatarURL 预签名
+func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
+	var req user.GetAvatarURLRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	if !strings.HasPrefix(req.Avatar, "users/avatar/") {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	resp, err := hdl.userSvc.GetAvatarURL(ctx, &user_grpc.GetAvatarURLRequest{ObjectName: req.Avatar})
+	if err != nil {
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), nil)
+		return
+	}
+
+	response.Success(ctx, "获取预签名 URL", gin.H{
+		"url": resp.URL,
+	})
+}
+
+// UploadAvatarCallback 回调
+func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
+	// 对请求进行验签
+	if ok, err := utils.VerifyOSS(ctx.Request); !ok || err != nil {
+		slog.Error("Invaild Request") // 验签失败
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// Body 绑定结构体
+	var uploadCallbackReq user.UploadCallbackRequest
+	if err := ctx.ShouldBindJSON(&uploadCallbackReq); err != nil {
+		// 参数绑定失败
+		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 验证 Bucket
+	if uploadCallbackReq.Bucket != "go-postery" {
+		slog.Error("Invaild Bucket")
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	// 获取 uid 和 objectName
+	// users/avatar/uid/filename
+	segments := strings.Split(uploadCallbackReq.Object, "/")
+	if len(segments) != 4 {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	uid, err := strconv.ParseInt(segments[2], 10, 64)
+	if err != nil {
+		response.Error(ctx, errno.ErrInvalidParam)
+		return
+	}
+
+	_, err = hdl.userSvc.UploadAvatarCallback(ctx, &user_grpc.UploadAvatarCallbackRequest{UserID: uid, ObjectName: uploadCallbackReq.Object})
+	if err != nil {
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), nil)
+		return
+	}
+
+	response.Success(ctx, "回调成功", nil)
+}
+
+// UploadAvatarSign 上传头像
+func (hdl *UserHandler) UploadAvatarSign(ctx *gin.Context) {
+	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if err != nil {
+		response.Error(ctx, errno.ErrUserNotLogin)
+		return
+	}
+
+	resp, err := hdl.userSvc.UploadAvatarSign(ctx, &user_grpc.UploadAvatarSignRequest{UserID: uid})
+	if err != nil {
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal),
+			user.OSSSignDTO{
+				Response: "",
+			})
+		return
+	}
+
+	response.Success(ctx, "获取签名成功", user.OSSSignDTO{
+		Response: resp.Response,
+	})
 }

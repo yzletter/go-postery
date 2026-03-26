@@ -10,21 +10,12 @@ type ModifyProfileRequest struct {
 	Country  string `json:"country,omitempty"`  // 国家
 }
 
-//func ModifyProfileRequestToModel(request ModifyProfileRequest) model.UserProfile {
-//	userProfile := model.UserProfile{
-//		Nickname: request.Nickname,
-//		Avatar:   &request.Avatar,
-//		Bio:      &request.Bio,
-//		Gender:   request.Gender,
-//		BirthDay: nil,
-//		Location: &request.Location,
-//		Country:  &request.Country,
-//	}
-//
-//	t, errs := time.Parse("2006-01-02", request.BirthDay)
-//	if errs == nil {
-//		userProfile.BirthDay = &t
-//	}
-//
-//	return userProfile
-//}
+type UploadCallbackRequest struct {
+	Bucket string `json:"bucket"`
+	Size   string `json:"size"`
+	Object string `json:"object"`
+}
+
+type GetAvatarURLRequest struct {
+	Avatar string `json:"avatar"`
+}

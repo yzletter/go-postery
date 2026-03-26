@@ -57,7 +57,7 @@ type AliyunOSSManager struct {
 func Init(config config.OSSConfig) ports.OSSManager {
 	region = "cn-hongkong"    // Bucket 所处地域
 	bucketName = "go-postery" // Bucket 名称
-	callbackUrl = "http://gopostery.top/callback"
+	callbackUrl = "http://gopostery.top/api/v1/users/callback"
 
 	return &AliyunOSSManager{
 		AccessKeyID:     config.AccessKeyID,
@@ -73,9 +73,9 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 
 	config := new(credentials.Config).
 		SetType("ram_role_arn").
-		SetAccessKeyId(manager.AccessKeyID).         // 填写 AccessKeyID
+		SetAccessKeyId(manager.AccessKeyID). // 填写 AccessKeyID
 		SetAccessKeySecret(manager.AccessKeySecret). // 填写 AccessKeySecret
-		SetRoleArn(manager.Arn).                     // 填写 Arn
+		SetRoleArn(manager.Arn). // 填写 Arn
 		SetRoleSessionName("Upload").
 		SetPolicy("").
 		SetRoleSessionExpiration(3600)
@@ -145,8 +145,8 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 	// 回调
 	var callbackParam CallbackParam
 	callbackParam.CallbackUrl = callbackUrl
-	callbackParam.CallbackBody = "filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}"
-	callbackParam.CallbackBodyType = "application/x-www-form-urlencoded"
+	callbackParam.CallbackBody = "{\"bucket\":\"${bucket}\",\"object\":\"${object}\",\"size\":\"${size}\"}"
+	callbackParam.CallbackBodyType = "application/json"
 	callback_str, err := json.Marshal(callbackParam)
 	if err != nil {
 		fmt.Println("callback json err:", err)

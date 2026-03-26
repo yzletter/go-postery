@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -34,7 +35,8 @@ func NewUserService(userRepository repository.UserRepository, followRepository r
 
 // UploadAvatarSign 获取上传头像 OSS 的签名
 func (svc *userService) UploadAvatarSign(ctx context.Context, uid int64) (string, error) {
-	dir := "users/avatar/"
+	// users/avatar/uid/filename
+	dir := "users/avatar/" + strconv.FormatInt(uid, 64) + "/"
 	resp, err := svc.ossManager.Sign(dir)
 	if err != nil {
 		return "", errs.ErrInternal
