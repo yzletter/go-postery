@@ -769,6 +769,270 @@ func (x *ListFollowResponse) GetUserBriefs() []*UserBrief {
 	return nil
 }
 
+type UploadAvatarSignRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadAvatarSignRequest) Reset() {
+	*x = UploadAvatarSignRequest{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadAvatarSignRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadAvatarSignRequest) ProtoMessage() {}
+
+func (x *UploadAvatarSignRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadAvatarSignRequest.ProtoReflect.Descriptor instead.
+func (*UploadAvatarSignRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *UploadAvatarSignRequest) GetUserID() int64 {
+	if x != nil {
+		return x.UserID
+	}
+	return 0
+}
+
+type UploadAvatarSignResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Response      string                 `protobuf:"bytes,1,opt,name=Response,proto3" json:"Response,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadAvatarSignResponse) Reset() {
+	*x = UploadAvatarSignResponse{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadAvatarSignResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadAvatarSignResponse) ProtoMessage() {}
+
+func (x *UploadAvatarSignResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadAvatarSignResponse.ProtoReflect.Descriptor instead.
+func (*UploadAvatarSignResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *UploadAvatarSignResponse) GetResponse() string {
+	if x != nil {
+		return x.Response
+	}
+	return ""
+}
+
+type UploadAvatarCallbackRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
+	ObjectName    string                 `protobuf:"bytes,2,opt,name=ObjectName,proto3" json:"ObjectName,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadAvatarCallbackRequest) Reset() {
+	*x = UploadAvatarCallbackRequest{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadAvatarCallbackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadAvatarCallbackRequest) ProtoMessage() {}
+
+func (x *UploadAvatarCallbackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadAvatarCallbackRequest.ProtoReflect.Descriptor instead.
+func (*UploadAvatarCallbackRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *UploadAvatarCallbackRequest) GetUserID() int64 {
+	if x != nil {
+		return x.UserID
+	}
+	return 0
+}
+
+func (x *UploadAvatarCallbackRequest) GetObjectName() string {
+	if x != nil {
+		return x.ObjectName
+	}
+	return ""
+}
+
+type UploadAvatarCallbackResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UploadAvatarCallbackResponse) Reset() {
+	*x = UploadAvatarCallbackResponse{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UploadAvatarCallbackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UploadAvatarCallbackResponse) ProtoMessage() {}
+
+func (x *UploadAvatarCallbackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UploadAvatarCallbackResponse.ProtoReflect.Descriptor instead.
+func (*UploadAvatarCallbackResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{16}
+}
+
+type GetAvatarURLRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ObjectName    string                 `protobuf:"bytes,1,opt,name=ObjectName,proto3" json:"ObjectName,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAvatarURLRequest) Reset() {
+	*x = GetAvatarURLRequest{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAvatarURLRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAvatarURLRequest) ProtoMessage() {}
+
+func (x *GetAvatarURLRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAvatarURLRequest.ProtoReflect.Descriptor instead.
+func (*GetAvatarURLRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetAvatarURLRequest) GetObjectName() string {
+	if x != nil {
+		return x.ObjectName
+	}
+	return ""
+}
+
+type GetAvatarURLResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	URL           string                 `protobuf:"bytes,1,opt,name=URL,proto3" json:"URL,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAvatarURLResponse) Reset() {
+	*x = GetAvatarURLResponse{}
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAvatarURLResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAvatarURLResponse) ProtoMessage() {}
+
+func (x *GetAvatarURLResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_user_v1_user_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAvatarURLResponse.ProtoReflect.Descriptor instead.
+func (*GetAvatarURLResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_user_v1_user_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetAvatarURLResponse) GetURL() string {
+	if x != nil {
+		return x.URL
+	}
+	return ""
+}
+
 var File_api_proto_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_api_proto_user_v1_user_proto_rawDesc = "" +
@@ -829,7 +1093,23 @@ const file_api_proto_user_v1_user_proto_rawDesc = "" +
 	"\x05Count\x18\x01 \x01(\x04R\x05Count\x122\n" +
 	"\n" +
 	"UserBriefs\x18\x02 \x03(\v2\x12.user.v1.UserBriefR\n" +
-	"UserBriefs2\xc9\x04\n" +
+	"UserBriefs\"1\n" +
+	"\x17UploadAvatarSignRequest\x12\x16\n" +
+	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\"6\n" +
+	"\x18UploadAvatarSignResponse\x12\x1a\n" +
+	"\bResponse\x18\x01 \x01(\tR\bResponse\"U\n" +
+	"\x1bUploadAvatarCallbackRequest\x12\x16\n" +
+	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1e\n" +
+	"\n" +
+	"ObjectName\x18\x02 \x01(\tR\n" +
+	"ObjectName\"\x1e\n" +
+	"\x1cUploadAvatarCallbackResponse\"5\n" +
+	"\x13GetAvatarURLRequest\x12\x1e\n" +
+	"\n" +
+	"ObjectName\x18\x01 \x01(\tR\n" +
+	"ObjectName\"(\n" +
+	"\x14GetAvatarURLResponse\x12\x10\n" +
+	"\x03URL\x18\x01 \x01(\tR\x03URL2\xd4\x06\n" +
 	"\vUserService\x12E\n" +
 	"\x0eGetProfileById\x12\x1e.user.v1.GetProfileByIdRequest\x1a\x13.user.v1.UserDetail\x12N\n" +
 	"\rUpdateProfile\x12\x1d.user.v1.UpdateProfileRequest\x1a\x1e.user.v1.UpdateProfileResponse\x120\n" +
@@ -838,7 +1118,10 @@ const file_api_proto_user_v1_user_proto_rawDesc = "" +
 	"\bUnFollow\x12\x1c.user.v1.FollowCommonRequest\x1a\x1c.user.v1.FollowEmptyResponse\x12C\n" +
 	"\bIfFollow\x12\x1c.user.v1.FollowCommonRequest\x1a\x19.user.v1.IfFollowResponse\x12N\n" +
 	"\x13ListFollowersByPage\x12\x1a.user.v1.ListFollowRequest\x1a\x1b.user.v1.ListFollowResponse\x12N\n" +
-	"\x13ListFolloweesByPage\x12\x1a.user.v1.ListFollowRequest\x1a\x1b.user.v1.ListFollowResponseB<Z:github.com/yzletter/go-postery/api/proto/user/v1;user_grpcb\x06proto3"
+	"\x13ListFolloweesByPage\x12\x1a.user.v1.ListFollowRequest\x1a\x1b.user.v1.ListFollowResponse\x12W\n" +
+	"\x10UploadAvatarSign\x12 .user.v1.UploadAvatarSignRequest\x1a!.user.v1.UploadAvatarSignResponse\x12c\n" +
+	"\x14UploadAvatarCallback\x12$.user.v1.UploadAvatarCallbackRequest\x1a%.user.v1.UploadAvatarCallbackResponse\x12K\n" +
+	"\fGetAvatarURL\x12\x1c.user.v1.GetAvatarURLRequest\x1a\x1d.user.v1.GetAvatarURLResponseB<Z:github.com/yzletter/go-postery/api/proto/user/v1;user_grpcb\x06proto3"
 
 var (
 	file_api_proto_user_v1_user_proto_rawDescOnce sync.Once
@@ -852,21 +1135,27 @@ func file_api_proto_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_api_proto_user_v1_user_proto_rawDescData
 }
 
-var file_api_proto_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_api_proto_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_api_proto_user_v1_user_proto_goTypes = []any{
-	(*UserBrief)(nil),             // 0: user.v1.UserBrief
-	(*TopUser)(nil),               // 1: user.v1.TopUser
-	(*GetProfileByIdRequest)(nil), // 2: user.v1.GetProfileByIdRequest
-	(*UserDetail)(nil),            // 3: user.v1.UserDetail
-	(*UpdateProfileRequest)(nil),  // 4: user.v1.UpdateProfileRequest
-	(*UpdateProfileResponse)(nil), // 5: user.v1.UpdateProfileResponse
-	(*TopRequest)(nil),            // 6: user.v1.TopRequest
-	(*TopResponse)(nil),           // 7: user.v1.TopResponse
-	(*FollowCommonRequest)(nil),   // 8: user.v1.FollowCommonRequest
-	(*FollowEmptyResponse)(nil),   // 9: user.v1.FollowEmptyResponse
-	(*IfFollowResponse)(nil),      // 10: user.v1.IfFollowResponse
-	(*ListFollowRequest)(nil),     // 11: user.v1.ListFollowRequest
-	(*ListFollowResponse)(nil),    // 12: user.v1.ListFollowResponse
+	(*UserBrief)(nil),                    // 0: user.v1.UserBrief
+	(*TopUser)(nil),                      // 1: user.v1.TopUser
+	(*GetProfileByIdRequest)(nil),        // 2: user.v1.GetProfileByIdRequest
+	(*UserDetail)(nil),                   // 3: user.v1.UserDetail
+	(*UpdateProfileRequest)(nil),         // 4: user.v1.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil),        // 5: user.v1.UpdateProfileResponse
+	(*TopRequest)(nil),                   // 6: user.v1.TopRequest
+	(*TopResponse)(nil),                  // 7: user.v1.TopResponse
+	(*FollowCommonRequest)(nil),          // 8: user.v1.FollowCommonRequest
+	(*FollowEmptyResponse)(nil),          // 9: user.v1.FollowEmptyResponse
+	(*IfFollowResponse)(nil),             // 10: user.v1.IfFollowResponse
+	(*ListFollowRequest)(nil),            // 11: user.v1.ListFollowRequest
+	(*ListFollowResponse)(nil),           // 12: user.v1.ListFollowResponse
+	(*UploadAvatarSignRequest)(nil),      // 13: user.v1.UploadAvatarSignRequest
+	(*UploadAvatarSignResponse)(nil),     // 14: user.v1.UploadAvatarSignResponse
+	(*UploadAvatarCallbackRequest)(nil),  // 15: user.v1.UploadAvatarCallbackRequest
+	(*UploadAvatarCallbackResponse)(nil), // 16: user.v1.UploadAvatarCallbackResponse
+	(*GetAvatarURLRequest)(nil),          // 17: user.v1.GetAvatarURLRequest
+	(*GetAvatarURLResponse)(nil),         // 18: user.v1.GetAvatarURLResponse
 }
 var file_api_proto_user_v1_user_proto_depIdxs = []int32{
 	1,  // 0: user.v1.TopResponse.TopUsers:type_name -> user.v1.TopUser
@@ -879,16 +1168,22 @@ var file_api_proto_user_v1_user_proto_depIdxs = []int32{
 	8,  // 7: user.v1.UserService.IfFollow:input_type -> user.v1.FollowCommonRequest
 	11, // 8: user.v1.UserService.ListFollowersByPage:input_type -> user.v1.ListFollowRequest
 	11, // 9: user.v1.UserService.ListFolloweesByPage:input_type -> user.v1.ListFollowRequest
-	3,  // 10: user.v1.UserService.GetProfileById:output_type -> user.v1.UserDetail
-	5,  // 11: user.v1.UserService.UpdateProfile:output_type -> user.v1.UpdateProfileResponse
-	7,  // 12: user.v1.UserService.Top:output_type -> user.v1.TopResponse
-	9,  // 13: user.v1.UserService.Follow:output_type -> user.v1.FollowEmptyResponse
-	9,  // 14: user.v1.UserService.UnFollow:output_type -> user.v1.FollowEmptyResponse
-	10, // 15: user.v1.UserService.IfFollow:output_type -> user.v1.IfFollowResponse
-	12, // 16: user.v1.UserService.ListFollowersByPage:output_type -> user.v1.ListFollowResponse
-	12, // 17: user.v1.UserService.ListFolloweesByPage:output_type -> user.v1.ListFollowResponse
-	10, // [10:18] is the sub-list for method output_type
-	2,  // [2:10] is the sub-list for method input_type
+	13, // 10: user.v1.UserService.UploadAvatarSign:input_type -> user.v1.UploadAvatarSignRequest
+	15, // 11: user.v1.UserService.UploadAvatarCallback:input_type -> user.v1.UploadAvatarCallbackRequest
+	17, // 12: user.v1.UserService.GetAvatarURL:input_type -> user.v1.GetAvatarURLRequest
+	3,  // 13: user.v1.UserService.GetProfileById:output_type -> user.v1.UserDetail
+	5,  // 14: user.v1.UserService.UpdateProfile:output_type -> user.v1.UpdateProfileResponse
+	7,  // 15: user.v1.UserService.Top:output_type -> user.v1.TopResponse
+	9,  // 16: user.v1.UserService.Follow:output_type -> user.v1.FollowEmptyResponse
+	9,  // 17: user.v1.UserService.UnFollow:output_type -> user.v1.FollowEmptyResponse
+	10, // 18: user.v1.UserService.IfFollow:output_type -> user.v1.IfFollowResponse
+	12, // 19: user.v1.UserService.ListFollowersByPage:output_type -> user.v1.ListFollowResponse
+	12, // 20: user.v1.UserService.ListFolloweesByPage:output_type -> user.v1.ListFollowResponse
+	14, // 21: user.v1.UserService.UploadAvatarSign:output_type -> user.v1.UploadAvatarSignResponse
+	16, // 22: user.v1.UserService.UploadAvatarCallback:output_type -> user.v1.UploadAvatarCallbackResponse
+	18, // 23: user.v1.UserService.GetAvatarURL:output_type -> user.v1.GetAvatarURLResponse
+	13, // [13:24] is the sub-list for method output_type
+	2,  // [2:13] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -905,7 +1200,7 @@ func file_api_proto_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_user_v1_user_proto_rawDesc), len(file_api_proto_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

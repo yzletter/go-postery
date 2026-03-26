@@ -21,6 +21,23 @@ func NewUserDAO(db *gorm.DB) UserDAO {
 	}
 }
 
+// UpdateAvatar 修改用户头像链接
+func (dao *gormUserDAO) UpdateAvatar(ctx context.Context, uid int64, avatar string) error {
+	// 1. 操作数据库
+	result := dao.db.WithContext(ctx).Model(&model.UserProfile{}).Where("user_id = ? AND deleted_at IS NULL", uid).Update("avatar", avatar)
+	if result.Error != nil {
+		// 业务层面错误
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return ErrRecordNotFound
+		}
+		// 系统层面错误
+		slog.Error(UpdateFailed, "id", uid, "error", result.Error)
+		return ErrServerInternal
+	}
+
+	return nil
+}
+
 // GetProfileByID 根据 ID 查找用户资料
 func (dao *gormUserDAO) GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error) {
 	// 1. 构造结构体对象

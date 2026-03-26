@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -22,9 +23,10 @@ import (
 
 // 定义全局变量
 var (
-	region     string
-	bucketName string
-	product    = "oss"
+	region      string
+	bucketName  string
+	product     = "oss"
+	callbackUrl string
 )
 
 // PolicyToken 结构体用于存储生成的表单数据
@@ -37,6 +39,13 @@ type PolicyToken struct {
 	Signature        string `json:"signature"`
 	Host             string `json:"host"`
 	Dir              string `json:"dir"`
+	Callback         string `json:"callback"` // 回调
+}
+
+type CallbackParam struct {
+	CallbackUrl      string `json:"callbackUrl"`
+	CallbackBody     string `json:"callbackBody"`
+	CallbackBodyType string `json:"callbackBodyType"`
 }
 
 type AliyunOSSManager struct {
@@ -48,6 +57,7 @@ type AliyunOSSManager struct {
 func Init(config config.OSSConfig) ports.OSSManager {
 	region = "cn-hongkong"    // Bucket 所处地域
 	bucketName = "go-postery" // Bucket 名称
+	callbackUrl = "http://gopostery.top/callback"
 
 	return &AliyunOSSManager{
 		AccessKeyID:     config.AccessKeyID,
@@ -74,12 +84,14 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 	provider, err := credentials.NewCredential(config)
 	if err != nil {
 		slog.Error("OSS NewCredential fail", "error", err)
+		return "", err
 	}
 
 	// 从凭证提供器获取凭证
 	cred, err := provider.GetCredential()
 	if err != nil {
 		slog.Error("OSS GetCredential fail", "error", err)
+		return "", err
 	}
 
 	// 构建policy
@@ -130,6 +142,17 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 	io.WriteString(h, stringToSign)
 	signature := hex.EncodeToString(h.Sum(nil))
 
+	// 回调
+	var callbackParam CallbackParam
+	callbackParam.CallbackUrl = callbackUrl
+	callbackParam.CallbackBody = "filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}"
+	callbackParam.CallbackBodyType = "application/x-www-form-urlencoded"
+	callback_str, err := json.Marshal(callbackParam)
+	if err != nil {
+		fmt.Println("callback json err:", err)
+	}
+	callbackBase64 := base64.StdEncoding.EncodeToString(callback_str)
+
 	// 构建返回给前端的表单
 	policyToken := PolicyToken{
 		Policy:           stringToSign,
@@ -138,8 +161,9 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 		Credential:       fmt.Sprintf("%v/%v/%v/%v/aliyun_v4_request", *cred.AccessKeyId, date, region, product),
 		Date:             utcTime.UTC().Format("20060102T150405Z"),
 		Signature:        signature,
-		Host:             host, // 返回 OSS 上传地址
-		Dir:              dir,  // 返回上传目录
+		Host:             host,           // 返回 OSS 上传地址
+		Dir:              dir,            // 返回上传目录
+		Callback:         callbackBase64, // 返回上传回调参数
 	}
 
 	response, err := json.Marshal(policyToken)
@@ -176,8 +200,11 @@ func (manager *AliyunOSSManager) Resign(objectName string) (string, error) {
 	)
 	if err != nil {
 		slog.Error("failed to get object presign", "error", err)
+		return "", err
 	}
-
-	slog.Info("Presign URL", "method", result.Method, "expiration", result.Expiration, "url", result.URL)
-	return result.URL, nil
+	if result != nil {
+		slog.Info("Presign URL", "method", result.Method, "expiration", result.Expiration, "url", result.URL)
+		return result.URL, nil
+	}
+	return "", errors.New("Presign Failed")
 }

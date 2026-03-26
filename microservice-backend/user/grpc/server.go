@@ -100,3 +100,26 @@ func (server *UserServiceServer) ListFolloweesByPage(ctx context.Context, req *u
 
 	return &user_grpc.ListFollowResponse{Count: uint64(total), UserBriefs: userBriefs}, nil
 }
+
+func (server *UserServiceServer) UploadAvatarSign(ctx context.Context, req *user_grpc.UploadAvatarSignRequest) (*user_grpc.UploadAvatarSignResponse, error) {
+	resp, err := server.svc.UploadAvatarSign(ctx, req.UserID)
+	if err != nil {
+		return &user_grpc.UploadAvatarSignResponse{}, err
+	}
+	return &user_grpc.UploadAvatarSignResponse{Response: resp}, nil
+}
+
+func (server *UserServiceServer) UploadAvatarCallback(ctx context.Context, req *user_grpc.UploadAvatarCallbackRequest) (*user_grpc.UploadAvatarCallbackResponse, error) {
+	if err := server.svc.UploadAvatarCallback(ctx, req.UserID, req.ObjectName); err != nil {
+		return &user_grpc.UploadAvatarCallbackResponse{}, err
+	}
+	return &user_grpc.UploadAvatarCallbackResponse{}, nil
+}
+
+func (server *UserServiceServer) GetAvatarURL(ctx context.Context, req *user_grpc.GetAvatarURLRequest) (*user_grpc.GetAvatarURLResponse, error) {
+	url, err := server.svc.GetAvatarURL(ctx, req.ObjectName)
+	if err != nil {
+		return &user_grpc.GetAvatarURLResponse{}, err
+	}
+	return &user_grpc.GetAvatarURLResponse{URL: url}, nil
+}

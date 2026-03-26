@@ -75,6 +75,29 @@ message ListFollowResponse {
   repeated UserBrief UserBriefs = 2;
 }
 
+message UploadAvatarSignRequest {
+  int64 UserID = 1;
+}
+
+message UploadAvatarSignResponse {
+  string Response = 1;
+}
+
+message UploadAvatarCallbackRequest {
+  int64 UserID = 1;
+  string ObjectName = 2;
+}
+
+message UploadAvatarCallbackResponse {}
+
+message GetAvatarURLRequest {
+  string ObjectName = 1;
+}
+
+message GetAvatarURLResponse {
+  string URL = 1;
+}
+
 service UserService {
   // 根据用户 ID 获取用户资料
   rpc GetProfileById(GetProfileByIdRequest) returns (UserDetail);
@@ -89,6 +112,12 @@ service UserService {
   rpc ListFollowersByPage(ListFollowRequest) returns (ListFollowResponse);
   // 按页查找关注的人
   rpc ListFolloweesByPage(ListFollowRequest) returns (ListFollowResponse);
+  // 获取上传头像 OSS 的签名
+  rpc UploadAvatarSign(UploadAvatarSignRequest) returns (UploadAvatarSignResponse);
+  // OSS 信息落库
+  rpc UploadAvatarCallback(UploadAvatarCallbackRequest) returns (UploadAvatarCallbackResponse);
+  // 获取头像预签名 URL
+  rpc GetAvatarURL(GetAvatarURLRequest) returns (GetAvatarURLResponse);
 }
 
 /*

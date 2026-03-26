@@ -32,8 +32,36 @@ func NewUserService(userRepository repository.UserRepository, followRepository r
 	}
 }
 
-func (svc *userService) Upload(ctx context.Context, uid int64) {
+// UploadAvatarSign 获取上传头像 OSS 的签名
+func (svc *userService) UploadAvatarSign(ctx context.Context, uid int64) (string, error) {
+	dir := "users/avatar/"
+	resp, err := svc.ossManager.Sign(dir)
+	if err != nil {
+		return "", errs.ErrInternal
+	}
+	return resp, err
+}
 
+// UploadAvatarCallback OSS 信息落库
+func (svc *userService) UploadAvatarCallback(ctx context.Context, uid int64, objectName string) error {
+	// 落库
+	if err := svc.userRepository.UpdateAvatar(ctx, uid, objectName); err != nil {
+		// 用户不存在
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errs.ErrNotFound
+		}
+		return errs.ErrInternal
+	}
+	return nil
+}
+
+// GetAvatarURL 获取头像预签名 URL
+func (svc *userService) GetAvatarURL(ctx context.Context, objectName string) (string, error) {
+	url, err := svc.ossManager.Resign(objectName)
+	if err != nil {
+		return "", errs.ErrInternal
+	}
+	return url, nil
 }
 
 func (svc *userService) GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error) {

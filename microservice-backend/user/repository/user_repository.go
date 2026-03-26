@@ -18,6 +18,13 @@ func NewUserRepository(userDAO dao.UserDAO, userCache cache.UserCache) UserRepos
 	return &userRepository{dao: userDAO, cache: userCache}
 }
 
+func (repo *userRepository) UpdateAvatar(ctx context.Context, uid int64, avatar string) error {
+	if err := repo.dao.UpdateAvatar(ctx, uid, avatar); err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
 // GetProfileByID 根据 ID 查找用户资料
 func (repo *userRepository) GetProfileByID(ctx context.Context, uid int64) (*model.UserProfile, error) {
 	userProfile, err := repo.dao.GetProfileByID(ctx, uid)
