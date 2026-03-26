@@ -108,3 +108,27 @@ func (client *userClient) ListFolloweesByPage(ctx context.Context, req *user_grp
 
 	return client.client.ListFolloweesByPage(ctx, req)
 }
+
+func (client *userClient) UploadAvatarSign(ctx context.Context, req *user_grpc.UploadAvatarSignRequest) (*user_grpc.UploadAvatarSignResponse, error) {
+	// 添加超时控制
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
+	defer cancel()
+
+	return client.client.UploadAvatarSign(ctx, req)
+}
+
+func (client *userClient) UploadAvatarCallback(ctx context.Context, req *user_grpc.UploadAvatarCallbackRequest) (*user_grpc.UploadAvatarCallbackResponse, error) {
+	// 添加超时控制
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
+	defer cancel()
+
+	return client.client.UploadAvatarCallback(ctx, req)
+}
+
+func (client *userClient) GetAvatarURL(ctx context.Context, req *user_grpc.GetAvatarURLRequest) (*user_grpc.GetAvatarURLResponse, error) {
+	// 添加超时控制
+	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
+	defer cancel()
+
+	return client.client.GetAvatarURL(ctx, req)
+}
