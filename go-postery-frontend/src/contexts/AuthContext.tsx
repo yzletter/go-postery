@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import type { User } from '../types'
 import { md5Hash } from '../utils/crypto'
-import { apiPost, AUTH_API_BASE_URL } from '../utils/api'
+import { apiGet, apiPost, AUTH_API_BASE_URL } from '../utils/api'
 import { normalizeId } from '../utils/id'
+import { normalizeUserDetail } from '../utils/user'
 
 interface AuthContextType {
   user: User | null
@@ -40,6 +41,7 @@ const normalizeUserFromResponse = (raw: any, fallbackName: string): User => {
     id: resolvedId || Date.now().toString(),
     name: resolvedName,
     email: responseUser.email ?? responseUser.Email,
+    avatar: responseUser.avatar ?? responseUser.Avatar ?? raw?.avatar ?? raw?.Avatar,
   }
 }
 
@@ -76,14 +78,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return newUser
   }
 
-  const updateUser = (updates: Partial<User>) => {
+  const updateUser = useCallback((updates: Partial<User>) => {
     setUser((prev) => {
       if (!prev) return prev
       const next = { ...prev, ...updates }
       localStorage.setItem('user', JSON.stringify(next))
       return next
     })
-  }
+  }, [])
+
+  useEffect(() => {
+    if (!user?.id || user.avatar) return
+
+    let cancelled = false
+
+    apiGet(`/users/${user.id}`)
+      .then(({ data }) => {
+        if (cancelled || !data) return
+        const detail = normalizeUserDetail(data)
+        if (!detail.avatar) return
+        updateUser({ avatar: detail.avatar })
+      })
+      .catch((error) => {
+        console.warn('Failed to hydrate user avatar:', error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [updateUser, user?.avatar, user?.id])
 
   const loginWithPassword = async (identifier: string, password: string): Promise<boolean> => {
     setIsLoading(true)

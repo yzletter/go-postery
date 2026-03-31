@@ -10,6 +10,7 @@ import {
   HeartHandshake,
   Send,
 } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet } from '../utils/api'
 import { formatRelativeTime } from '../utils/date'
@@ -48,7 +49,6 @@ export default function Profile() {
   const subtitle = isCurrentUser
     ? '分享你的想法，构建更好的社区'
     : `正在查看 ${displayName} 的主页`
-  const avatarUrl = profileInfo?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`
   const formatDate = (value?: string | Date) => {
     if (!value) return '未设置'
     const date = value instanceof Date ? value : new Date(value)
@@ -258,9 +258,10 @@ export default function Profile() {
         <div className="relative space-y-5">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <img
-                src={avatarUrl}
-                alt={displayName}
+              <UserAvatar
+                avatar={profileInfo?.avatar}
+                name={displayName}
+                userId={displayUserId}
                 className="w-20 h-20 rounded-full border-4 border-white shadow-sm ring-2 ring-primary-100"
               />
               <div>

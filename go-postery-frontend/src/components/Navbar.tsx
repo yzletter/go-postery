@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send, Sparkles, Shield } from 'lucide-react'
+import UserAvatar from './UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdminUser } from '../utils/admin'
 
@@ -107,9 +108,10 @@ export default function Navbar() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/60 ring-1 ring-gray-200/70 shadow-sm hover:bg-white transition-colors"
                   >
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
-                      alt={user.name}
+                    <UserAvatar
+                      avatar={user.avatar}
+                      name={user.name}
+                      userId={user.id}
                       className="w-8 h-8 rounded-full"
                     />
                     <span className="hidden md:inline text-gray-700 font-medium">

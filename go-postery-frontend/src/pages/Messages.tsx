@@ -11,6 +11,7 @@ import {
 } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Send, MessageCircle, Trash2 } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiDelete, API_BASE_URL } from '../utils/api'
 import { formatRelativeTime } from '../utils/date'
@@ -948,9 +949,6 @@ export default function Messages() {
             sessions.map((session) => {
               const isActive = session.id === activeId
               const isDeleting = Boolean(deletingSessionIds[session.id])
-              const avatarUrl =
-                session.avatar ||
-                `https://api.dicebear.com/7.x/avataaars/svg?seed=msg-${session.targetId || session.name || session.id}`
               return (
                 <div
                   key={session.id}
@@ -963,9 +961,11 @@ export default function Messages() {
                     onClick={() => handleSelectSession(session.id)}
                     className="flex flex-1 min-w-0 items-center space-x-3 text-left"
                   >
-                    <img
-                      src={avatarUrl}
-                      alt={session.name}
+                    <UserAvatar
+                      avatar={session.avatar}
+                      name={session.name}
+                      userId={session.targetId || session.id}
+                      fallbackSeed={`msg-${session.targetId || session.name || session.id}`}
                       className="w-10 h-10 rounded-full"
                     />
                     <div className="flex-1 min-w-0">
@@ -1014,12 +1014,11 @@ export default function Messages() {
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <div className="flex items-center space-x-3">
               {activeSession ? (
-                <img
-                  src={
-                    activeSession.avatar ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=msg-${activeSession.targetId || activeSession.name || activeSession.id}`
-                  }
-                  alt={activeSession.name}
+                <UserAvatar
+                  avatar={activeSession.avatar}
+                  name={activeSession.name}
+                  userId={activeSession.targetId || activeSession.id}
+                  fallbackSeed={`msg-${activeSession.targetId || activeSession.name || activeSession.id}`}
                   className="w-10 h-10 rounded-full"
                 />
               ) : (
@@ -1081,9 +1080,6 @@ export default function Messages() {
             {activeSession &&
               chatList.map((msg) => {
                 const isMe = msg.from === 'me'
-                const otherAvatar =
-                  activeSession.avatar ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=msg-${activeSession.targetId || activeSession.name || activeSession.id}`
                 const messageTimestamp = toTimestamp(msg.createdAt)
                 const shouldShowTime =
                   messageTimestamp > 0 &&
@@ -1095,9 +1091,11 @@ export default function Messages() {
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     {!isMe && (
-                      <img
-                        src={otherAvatar}
-                        alt={activeSession.name}
+                      <UserAvatar
+                        avatar={activeSession.avatar}
+                        name={activeSession.name}
+                        userId={activeSession.targetId || activeSession.id}
+                        fallbackSeed={`msg-${activeSession.targetId || activeSession.name || activeSession.id}`}
                         className="w-8 h-8 rounded-full mr-2"
                       />
                     )}
@@ -1114,8 +1112,11 @@ export default function Messages() {
                       ) : null}
                     </div>
                     {isMe && (
-                      <img
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'me'}`}
+                      <UserAvatar
+                        avatar={user?.avatar}
+                        name={user?.name || '我'}
+                        userId={user?.id}
+                        fallbackSeed={user?.name || 'me'}
                         alt="me"
                         className="w-8 h-8 rounded-full ml-2"
                       />

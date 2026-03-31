@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Gift, Sparkles } from 'lucide-react'
 import type { Post, FollowRelation } from '../types'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import { buildIdSeed, normalizeId } from '../utils/id'
 import { followUser, getFollowRelation, isFollowing, unfollowUser } from '../utils/follow'
@@ -441,9 +442,10 @@ export default function Home() {
                       onClick={(e) => e.stopPropagation()}
                       className="flex-shrink-0"
                     >
-                      <img
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
-                        alt={post.author.name}
+                      <UserAvatar
+                        avatar={post.author.avatar}
+                        name={post.author.name}
+                        userId={post.author.id}
                         className="w-11 h-11 rounded-full"
                       />
                     </Link>
@@ -673,12 +675,10 @@ export default function Home() {
                       state={{ username: item.name }}
                       className="flex-shrink-0"
                     >
-                      <img
-                        src={
-                          item.avatar ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=recommend-${item.id}`
-                        }
-                        alt={item.name}
+                      <UserAvatar
+                        avatar={item.avatar}
+                        name={item.name}
+                        userId={item.id}
                         className="w-10 h-10 rounded-full"
                       />
                     </Link>

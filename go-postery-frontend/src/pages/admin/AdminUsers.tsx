@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink, RefreshCw, Search, Trash2, UserRound } from 'lucide-react'
+import UserAvatar from '../../components/UserAvatar'
 import type { Post, UserDetail } from '../../types'
 import { apiDelete, apiGet } from '../../utils/api'
 import { formatRelativeTime } from '../../utils/date'
@@ -94,12 +95,6 @@ export default function AdminUsers() {
     }
   }
 
-  const avatarUrl = useMemo(() => {
-    if (profile?.avatar) return profile.avatar
-    const seed = profile?.name || userId || 'user'
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
-  }, [profile?.avatar, profile?.name, userId])
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -165,7 +160,12 @@ export default function AdminUsers() {
           <div className="border border-gray-100 rounded-2xl bg-white/70 backdrop-blur-sm p-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <img src={avatarUrl} alt={profile?.name || userId} className="w-14 h-14 rounded-2xl" />
+                <UserAvatar
+                  avatar={profile?.avatar}
+                  name={profile?.name || userId}
+                  userId={userId}
+                  className="w-14 h-14 rounded-2xl"
+                />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-bold text-gray-900 truncate">

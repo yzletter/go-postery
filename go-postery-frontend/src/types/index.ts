@@ -10,6 +10,7 @@ export interface User {
   id?: Id
   name: string
   email?: string
+  avatar?: string
 }
 
 export interface UserDetail {
@@ -43,6 +44,7 @@ export interface Post {
   author: {
     id: Id
     name: string
+    avatar?: string
   }
   createdAt: string
   views?: number
@@ -61,6 +63,7 @@ export interface Comment {
   author: {
     id: Id
     name: string
+    avatar?: string
   }
   createdAt: string
   likes?: number

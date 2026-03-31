@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, Flame, Filter, Clock, Sparkles, Tag, ArrowUpRight, LayoutGrid, BarChart3, Loader2 } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import { formatRelativeTime } from '../utils/date'
 import { ApiError, apiPost } from '../utils/api'
 import { normalizePost } from '../utils/post'
@@ -10,7 +11,6 @@ type SearchResultItem = Post & {
   summary?: string
   matchScore?: number
   badge?: string
-  authorAvatar?: string
 }
 
 const searchCategories = [
@@ -53,26 +53,10 @@ const computeMatchScore = (post: Post, keyword: string) => {
   return Math.min(98, score)
 }
 
-const extractAuthorAvatar = (raw: any) => {
-  const author = raw?.author ?? {}
-  const avatar =
-    typeof author.avatar === 'string'
-      ? author.avatar.trim()
-      : typeof author.Avatar === 'string'
-        ? author.Avatar.trim()
-        : typeof raw?.avatar === 'string'
-          ? raw.avatar.trim()
-          : typeof raw?.Avatar === 'string'
-            ? raw.Avatar.trim()
-            : ''
-  return avatar
-}
-
 const normalizeSearchItem = (raw: any, keyword: string): SearchResultItem | null => {
   const normalized = normalizePost(raw)
   if (!normalized.id || !normalized.title) return null
   const summary = buildSummary(normalized.content)
-  const avatar = extractAuthorAvatar(raw)
   return {
     ...normalized,
     views: normalized.views ?? 0,
@@ -80,7 +64,6 @@ const normalizeSearchItem = (raw: any, keyword: string): SearchResultItem | null
     comments: normalized.comments ?? 0,
     summary: summary || undefined,
     matchScore: computeMatchScore(normalized, keyword),
-    authorAvatar: avatar || undefined,
   }
 }
 
@@ -372,12 +355,10 @@ export default function SearchPage() {
 
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <img
-                        src={
-                          post.authorAvatar ||
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=search-${post.author.id}`
-                        }
-                        alt={post.author.name}
+                      <UserAvatar
+                        avatar={post.author.avatar}
+                        name={post.author.name}
+                        userId={post.author.id}
                         className="w-11 h-11 rounded-full border border-gray-200"
                       />
                     </div>

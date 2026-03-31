@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState, type AnchorHTMLAttributes, type HTMLAttributes } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import { apiPost } from '../utils/api'
 import ReactMarkdown from 'react-markdown'
@@ -268,9 +269,10 @@ export default function Agent() {
           </div>
           {user && (
             <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
-                alt={user.name}
+              <UserAvatar
+                avatar={user.avatar}
+                name={user.name}
+                userId={user.id}
                 className="w-8 h-8 rounded-full"
               />
               <span>{user.name}</span>
@@ -341,8 +343,11 @@ export default function Agent() {
                   )}
                 </div>
                 {isUser && (
-                  <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
+                  <UserAvatar
+                    avatar={user?.avatar}
+                    name={user?.name || 'Me'}
+                    userId={user?.id}
+                    fallbackSeed={user?.name || 'user'}
                     alt="Me"
                     className="w-9 h-9 rounded-full ml-3"
                   />

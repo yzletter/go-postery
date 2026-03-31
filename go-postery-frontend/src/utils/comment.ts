@@ -26,6 +26,10 @@ export function normalizeComment(raw: any): Comment {
         authorRaw?.name ??
         authorRaw?.Name ??
         '匿名用户',
+      avatar:
+        authorRaw?.avatar ??
+        authorRaw?.Avatar ??
+        undefined,
     },
     createdAt:
       raw?.createdAt ??

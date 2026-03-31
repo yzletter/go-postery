@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, FormEvent, ReactNode } from 'react'
+import { useState, useEffect, useCallback, FormEvent, ReactNode, type ChangeEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -14,17 +14,155 @@ import {
   Globe,
   Calendar,
 } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import { apiGet, apiPost } from '../utils/api'
 import { normalizeUserDetail } from '../utils/user'
 import type { ModifyUserProfileRequest, UserDetail } from '../types'
+
+const AVATAR_MAX_FILE_SIZE = 2 * 1024 * 1024
+const AVATAR_MIN_DIMENSION = 128
+const AVATAR_MAX_DIMENSION = 2048
+const AVATAR_ALLOWED_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
+
+type AvatarUploadPolicy = {
+  policy?: string
+  signature?: string
+  x_oss_signature_version?: string
+  x_oss_credential?: string
+  x_oss_date?: string
+  security_token?: string
+  host?: string
+  dir?: string
+  callback?: string
+}
+
+type AvatarUploadSignResponse = {
+  response?: string
+}
+
+const AVATAR_SIZE_LABEL = `${Math.round(AVATAR_MAX_FILE_SIZE / 1024 / 1024)}MB`
+
+const readAvatarDimensions = (file: File) =>
+  new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file)
+    const image = new window.Image()
+
+    image.onload = () => {
+      const dimensions = {
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      }
+      URL.revokeObjectURL(objectUrl)
+      resolve(dimensions)
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('无法读取图片尺寸，请重新选择文件'))
+    }
+
+    image.src = objectUrl
+  })
+
+const validateAvatarFile = async (file: File) => {
+  if (!AVATAR_ALLOWED_TYPES[file.type]) {
+    throw new Error('头像仅支持 JPG、PNG 或 WebP 格式')
+  }
+
+  if (file.size > AVATAR_MAX_FILE_SIZE) {
+    throw new Error(`头像大小不能超过 ${AVATAR_SIZE_LABEL}`)
+  }
+
+  const { width, height } = await readAvatarDimensions(file)
+  if (width < AVATAR_MIN_DIMENSION || height < AVATAR_MIN_DIMENSION) {
+    throw new Error(`头像尺寸至少需要 ${AVATAR_MIN_DIMENSION} x ${AVATAR_MIN_DIMENSION}`)
+  }
+
+  if (width > AVATAR_MAX_DIMENSION || height > AVATAR_MAX_DIMENSION) {
+    throw new Error(`头像尺寸不能超过 ${AVATAR_MAX_DIMENSION} x ${AVATAR_MAX_DIMENSION}`)
+  }
+}
+
+const parseAvatarUploadPolicy = (raw: unknown): Required<AvatarUploadPolicy> => {
+  if (typeof raw !== 'string' || !raw.trim()) {
+    throw new Error('头像上传签名无效')
+  }
+
+  const parsed = JSON.parse(raw) as AvatarUploadPolicy
+  const policy = parsed.policy?.trim()
+  const signature = parsed.signature?.trim()
+  const signatureVersion = parsed.x_oss_signature_version?.trim() || 'OSS4-HMAC-SHA256'
+  const credential = parsed.x_oss_credential?.trim()
+  const date = parsed.x_oss_date?.trim()
+  const securityToken = parsed.security_token?.trim()
+  const host = parsed.host?.trim()
+  const dir = parsed.dir?.trim()
+  const callback = parsed.callback?.trim()
+
+  if (!policy || !signature || !credential || !date || !securityToken || !host || !dir || !callback) {
+    throw new Error('头像上传签名字段不完整')
+  }
+
+  return {
+    policy,
+    signature,
+    x_oss_signature_version: signatureVersion,
+    x_oss_credential: credential,
+    x_oss_date: date,
+    security_token: securityToken,
+    host,
+    dir,
+    callback,
+  }
+}
+
+const buildAvatarObjectKey = (dir: string, file: File) => {
+  const extension = AVATAR_ALLOWED_TYPES[file.type] || 'png'
+  const suffix = Math.random().toString(36).slice(2, 8)
+  return `${dir}avatar-${Date.now()}-${suffix}.${extension}`
+}
+
+const uploadAvatarFile = async (file: File) => {
+  const { data } = await apiGet<AvatarUploadSignResponse>('/users/me/upload')
+  const policy = parseAvatarUploadPolicy(data?.response)
+  const objectKey = buildAvatarObjectKey(policy.dir, file)
+
+  const formData = new FormData()
+  formData.append('success_action_status', '200')
+  formData.append('policy', policy.policy)
+  formData.append('x-oss-signature', policy.signature)
+  formData.append('x-oss-signature-version', policy.x_oss_signature_version)
+  formData.append('x-oss-credential', policy.x_oss_credential)
+  formData.append('x-oss-date', policy.x_oss_date)
+  formData.append('key', objectKey)
+  formData.append('x-oss-security-token', policy.security_token)
+  formData.append('callback', policy.callback)
+  formData.append('file', file)
+
+  const response = await fetch(policy.host, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error('头像上传失败，请稍后重试')
+  }
+
+  return objectKey
+}
 
 export default function Settings() {
   const navigate = useNavigate()
   const { user, changePassword, updateUser } = useAuth()
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile')
   const [nickname, setNickname] = useState(user?.name || '')
-  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarObjectKey, setAvatarObjectKey] = useState('')
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('')
   const [bio, setBio] = useState('')
   const [gender, setGender] = useState<number>(0)
   const [birthday, setBirthday] = useState('')
@@ -34,6 +172,7 @@ export default function Settings() {
   const [profileError, setProfileError] = useState('')
   const [isProfileLoading, setIsProfileLoading] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -53,6 +192,23 @@ export default function Settings() {
     return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10)
   }, [])
 
+  const updateAvatarPreview = useCallback((nextUrl: string) => {
+    setAvatarPreviewUrl((prev) => {
+      if (prev && prev !== nextUrl) {
+        URL.revokeObjectURL(prev)
+      }
+      return nextUrl
+    })
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl)
+      }
+    }
+  }, [avatarPreviewUrl])
+
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return
 
@@ -64,15 +220,21 @@ export default function Settings() {
 
       if (detail) {
         setNickname(detail.name || user?.name || '')
-        setAvatarUrl(detail.avatar || '')
+        setAvatarObjectKey(detail.avatar || '')
+        updateAvatarPreview('')
         setBio(detail.bio || '')
         setGender(detail.gender ?? 0)
         setBirthday(normalizeBirthdayInput(detail.birthday))
         setLocation(detail.location || '')
         setCountry(detail.country || '')
+        updateUser({
+          name: detail.name || user?.name || '',
+          avatar: detail.avatar || undefined,
+        })
       } else {
         setNickname(user?.name || '')
-        setAvatarUrl('')
+        setAvatarObjectKey('')
+        updateAvatarPreview('')
         setBio('')
         setGender(0)
         setBirthday('')
@@ -85,7 +247,7 @@ export default function Settings() {
     } finally {
       setIsProfileLoading(false)
     }
-  }, [normalizeBirthdayInput, user?.id, user?.name])
+  }, [normalizeBirthdayInput, updateAvatarPreview, updateUser, user?.id, user?.name])
 
   useEffect(() => {
     void fetchProfile()
@@ -97,10 +259,32 @@ export default function Settings() {
   }
 
   const displayName = nickname.trim() || user?.name || '用户'
-  const avatarPreview =
-    (avatarUrl && avatarUrl.trim()) ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`
-  const disableProfileForm = isProfileLoading || isSavingProfile
+  const avatarPreview = avatarPreviewUrl || avatarObjectKey
+  const disableProfileForm = isProfileLoading || isSavingProfile || isUploadingAvatar
+
+  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    setProfileSuccess('')
+    setProfileError('')
+    setIsUploadingAvatar(true)
+
+    try {
+      await validateAvatarFile(file)
+      const objectKey = await uploadAvatarFile(file)
+      updateAvatarPreview(URL.createObjectURL(file))
+      setAvatarObjectKey(objectKey)
+      updateUser({ avatar: objectKey })
+      setProfileSuccess('头像上传成功')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '头像上传失败'
+      setProfileError(message)
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
 
   const handleProfileSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -115,7 +299,7 @@ export default function Settings() {
 
     const payload: ModifyUserProfileRequest = {
       nickname: normalizedNickname,
-      avatar: avatarUrl.trim(),
+      avatar: avatarObjectKey.trim(),
       bio: bio.trim(),
       gender,
       birthday,
@@ -127,7 +311,11 @@ export default function Settings() {
 
     try {
       await apiPost('/users/me', payload as Record<string, unknown>)
-      updateUser({ name: normalizedNickname })
+      updateAvatarPreview('')
+      updateUser({
+        name: normalizedNickname,
+        avatar: avatarObjectKey.trim() || undefined,
+      })
       setProfileSuccess('个人资料已更新')
       await fetchProfile()
     } catch (err) {
@@ -255,15 +443,18 @@ export default function Settings() {
                 )}
 
                 <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
-                  <img
-                    src={avatarPreview}
-                    alt={displayName}
+                  <UserAvatar
+                    avatar={avatarPreview}
+                    name={displayName}
+                    userId={user.id}
                     className="w-14 h-14 rounded-full border border-white shadow-sm"
                   />
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{displayName}</p>
                     <p className="text-xs text-gray-500">用户 ID：{user.id ?? '—'}</p>
-                    <p className="text-xs text-gray-500">头像预览基于填写的 URL</p>
+                    <p className="text-xs text-gray-500">
+                      {isUploadingAvatar ? '头像上传中...' : '头像展示会通过 presign 临时地址加载'}
+                    </p>
                   </div>
                 </div>
 
@@ -287,19 +478,25 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">头像 URL</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Image className="h-5 w-5 text-gray-400" />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">上传头像</label>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <Image className="h-4 w-4 text-gray-400" />
+                          <span>支持 JPG / PNG / WebP</span>
                         </div>
                         <input
-                          type="text"
-                          value={avatarUrl}
-                          onChange={(e) => setAvatarUrl(e.target.value)}
-                          className="input pl-10"
-                          placeholder="https://example.com/avatar.png"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleAvatarChange}
+                          className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-700 hover:file:bg-primary-50"
                           disabled={disableProfileForm}
                         />
+                        <p className="text-xs text-gray-500">
+                          大小不超过 {AVATAR_SIZE_LABEL}，尺寸需在 {AVATAR_MIN_DIMENSION} x {AVATAR_MIN_DIMENSION} 到 {AVATAR_MAX_DIMENSION} x {AVATAR_MAX_DIMENSION} 之间
+                        </p>
+                        {avatarObjectKey ? (
+                          <p className="text-[11px] text-gray-400 break-all">对象键：{avatarObjectKey}</p>
+                        ) : null}
                       </div>
                     </div>
 
@@ -390,7 +587,11 @@ export default function Settings() {
 
                   <div className="flex items-center justify-between pt-2">
                     <div className="text-xs text-gray-500">
-                      {isSavingProfile ? '正在保存到服务器...' : '保存后刷新个人主页即可查看变更'}
+                      {isUploadingAvatar
+                        ? '头像已单独上传，正在等待上传完成...'
+                        : isSavingProfile
+                          ? '正在保存到服务器...'
+                          : '保存后刷新个人主页即可查看变更'}
                     </div>
                     <button
                       type="submit"

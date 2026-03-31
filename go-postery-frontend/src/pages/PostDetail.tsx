@@ -12,6 +12,7 @@ import {
   type ImgHTMLAttributes,
 } from 'react'
 import type { Post, Comment } from '../types'
+import UserAvatar from '../components/UserAvatar'
 import { normalizePost } from '../utils/post'
 import { normalizeComment } from '../utils/comment'
 import { normalizeId } from '../utils/id'
@@ -644,9 +645,10 @@ export default function PostDetail() {
               state={{ username: post.author.name }}
               className="flex-shrink-0"
             >
-              <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.id}`}
-                alt={post.author.name}
+              <UserAvatar
+                avatar={post.author.avatar}
+                name={post.author.name}
+                userId={post.author.id}
                 className="w-10 h-10 rounded-full"
               />
             </Link>
@@ -792,9 +794,10 @@ export default function PostDetail() {
                       state={{ username: parent.author.name }}
                       className="flex-shrink-0"
                     >
-                      <img
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${parent.author.id}`}
-                        alt={parent.author.name}
+                      <UserAvatar
+                        avatar={parent.author.avatar}
+                        name={parent.author.name}
+                        userId={parent.author.id}
                         className="w-10 h-10 rounded-full"
                       />
                     </Link>
@@ -876,9 +879,10 @@ export default function PostDetail() {
                               state={{ username: reply.author.name }}
                               className="flex-shrink-0"
                             >
-                              <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.author.id}`}
-                                alt={reply.author.name}
+                              <UserAvatar
+                                avatar={reply.author.avatar}
+                                name={reply.author.name}
+                                userId={reply.author.id}
                                 className="w-9 h-9 rounded-full"
                               />
                             </Link>

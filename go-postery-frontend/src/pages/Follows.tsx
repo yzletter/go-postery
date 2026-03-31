@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Users, HeartHandshake, ShieldAlert } from 'lucide-react'
+import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import type { FollowRelation, FollowUser } from '../types'
 import { followUser, getFollowRelation, isFollowing, listFollowers, listFollowees, unfollowUser } from '../utils/follow'
@@ -263,9 +264,10 @@ export default function Follows() {
                       state={{ username: item.name }}
                       className="flex-shrink-0"
                     >
-                      <img
-                        src={item.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=follow-${item.id}`}
-                        alt={item.name}
+                      <UserAvatar
+                        avatar={item.avatar}
+                        name={item.name}
+                        userId={item.id}
                         className="w-10 h-10 rounded-full"
                       />
                     </Link>

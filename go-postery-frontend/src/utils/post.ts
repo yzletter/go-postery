@@ -57,6 +57,10 @@ export function normalizePost(raw: any): Post {
         authorRaw?.name ??
         authorRaw?.Name ??
         '匿名用户',
+      avatar:
+        authorRaw?.avatar ??
+        authorRaw?.Avatar ??
+        undefined,
     },
     createdAt:
       raw?.createdAt ??
