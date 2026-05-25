@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -21,7 +22,12 @@ func NewOrderCache(client redis.UniversalClient) OrderCache {
 
 // CreateTempOrder 创建临时订单
 func (cache *redisOrderCache) CreateTempOrder(ctx context.Context, uid, gid int64) error {
-	return cache.client.Set(ctx, lotteryOrderPrefix+strconv.FormatInt(uid, 10), strconv.FormatInt(gid, 10), 0).Err()
+	if ok, err := cache.client.SetNX(ctx, lotteryOrderPrefix+strconv.FormatInt(uid, 10), gid, 12*time.Minute).Result(); err != nil {
+		return err
+	} else if !ok {
+		return ErrCreateTempOrder // 或复用一个 cache 层冲突错误
+	}
+	return nil
 }
 
 // DeleteTempOrder 删除临时订单

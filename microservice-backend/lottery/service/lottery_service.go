@@ -56,27 +56,41 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, erro
 
 // Lottery 抽奖接口
 func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gift, error) {
+	// 获取临时订单
+	exists, err := svc.orderRepo.CheckTempOrder(ctx, userID)
+	if err != nil {
+		slog.Error("Check Temp Order Failed", "error", err)
+		return nil, errs.ErrInternal
+	} else if exists {
+		empty := &model.Gift{
+			ID:   2,
+			Name: "当前有未支付的订单",
+		}
+		return empty, nil
+	}
+
 	// 进行十次抽奖尝试
-	for try := 1; try <= 10; try++ {
-		// 获取缓存中的库存
+	const maxTry = 10
+
+	for try := 1; try <= maxTry; try++ {
+		// 获取商品库存
 		gifts, err := svc.giftRepo.GetCacheInventory(ctx)
 		if err != nil {
 			continue
 		}
 
-		ids := make([]int64, 0, len(gifts))
-		probs := make([]float64, 0, len(gifts))
-
-		// 只保留 > 0 的部分
+		// 获取商品 ID 和库存
+		giftIDs, giftStocks := make([]int64, 0, len(gifts)), make([]float64, 0, len(gifts))
 		for _, gift := range gifts {
+			// 只保留 > 0 的部分
 			if gift.Count > 0 {
-				ids = append(ids, gift.ID)
-				probs = append(probs, float64(gift.Count))
+				giftIDs = append(giftIDs, gift.ID)
+				giftStocks = append(giftStocks, float64(gift.Count))
 			}
 		}
 
 		// 所有奖品已抽完
-		if len(probs) == 0 {
+		if len(giftStocks) == 0 {
 			empty := &model.Gift{
 				ID:   0,
 				Name: "奖品已抽完",
@@ -85,14 +99,12 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 		}
 
 		// 进行抽奖
-		idx := lottery(probs)
-		if idx == -1 {
+		gid := lottery(giftIDs, giftStocks)
+		if gid == -1 {
 			continue
 		}
 
-		gid := ids[idx]
-
-		// 扣减缓存库存
+		// 扣减库存
 		if err := svc.giftRepo.ReduceCacheInventory(ctx, gid); err != nil {
 			// 扣减失败
 			continue
@@ -112,7 +124,15 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 		// 创建临时订单
 		if err := svc.orderRepo.CreateTempOrder(ctx, userID, gid); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-			continue
+			if !errors.Is(err, repository.ErrResourceConflict) {
+				slog.Error("Create Temp Order Failed", "error", err)
+				return nil, errs.ErrInternal
+			}
+			empty := &model.Gift{
+				ID:   2,
+				Name: "当前有未支付的订单",
+			}
+			return empty, nil
 		}
 
 		// 发送延迟消息
@@ -256,14 +276,14 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.Order, dela
 }
 
 // 抽奖算法
-func lottery(probs []float64) int {
-	if len(probs) == 0 {
+func lottery(ids []int64, stocks []float64) int64 {
+	if len(ids) == 0 || len(ids) != len(stocks) {
 		return -1
 	}
 
 	sum := 0.0
-	acc := make([]float64, len(probs))
-	for i, prob := range probs {
+	acc := make([]float64, len(stocks))
+	for i, prob := range stocks {
 		sum += prob
 		acc[i] = sum
 	}
@@ -271,8 +291,8 @@ func lottery(probs []float64) int {
 	// 获取 [0, sum) 的随机数
 	x := rand.Float64() * sum
 
-	// 大于等于 x 的第一个数的位置
-	l, r := 0, len(probs)-1
+	// 二分查找大于等于 x 的第一个数的位置
+	l, r := 0, len(stocks)-1
 	for l < r {
 		mid := (l + r) / 2
 		if acc[mid] < x {
@@ -282,5 +302,5 @@ func lottery(probs []float64) int {
 		}
 	}
 
-	return l
+	return ids[l]
 }
