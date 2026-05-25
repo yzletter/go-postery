@@ -48,6 +48,11 @@ type LotteryOrder = {
   created_at?: string
 }
 
+type LotteryDrawResult = {
+  gift: GiftItem
+  tempOrderId: string
+}
+
 const DECISION_SECONDS = 600
 const SPIN_TIMEOUT = 4400
 const MAX_HISTORY = 8
@@ -128,6 +133,19 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
   }
 }
 
+const normalizeDrawResult = (raw: any): LotteryDrawResult | null => {
+  if (!raw) return null
+  const gift = normalizeGift(raw.gift ?? raw.Gift ?? raw)
+  if (!gift) return null
+  const tempOrderId = normalizeId(
+    raw.temp_order_id ??
+    raw.tempOrderID ??
+    raw.TempOrderID ??
+    raw.tempOrderId
+  )
+  return { gift, tempOrderId }
+}
+
 const isLoseGift = (gift: GiftItem | null) => {
   if (!gift) return false
   const normalizedName = gift.name.trim()
@@ -164,6 +182,7 @@ export default function Lottery() {
   const [rotation, setRotation] = useState(0)
   const [isSpinning, setIsSpinning] = useState(false)
   const [result, setResult] = useState<GiftItem | null>(null)
+  const [tempOrderId, setTempOrderId] = useState('')
   const [decisionState, setDecisionState] = useState<'idle' | 'pending' | 'paid' | 'abandoned' | 'missed'>('idle')
   const [countdown, setCountdown] = useState(0)
   const [history, setHistory] = useState<HistoryItem[]>([])
@@ -184,6 +203,7 @@ export default function Lottery() {
   const decisionStateRef = useRef(decisionState)
   const isSubmittingRef = useRef<'pay' | 'giveup' | null>(null)
   const activeGiftRef = useRef<GiftItem | null>(null)
+  const activeTempOrderIdRef = useRef('')
 
   useEffect(() => {
     decisionStateRef.current = decisionState
@@ -196,6 +216,10 @@ export default function Lottery() {
   useEffect(() => {
     activeGiftRef.current = result
   }, [result])
+
+  useEffect(() => {
+    activeTempOrderIdRef.current = tempOrderId
+  }, [tempOrderId])
 
   const fetchGifts = useCallback(async () => {
     setIsGiftsLoading(true)
@@ -331,12 +355,19 @@ export default function Lottery() {
   const submitGiveup = useCallback(async (mode: 'manual' | 'timeout') => {
     if (isSubmittingRef.current) return
     const gift = activeGiftRef.current
+    const activeTempOrderId = activeTempOrderIdRef.current
     if (!gift || isLoseGift(gift)) return
     if (decisionStateRef.current !== 'pending') return
     if (!userId) {
       if (mode === 'manual') {
         alert('请先登录后再操作')
         navigate('/login')
+      }
+      return
+    }
+    if (!activeTempOrderId) {
+      if (mode === 'manual') {
+        setActionError('临时订单信息缺失，请重新抽奖')
       }
       return
     }
@@ -350,12 +381,18 @@ export default function Lottery() {
     }
 
     try {
-      await apiPost('/lottery/giveup', { user_id: userId, gift_id: gift.id })
+      await apiPost('/lottery/giveup', {
+        user_id: userId,
+        gift_id: gift.id,
+        temp_order_id: activeTempOrderId,
+      })
       if (mode === 'manual') {
         setDecisionState('abandoned')
         resetDecisionTimer()
         updateHistoryStatus('已主动放弃')
       }
+      setTempOrderId('')
+      activeTempOrderIdRef.current = ''
     } catch (error) {
       console.error('放弃支付失败:', error)
       const message = error instanceof Error ? error.message : '放弃支付失败'
@@ -420,17 +457,19 @@ export default function Lottery() {
     setIsSpinning(true)
     setDecisionState('idle')
     setResult(null)
+    setTempOrderId('')
+    activeTempOrderIdRef.current = ''
     setDrawError(null)
     setActionError(null)
     resetDecisionTimer()
 
     try {
-      const { data } = await apiGet<GiftItem>('/lottery/lucky')
-      const rawGift = (data as any)?.gift ?? data
-      const gift = normalizeGift(rawGift)
-      if (!gift) {
+      const { data } = await apiGet<unknown>('/lottery/lucky')
+      const drawResult = normalizeDrawResult(data)
+      if (!drawResult) {
         throw new Error('抽奖失败，请稍后重试')
       }
+      const { gift } = drawResult
 
       const targetIndex = findWheelIndex(gift)
       const extraTurns = 6 + Math.floor(Math.random() * 3)
@@ -445,6 +484,8 @@ export default function Lottery() {
 
       spinTimerRef.current = window.setTimeout(() => {
         setResult(gift)
+        setTempOrderId(drawResult.tempOrderId)
+        activeTempOrderIdRef.current = drawResult.tempOrderId
         setIsSpinning(false)
         const recordId = Date.now()
         activeRecordId.current = recordId
@@ -470,6 +511,10 @@ export default function Lottery() {
   const handlePay = async () => {
     if (decisionState !== 'pending' || isSubmitting) return
     if (!result || isLoseGift(result)) return
+    if (!tempOrderId) {
+      setActionError('临时订单信息缺失，请重新抽奖')
+      return
+    }
     if (!userId) {
       alert('请先登录后再操作')
       navigate('/login')
@@ -480,9 +525,15 @@ export default function Lottery() {
     setActionError(null)
 
     try {
-      await apiPost('/lottery/pay', { user_id: userId, gift_id: result.id })
+      await apiPost('/lottery/pay', {
+        user_id: userId,
+        gift_id: result.id,
+        temp_order_id: tempOrderId,
+      })
       setDecisionState('paid')
       resetDecisionTimer()
+      setTempOrderId('')
+      activeTempOrderIdRef.current = ''
       updateHistoryStatus('已支付领取')
       void fetchLatestOrder()
     } catch (error) {
@@ -497,6 +548,8 @@ export default function Lottery() {
     resetDecisionTimer()
     setDecisionState('idle')
     setResult(null)
+    setTempOrderId('')
+    activeTempOrderIdRef.current = ''
     setDrawError(null)
     setActionError(null)
     activeRecordId.current = null
