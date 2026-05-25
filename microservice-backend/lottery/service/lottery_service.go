@@ -34,6 +34,12 @@ func NewLotteryService(orderRepo repository.OrderRepository, giftRepo repository
 	}
 }
 
+// InitCacheInventory 初始化库存
+func (svc *lotteryService) InitCacheInventory(ctx context.Context) {
+	svc.giftRepo.InitCacheInventory(ctx)
+}
+
+// GetAllGifts 获取所有礼物
 func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, error) {
 	gifts, err := svc.giftRepo.GetAllGifts(ctx)
 	if err != nil {
@@ -48,7 +54,9 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, erro
 	return gifts, nil
 }
 
+// Lottery 抽奖接口
 func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gift, error) {
+	// 进行十次抽奖尝试
 	for try := 1; try <= 10; try++ {
 		// 获取缓存中的库存
 		gifts, err := svc.giftRepo.GetCacheInventory(ctx)
@@ -108,8 +116,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 		}
 
 		// 发送延迟消息
-		err = svc.produce(ctx, &model.Order{UserID: userID, GiftID: gid}, conf.RocketLotteryPayDelay)
-		if err != nil {
+		if err = svc.produce(ctx, &model.Order{UserID: userID, GiftID: gid}, conf.RocketLotteryPayDelay); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 			_ = svc.orderRepo.DeleteTempOrder(ctx, userID)
 			continue
@@ -127,6 +134,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 	return empty, nil
 }
 
+// Pay 支付接口
 func (svc *lotteryService) Pay(ctx context.Context, userID int64, giftID int64) error {
 	// 获取临时订单
 	tempID, err := svc.orderRepo.GetTempOrder(ctx, userID)
@@ -158,6 +166,7 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, giftID int64) 
 	return nil
 }
 
+// GiveUp 放弃支付
 func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, giftID int64) error {
 	// 获取临时订单
 	tempID, err := svc.orderRepo.GetTempOrder(ctx, userID)
@@ -171,6 +180,7 @@ func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, giftID int6
 	return nil
 }
 
+// Result 支付结果
 func (svc *lotteryService) Result(ctx context.Context, userID int64) (*model.Order, *model.Gift, error) {
 	// 获取订单
 	order, err := svc.orderRepo.GetOrder(ctx, userID)
@@ -222,11 +232,6 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 			}
 		}
 	}
-}
-
-// InitCacheInventory 初始化库存
-func (svc *lotteryService) InitCacheInventory(ctx context.Context) {
-	svc.giftRepo.InitCacheInventory(ctx)
 }
 
 func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	_ "embed"
 	"log/slog"
 	"strconv"
 
@@ -12,6 +13,9 @@ import (
 const (
 	lotteryGiftPrefix = "lottery:gift:"
 )
+
+//go:embed lua/decrease_inventory_script.lua
+var luaDecrInventoryScript string
 
 type redisGiftCache struct {
 	client redis.UniversalClient
@@ -65,14 +69,15 @@ func (cache *redisGiftCache) GetAllInventory(ctx context.Context) ([]*model.Gift
 }
 
 func (cache *redisGiftCache) ReduceInventory(ctx context.Context, gid int64) error {
-	count, err := cache.client.Decr(ctx, lotteryGiftPrefix+strconv.FormatInt(gid, 10)).Result()
-	if err != nil {
-		return err
-	} else if count < 0 {
-		return ErrReduceInventory
+	key := lotteryGiftPrefix + strconv.FormatInt(gid, 10)
+	// 执行 Lua 脚本扣减库存
+	if result, err := cache.client.Eval(ctx, luaDecrInventoryScript, []string{key}).Int(); err != nil {
+		return err // Redis 错误
+	} else if result != 1 {
+		return ErrReduceInventory // 库存不足
 	}
-	return nil
 
+	return nil
 }
 
 func (cache *redisGiftCache) IncreaseInventory(ctx context.Context, gid int64) error {
