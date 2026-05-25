@@ -52,7 +52,7 @@ func (client *lotteryClient) GetAllGifts(ctx context.Context, req *lottery_grpc.
 	return client.client.GetAllGifts(ctx, req)
 }
 
-func (client *lotteryClient) Lottery(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.Gift, error) {
+func (client *lotteryClient) Lottery(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.LotteryResponse, error) {
 	// 添加超时控制
 	ctx, cancel := context.WithTimeout(ctx, 8000*time.Millisecond)
 	defer cancel()

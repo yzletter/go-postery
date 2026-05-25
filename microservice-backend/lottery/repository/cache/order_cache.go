@@ -2,15 +2,21 @@ package cache
 
 import (
 	"context"
+	_ "embed"
+	"encoding/json"
 	"strconv"
-	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
 )
 
 const (
-	lotteryOrderPrefix = "lottery:order:"
+	lotteryTempOrderPrefix = "lottery:temp_order:"
+	tempOrderTTL           = 0
 )
+
+//go:embed lua/delete_temp_order_script.lua
+var luaDeleteTempOrderScript string
 
 type redisOrderCache struct {
 	client redis.UniversalClient
@@ -21,21 +27,51 @@ func NewOrderCache(client redis.UniversalClient) OrderCache {
 }
 
 // CreateTempOrder 创建临时订单
-func (cache *redisOrderCache) CreateTempOrder(ctx context.Context, uid, gid int64) error {
-	if ok, err := cache.client.SetNX(ctx, lotteryOrderPrefix+strconv.FormatInt(uid, 10), gid, 12*time.Minute).Result(); err != nil {
+func (cache *redisOrderCache) CreateTempOrder(ctx context.Context, order *model.TempOrder) error {
+	value, err := json.Marshal(order)
+	if err != nil {
+		return err
+	}
+
+	if ok, err := cache.client.SetNX(ctx, tempOrderKey(order.UserID), value, tempOrderTTL).Result(); err != nil {
 		return err
 	} else if !ok {
-		return ErrCreateTempOrder // 或复用一个 cache 层冲突错误
+		return ErrCreateTempOrder
 	}
 	return nil
 }
 
 // DeleteTempOrder 删除临时订单
-func (cache *redisOrderCache) DeleteTempOrder(ctx context.Context, uid int64) error {
-	return cache.client.Del(ctx, lotteryOrderPrefix+strconv.FormatInt(uid, 10)).Err()
+func (cache *redisOrderCache) DeleteTempOrder(ctx context.Context, uid, tempOrderID int64) error {
+	result, err := cache.client.Eval(
+		ctx,
+		luaDeleteTempOrderScript,
+		[]string{tempOrderKey(uid)},
+		strconv.FormatInt(tempOrderID, 10),
+	).Int()
+	if err != nil {
+		return err
+	}
+	if result != 1 {
+		return ErrTempOrderMissing
+	}
+	return nil
 }
 
-// GetTempOrderID 获取临时订单
-func (cache *redisOrderCache) GetTempOrderID(ctx context.Context, uid int64) (int64, error) {
-	return cache.client.Get(ctx, lotteryOrderPrefix+strconv.FormatInt(uid, 10)).Int64()
+// GetTempOrder 获取临时订单
+func (cache *redisOrderCache) GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error) {
+	value, err := cache.client.Get(ctx, tempOrderKey(uid)).Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	var order model.TempOrder
+	if err = json.Unmarshal(value, &order); err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+func tempOrderKey(uid int64) string {
+	return lotteryTempOrderPrefix + strconv.FormatInt(uid, 10)
 }

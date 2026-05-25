@@ -14,6 +14,7 @@ message UserID {
 message LotteryCommonRequest {
   int64 UserID = 1;
   int64 GiftID = 2;
+  int64 TempOrderID = 3;
 }
 
 message Order {
@@ -36,12 +37,17 @@ message Gifts {
   repeated Gift Gifts = 1;
 }
 
+message LotteryResponse {
+  Gift Gift = 1;
+  int64 TempOrderID = 2;
+}
+
 
 service LotteryService {
   // 获取索引奖品
   rpc GetAllGifts(EmptyRequest) returns (Gifts);
   // 进行抽奖
-  rpc Lottery(UserID) returns (Gift);
+  rpc Lottery(UserID) returns (LotteryResponse);
   // 支付
   rpc Pay(LotteryCommonRequest) returns (EmptyResponse);
   // 放弃

@@ -15,12 +15,30 @@ type GiftDTO struct {
 }
 
 func ToGiftDTO(gift *lottery_grpc.Gift) GiftDTO {
+	if gift == nil {
+		return GiftDTO{}
+	}
 	return GiftDTO{
 		ID:          gift.ID,
 		Name:        gift.Name,
 		Avatar:      gift.Avatar,
 		Description: gift.Description,
 		Prize:       int(gift.Prize),
+	}
+}
+
+type LotteryResultDTO struct {
+	GiftDTO
+	TempOrderID int64 `json:"temp_order_id,string,omitempty"`
+}
+
+func ToLotteryResultDTO(result *lottery_grpc.LotteryResponse) LotteryResultDTO {
+	if result == nil {
+		return LotteryResultDTO{}
+	}
+	return LotteryResultDTO{
+		GiftDTO:     ToGiftDTO(result.Gift),
+		TempOrderID: result.TempOrderID,
 	}
 }
 

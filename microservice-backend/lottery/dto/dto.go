@@ -9,12 +9,25 @@ import (
 
 // ToGift model 转 lottery_grpc.Gift
 func ToGift(gift *model2.Gift) *lottery_grpc.Gift {
+	if gift == nil {
+		return &lottery_grpc.Gift{}
+	}
 	return &lottery_grpc.Gift{
 		ID:          gift.ID,
 		Name:        gift.Name,
 		Avatar:      gift.Avatar,
 		Description: gift.Description,
 		Prize:       int64(gift.Prize),
+	}
+}
+
+func ToLotteryResponse(result *model2.LotteryResult) *lottery_grpc.LotteryResponse {
+	if result == nil {
+		return &lottery_grpc.LotteryResponse{}
+	}
+	return &lottery_grpc.LotteryResponse{
+		Gift:        ToGift(result.Gift),
+		TempOrderID: result.TempOrderID,
 	}
 }
 

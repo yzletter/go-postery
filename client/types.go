@@ -48,7 +48,7 @@ type AuthClient interface {
 
 type LotteryClient interface {
 	GetAllGifts(ctx context.Context, req *lottery_grpc.EmptyRequest) (*lottery_grpc.Gifts, error)
-	Lottery(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.Gift, error)
+	Lottery(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.LotteryResponse, error)
 	Pay(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error)
 	GiveUp(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error)
 	Result(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.Order, error)

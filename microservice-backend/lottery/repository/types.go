@@ -7,10 +7,9 @@ import (
 )
 
 type OrderRepository interface {
-	CreateTempOrder(ctx context.Context, uid, gid int64) error
-	DeleteTempOrder(ctx context.Context, uid int64) error
-	GetTempOrder(ctx context.Context, uid int64) (int64, error)
-	CheckTempOrder(ctx context.Context, uid int64) (bool, error)
+	CreateTempOrder(ctx context.Context, order *model2.TempOrder) error
+	DeleteTempOrder(ctx context.Context, uid, tempOrderID int64) error
+	GetTempOrder(ctx context.Context, uid int64) (*model2.TempOrder, error)
 	CreateOrder(ctx context.Context, order *model2.Order) error
 	GetOrder(ctx context.Context, uid int64) (*model2.Order, error)
 }

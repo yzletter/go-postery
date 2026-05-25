@@ -7,9 +7,9 @@ import (
 )
 
 type OrderCache interface {
-	CreateTempOrder(ctx context.Context, uid, gid int64) error
-	DeleteTempOrder(ctx context.Context, uid int64) error
-	GetTempOrderID(ctx context.Context, uid int64) (int64, error)
+	CreateTempOrder(ctx context.Context, order *model.TempOrder) error
+	DeleteTempOrder(ctx context.Context, uid, tempOrderID int64) error
+	GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error)
 }
 
 type GiftCache interface {

@@ -33,7 +33,7 @@ type LotteryServiceClient interface {
 	// 获取索引奖品
 	GetAllGifts(ctx context.Context, in *EmptyRequest, opts ...grpc.CallOption) (*Gifts, error)
 	// 进行抽奖
-	Lottery(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Gift, error)
+	Lottery(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*LotteryResponse, error)
 	// 支付
 	Pay(ctx context.Context, in *LotteryCommonRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// 放弃
@@ -60,9 +60,9 @@ func (c *lotteryServiceClient) GetAllGifts(ctx context.Context, in *EmptyRequest
 	return out, nil
 }
 
-func (c *lotteryServiceClient) Lottery(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Gift, error) {
+func (c *lotteryServiceClient) Lottery(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*LotteryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Gift)
+	out := new(LotteryResponse)
 	err := c.cc.Invoke(ctx, LotteryService_Lottery_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ type LotteryServiceServer interface {
 	// 获取索引奖品
 	GetAllGifts(context.Context, *EmptyRequest) (*Gifts, error)
 	// 进行抽奖
-	Lottery(context.Context, *UserID) (*Gift, error)
+	Lottery(context.Context, *UserID) (*LotteryResponse, error)
 	// 支付
 	Pay(context.Context, *LotteryCommonRequest) (*EmptyResponse, error)
 	// 放弃
@@ -127,7 +127,7 @@ type UnimplementedLotteryServiceServer struct{}
 func (UnimplementedLotteryServiceServer) GetAllGifts(context.Context, *EmptyRequest) (*Gifts, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAllGifts not implemented")
 }
-func (UnimplementedLotteryServiceServer) Lottery(context.Context, *UserID) (*Gift, error) {
+func (UnimplementedLotteryServiceServer) Lottery(context.Context, *UserID) (*LotteryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Lottery not implemented")
 }
 func (UnimplementedLotteryServiceServer) Pay(context.Context, *LotteryCommonRequest) (*EmptyResponse, error) {

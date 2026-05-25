@@ -35,19 +35,19 @@ func (server *LotteryServiceServer) GetAllGifts(ctx context.Context, request *lo
 	return &lottery_grpc.Gifts{Gifts: respGifts}, nil
 }
 
-func (server *LotteryServiceServer) Lottery(ctx context.Context, id *lottery_grpc.UserID) (*lottery_grpc.Gift, error) {
+func (server *LotteryServiceServer) Lottery(ctx context.Context, id *lottery_grpc.UserID) (*lottery_grpc.LotteryResponse, error) {
 	// 调用 Service
-	gift, err := server.svc.Lottery(ctx, id.UserID)
+	result, err := server.svc.Lottery(ctx, id.UserID)
 	if err != nil {
-		return &lottery_grpc.Gift{}, err
+		return &lottery_grpc.LotteryResponse{}, err
 	}
 	// 返回 Response
-	return dto.ToGift(gift), nil
+	return dto.ToLotteryResponse(result), nil
 }
 
 func (server *LotteryServiceServer) Pay(ctx context.Context, request *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
 	// 调用 Service
-	if err := server.svc.Pay(ctx, request.UserID, request.GiftID); err != nil {
+	if err := server.svc.Pay(ctx, request.UserID, request.TempOrderID, request.GiftID); err != nil {
 		return &lottery_grpc.EmptyResponse{}, err
 	}
 	// 返回 Response
@@ -56,7 +56,7 @@ func (server *LotteryServiceServer) Pay(ctx context.Context, request *lottery_gr
 
 func (server *LotteryServiceServer) GiveUp(ctx context.Context, request *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
 	// 调用 Service
-	if err := server.svc.GiveUp(ctx, request.UserID, request.GiftID); err != nil {
+	if err := server.svc.GiveUp(ctx, request.UserID, request.TempOrderID, request.GiftID); err != nil {
 		return &lottery_grpc.EmptyResponse{}, err
 	}
 	// 返回 Response

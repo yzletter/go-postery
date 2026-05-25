@@ -51,13 +51,13 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 		return
 	}
 
-	gift, err := hdl.lotterySvc.Lottery(ctx, &lottery_grpc.UserID{UserID: uid})
+	result, err := hdl.lotterySvc.Lottery(ctx, &lottery_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), lottery.GiftDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), lottery.LotteryResultDTO{})
 		return
 	}
 
-	response.Success(ctx, "抽奖成功", lottery.ToGiftDTO(gift))
+	response.Success(ctx, "抽奖成功", lottery.ToLotteryResultDTO(result))
 }
 
 func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
@@ -79,7 +79,11 @@ func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
 		return
 	}
 
-	if _, err := hdl.lotterySvc.GiveUp(ctx, &lottery_grpc.LotteryCommonRequest{UserID: giveReq.UserID, GiftID: giveReq.GiftID}); err != nil {
+	if _, err := hdl.lotterySvc.GiveUp(ctx, &lottery_grpc.LotteryCommonRequest{
+		UserID:      giveReq.UserID,
+		GiftID:      giveReq.GiftID,
+		TempOrderID: giveReq.TempOrderID,
+	}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrNotLottery,
 		}, errno.ErrServerInternal), gin.H{})
@@ -112,7 +116,11 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 	}
 
 	// 进行支付
-	if _, err := hdl.lotterySvc.Pay(ctx, &lottery_grpc.LotteryCommonRequest{UserID: payReq.UserID, GiftID: payReq.GiftID}); err != nil {
+	if _, err := hdl.lotterySvc.Pay(ctx, &lottery_grpc.LotteryCommonRequest{
+		UserID:      payReq.UserID,
+		GiftID:      payReq.GiftID,
+		TempOrderID: payReq.TempOrderID,
+	}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrNotLottery,
 		}, errno.ErrServerInternal), gin.H{})

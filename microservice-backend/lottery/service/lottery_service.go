@@ -55,18 +55,14 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, erro
 }
 
 // Lottery 抽奖接口
-func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gift, error) {
+func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.LotteryResult, error) {
 	// 获取临时订单
-	exists, err := svc.orderRepo.CheckTempOrder(ctx, userID)
+	result, exists, err := svc.getTempOrderResult(ctx, userID)
 	if err != nil {
 		slog.Error("Check Temp Order Failed", "error", err)
 		return nil, errs.ErrInternal
 	} else if exists {
-		empty := &model.Gift{
-			ID:   2,
-			Name: "当前有未支付的订单",
-		}
-		return empty, nil
+		return result, nil
 	}
 
 	// 进行十次抽奖尝试
@@ -95,7 +91,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 				ID:   0,
 				Name: "奖品已抽完",
 			}
-			return empty, nil
+			return &model.LotteryResult{Gift: empty}, nil
 		}
 
 		// 进行抽奖
@@ -118,32 +114,43 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 			continue
 		} else if gift.Name == "谢谢参与" {
 			// 不用创建临时订单
-			return gift, nil
+			return &model.LotteryResult{Gift: gift}, nil
+		}
+
+		tempOrder := &model.TempOrder{
+			ID:     svc.idGen.NextID(),
+			UserID: userID,
+			GiftID: gid,
 		}
 
 		// 创建临时订单
-		if err := svc.orderRepo.CreateTempOrder(ctx, userID, gid); err != nil {
+		if err := svc.orderRepo.CreateTempOrder(ctx, tempOrder); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 			if !errors.Is(err, repository.ErrResourceConflict) {
 				slog.Error("Create Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
 			}
-			empty := &model.Gift{
-				ID:   2,
-				Name: "当前有未支付的订单",
+			if result, exists, err = svc.getTempOrderResult(ctx, userID); err != nil {
+				slog.Error("Get Temp Order Failed", "error", err)
+				return nil, errs.ErrInternal
+			} else if exists {
+				return result, nil
 			}
-			return empty, nil
+			continue
 		}
 
 		// 发送延迟消息
-		if err = svc.produce(ctx, &model.Order{UserID: userID, GiftID: gid}, conf.RocketLotteryPayDelay); err != nil {
+		if err = svc.produce(ctx, tempOrder, conf.RocketLotteryPayDelay); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-			_ = svc.orderRepo.DeleteTempOrder(ctx, userID)
+			_ = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrder.ID)
 			continue
 		}
 
 		// 返回数据
-		return gift, nil
+		return &model.LotteryResult{
+			Gift:        gift,
+			TempOrderID: tempOrder.ID,
+		}, nil
 	}
 
 	empty := &model.Gift{
@@ -151,16 +158,47 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Gi
 		Name: "谢谢参与",
 	}
 	slog.Error("Lottery Nothing")
-	return empty, nil
+	return &model.LotteryResult{Gift: empty}, nil
+}
+
+func (svc *lotteryService) getTempOrderResult(ctx context.Context, userID int64) (*model.LotteryResult, bool, error) {
+	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+
+	gift, err := svc.giftRepo.GetByID(ctx, tempOrder.GiftID)
+	if err != nil {
+		gift = &model.Gift{
+			ID:   tempOrder.GiftID,
+			Name: "当前有未支付的订单",
+		}
+	}
+	return &model.LotteryResult{
+		Gift:        gift,
+		TempOrderID: tempOrder.ID,
+	}, true, nil
 }
 
 // Pay 支付接口
-func (svc *lotteryService) Pay(ctx context.Context, userID int64, giftID int64) error {
+func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID int64, giftID int64) error {
 	// 获取临时订单
-	tempID, err := svc.orderRepo.GetTempOrder(ctx, userID)
-	if err != nil || tempID != giftID {
+	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
+	if err != nil || tempOrder.ID != tempOrderID || tempOrder.GiftID != giftID {
 		slog.Error("No Available Order")
 		return errs.ErrNotFound
+	}
+
+	if err = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrderID); err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("No Available Order")
+			return errs.ErrNotFound
+		}
+		slog.Error("Delete Temp Order Failed", "error", err)
+		return errs.ErrInternal
 	}
 
 	// 正式订单落库
@@ -181,21 +219,27 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, giftID int64) 
 		return errs.ErrInternal
 	}
 
-	// 删除临时订单
-	_ = svc.orderRepo.DeleteTempOrder(ctx, userID)
 	return nil
 }
 
 // GiveUp 放弃支付
-func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, giftID int64) error {
+func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, tempOrderID int64, giftID int64) error {
 	// 获取临时订单
-	tempID, err := svc.orderRepo.GetTempOrder(ctx, userID)
-	if err != nil || tempID != giftID {
+	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
+	if err != nil || tempOrder.ID != tempOrderID || tempOrder.GiftID != giftID {
 		slog.Error("No Available Order")
 		return errs.ErrNotFound
 	}
 
-	_ = svc.orderRepo.DeleteTempOrder(ctx, userID)
+	if err = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrderID); err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("No Available Order")
+			return errs.ErrNotFound
+		}
+		slog.Error("Delete Temp Order Failed", "error", err)
+		return errs.ErrInternal
+	}
+
 	_ = svc.giftRepo.IncreaseCacheInventory(ctx, giftID)
 	return nil
 }
@@ -237,16 +281,15 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 			}
 
 			for _, message := range messages {
-				var order model.Order
-				err := sonic.Unmarshal(message.GetBody(), &order)
+				var tempOrder model.TempOrder
+				err := sonic.Unmarshal(message.GetBody(), &tempOrder)
 				if err != nil {
 					continue
 				}
-				gid, _ := svc.orderRepo.GetTempOrder(ctx, order.UserID)
-				if gid == order.GiftID {
-					// 支付超时，删除临时订单，增加库存
-					_ = svc.orderRepo.DeleteTempOrder(ctx, order.UserID)
-					_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+				if err = svc.orderRepo.DeleteTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err == nil {
+					_ = svc.giftRepo.IncreaseCacheInventory(ctx, tempOrder.GiftID)
+				} else if !errors.Is(err, repository.ErrRecordNotFound) {
+					slog.Error("Delete Temp Order Failed", "error", err)
 				}
 				consumer.Ack(ctx, message)
 			}
@@ -254,7 +297,7 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 	}
 }
 
-func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {
+func (svc *lotteryService) produce(ctx context.Context, order *model.TempOrder, delay int) error {
 	// 序列化 Order
 	body, err := sonic.Marshal(order)
 	if err != nil {

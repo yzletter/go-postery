@@ -22,8 +22,8 @@ func NewOrderRepository(dao dao.OrderDAO, cache cache.OrderCache) OrderRepositor
 	}
 }
 
-func (repo *orderRepository) CreateTempOrder(ctx context.Context, uid, gid int64) error {
-	if err := repo.cache.CreateTempOrder(ctx, uid, gid); err != nil {
+func (repo *orderRepository) CreateTempOrder(ctx context.Context, order *model.TempOrder) error {
+	if err := repo.cache.CreateTempOrder(ctx, order); err != nil {
 		if errors.Is(err, cache.ErrCreateTempOrder) {
 			return ErrResourceConflict
 		}
@@ -32,31 +32,25 @@ func (repo *orderRepository) CreateTempOrder(ctx context.Context, uid, gid int64
 	return nil
 }
 
-func (repo *orderRepository) DeleteTempOrder(ctx context.Context, uid int64) error {
-	err := repo.cache.DeleteTempOrder(ctx, uid)
-	if err != nil {
+func (repo *orderRepository) DeleteTempOrder(ctx context.Context, uid, tempOrderID int64) error {
+	if err := repo.cache.DeleteTempOrder(ctx, uid, tempOrderID); err != nil {
+		if errors.Is(err, cache.ErrTempOrderMissing) {
+			return ErrRecordNotFound
+		}
 		return ErrServerInternal
 	}
-
 	return nil
 }
 
-func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (int64, error) {
-	id, err := repo.cache.GetTempOrderID(ctx, uid)
+func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error) {
+	order, err := repo.cache.GetTempOrder(ctx, uid)
 	if err != nil {
-		return 0, ErrRecordNotFound
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, ErrServerInternal
 	}
-	return id, nil
-}
-
-func (repo *orderRepository) CheckTempOrder(ctx context.Context, uid int64) (bool, error) {
-	_, err := repo.cache.GetTempOrderID(ctx, uid)
-	if err == nil {
-		return true, nil
-	} else if errors.Is(err, redis.Nil) {
-		return false, nil
-	}
-	return false, ErrServerInternal
+	return order, nil
 }
 
 func (repo *orderRepository) CreateOrder(ctx context.Context, order *model.Order) error {

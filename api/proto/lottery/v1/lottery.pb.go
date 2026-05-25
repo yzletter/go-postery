@@ -141,6 +141,7 @@ type LotteryCommonRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
 	GiftID        int64                  `protobuf:"varint,2,opt,name=GiftID,proto3" json:"GiftID,omitempty"`
+	TempOrderID   int64                  `protobuf:"varint,3,opt,name=TempOrderID,proto3" json:"TempOrderID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -185,6 +186,13 @@ func (x *LotteryCommonRequest) GetUserID() int64 {
 func (x *LotteryCommonRequest) GetGiftID() int64 {
 	if x != nil {
 		return x.GiftID
+	}
+	return 0
+}
+
+func (x *LotteryCommonRequest) GetTempOrderID() int64 {
+	if x != nil {
+		return x.TempOrderID
 	}
 	return 0
 }
@@ -385,6 +393,58 @@ func (x *Gifts) GetGifts() []*Gift {
 	return nil
 }
 
+type LotteryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Gift          *Gift                  `protobuf:"bytes,1,opt,name=Gift,proto3" json:"Gift,omitempty"`
+	TempOrderID   int64                  `protobuf:"varint,2,opt,name=TempOrderID,proto3" json:"TempOrderID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LotteryResponse) Reset() {
+	*x = LotteryResponse{}
+	mi := &file_api_proto_lottery_v1_lottery_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LotteryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LotteryResponse) ProtoMessage() {}
+
+func (x *LotteryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_lottery_v1_lottery_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LotteryResponse.ProtoReflect.Descriptor instead.
+func (*LotteryResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_lottery_v1_lottery_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LotteryResponse) GetGift() *Gift {
+	if x != nil {
+		return x.Gift
+	}
+	return nil
+}
+
+func (x *LotteryResponse) GetTempOrderID() int64 {
+	if x != nil {
+		return x.TempOrderID
+	}
+	return 0
+}
+
 var File_api_proto_lottery_v1_lottery_proto protoreflect.FileDescriptor
 
 const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
@@ -394,10 +454,11 @@ const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
 	"\fEmptyRequest\"\x0f\n" +
 	"\rEmptyResponse\" \n" +
 	"\x06UserID\x12\x16\n" +
-	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\"F\n" +
+	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\"h\n" +
 	"\x14LotteryCommonRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x16\n" +
-	"\x06GiftID\x18\x02 \x01(\x03R\x06GiftID\"\x93\x01\n" +
+	"\x06GiftID\x18\x02 \x01(\x03R\x06GiftID\x12 \n" +
+	"\vTempOrderID\x18\x03 \x01(\x03R\vTempOrderID\"\x93\x01\n" +
 	"\x05Order\x12\x18\n" +
 	"\aOrderID\x18\x01 \x01(\x03R\aOrderID\x12\x16\n" +
 	"\x06UserID\x18\x02 \x01(\x03R\x06UserID\x12$\n" +
@@ -411,10 +472,13 @@ const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
 	"\vDescription\x18\x04 \x01(\tR\vDescription\x12\x14\n" +
 	"\x05Prize\x18\x05 \x01(\x03R\x05Prize\"/\n" +
 	"\x05Gifts\x12&\n" +
-	"\x05Gifts\x18\x01 \x03(\v2\x10.lottery.v1.GiftR\x05Gifts2\xb9\x02\n" +
+	"\x05Gifts\x18\x01 \x03(\v2\x10.lottery.v1.GiftR\x05Gifts\"Y\n" +
+	"\x0fLotteryResponse\x12$\n" +
+	"\x04Gift\x18\x01 \x01(\v2\x10.lottery.v1.GiftR\x04Gift\x12 \n" +
+	"\vTempOrderID\x18\x02 \x01(\x03R\vTempOrderID2\xc4\x02\n" +
 	"\x0eLotteryService\x12:\n" +
-	"\vGetAllGifts\x12\x18.lottery.v1.EmptyRequest\x1a\x11.lottery.v1.Gifts\x12/\n" +
-	"\aLottery\x12\x12.lottery.v1.UserID\x1a\x10.lottery.v1.Gift\x12B\n" +
+	"\vGetAllGifts\x12\x18.lottery.v1.EmptyRequest\x1a\x11.lottery.v1.Gifts\x12:\n" +
+	"\aLottery\x12\x12.lottery.v1.UserID\x1a\x1b.lottery.v1.LotteryResponse\x12B\n" +
 	"\x03Pay\x12 .lottery.v1.LotteryCommonRequest\x1a\x19.lottery.v1.EmptyResponse\x12E\n" +
 	"\x06GiveUp\x12 .lottery.v1.LotteryCommonRequest\x1a\x19.lottery.v1.EmptyResponse\x12/\n" +
 	"\x06Result\x12\x12.lottery.v1.UserID\x1a\x11.lottery.v1.OrderBBZ@github.con/yzletter/go-postery/api/proto/lottery/v1:lottery_grpcb\x06proto3"
@@ -431,7 +495,7 @@ func file_api_proto_lottery_v1_lottery_proto_rawDescGZIP() []byte {
 	return file_api_proto_lottery_v1_lottery_proto_rawDescData
 }
 
-var file_api_proto_lottery_v1_lottery_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_proto_lottery_v1_lottery_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_proto_lottery_v1_lottery_proto_goTypes = []any{
 	(*EmptyRequest)(nil),         // 0: lottery.v1.EmptyRequest
 	(*EmptyResponse)(nil),        // 1: lottery.v1.EmptyResponse
@@ -440,25 +504,27 @@ var file_api_proto_lottery_v1_lottery_proto_goTypes = []any{
 	(*Order)(nil),                // 4: lottery.v1.Order
 	(*Gift)(nil),                 // 5: lottery.v1.Gift
 	(*Gifts)(nil),                // 6: lottery.v1.Gifts
+	(*LotteryResponse)(nil),      // 7: lottery.v1.LotteryResponse
 }
 var file_api_proto_lottery_v1_lottery_proto_depIdxs = []int32{
 	5, // 0: lottery.v1.Order.Gift:type_name -> lottery.v1.Gift
 	5, // 1: lottery.v1.Gifts.Gifts:type_name -> lottery.v1.Gift
-	0, // 2: lottery.v1.LotteryService.GetAllGifts:input_type -> lottery.v1.EmptyRequest
-	2, // 3: lottery.v1.LotteryService.Lottery:input_type -> lottery.v1.UserID
-	3, // 4: lottery.v1.LotteryService.Pay:input_type -> lottery.v1.LotteryCommonRequest
-	3, // 5: lottery.v1.LotteryService.GiveUp:input_type -> lottery.v1.LotteryCommonRequest
-	2, // 6: lottery.v1.LotteryService.Result:input_type -> lottery.v1.UserID
-	6, // 7: lottery.v1.LotteryService.GetAllGifts:output_type -> lottery.v1.Gifts
-	5, // 8: lottery.v1.LotteryService.Lottery:output_type -> lottery.v1.Gift
-	1, // 9: lottery.v1.LotteryService.Pay:output_type -> lottery.v1.EmptyResponse
-	1, // 10: lottery.v1.LotteryService.GiveUp:output_type -> lottery.v1.EmptyResponse
-	4, // 11: lottery.v1.LotteryService.Result:output_type -> lottery.v1.Order
-	7, // [7:12] is the sub-list for method output_type
-	2, // [2:7] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	5, // 2: lottery.v1.LotteryResponse.Gift:type_name -> lottery.v1.Gift
+	0, // 3: lottery.v1.LotteryService.GetAllGifts:input_type -> lottery.v1.EmptyRequest
+	2, // 4: lottery.v1.LotteryService.Lottery:input_type -> lottery.v1.UserID
+	3, // 5: lottery.v1.LotteryService.Pay:input_type -> lottery.v1.LotteryCommonRequest
+	3, // 6: lottery.v1.LotteryService.GiveUp:input_type -> lottery.v1.LotteryCommonRequest
+	2, // 7: lottery.v1.LotteryService.Result:input_type -> lottery.v1.UserID
+	6, // 8: lottery.v1.LotteryService.GetAllGifts:output_type -> lottery.v1.Gifts
+	7, // 9: lottery.v1.LotteryService.Lottery:output_type -> lottery.v1.LotteryResponse
+	1, // 10: lottery.v1.LotteryService.Pay:output_type -> lottery.v1.EmptyResponse
+	1, // 11: lottery.v1.LotteryService.GiveUp:output_type -> lottery.v1.EmptyResponse
+	4, // 12: lottery.v1.LotteryService.Result:output_type -> lottery.v1.Order
+	8, // [8:13] is the sub-list for method output_type
+	3, // [3:8] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_lottery_v1_lottery_proto_init() }
@@ -472,7 +538,7 @@ func file_api_proto_lottery_v1_lottery_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_lottery_v1_lottery_proto_rawDesc), len(file_api_proto_lottery_v1_lottery_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
