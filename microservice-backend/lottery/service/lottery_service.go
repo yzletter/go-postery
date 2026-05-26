@@ -56,9 +56,8 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, erro
 
 // Lottery 抽奖接口
 func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.LotteryResult, error) {
-	// 获取临时订单
-	result, exists, err := svc.getTempOrderResult(ctx, userID)
-	if err != nil {
+	// 尝试获取临时订单
+	if result, exists, err := svc.getTempOrderResult(ctx, userID); err != nil {
 		slog.Error("Check Temp Order Failed", "error", err)
 		return nil, errs.ErrInternal
 	} else if exists {
@@ -130,12 +129,15 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Lo
 				slog.Error("Create Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
 			}
-			if result, exists, err = svc.getTempOrderResult(ctx, userID); err != nil {
+
+			// 获取临时订单
+			if result, exists, err := svc.getTempOrderResult(ctx, userID); err != nil {
 				slog.Error("Get Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
 			} else if exists {
 				return result, nil
 			}
+
 			continue
 		}
 
@@ -177,6 +179,7 @@ func (svc *lotteryService) getTempOrderResult(ctx context.Context, userID int64)
 			Name: "当前有未支付的订单",
 		}
 	}
+
 	return &model.LotteryResult{
 		Gift:        gift,
 		TempOrderID: tempOrder.ID,
@@ -192,6 +195,7 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID in
 		return errs.ErrNotFound
 	}
 
+	// 删临时订单
 	if err = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrderID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("No Available Order")
@@ -201,7 +205,6 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID in
 		return errs.ErrInternal
 	}
 
-	// 正式订单落库
 	order := &model.Order{
 		ID:     svc.idGen.NextID(),
 		UserID: userID,
@@ -209,6 +212,7 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID in
 		Count:  1,
 	}
 
+	// 正式订单落库
 	if err := svc.orderRepo.CreateOrder(ctx, order); err != nil {
 		_ = svc.giftRepo.IncreaseCacheInventory(ctx, giftID)
 		if errors.Is(err, repository.ErrUniqueKey) {
@@ -282,8 +286,7 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 
 			for _, message := range messages {
 				var tempOrder model.TempOrder
-				err := sonic.Unmarshal(message.GetBody(), &tempOrder)
-				if err != nil {
+				if err := sonic.Unmarshal(message.GetBody(), &tempOrder); err != nil {
 					continue
 				}
 				if err = svc.orderRepo.DeleteTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err == nil {
