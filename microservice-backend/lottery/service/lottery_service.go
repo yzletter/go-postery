@@ -287,14 +287,27 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 			for _, message := range messages {
 				var tempOrder model.TempOrder
 				if err := sonic.Unmarshal(message.GetBody(), &tempOrder); err != nil {
+					// 毒消息进行 Ack 避免恶性循环
+					slog.Error("Unmarshal Lottery Temp Order Message Failed", "error", err, "message_id", message.GetMessageId(), "topic", message.GetTopic())
+
+					// 毒消息 Ack 失败
+					if ackErr := consumer.Ack(ctx, message); ackErr != nil {
+						slog.Error("Ack Invalid Lottery Message Failed", "error", ackErr, "message_id", message.GetMessageId())
+					}
 					continue
 				}
+
+				// 删除临时订单 + 恢复库存
 				if err = svc.orderRepo.DeleteTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err == nil {
+					// 恢复库存
 					_ = svc.giftRepo.IncreaseCacheInventory(ctx, tempOrder.GiftID)
-				} else if !errors.Is(err, repository.ErrRecordNotFound) {
+					consumer.Ack(ctx, message) // ACK
+				} else if errors.Is(err, repository.ErrRecordNotFound) {
+					// 临时订单不存在
+					consumer.Ack(ctx, message) // ACK
+				} else {
 					slog.Error("Delete Temp Order Failed", "error", err)
 				}
-				consumer.Ack(ctx, message)
 			}
 		}
 	}
