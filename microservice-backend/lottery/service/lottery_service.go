@@ -298,15 +298,14 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 				}
 
 				// 删除临时订单 + 恢复库存
-				if err = svc.orderRepo.DeleteTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err == nil {
-					// 恢复库存
-					_ = svc.giftRepo.IncreaseCacheInventory(ctx, tempOrder.GiftID)
-					consumer.Ack(ctx, message) // ACK
-				} else if errors.Is(err, repository.ErrRecordNotFound) {
-					// 临时订单不存在
-					consumer.Ack(ctx, message) // ACK
-				} else {
+				if ok, err := svc.orderRepo.RecycleTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err != nil {
 					slog.Error("Delete Temp Order Failed", "error", err)
+					// 不 Ack，等待重试
+					continue
+				} else if ok {
+					if ackErr := consumer.Ack(ctx, message); ackErr != nil {
+						slog.Error("Ack Invalid Lottery Message Failed", "error", ackErr, "message_id", message.GetMessageId())
+					}
 				}
 			}
 		}

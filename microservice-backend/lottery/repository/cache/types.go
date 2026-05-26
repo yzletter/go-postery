@@ -9,6 +9,7 @@ import (
 type OrderCache interface {
 	CreateTempOrder(ctx context.Context, order *model.TempOrder) error
 	DeleteTempOrder(ctx context.Context, uid, tempOrderID int64) error
+	RecycleTempOrder(ctx context.Context, uid, tempOrderID int64) (bool, error)
 	GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error)
 }
 

@@ -42,6 +42,14 @@ func (repo *orderRepository) DeleteTempOrder(ctx context.Context, uid, tempOrder
 	return nil
 }
 
+func (repo *orderRepository) RecycleTempOrder(ctx context.Context, uid, tempOrderID int64) (bool, error) {
+	if ok, err := repo.cache.RecycleTempOrder(ctx, uid, tempOrderID); err != nil {
+		return false, ErrServerInternal
+	} else {
+		return ok, nil
+	}
+}
+
 func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error) {
 	order, err := repo.cache.GetTempOrder(ctx, uid)
 	if err != nil {
