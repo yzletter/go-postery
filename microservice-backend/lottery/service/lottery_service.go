@@ -205,20 +205,29 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID in
 		return errs.ErrInternal
 	}
 
+	// 正式订单落库
 	order := &model.Order{
-		ID:     svc.idGen.NextID(),
-		UserID: userID,
-		GiftID: giftID,
-		Count:  1,
+		ID:          svc.idGen.NextID(),
+		TempOrderID: tempOrderID,
+		UserID:      userID,
+		GiftID:      giftID,
+		Count:       1,
 	}
 
-	// 正式订单落库
 	if err := svc.orderRepo.CreateOrder(ctx, order); err != nil {
-		_ = svc.giftRepo.IncreaseCacheInventory(ctx, giftID)
 		if errors.Is(err, repository.ErrUniqueKey) {
-			slog.Error("Server Internal Error", "error", err)
-			return errs.ErrInternal
+			slog.Error("Order Has Created", "error", err)
+			return errs.ErrAlreadyExits
 		}
+
+		// 尝试恢复临时订单 todo 一致性漏洞
+		if err := svc.orderRepo.CreateTempOrder(ctx, tempOrder); err != nil {
+			if !errors.Is(err, repository.ErrResourceConflict) {
+				slog.Error("Create Temp Order Failed", "error", err)
+				return errs.ErrInternal
+			}
+		}
+
 		slog.Error("Server Internal Error", "error", err)
 		return errs.ErrInternal
 	}
