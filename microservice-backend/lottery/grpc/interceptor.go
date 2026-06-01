@@ -8,13 +8,13 @@ import (
 	_grpc "google.golang.org/grpc"
 )
 
+type Limiter interface {
+	Limit(ctx context.Context, prefix, identifier string) (bool, error)
+}
+
 type GrpcLimitInterceptor struct {
 	limitPrefix string
 	limiter     Limiter
-}
-
-type Limiter interface {
-	Limit(ctx context.Context, prefix, identifier string) (bool, error)
 }
 
 func NewGrpcLimitInterceptor(limitPrefix string, limiter Limiter) *GrpcLimitInterceptor {

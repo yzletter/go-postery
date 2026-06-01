@@ -4,11 +4,11 @@ import (
 	"time"
 
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
-	model2 "github.com/yzletter/go-postery/microservice-backend/lottery/model"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
 )
 
 // ToGift model 转 lottery_grpc.Gift
-func ToGift(gift *model2.Gift) *lottery_grpc.Gift {
+func ToGift(gift *model.Gift) *lottery_grpc.Gift {
 	if gift == nil {
 		return &lottery_grpc.Gift{}
 	}
@@ -21,7 +21,7 @@ func ToGift(gift *model2.Gift) *lottery_grpc.Gift {
 	}
 }
 
-func ToLotteryResponse(result *model2.LotteryResult) *lottery_grpc.LotteryResponse {
+func ToLotteryResponse(result *model.LotteryResult) *lottery_grpc.LotteryResponse {
 	if result == nil {
 		return &lottery_grpc.LotteryResponse{}
 	}
@@ -32,7 +32,7 @@ func ToLotteryResponse(result *model2.LotteryResult) *lottery_grpc.LotteryRespon
 }
 
 // ToOrder model 转 lottery_grpc.Order
-func ToOrder(order *model2.Order, gift *model2.Gift) *lottery_grpc.Order {
+func ToOrder(order *model.Order, gift *model.Gift) *lottery_grpc.Order {
 	return &lottery_grpc.Order{
 		OrderID:   order.ID,
 		UserID:    order.UserID,
