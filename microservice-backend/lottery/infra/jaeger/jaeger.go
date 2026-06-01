@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/yzletter/go-postery/microservice-backend/lottery/config"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/conf"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -15,7 +15,7 @@ import (
 )
 
 // InitJaeger 初始化 Jaeger
-func InitJaeger(ctx context.Context, config config.JaegerConfig, service string) func() {
+func InitJaeger(ctx context.Context, config conf.JaegerConfig, service string) func() {
 	// 构造 Jaeger Trace Provider
 	exporter, err := otlptracehttp.New(ctx,
 		otlptracehttp.WithEndpoint(config.Addr),

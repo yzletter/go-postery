@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/yzletter/go-postery/microservice-backend/lottery/config"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/conf"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -26,7 +26,7 @@ type PoolConfig struct {
 }
 
 // Init 初始化数据库
-func Init(config config.MySQLConfig) *gorm.DB {
+func Init(config conf.MySQLConfig) *gorm.DB {
 	// 拼接出 MySQL DataSourceName
 	dataSourceName := getDataSourceName(config.User, config.Password, config.Addr, config.DBName)
 
