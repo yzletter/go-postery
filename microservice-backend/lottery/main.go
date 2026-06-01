@@ -60,7 +60,7 @@ func main() {
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)
 
 	// Service 层
-	MetricService := service.NewMetricService()
+	MetricService := service.NewMetricService(ServiceName)
 	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
 	LotteryService := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ, IDGenerator) // 注册 LotteryService
 	LotteryService.InitCacheInventory(context.Background())
