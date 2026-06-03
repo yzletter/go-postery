@@ -40,7 +40,7 @@ func (svc *lotteryService) InitCacheInventory(ctx context.Context) {
 	svc.giftRepo.InitCacheInventory(ctx)
 }
 
-// GetAllGifts 获取所有礼物
+// GetAllGifts 获取所有抽奖礼物
 func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, error) {
 	gifts, err := svc.giftRepo.GetAllGifts(ctx)
 	if err != nil {
@@ -116,24 +116,29 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 			continue
 		}
 
+		lotteryTime := time.Now()
 		order := &model.Order{
-			ID:     svc.idGen.NextID(),
-			UserID: userID,
-			GiftID: gid,
-			Count:  1,
-			Status: model.OrderStatusPending,
+			ID:                      svc.idGen.NextID(),
+			UserID:                  userID,
+			GiftID:                  gid,
+			Count:                   1,
+			ExpireAt:                lotteryTime.Add(conf.RocketLotteryPayDelay * time.Second),
+			Status:                  model.OrderStatusPending,
+			StockRollbackStatus:     model.StockRollbackStatusPending,
+			StockRollbackRetryCount: 0,
+			NextRollbackAt:          lotteryTime.Add(conf.RocketLotteryPayDelay * time.Second),
 		}
 
 		// 创建临时订单
 		if err := svc.orderRepo.CreateTempOrder(ctx, order); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-			if !errors.Is(err, repository.ErrResourceConflict) {
+			if !errors.Is(err, repository.ErrUniqueKey) {
 				// 如果不是订单重复, 报错
 				slog.Error("Create Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
 			}
 
-			// 订单重复，获取已经存在的临时订单进行返回
+			//订单重复，获取已经存在的临时订单进行返回
 			if result, exists, err := svc.getTempOrderResult(ctx, userID); err != nil {
 				slog.Error("Get Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
@@ -268,15 +273,17 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 				}
 
 				// 取消临时订单 + 恢复库存
-				if ok, err := svc.orderRepo.RecycleTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err != nil {
+				if ok, err := svc.orderRepo.RecycleTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err != nil || !ok {
 					slog.Error("Delete Temp Order Failed", "error", err)
 					// 不 Ack，等待重试
 					continue
-				} else if ok {
-					if ackErr := consumer.Ack(ctx, message); ackErr != nil {
-						slog.Error("Ack Invalid Lottery Message Failed", "error", ackErr, "message_id", message.GetMessageId())
-					}
 				}
+
+				if ackErr := consumer.Ack(ctx, message); ackErr != nil {
+					slog.Error("Ack Invalid Lottery Message Failed", "error", ackErr, "message_id", message.GetMessageId())
+				}
+
+				_ = svc.giftRepo.IncreaseCacheInventory(ctx, tempOrder.GiftID) // 不会导致超卖
 			}
 		}
 	}

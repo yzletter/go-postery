@@ -22,5 +22,5 @@ const (
 	DescriptionNoGifts        = "奖品已抽完"
 	DescriptionLotterySuccess = "抽奖成功"
 	DescriptionLotteryNothing = "很遗憾，未抽中奖品，谢谢参与"
-	DescriptionTempOrderToPay = "当前有未支付的订单"
+	DescriptionTempOrderToPay = "当前已有订单"
 )
