@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/microservice-backend/lottery/dto"
 	model2 "github.com/yzletter/go-postery/microservice-backend/lottery/model"
 )
 
 type LotteryService interface {
 	GetAllGifts(ctx context.Context) ([]*model2.Gift, error)                         // 获取索引奖品
-	Lottery(ctx context.Context, userID int64) (*model2.LotteryResult, error)        // 进行抽奖
+	Lottery(ctx context.Context, userID int64) (*dto.LotteryResult, error)           // 进行抽奖
 	Pay(ctx context.Context, userID int64, tempOrderID int64, giftID int64) error    // 支付
 	GiveUp(ctx context.Context, userID int64, tempOrderID int64, giftID int64) error // 放弃
 	Result(ctx context.Context, userID int64) (*model2.Order, *model2.Gift, error)   // 查询结果

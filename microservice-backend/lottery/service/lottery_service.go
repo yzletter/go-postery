@@ -11,6 +11,7 @@ import (
 	rmq_client "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/bytedance/sonic"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/conf"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/dto"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/errs"
 	infraRocketMQ "github.com/yzletter/go-postery/microservice-backend/lottery/infra/rocketmq"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
@@ -55,8 +56,8 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, erro
 }
 
 // Lottery 抽奖接口
-func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.LotteryResult, error) {
-	// 尝试获取临时订单
+func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.LotteryResult, error) {
+	// 尝试获取临时订单查看是否抽过奖
 	if result, exists, err := svc.getTempOrderResult(ctx, userID); err != nil {
 		slog.Error("Check Temp Order Failed", "error", err)
 		return nil, errs.ErrInternal
@@ -71,7 +72,8 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Lo
 		// 获取商品库存
 		gifts, err := svc.giftRepo.GetCacheInventory(ctx)
 		if err != nil {
-			continue
+			slog.Error("Get Cache Inventory Failed", "error", err)
+			return nil, errs.ErrInternal
 		}
 
 		// 获取商品 ID 和库存
@@ -86,11 +88,11 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Lo
 
 		// 所有奖品已抽完
 		if len(giftStocks) == 0 {
-			empty := &model.Gift{
-				ID:   0,
-				Name: "奖品已抽完",
-			}
-			return &model.LotteryResult{Gift: empty}, nil
+			return &dto.LotteryResult{
+				Success:     false,
+				Description: dto.DescriptionNoGifts,
+				UserID:      userID,
+			}, nil
 		}
 
 		// 进行抽奖
@@ -109,28 +111,29 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Lo
 		gift, err := svc.giftRepo.GetByID(ctx, gid)
 		if err != nil {
 			// 获取不到详情
+			slog.Error("Get Gift Failed", "error", err)
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 			continue
-		} else if gift.Name == "谢谢参与" {
-			// 不用创建临时订单
-			return &model.LotteryResult{Gift: gift}, nil
 		}
 
-		tempOrder := &model.TempOrder{
+		order := &model.Order{
 			ID:     svc.idGen.NextID(),
 			UserID: userID,
 			GiftID: gid,
+			Count:  1,
+			Status: model.OrderStatusPending,
 		}
 
 		// 创建临时订单
-		if err := svc.orderRepo.CreateTempOrder(ctx, tempOrder); err != nil {
+		if err := svc.orderRepo.CreateTempOrder(ctx, order); err != nil {
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
 			if !errors.Is(err, repository.ErrResourceConflict) {
+				// 如果不是订单重复, 报错
 				slog.Error("Create Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
 			}
 
-			// 获取临时订单
+			// 订单重复，获取已经存在的临时订单进行返回
 			if result, exists, err := svc.getTempOrderResult(ctx, userID); err != nil {
 				slog.Error("Get Temp Order Failed", "error", err)
 				return nil, errs.ErrInternal
@@ -142,48 +145,29 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*model.Lo
 		}
 
 		// 发送延迟消息
-		if err = svc.produce(ctx, tempOrder, conf.RocketLotteryPayDelay); err != nil {
-			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-			_ = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrder.ID)
-			continue
+		if err = svc.produce(ctx, order, conf.RocketLotteryPayDelay); err != nil {
+			// 延迟消息发送失败, 最多导致超时订单无法回收库存，导致库存流失, 但不会超卖
+			// 定时扫订单表进行兜底
+			slog.Error("Produce Temp Order Failed", "error", err)
 		}
 
 		// 返回数据
-		return &model.LotteryResult{
+		return &dto.LotteryResult{
+			Success:     true,
+			Description: dto.DescriptionLotterySuccess,
+			OrderID:     order.ID,
+			UserID:      userID,
 			Gift:        gift,
-			TempOrderID: tempOrder.ID,
 		}, nil
 	}
 
-	empty := &model.Gift{
-		ID:   1,
-		Name: "谢谢参与",
-	}
+	// 未抽中奖品
 	slog.Error("Lottery Nothing")
-	return &model.LotteryResult{Gift: empty}, nil
-}
-
-func (svc *lotteryService) getTempOrderResult(ctx context.Context, userID int64) (*model.LotteryResult, bool, error) {
-	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return nil, false, nil
-		}
-		return nil, false, err
-	}
-
-	gift, err := svc.giftRepo.GetByID(ctx, tempOrder.GiftID)
-	if err != nil {
-		gift = &model.Gift{
-			ID:   tempOrder.GiftID,
-			Name: "当前有未支付的订单",
-		}
-	}
-
-	return &model.LotteryResult{
-		Gift:        gift,
-		TempOrderID: tempOrder.ID,
-	}, true, nil
+	return &dto.LotteryResult{
+		Success:     true,
+		Description: dto.DescriptionLotteryNothing,
+		UserID:      userID,
+	}, nil
 }
 
 // Pay 支付接口
@@ -195,39 +179,14 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID in
 		return errs.ErrNotFound
 	}
 
-	// 删临时订单
-	if err = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrderID); err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			slog.Error("No Available Order")
-			return errs.ErrNotFound
-		}
-		slog.Error("Delete Temp Order Failed", "error", err)
-		return errs.ErrInternal
-	}
+	// todo 接支付链路
 
-	// 正式订单落库
-	order := &model.Order{
-		ID:          svc.idGen.NextID(),
-		TempOrderID: tempOrderID,
-		UserID:      userID,
-		GiftID:      giftID,
-		Count:       1,
-	}
-
-	if err := svc.orderRepo.CreateOrder(ctx, order); err != nil {
+	// 正式订单落库 + 扣减实际库存
+	if err := svc.orderRepo.PayTempOrder(ctx, tempOrder.ID); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			slog.Error("Order Has Created", "error", err)
 			return errs.ErrAlreadyExits
 		}
-
-		// 尝试恢复临时订单 todo 一致性漏洞
-		if err := svc.orderRepo.CreateTempOrder(ctx, tempOrder); err != nil {
-			if !errors.Is(err, repository.ErrResourceConflict) {
-				slog.Error("Create Temp Order Failed", "error", err)
-				return errs.ErrInternal
-			}
-		}
-
 		slog.Error("Server Internal Error", "error", err)
 		return errs.ErrInternal
 	}
@@ -244,7 +203,8 @@ func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, tempOrderID
 		return errs.ErrNotFound
 	}
 
-	if err = svc.orderRepo.DeleteTempOrder(ctx, userID, tempOrderID); err != nil {
+	// 取消临时订单
+	if err = svc.orderRepo.CancelTempOrder(ctx, tempOrder.ID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("No Available Order")
 			return errs.ErrNotFound
@@ -253,7 +213,9 @@ func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, tempOrderID
 		return errs.ErrInternal
 	}
 
+	// 恢复库存
 	_ = svc.giftRepo.IncreaseCacheInventory(ctx, giftID)
+
 	return nil
 }
 
@@ -294,11 +256,10 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 			}
 
 			for _, message := range messages {
-				var tempOrder model.TempOrder
+				var tempOrder model.Order
 				if err := sonic.Unmarshal(message.GetBody(), &tempOrder); err != nil {
 					// 毒消息进行 Ack 避免恶性循环
 					slog.Error("Unmarshal Lottery Temp Order Message Failed", "error", err, "message_id", message.GetMessageId(), "topic", message.GetTopic())
-
 					// 毒消息 Ack 失败
 					if ackErr := consumer.Ack(ctx, message); ackErr != nil {
 						slog.Error("Ack Invalid Lottery Message Failed", "error", ackErr, "message_id", message.GetMessageId())
@@ -306,7 +267,7 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 					continue
 				}
 
-				// 删除临时订单 + 恢复库存
+				// 取消临时订单 + 恢复库存
 				if ok, err := svc.orderRepo.RecycleTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err != nil {
 					slog.Error("Delete Temp Order Failed", "error", err)
 					// 不 Ack，等待重试
@@ -321,7 +282,7 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 	}
 }
 
-func (svc *lotteryService) produce(ctx context.Context, order *model.TempOrder, delay int) error {
+func (svc *lotteryService) produce(ctx context.Context, order *model.Order, delay int) error {
 	// 序列化 Order
 	body, err := sonic.Marshal(order)
 	if err != nil {
@@ -329,16 +290,16 @@ func (svc *lotteryService) produce(ctx context.Context, order *model.TempOrder, 
 	}
 
 	// 构造 Message
-	message := &rmq_client.Message{
-		Topic: conf.RocketLotteryTopic,
-		Body:  body,
-	}
+	message := &rmq_client.Message{Topic: conf.RocketLotteryTopic, Body: body}
+
+	// 给 Message 添加延迟
 	message.SetDelayTimestamp(time.Now().Add(time.Duration(delay) * time.Second))
 
-	// 发送消息
+	// 发送 Message
 	if _, err = svc.mq.RocketProducer.Send(ctx, message); err != nil {
 		return errs.ErrInternal
 	}
+
 	return nil
 }
 
@@ -370,4 +331,31 @@ func lottery(ids []int64, stocks []float64) int64 {
 	}
 
 	return ids[l]
+}
+
+func (svc *lotteryService) getTempOrderResult(ctx context.Context, userID int64) (*dto.LotteryResult, bool, error) {
+	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+
+	gift, err := svc.giftRepo.GetByID(ctx, tempOrder.GiftID)
+	if err != nil {
+		// 降级
+		gift = &model.Gift{
+			ID:   tempOrder.GiftID,
+			Name: "奖品查询失败",
+		}
+	}
+
+	return &dto.LotteryResult{
+		Success:     false,
+		Description: dto.DescriptionTempOrderToPay,
+		OrderID:     tempOrder.ID,
+		UserID:      tempOrder.UserID,
+		Gift:        gift,
+	}, true, nil
 }

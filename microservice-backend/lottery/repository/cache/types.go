@@ -3,14 +3,15 @@ package cache
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/microservice-backend/lottery/dto"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
 )
 
 type OrderCache interface {
-	CreateTempOrder(ctx context.Context, order *model.TempOrder) error
+	CreateTempOrder(ctx context.Context, order *dto.Order) error
 	DeleteTempOrder(ctx context.Context, uid, tempOrderID int64) error
 	RecycleTempOrder(ctx context.Context, uid, tempOrderID int64) (bool, error)
-	GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error)
+	GetTempOrder(ctx context.Context, uid int64) (*dto.Order, error)
 }
 
 type GiftCache interface {

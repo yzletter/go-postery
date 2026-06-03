@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/dto"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/repository/cache"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/repository/dao"
@@ -22,7 +23,7 @@ func NewOrderRepository(dao dao.OrderDAO, cache cache.OrderCache) OrderRepositor
 	}
 }
 
-func (repo *orderRepository) CreateTempOrder(ctx context.Context, order *model.TempOrder) error {
+func (repo *orderRepository) CreateTempOrder(ctx context.Context, order *dto.Order) error {
 	if err := repo.cache.CreateTempOrder(ctx, order); err != nil {
 		if errors.Is(err, cache.ErrCreateTempOrder) {
 			return ErrResourceConflict
@@ -50,7 +51,7 @@ func (repo *orderRepository) RecycleTempOrder(ctx context.Context, uid, tempOrde
 	}
 }
 
-func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error) {
+func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*dto.Order, error) {
 	order, err := repo.cache.GetTempOrder(ctx, uid)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {

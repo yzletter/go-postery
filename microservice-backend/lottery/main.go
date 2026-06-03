@@ -31,11 +31,13 @@ import (
 
 const ServiceName = "lottery_service"
 
+const EtcdEndPoint = "172.16.131.223:2379"
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{"172.16.131.223:2379"})     // Init Etcd
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})              // Init Etcd
 	Config := conf.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_") // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
 

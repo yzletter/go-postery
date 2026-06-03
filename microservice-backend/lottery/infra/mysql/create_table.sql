@@ -244,19 +244,24 @@ CREATE TABLE IF NOT EXISTS session
 # Order 表
 CREATE TABLE IF NOT EXISTS orders
 (
-    id            BIGINT   NOT NULL COMMENT 'ID',
-    temp_order_id BIGINT   NOT NULL COMMENT '临时订单 ID',
-    user_id       BIGINT   NOT NULL COMMENT '用户 ID',
-    gift_id       BIGINT   NOT NULL COMMENT '商品 ID',
-    count         INT      NOT NULL DEFAULT 1 COMMENT '购买数量',
+    id                         BIGINT   NOT NULL COMMENT 'ID',
+    user_id                    BIGINT   NOT NULL COMMENT '用户 ID',
+    gift_id                    BIGINT   NOT NULL COMMENT '商品 ID',
+    count                      INT      NOT NULL DEFAULT 1 COMMENT '购买数量',
 
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+    expire_at                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '过期时间',
+    status                     INT      NOT NULL DEFAULT 0 COMMENT '订单状态 0 待支付，1 已支付，2 已放弃，3 已超时',
+    stock_rollback_status      INT      NOT NULL DEFAULT 0 COMMENT '回补状态 0 待回补，1 已回补，2 回补失败',
+    stock_rollback_retry_count INT      NOT NULL DEFAULT 0 COMMENT '已尝试回补次数',
+    next_rollback_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '下次回补时间',
+
+    created_at                 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at                 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at                 DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
 
     PRIMARY KEY (id),
     UNIQUE KEY uq_user_id (user_id, id),
-    UNIQUE KEY uq_temp_order_id (temp_order_id)
+    KEY idx_timeout_scan (status, expire_at, stock_rollback_status, next_rollback_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '订单表';
 
 

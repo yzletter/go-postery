@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
+	"github.com/yzletter/go-postery/microservice-backend/lottery/dto"
 )
 
 const (
@@ -32,7 +32,7 @@ func NewOrderCache(client redis.UniversalClient) OrderCache {
 }
 
 // CreateTempOrder 创建临时订单
-func (cache *redisOrderCache) CreateTempOrder(ctx context.Context, order *model.TempOrder) error {
+func (cache *redisOrderCache) CreateTempOrder(ctx context.Context, order *dto.Order) error {
 	body, err := json.Marshal(order)
 	if err != nil {
 		return err
@@ -87,13 +87,13 @@ func (cache *redisOrderCache) RecycleTempOrder(ctx context.Context, uid, tempOrd
 }
 
 // GetTempOrder 获取临时订单
-func (cache *redisOrderCache) GetTempOrder(ctx context.Context, uid int64) (*model.TempOrder, error) {
+func (cache *redisOrderCache) GetTempOrder(ctx context.Context, uid int64) (*dto.Order, error) {
 	body, err := cache.client.Get(ctx, tempOrderKey(uid)).Bytes()
 	if err != nil {
 		return nil, err
 	}
 
-	var order model.TempOrder
+	var order dto.Order
 	if err = json.Unmarshal(body, &order); err != nil {
 		return nil, err
 	}

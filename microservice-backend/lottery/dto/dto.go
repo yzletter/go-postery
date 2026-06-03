@@ -21,13 +21,13 @@ func ToGift(gift *model.Gift) *lottery_grpc.Gift {
 	}
 }
 
-func ToLotteryResponse(result *model.LotteryResult) *lottery_grpc.LotteryResponse {
+func ToLotteryResponse(result *LotteryResult) *lottery_grpc.LotteryResponse {
 	if result == nil {
 		return &lottery_grpc.LotteryResponse{}
 	}
 	return &lottery_grpc.LotteryResponse{
 		Gift:        ToGift(result.Gift),
-		TempOrderID: result.TempOrderID,
+		TempOrderID: result.OrderID,
 	}
 }
 
