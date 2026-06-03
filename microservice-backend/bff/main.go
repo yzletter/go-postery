@@ -24,14 +24,20 @@ import (
 	service2 "github.com/yzletter/go-postery/microservice-backend/bff/service"
 )
 
-const ServiceName = "bff_service"
+const (
+	ServiceName = "bff_service"
+	GoPostery   = "go_postery_"
+	//GoPostery    = "test_go_postery_"
+	EtcdEndPoint = "172.16.131.223:2379"
+	//EtcdEndPoint = "localhost:12379"
+)
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{"172.16.131.223:2379"})       // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_") // Get Config From Remote Config Center
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                           // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery) // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
 
 	// gRPC Common Infrastructure
@@ -71,7 +77,7 @@ func main() {
 	AuthRequiredMdl := middleware2.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
 	MetricMdl := middleware2.MetricMiddleware(MetricSvc)                     // MetricMdl 用于 Prometheus 监控中间件
 	RateLimitMdl := middleware2.RateLimitMiddleware(RateLimitSvc)            // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{ // CorsMdl 跨域中间件
+	CorsMdl := cors.New(cors.Config{                                         // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://" + Config.App.FrontendAddr}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "traceparent", "tracestate", "baggage"},
@@ -107,9 +113,9 @@ func main() {
 	// 注册全局中间件
 	engine.Use(
 		middleware2.TracingMiddleware(ServiceName), // OpenTelemetry tracing 中间件
-		CorsMdl,                                    // CorsMdl 跨域中间件
-		MetricMdl,                                  // Prometheus 监控中间件
-		RateLimitMdl,                               // 限流中间件
+		CorsMdl,      // CorsMdl 跨域中间件
+		MetricMdl,    // Prometheus 监控中间件
+		RateLimitMdl, // 限流中间件
 	)
 
 	// 运维接口

@@ -21,24 +21,36 @@ var (
 // client 依赖注入 etcd Client
 //
 // prefix 业务配置 Key 的前缀
-func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string) Config {
+func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string, commonPrefix string) Config {
 	conce.Do(func() {
-		// 加载 Redis 配置
-		config.Redis = loadRedisConfig(ctx, client, prefix)
-		// 加载 Jaeger 配置
-		config.Jaeger = loadJaegerConfig(ctx, client, prefix)
+		config.CommonMicroServiceConfig = loadCommonMicroServiceConfig(ctx, client, commonPrefix)
 		// 加载 App 配置
 		config.App = loadAppConfig(ctx, client, prefix)
 		// 加载 Log 配置
 		config.Log = loadLogConfig(ctx, client, prefix)
-		// 加载 RabbitMQ 配置
-		config.RabbitMQ = loadRabbitMQConfig(ctx, client, prefix)
 		fmt.Println(config)
 
+		go watch(ctx, client, commonPrefix, watchKeys)
 		go watch(ctx, client, prefix, watchKeys)
 	})
 
 	return config
+}
+
+func loadCommonMicroServiceConfig(ctx context.Context, client *etcdv3.Client, prefix string) CommonMicroServiceConfig {
+	return CommonMicroServiceConfig{
+		// 数据库
+		MySQL: loadMySQLConfig(ctx, client, prefix),
+		// 缓存
+		Redis: loadRedisConfig(ctx, client, prefix),
+		// 消息队列
+		Kafka:    loadKafkaConfig(ctx, client, prefix),
+		RabbitMQ: loadRabbitMQConfig(ctx, client, prefix),
+		RocketMQ: loadRocketMQConfig(ctx, client, prefix),
+		// 链路追踪与向量数据库
+		Jaeger: loadJaegerConfig(ctx, client, prefix),
+		Qdrant: loadQdrantConfig(ctx, client, prefix),
+	}
 }
 
 // 监听配置变化
@@ -137,6 +149,42 @@ func loadKafkaConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
 			watchKeys[prefix+"kafka_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadRocketMQConfig(ctx context.Context, client *etcdv3.Client, prefix string) RocketMQConfig {
+	var config RocketMQConfig
+
+	// 获取 RocketMQ 端口
+	if resp, err := client.Get(ctx, prefix+"rocket_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Addr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"rocket_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadQdrantConfig(ctx context.Context, client *etcdv3.Client, prefix string) QdrantConfig {
+	var config QdrantConfig
+
+	// 获取地址
+	if resp, err := client.Get(ctx, prefix+"qdrant_host"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Host = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qdrant_host"] = struct{}{}
+		}
+	}
+
+	// 获取端口
+	if resp, err := client.Get(ctx, prefix+"qdrant_port"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Port, _ = strconv.Atoi(string(resp.Kvs[0].Value))
+			watchKeys[prefix+"qdrant_port"] = struct{}{}
 		}
 	}
 

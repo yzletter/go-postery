@@ -2,14 +2,21 @@ package config
 
 // Config 需要的所有配置
 type Config struct {
-	Redis  RedisConfig
-	MySQL  MySQLConfig
-	Kafka  KafkaConfig
-	Jaeger JaegerConfig
+	CommonMicroServiceConfig
 	Log    LogConfig
 	Metric MetricConfig
 	OSS    OSSConfig
 	GRPC   GRPCConfig
+}
+
+type CommonMicroServiceConfig struct {
+	MySQL    MySQLConfig
+	Redis    RedisConfig
+	Kafka    KafkaConfig
+	RabbitMQ RabbitMQConfig
+	RocketMQ RocketMQConfig
+	Qdrant   QdrantConfig
+	Jaeger   JaegerConfig
 }
 
 type OSSConfig struct {
@@ -42,6 +49,21 @@ type JaegerConfig struct {
 
 type KafkaConfig struct {
 	Addr string
+}
+
+type RabbitMQConfig struct {
+	User     string
+	Password string
+	Addr     string
+}
+
+type RocketMQConfig struct {
+	Addr string // RocketMQ 地址
+}
+
+type QdrantConfig struct {
+	Host string
+	Port int
 }
 
 type LogConfig struct {

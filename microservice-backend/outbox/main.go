@@ -25,14 +25,20 @@ func ListenTermSignal(f func()) {
 	os.Exit(0)
 }
 
-const ServiceName = "outbox_service"
+const (
+	ServiceName = "outbox_service"
+	GoPostery   = "go_postery_"
+	//GoPostery    = "test_go_postery_"
+	EtcdEndPoint = "172.16.131.223:2379"
+	//EtcdEndPoint = "localhost:12379"
+)
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{"172.16.131.223:2379"})       // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_") // Get Config From Remote Config Center
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                           // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery) // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
 
 	// gRPC Common Infrastructure
