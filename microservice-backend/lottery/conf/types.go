@@ -15,13 +15,20 @@ const (
 // sh mqadmin updateSubGroup -n localhost:9876 -c DefaultCluster -g go_postery
 
 type Config struct {
-	Redis    RedisConfig
+	CommonMicroServiceConfig
+	Log    LogConfig
+	Metric MetricConfig
+	GRPC   GRPCConfig
+}
+
+type CommonMicroServiceConfig struct {
 	MySQL    MySQLConfig
-	Jaeger   JaegerConfig
-	Log      LogConfig
-	Metric   MetricConfig
-	GRPC     GRPCConfig
+	Redis    RedisConfig
+	Kafka    KafkaConfig
+	RabbitMQ RabbitMQConfig
 	RocketMQ RocketMQConfig
+	Qdrant   QdrantConfig
+	Jaeger   JaegerConfig
 }
 
 type JaegerConfig struct {
@@ -30,6 +37,21 @@ type JaegerConfig struct {
 
 type RocketMQConfig struct {
 	Addr string // RocketMQ 地址
+}
+
+type KafkaConfig struct {
+	Addr string // Kafka 地址
+}
+
+type RabbitMQConfig struct {
+	User     string
+	Password string
+	Addr     string
+}
+
+type QdrantConfig struct {
+	Host string
+	Port int
 }
 
 type RedisConfig struct {
