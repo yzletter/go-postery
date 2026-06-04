@@ -46,6 +46,9 @@ type LotteryOrder = {
   gift: GiftItem
   count: number
   created_at?: string
+  status?: number
+  paid_at?: string
+  expire_at?: string
 }
 
 type LotteryDrawStatus = 'won' | 'pending_order' | 'missed' | 'sold_out' | 'unknown'
@@ -168,6 +171,25 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
         : typeof raw.CreatedAt === 'string'
           ? raw.CreatedAt
           : ''
+  const paidAt =
+    typeof raw.paid_at === 'string'
+      ? raw.paid_at
+      : typeof raw.paidAt === 'string'
+        ? raw.paidAt
+        : typeof raw.PaidAt === 'string'
+          ? raw.PaidAt
+          : ''
+  const expireAt =
+    typeof raw.expire_at === 'string'
+      ? raw.expire_at
+      : typeof raw.expireAt === 'string'
+        ? raw.expireAt
+        : typeof raw.ExpireAt === 'string'
+          ? raw.ExpireAt
+          : ''
+  const statusValue = Number(raw.status ?? raw.Status)
+  const status = Number.isFinite(statusValue) ? statusValue : undefined
+
   return {
     id,
     user: {
@@ -179,6 +201,9 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
     gift,
     count,
     created_at: createdAt || undefined,
+    status,
+    paid_at: paidAt || undefined,
+    expire_at: expireAt || undefined,
   }
 }
 
@@ -1098,8 +1123,8 @@ export default function Lottery() {
                   )}
                   <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                     <span>数量 {latestOrder.count}</span>
-                    {latestOrder.created_at && (
-                      <span>支付时间 {formatDateTime(latestOrder.created_at)}</span>
+                    {(latestOrder.paid_at || latestOrder.created_at) && (
+                      <span>支付时间 {formatDateTime(latestOrder.paid_at || latestOrder.created_at)}</span>
                     )}
                     <span>价值 {formatPrize(latestOrder.gift.prize)}</span>
                   </div>

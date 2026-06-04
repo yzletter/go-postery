@@ -18,11 +18,16 @@ message LotteryCommonRequest {
 }
 
 message Order {
+  reserved 9;
+
   int64 OrderID = 1;
   int64 UserID = 2;
   Gift Gift = 3;
   int64 Count = 4;
   string CreatedAt = 5;
+  int32 Status = 6;
+  string PaidAt = 7;
+  string ExpireAt = 8;
 }
 
 message Gift {

@@ -204,6 +204,9 @@ type Order struct {
 	Gift          *Gift                  `protobuf:"bytes,3,opt,name=Gift,proto3" json:"Gift,omitempty"`
 	Count         int64                  `protobuf:"varint,4,opt,name=Count,proto3" json:"Count,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,5,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
+	Status        int32                  `protobuf:"varint,6,opt,name=Status,proto3" json:"Status,omitempty"`
+	PaidAt        string                 `protobuf:"bytes,7,opt,name=PaidAt,proto3" json:"PaidAt,omitempty"`
+	ExpireAt      string                 `protobuf:"bytes,8,opt,name=ExpireAt,proto3" json:"ExpireAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -269,6 +272,27 @@ func (x *Order) GetCount() int64 {
 func (x *Order) GetCreatedAt() string {
 	if x != nil {
 		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *Order) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *Order) GetPaidAt() string {
+	if x != nil {
+		return x.PaidAt
+	}
+	return ""
+}
+
+func (x *Order) GetExpireAt() string {
+	if x != nil {
+		return x.ExpireAt
 	}
 	return ""
 }
@@ -482,13 +506,17 @@ const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
 	"\x14LotteryCommonRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x16\n" +
 	"\x06GiftID\x18\x02 \x01(\x03R\x06GiftID\x12 \n" +
-	"\vTempOrderID\x18\x03 \x01(\x03R\vTempOrderID\"\x93\x01\n" +
+	"\vTempOrderID\x18\x03 \x01(\x03R\vTempOrderID\"\xe5\x01\n" +
 	"\x05Order\x12\x18\n" +
 	"\aOrderID\x18\x01 \x01(\x03R\aOrderID\x12\x16\n" +
 	"\x06UserID\x18\x02 \x01(\x03R\x06UserID\x12$\n" +
 	"\x04Gift\x18\x03 \x01(\v2\x10.lottery.v1.GiftR\x04Gift\x12\x14\n" +
 	"\x05Count\x18\x04 \x01(\x03R\x05Count\x12\x1c\n" +
-	"\tCreatedAt\x18\x05 \x01(\tR\tCreatedAt\"z\n" +
+	"\tCreatedAt\x18\x05 \x01(\tR\tCreatedAt\x12\x16\n" +
+	"\x06Status\x18\x06 \x01(\x05R\x06Status\x12\x16\n" +
+	"\x06PaidAt\x18\a \x01(\tR\x06PaidAt\x12\x1a\n" +
+	"\bExpireAt\x18\b \x01(\tR\bExpireAtJ\x04\b\t\x10\n" +
+	"\"z\n" +
 	"\x04Gift\x12\x0e\n" +
 	"\x02ID\x18\x01 \x01(\x03R\x02ID\x12\x12\n" +
 	"\x04Name\x18\x02 \x01(\tR\x04Name\x12\x16\n" +

@@ -186,6 +186,9 @@
 | gift | GiftDTO | 奖品信息 |
 | count | int | 购买数量 |
 | created_at | string | 创建时间（RFC3339） |
+| status | int | 订单状态：0 待支付，1 已支付，2 已放弃，3 已超时 |
+| paid_at | string | 支付时间（RFC3339，未支付为空） |
+| expire_at | string | 过期时间（RFC3339） |
 
 ### PassStatusResponse
 | 字段 | 类型 | 说明 |

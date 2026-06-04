@@ -73,6 +73,9 @@ type OrderDTO struct {
 	Gift      GiftDTO          `json:"gift"`
 	Count     int              `json:"count"`      // 购买数量
 	CreatedAt string           `json:"created_at"` // 创建时间
+	Status    int32            `json:"status"`     // 订单状态 0 待支付，1 已支付，2 已放弃，3 已超时
+	PaidAt    string           `json:"paid_at"`    // 支付时间
+	ExpireAt  string           `json:"expire_at"`  // 过期时间
 }
 
 func ToOrderDTO(order *lottery_grpc.Order, user *user_grpc.UserDetail) OrderDTO {
@@ -82,5 +85,8 @@ func ToOrderDTO(order *lottery_grpc.Order, user *user_grpc.UserDetail) OrderDTO 
 		Gift:      ToGiftDTO(order.Gift),
 		Count:     int(order.Count),
 		CreatedAt: order.CreatedAt,
+		Status:    order.Status,
+		PaidAt:    order.PaidAt,
+		ExpireAt:  order.ExpireAt,
 	}
 }

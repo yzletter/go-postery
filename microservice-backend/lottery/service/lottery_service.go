@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"math/rand"
@@ -182,8 +183,10 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID int64, giftID int64) error {
 	// 获取临时订单
 	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
-	if err != nil || tempOrder.ID != tempOrderID || tempOrder.GiftID != giftID {
-		slog.Error("No Available Order")
+	if err != nil || tempOrder == nil || tempOrder.ID != tempOrderID || tempOrder.GiftID != giftID {
+		fmt.Println(userID, giftID, tempOrderID)
+		fmt.Println(tempOrder.UserID, tempOrder.GiftID, tempOrder.ID)
+		slog.Error("No Available Order", "error", err)
 		return errs.ErrNotFound
 	}
 
