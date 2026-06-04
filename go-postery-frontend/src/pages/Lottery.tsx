@@ -48,9 +48,15 @@ type LotteryOrder = {
   created_at?: string
 }
 
+type LotteryDrawStatus = 'won' | 'pending_order' | 'missed' | 'sold_out' | 'unknown'
+
 type LotteryDrawResult = {
   gift: GiftItem
   tempOrderId: string
+  success?: boolean
+  description?: string
+  userId?: string
+  status: LotteryDrawStatus
 }
 
 const DECISION_SECONDS = 600
@@ -75,14 +81,31 @@ const DEFAULT_LOSE_GIFT: GiftItem = {
   prize: 0,
 }
 
+const RESULT_DESCRIPTION_SUCCESS = '抽奖成功'
+const RESULT_DESCRIPTION_NO_GIFTS = '奖品已抽完'
+const RESULT_DESCRIPTION_MISS = '很遗憾，未抽中奖品，谢谢参与'
+const RESULT_DESCRIPTION_TEMP_ORDER = '当前已有订单'
+
+const readString = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+
+const readBoolean = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true') return true
+    if (normalized === 'false') return false
+  }
+  return undefined
+}
+
 const normalizeGift = (raw: any): GiftItem | null => {
   if (!raw) return null
-  const id = normalizeId(raw.id ?? raw.Id ?? raw.ID)
-  const name = typeof raw.name === 'string' ? raw.name.trim() : ''
+  const id = normalizeId(raw.id ?? raw.Id ?? raw.ID ?? raw.gift_id ?? raw.GiftID)
+  const name = readString(raw.name ?? raw.Name)
   if (!id || !name) return null
-  const avatar = typeof raw.avatar === 'string' ? raw.avatar.trim() : ''
-  const description = typeof raw.description === 'string' ? raw.description.trim() : ''
-  const prizeValue = Number(raw.prize)
+  const avatar = readString(raw.avatar ?? raw.Avatar)
+  const description = readString(raw.description ?? raw.Description)
+  const prizeValue = Number(raw.prize ?? raw.Prize)
   const prize = Number.isFinite(prizeValue) ? prizeValue : undefined
   return {
     id,
@@ -93,9 +116,33 @@ const normalizeGift = (raw: any): GiftItem | null => {
   }
 }
 
+const isLoseGift = (gift: GiftItem | null) => {
+  if (!gift) return false
+  const normalizedName = gift.name.trim()
+  return normalizeId(gift.id) === '0' || normalizedName === '谢谢参与'
+}
+
+const fallbackGiftFromDescription = (description: string): GiftItem | null => {
+  if (!description) return null
+  if (description.includes(RESULT_DESCRIPTION_NO_GIFTS)) {
+    return {
+      ...DEFAULT_LOSE_GIFT,
+      name: RESULT_DESCRIPTION_NO_GIFTS,
+      description,
+    }
+  }
+  if (description.includes('未抽中') || description.includes('谢谢参与')) {
+    return {
+      ...DEFAULT_LOSE_GIFT,
+      description,
+    }
+  }
+  return null
+}
+
 const normalizeOrder = (raw: any): LotteryOrder | null => {
   if (!raw) return null
-  const id = normalizeId(raw.id ?? raw.Id ?? raw.ID)
+  const id = normalizeId(raw.id ?? raw.Id ?? raw.ID ?? raw.order_id ?? raw.OrderID)
   if (!id) return null
   const userRaw = raw.user ?? raw.User ?? {}
   const userId = normalizeId(userRaw.id ?? userRaw.Id ?? userRaw.ID)
@@ -118,7 +165,9 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
       ? raw.created_at
       : typeof raw.createdAt === 'string'
         ? raw.createdAt
-        : ''
+        : typeof raw.CreatedAt === 'string'
+          ? raw.CreatedAt
+          : ''
   return {
     id,
     user: {
@@ -133,9 +182,36 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
   }
 }
 
+const getDrawStatus = (
+  gift: GiftItem,
+  tempOrderId: string,
+  description: string
+): LotteryDrawStatus => {
+  if (description.includes(RESULT_DESCRIPTION_NO_GIFTS) || gift.name === RESULT_DESCRIPTION_NO_GIFTS) {
+    return 'sold_out'
+  }
+  if (tempOrderId && description.includes(RESULT_DESCRIPTION_TEMP_ORDER) && !isLoseGift(gift)) {
+    return 'pending_order'
+  }
+  if (description.includes('未抽中') || isLoseGift(gift)) {
+    return 'missed'
+  }
+  if (tempOrderId && !isLoseGift(gift)) {
+    return 'won'
+  }
+  return 'unknown'
+}
+
 const normalizeDrawResult = (raw: any): LotteryDrawResult | null => {
   if (!raw) return null
-  const gift = normalizeGift(raw.gift ?? raw.Gift ?? raw)
+  const responseGift = raw.gift ?? raw.Gift
+  const description = readString(
+    raw.result_description ??
+    raw.resultDescription ??
+    raw.ResultDescription ??
+    (responseGift ? raw.description ?? raw.Description : undefined)
+  )
+  const gift = normalizeGift(responseGift ?? raw) ?? fallbackGiftFromDescription(description)
   if (!gift) return null
   const tempOrderId = normalizeId(
     raw.temp_order_id ??
@@ -143,13 +219,50 @@ const normalizeDrawResult = (raw: any): LotteryDrawResult | null => {
     raw.TempOrderID ??
     raw.tempOrderId
   )
-  return { gift, tempOrderId }
+  const userId = normalizeId(raw.user_id ?? raw.userId ?? raw.UserID)
+  return {
+    gift,
+    tempOrderId,
+    success: readBoolean(raw.success ?? raw.Success),
+    description: description || undefined,
+    userId: userId || undefined,
+    status: getDrawStatus(gift, tempOrderId, description),
+  }
 }
 
-const isLoseGift = (gift: GiftItem | null) => {
-  if (!gift) return false
-  const normalizedName = gift.name.trim()
-  return normalizeId(gift.id) === '0' || normalizedName === '谢谢参与'
+const isPayableDrawResult = (drawResult: LotteryDrawResult) => {
+  return Boolean(drawResult.tempOrderId) && !isLoseGift(drawResult.gift)
+}
+
+const getDrawNotice = (drawResult: LotteryDrawResult) => {
+  if (drawResult.status === 'pending_order') {
+    return '检测到已有待处理订单，请继续支付或放弃。'
+  }
+  if (drawResult.status === 'sold_out') {
+    return drawResult.description || RESULT_DESCRIPTION_NO_GIFTS
+  }
+  if (drawResult.status === 'missed') {
+    return drawResult.description && drawResult.description !== RESULT_DESCRIPTION_MISS
+      ? drawResult.description
+      : null
+  }
+  if (drawResult.description && drawResult.description !== RESULT_DESCRIPTION_SUCCESS) {
+    return drawResult.description
+  }
+  return null
+}
+
+const getHistoryStatus = (drawResult: LotteryDrawResult) => {
+  switch (drawResult.status) {
+    case 'pending_order':
+      return '已有待确认订单'
+    case 'missed':
+      return '未中奖'
+    case 'sold_out':
+      return RESULT_DESCRIPTION_NO_GIFTS
+    default:
+      return isPayableDrawResult(drawResult) ? '等待确认' : '未中奖'
+  }
 }
 
 const formatCountdown = (value: number) => {
@@ -190,6 +303,7 @@ export default function Lottery() {
   const [isGiftsLoading, setIsGiftsLoading] = useState(false)
   const [giftsError, setGiftsError] = useState<string | null>(null)
   const [drawError, setDrawError] = useState<string | null>(null)
+  const [drawNotice, setDrawNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<'pay' | 'giveup' | null>(null)
   const [latestOrder, setLatestOrder] = useState<LotteryOrder | null>(null)
@@ -352,12 +466,14 @@ export default function Lottery() {
     )
   }, [])
 
-  const submitGiveup = useCallback(async (mode: 'manual' | 'timeout') => {
-    if (isSubmittingRef.current) return
+  const submitGiveup = useCallback(async (mode: 'manual' | 'timeout' | 'release') => {
+    const isRelease = mode === 'release'
+    if (isSubmittingRef.current && !isRelease) return
     const gift = activeGiftRef.current
     const activeTempOrderId = activeTempOrderIdRef.current
-    if (!gift || isLoseGift(gift)) return
-    if (decisionStateRef.current !== 'pending') return
+    if (!gift) return
+    if (!isRelease && isLoseGift(gift)) return
+    if (!isRelease && decisionStateRef.current !== 'pending') return
     if (!userId) {
       if (mode === 'manual') {
         alert('请先登录后再操作')
@@ -391,22 +507,32 @@ export default function Lottery() {
         resetDecisionTimer()
         updateHistoryStatus('已主动放弃')
       }
+      if (!isRelease) {
+        setDrawNotice(null)
+      }
       setTempOrderId('')
       activeTempOrderIdRef.current = ''
     } catch (error) {
       console.error('放弃支付失败:', error)
       const message = error instanceof Error ? error.message : '放弃支付失败'
-      setActionError(message)
+      if (isRelease) {
+        setDrawError(message)
+      } else {
+        setActionError(message)
+      }
     } finally {
       setIsSubmitting(null)
     }
   }, [navigate, resetDecisionTimer, updateHistoryStatus, userId])
 
-  const startDecisionWindow = useCallback((gift: GiftItem) => {
-    if (isLoseGift(gift)) {
+  const startDecisionWindow = useCallback((drawResult: LotteryDrawResult) => {
+    if (!isPayableDrawResult(drawResult)) {
       setDecisionState('missed')
       resetDecisionTimer()
-      updateHistoryStatus('未中奖')
+      updateHistoryStatus(getHistoryStatus(drawResult))
+      if (drawResult.tempOrderId) {
+        void submitGiveup('release')
+      }
       return
     }
 
@@ -460,6 +586,7 @@ export default function Lottery() {
     setTempOrderId('')
     activeTempOrderIdRef.current = ''
     setDrawError(null)
+    setDrawNotice(null)
     setActionError(null)
     resetDecisionTimer()
 
@@ -486,6 +613,7 @@ export default function Lottery() {
         setResult(gift)
         setTempOrderId(drawResult.tempOrderId)
         activeTempOrderIdRef.current = drawResult.tempOrderId
+        setDrawNotice(getDrawNotice(drawResult))
         setIsSpinning(false)
         const recordId = Date.now()
         activeRecordId.current = recordId
@@ -493,13 +621,13 @@ export default function Lottery() {
           {
             id: recordId,
             prize: gift.name,
-            status: isLoseGift(gift) ? '未中奖' : '等待确认',
+            status: getHistoryStatus(drawResult),
             time: new Date().toLocaleTimeString(),
           },
           ...prev,
         ].slice(0, MAX_HISTORY))
 
-        startDecisionWindow(gift)
+        startDecisionWindow(drawResult)
       }, SPIN_TIMEOUT)
     } catch (error) {
       console.error('Failed to draw lottery:', error)
@@ -534,6 +662,7 @@ export default function Lottery() {
       resetDecisionTimer()
       setTempOrderId('')
       activeTempOrderIdRef.current = ''
+      setDrawNotice(null)
       updateHistoryStatus('已支付领取')
       void fetchLatestOrder()
     } catch (error) {
@@ -551,6 +680,7 @@ export default function Lottery() {
     setTempOrderId('')
     activeTempOrderIdRef.current = ''
     setDrawError(null)
+    setDrawNotice(null)
     setActionError(null)
     activeRecordId.current = null
   }
@@ -802,6 +932,13 @@ export default function Lottery() {
               </div>
             )}
 
+            {drawNotice && (
+              <div className="flex items-center gap-2 text-sm text-primary-700 bg-primary-50 border border-primary-100 px-3 py-2 rounded-lg">
+                <Clock3 className="h-4 w-4" />
+                {drawNotice}
+              </div>
+            )}
+
             {result && (
               <div className="space-y-3">
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
@@ -1005,7 +1142,7 @@ export default function Lottery() {
             <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
               <li>奖品列表实时同步后台接口，库存以系统数据为准。</li>
               <li>抽奖需登录，中奖后请在 {decisionMinutes} 分钟内完成支付或放弃。</li>
-              <li>抽到「谢谢参与」或奖品已抽完不会生成订单。</li>
+              <li>抽到「谢谢参与」或奖品已抽完不会进入支付流程。</li>
               <li>支付成功后可在「最新中奖结果」查看记录。</li>
               <li>抽奖记录仅保留本地最近 {MAX_HISTORY} 条。</li>
             </ul>
