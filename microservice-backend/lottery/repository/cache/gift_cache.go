@@ -11,11 +11,16 @@ import (
 )
 
 const (
-	lotteryGiftPrefix = "lottery:gift:"
+	lotteryGiftPrefix      = "lottery:gift:"
+	stockRollbackPrefix    = "lottery:stock_rollback:"
+	stockRollbackMarkerTTL = 0
 )
 
 //go:embed lua/decrease_inventory_script.lua
 var luaDecrInventoryScript string
+
+//go:embed lua/rollback_inventory_script.lua
+var luaRollbackInventoryScript string
 
 type redisGiftCache struct {
 	client redis.UniversalClient
@@ -82,4 +87,19 @@ func (cache *redisGiftCache) ReduceInventory(ctx context.Context, gid int64) err
 
 func (cache *redisGiftCache) IncreaseInventory(ctx context.Context, gid int64) error {
 	return cache.client.Incr(ctx, lotteryGiftPrefix+strconv.FormatInt(gid, 10)).Err()
+}
+
+func (cache *redisGiftCache) RollbackInventory(ctx context.Context, orderID, gid int64) error {
+	result, err := cache.client.Eval(ctx, luaRollbackInventoryScript, []string{giftKey(gid), stockRollbackKey(orderID)}, stockRollbackMarkerTTL).Int()
+	if err != nil {
+		return err
+	}
+	if result != 1 && result != 2 {
+		return ErrRollbackInventory
+	}
+	return nil
+}
+
+func stockRollbackKey(orderID int64) string {
+	return stockRollbackPrefix + strconv.FormatInt(orderID, 10)
 }

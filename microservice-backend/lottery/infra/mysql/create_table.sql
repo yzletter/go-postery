@@ -253,15 +253,16 @@ CREATE TABLE IF NOT EXISTS orders
     status                     INT      NOT NULL DEFAULT 0 COMMENT '订单状态 0 待支付，1 已支付，2 已放弃，3 已超时',
     paid_at                    DATETIME          DEFAULT NULL COMMENT '支付时间',
 
-    stock_rollback_status      INT      NOT NULL DEFAULT 0 COMMENT '回补状态 0 待回补，1 已回补，2 回补失败',
+    stock_rollback_status      INT      NOT NULL DEFAULT 0 COMMENT '回补状态 0 待回补，1 已回补，2 无需回补，3 回补失败',
     stock_rollback_retry_count INT      NOT NULL DEFAULT 0 COMMENT '已尝试回补次数',
-    next_rollback_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '下次回补时间',
+    next_rollback_at           DATETIME          DEFAULT NULL COMMENT '下次回补时间',
 
     created_at                 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at                 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted_at                 DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
 
     PRIMARY KEY (id),
+# todo user_id + lottery_id 构成
     UNIQUE KEY uq_user_id (user_id),
     KEY idx_timeout_scan (status, expire_at, stock_rollback_status, next_rollback_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '订单表';

@@ -74,22 +74,167 @@ func (dao *gormOrderDAO) CreateTempOrder(ctx context.Context, order *model.Order
 	}
 	return nil
 }
+
+// RecycleTempOrder 回收超时订单，返回是否需要回补缓存库存。
 func (dao *gormOrderDAO) RecycleTempOrder(ctx context.Context, uid int64, orderID int64) (bool, error) {
-	// 1. Pending -> Expired
 	now := time.Now()
 	result := dao.db.WithContext(ctx).Model(&model.Order{}).
-		Where("id = ? AND status = ? AND expire_at <= ? AND stock_rollback_status = ? AND deleted_at IS NULL",
-			orderID, model.OrderStatusPending, now, model.StockRollbackStatusPending).
+		Where("id = ? AND user_id = ? AND status = ? AND expire_at <= ? AND stock_rollback_status IN ? AND deleted_at IS NULL",
+			orderID, uid, model.OrderStatusPending, now, rollbackUnfinishedStatuses()).
 		Updates(map[string]interface{}{
 			"status": model.OrderStatusExpired,
 		})
 
 	if result.Error != nil {
 		return false, ErrServerInternal
-	} else if result.RowsAffected == 0 {
-		return false, ErrRecordNotFound
 	}
-	return true, nil
+	if result.RowsAffected > 0 {
+		return true, nil
+	}
+
+	order, err := dao.getByIDAndUserID(ctx, orderID, uid)
+	if err != nil {
+		if errors.Is(err, ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	switch order.Status {
+	case model.OrderStatusExpired:
+		return rollbackNeeded(order), nil
+	case model.OrderStatusCancelled:
+		return rollbackNeeded(order), nil
+	case model.OrderStatusPaid:
+		return false, nil
+	case model.OrderStatusPending:
+		if order.ExpireAt.After(now) {
+			return false, ErrRecordNotFound
+		}
+		return false, ErrServerInternal
+	default:
+		return false, nil
+	}
+}
+
+func (dao *gormOrderDAO) MarkRollbackDone(ctx context.Context, orderID int64) error {
+	result := dao.db.WithContext(ctx).Model(&model.Order{}).
+		Where("id = ? AND status IN ? AND stock_rollback_status IN ? AND deleted_at IS NULL",
+			orderID, rollbackOrderStatuses(), rollbackUnfinishedStatuses()).
+		Updates(map[string]interface{}{
+			"stock_rollback_status": model.StockRollbackStatusDone,
+			"next_rollback_at":      nil,
+		})
+
+	if result.Error != nil {
+		return ErrServerInternal
+	}
+	if result.RowsAffected > 0 {
+		return nil
+	}
+
+	order, err := dao.getByID(ctx, orderID)
+	if err != nil {
+		return err
+	}
+	if isRollbackOrderStatus(order.Status) && order.StockRollbackStatus == model.StockRollbackStatusDone {
+		return nil
+	}
+	return ErrRecordNotFound
+}
+
+func (dao *gormOrderDAO) MarkRollbackFailed(ctx context.Context, orderID int64, nextRollbackAt time.Time) error {
+	result := dao.db.WithContext(ctx).Model(&model.Order{}).
+		Where("id = ? AND status IN ? AND stock_rollback_status IN ? AND deleted_at IS NULL",
+			orderID, rollbackOrderStatuses(), rollbackUnfinishedStatuses()).
+		Updates(map[string]interface{}{
+			"stock_rollback_status":      model.StockRollbackStatusFailed,
+			"stock_rollback_retry_count": gorm.Expr("stock_rollback_retry_count + ?", 1),
+			"next_rollback_at":           nextRollbackAt,
+		})
+
+	if result.Error != nil {
+		return ErrServerInternal
+	}
+	if result.RowsAffected > 0 {
+		return nil
+	}
+
+	order, err := dao.getByID(ctx, orderID)
+	if err != nil {
+		return err
+	}
+	if isRollbackOrderStatus(order.Status) && order.StockRollbackStatus == model.StockRollbackStatusDone {
+		return nil
+	}
+	return ErrRecordNotFound
+}
+
+func (dao *gormOrderDAO) ListRollbackDueOrders(ctx context.Context, limit int) ([]*model.Order, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	now := time.Now()
+	var orders []*model.Order
+	result := dao.db.WithContext(ctx).Model(&model.Order{}).
+		Where(`stock_rollback_status IN ? AND deleted_at IS NULL AND (
+			(status IN ? AND (next_rollback_at IS NULL OR next_rollback_at <= ?)) OR
+			(status = ? AND expire_at <= ?)
+		)`,
+			rollbackUnfinishedStatuses(), rollbackOrderStatuses(), now, model.OrderStatusPending, now).
+		Order("expire_at ASC, next_rollback_at ASC").
+		Limit(limit).
+		Find(&orders)
+	if result.Error != nil {
+		return nil, ErrServerInternal
+	}
+	return orders, nil
+}
+
+func (dao *gormOrderDAO) getByID(ctx context.Context, orderID int64) (*model.Order, error) {
+	var order model.Order
+	result := dao.db.WithContext(ctx).Model(&model.Order{}).
+		Where("id = ? AND deleted_at IS NULL", orderID).
+		First(&order)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, ErrServerInternal
+	}
+	return &order, nil
+}
+
+func (dao *gormOrderDAO) getByIDAndUserID(ctx context.Context, orderID, uid int64) (*model.Order, error) {
+	var order model.Order
+	result := dao.db.WithContext(ctx).Model(&model.Order{}).
+		Where("id = ? AND user_id = ? AND deleted_at IS NULL", orderID, uid).
+		First(&order)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, ErrServerInternal
+	}
+	return &order, nil
+}
+
+func rollbackNeeded(order *model.Order) bool {
+	return order.StockRollbackStatus == model.StockRollbackStatusPending ||
+		order.StockRollbackStatus == model.StockRollbackStatusFailed
+}
+
+func rollbackUnfinishedStatuses() []int {
+	return []int{model.StockRollbackStatusPending, model.StockRollbackStatusFailed}
+}
+
+func rollbackOrderStatuses() []int {
+	return []int{model.OrderStatusExpired, model.OrderStatusCancelled}
+}
+
+func isRollbackOrderStatus(status int) bool {
+	return status == model.OrderStatusExpired || status == model.OrderStatusCancelled
 }
 
 func (dao *gormOrderDAO) PayTempOrder(ctx context.Context, orderID int64) error {
@@ -108,14 +253,15 @@ func (dao *gormOrderDAO) PayTempOrder(ctx context.Context, orderID int64) error 
 				return ErrRecordNotFound
 			}
 
-			// 2. Pending -> Paid 并更新支付时间
+			// 2. 订单 Pending -> Paid 并更新支付时间, 库存 Pending -> Unneeded
 			now := time.Now()
 			result := tx.Model(&model.Order{}).
 				Where("id = ? AND status = ? AND expire_at >= ? AND stock_rollback_status = ? AND deleted_at IS NULL",
 					orderID, model.OrderStatusPending, now, model.StockRollbackStatusPending).
 				Updates(map[string]interface{}{
-					"status":  model.OrderStatusPaid,
-					"paid_at": now,
+					"status":                model.OrderStatusPaid,
+					"paid_at":               now,
+					"stock_rollback_status": model.StockRollbackStatusUnneeded,
 				})
 
 			if result.Error != nil {

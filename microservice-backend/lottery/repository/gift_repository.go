@@ -60,6 +60,14 @@ func (repo *giftRepository) IncreaseCacheInventory(ctx context.Context, gid int6
 	return nil
 }
 
+func (repo *giftRepository) RollbackCacheInventory(ctx context.Context, orderID, gid int64) error {
+	err := repo.cache.RollbackInventory(ctx, orderID, gid)
+	if err != nil {
+		return ErrResourceConflict
+	}
+	return nil
+}
+
 func (repo *giftRepository) InitCacheInventory(ctx context.Context) {
 	gifts, err := repo.dao.GetAll(ctx)
 	if err != nil {

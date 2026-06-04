@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/yzletter/go-postery/microservice-backend/lottery/model"
 	"github.com/yzletter/go-postery/microservice-backend/lottery/repository/cache"
@@ -52,10 +53,32 @@ func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*mode
 
 func (repo *orderRepository) RecycleTempOrder(ctx context.Context, uid, tempOrderID int64) (bool, error) {
 	if ok, err := repo.dao.RecycleTempOrder(ctx, uid, tempOrderID); err != nil {
-		return false, ErrServerInternal
+		return false, toRepositoryErr(err)
 	} else {
 		return ok, nil
 	}
+}
+
+func (repo *orderRepository) MarkRollbackDone(ctx context.Context, orderID int64) error {
+	if err := repo.dao.MarkRollbackDone(ctx, orderID); err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *orderRepository) MarkRollbackFailed(ctx context.Context, orderID int64, nextRollbackAt time.Time) error {
+	if err := repo.dao.MarkRollbackFailed(ctx, orderID, nextRollbackAt); err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *orderRepository) ListRollbackDueOrders(ctx context.Context, limit int) ([]*model.Order, error) {
+	orders, err := repo.dao.ListRollbackDueOrders(ctx, limit)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return orders, nil
 }
 
 func (repo *orderRepository) GetOrder(ctx context.Context, uid int64) (*model.Order, error) {

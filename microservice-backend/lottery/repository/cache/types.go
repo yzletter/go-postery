@@ -19,4 +19,5 @@ type GiftCache interface {
 	GetAllInventory(ctx context.Context) ([]*model.Gift, error)
 	ReduceInventory(ctx context.Context, gid int64) error
 	IncreaseInventory(ctx context.Context, gid int64) error
+	RollbackInventory(ctx context.Context, orderID, gid int64) error
 }
