@@ -4,7 +4,7 @@
 // - protoc             v6.33.2
 // source: api/proto/lottery/v1/lottery.proto
 
-package v1_lottery_grpc
+package lottery_grpc
 
 import (
 	context "context"

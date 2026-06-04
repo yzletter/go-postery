@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: api/proto/lottery/v1/lottery.proto
 
-package v1_lottery_grpc
+package lottery_grpc
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -397,6 +397,9 @@ type LotteryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Gift          *Gift                  `protobuf:"bytes,1,opt,name=Gift,proto3" json:"Gift,omitempty"`
 	TempOrderID   int64                  `protobuf:"varint,2,opt,name=TempOrderID,proto3" json:"TempOrderID,omitempty"`
+	Success       bool                   `protobuf:"varint,3,opt,name=Success,proto3" json:"Success,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=Description,proto3" json:"Description,omitempty"`
+	UserID        int64                  `protobuf:"varint,5,opt,name=UserID,proto3" json:"UserID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -445,6 +448,27 @@ func (x *LotteryResponse) GetTempOrderID() int64 {
 	return 0
 }
 
+func (x *LotteryResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *LotteryResponse) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *LotteryResponse) GetUserID() int64 {
+	if x != nil {
+		return x.UserID
+	}
+	return 0
+}
+
 var File_api_proto_lottery_v1_lottery_proto protoreflect.FileDescriptor
 
 const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
@@ -472,16 +496,19 @@ const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
 	"\vDescription\x18\x04 \x01(\tR\vDescription\x12\x14\n" +
 	"\x05Prize\x18\x05 \x01(\x03R\x05Prize\"/\n" +
 	"\x05Gifts\x12&\n" +
-	"\x05Gifts\x18\x01 \x03(\v2\x10.lottery.v1.GiftR\x05Gifts\"Y\n" +
+	"\x05Gifts\x18\x01 \x03(\v2\x10.lottery.v1.GiftR\x05Gifts\"\xad\x01\n" +
 	"\x0fLotteryResponse\x12$\n" +
 	"\x04Gift\x18\x01 \x01(\v2\x10.lottery.v1.GiftR\x04Gift\x12 \n" +
-	"\vTempOrderID\x18\x02 \x01(\x03R\vTempOrderID2\xc4\x02\n" +
+	"\vTempOrderID\x18\x02 \x01(\x03R\vTempOrderID\x12\x18\n" +
+	"\aSuccess\x18\x03 \x01(\bR\aSuccess\x12 \n" +
+	"\vDescription\x18\x04 \x01(\tR\vDescription\x12\x16\n" +
+	"\x06UserID\x18\x05 \x01(\x03R\x06UserID2\xc4\x02\n" +
 	"\x0eLotteryService\x12:\n" +
 	"\vGetAllGifts\x12\x18.lottery.v1.EmptyRequest\x1a\x11.lottery.v1.Gifts\x12:\n" +
 	"\aLottery\x12\x12.lottery.v1.UserID\x1a\x1b.lottery.v1.LotteryResponse\x12B\n" +
 	"\x03Pay\x12 .lottery.v1.LotteryCommonRequest\x1a\x19.lottery.v1.EmptyResponse\x12E\n" +
 	"\x06GiveUp\x12 .lottery.v1.LotteryCommonRequest\x1a\x19.lottery.v1.EmptyResponse\x12/\n" +
-	"\x06Result\x12\x12.lottery.v1.UserID\x1a\x11.lottery.v1.OrderBBZ@github.con/yzletter/go-postery/api/proto/lottery/v1:lottery_grpcb\x06proto3"
+	"\x06Result\x12\x12.lottery.v1.UserID\x1a\x11.lottery.v1.OrderBBZ@github.com/yzletter/go-postery/api/proto/lottery/v1;lottery_grpcb\x06proto3"
 
 var (
 	file_api_proto_lottery_v1_lottery_proto_rawDescOnce sync.Once

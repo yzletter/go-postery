@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package lottery.v1;
 
-option go_package = "github.con/yzletter/go-postery/api/proto/lottery/v1:lottery_grpc";
+option go_package = "github.com/yzletter/go-postery/api/proto/lottery/v1;lottery_grpc";
 
 message EmptyRequest {}
 message EmptyResponse {}
@@ -40,6 +40,9 @@ message Gifts {
 message LotteryResponse {
   Gift Gift = 1;
   int64 TempOrderID = 2;
+  bool Success = 3;
+  string Description = 4;
+  int64 UserID = 5;
 }
 
 

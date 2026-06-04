@@ -57,7 +57,12 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 		return
 	}
 
-	response.Success(ctx, "抽奖成功", lottery.ToLotteryResultDTO(result))
+	resultDTO := lottery.ToLotteryResultDTO(result)
+	message := resultDTO.ResultDescription
+	if message == "" {
+		message = "抽奖成功"
+	}
+	response.Success(ctx, message, resultDTO)
 }
 
 func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {

@@ -29,16 +29,41 @@ func ToGiftDTO(gift *lottery_grpc.Gift) GiftDTO {
 
 type LotteryResultDTO struct {
 	GiftDTO
-	TempOrderID int64 `json:"temp_order_id,string,omitempty"`
+	TempOrderID       int64  `json:"temp_order_id,string,omitempty"`
+	Success           bool   `json:"success"`
+	ResultDescription string `json:"result_description,omitempty"`
+	UserID            int64  `json:"user_id,string,omitempty"`
 }
 
 func ToLotteryResultDTO(result *lottery_grpc.LotteryResponse) LotteryResultDTO {
 	if result == nil {
 		return LotteryResultDTO{}
 	}
+	gift := ToGiftDTO(result.Gift)
+	if gift.ID == 0 && gift.Name == "" && result.Description != "" {
+		gift = GiftDTO{
+			ID:          0,
+			Name:        lotteryResultName(result.Description),
+			Description: result.Description,
+		}
+	}
 	return LotteryResultDTO{
-		GiftDTO:     ToGiftDTO(result.Gift),
-		TempOrderID: result.TempOrderID,
+		GiftDTO:           gift,
+		TempOrderID:       result.TempOrderID,
+		Success:           result.Success,
+		ResultDescription: result.Description,
+		UserID:            result.UserID,
+	}
+}
+
+func lotteryResultName(description string) string {
+	switch description {
+	case "奖品已抽完":
+		return "奖品已抽完"
+	case "很遗憾，未抽中奖品，谢谢参与":
+		return "谢谢参与"
+	default:
+		return description
 	}
 }
 

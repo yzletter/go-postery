@@ -165,6 +165,19 @@
 | description | string | 描述 |
 | prize | int | 奖品价格 |
 
+### LotteryResultDTO
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | string | 奖品 ID，未中奖或无库存时为 "0" |
+| name | string | 奖品名称，未中奖时可能为 "谢谢参与" |
+| avatar | string | 奖品图片 |
+| description | string | 奖品描述或抽奖结果描述 |
+| prize | int | 奖品价格 |
+| temp_order_id | string | 临时订单 ID |
+| success | bool | 抽奖服务返回的业务状态 |
+| result_description | string | 抽奖结果描述 |
+| user_id | string | 用户 ID |
+
 ### OrderDTO
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -294,12 +307,14 @@
 | --- | --- | --- | --- | --- |
 | user_id | string | 是 | - | 用户 ID |
 | gift_id | string | 是 | - | 奖品 ID |
+| temp_order_id | string | 是 | - | 临时订单 ID |
 
 ### LotteryGiveUpRequest
 | 字段 | 类型 | 必填 | 约束 | 说明 |
 | --- | --- | --- | --- | --- |
 | user_id | string | 是 | - | 用户 ID |
 | gift_id | string | 是 | - | 奖品 ID |
+| temp_order_id | string | 是 | - | 临时订单 ID |
 
 ### AgentChatRequest
 | 字段 | 类型 | 必填 | 约束 | 说明 |
@@ -531,7 +546,7 @@
 
 ### GET /api/v1/lottery/lucky
 - 认证: 是
-- 响应 data: GiftDTO
+- 响应 data: LotteryResultDTO
 - 备注: 未抽中时可能返回 name 为 "谢谢参与" 或 "奖品已抽完" 的奖品
 
 ### POST /api/v1/lottery/giveup

@@ -28,6 +28,9 @@ func ToLotteryResponse(result *LotteryResult) *lottery_grpc.LotteryResponse {
 	return &lottery_grpc.LotteryResponse{
 		Gift:        ToGift(result.Gift),
 		TempOrderID: result.OrderID,
+		Success:     result.Success,
+		Description: result.Description,
+		UserID:      result.UserID,
 	}
 }
 
