@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"syscall"
 	"time"
@@ -24,20 +25,33 @@ import (
 	service2 "github.com/yzletter/go-postery/microservice-backend/bff/service"
 )
 
-const (
-	ServiceName = "bff_service"
-	GoPostery   = "go_postery_"
-	//GoPostery    = "test_go_postery_"
-	EtcdEndPoint = "172.16.131.223:2379"
-	//EtcdEndPoint = "localhost:12379"
+var (
+	ServiceName  string // 微服务名
+	GoPostery    string // GoPostery 公共配置前缀
+	EtcdEndPoint string // etcd 地址
 )
 
 func main() {
+	// 启动参数, 默认线上环境
+	env := flag.String("env", "production", "运行环境: local/production")
+	flag.Parse()
+
+	// 本地测试
+	if *env == "local" {
+		ServiceName = "test_bff_service"
+		GoPostery = "test_go_postery"
+		EtcdEndPoint = "localhost:12379"
+	} else {
+		ServiceName = "bff_service"
+		GoPostery = "go_postery"
+		EtcdEndPoint = "172.16.131.223:2379"
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                           // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery) // Get Config From Remote Config Center
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                               // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery+"_") // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
 
 	// gRPC Common Infrastructure
