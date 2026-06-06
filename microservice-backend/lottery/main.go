@@ -81,7 +81,7 @@ func main() {
 
 	// Service 层
 	MetricService := service.NewMetricService(ServiceName)
-	RateLimitService := service.NewRateLimitService(RedisClient, 5*time.Second, 5*2000)
+	RateLimitService := service.NewRateLimitService(RedisClient, 5*time.Second, 5*5000)
 	LotteryService := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ, IDGenerator) // 注册 LotteryService
 	LotteryService.InitCacheInventory(context.Background())
 	go LotteryService.StartLotteryOrderConsumer(context.Background()) // 开启协程核查临时订单进行库存回流
