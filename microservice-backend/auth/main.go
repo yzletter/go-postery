@@ -16,6 +16,7 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/auth/config"
 	grpc_server "github.com/yzletter/go-postery/microservice-backend/auth/grpc"
 	"github.com/yzletter/go-postery/microservice-backend/auth/grpc/client"
+	"github.com/yzletter/go-postery/microservice-backend/auth/grpc/hub"
 	infraEtcd "github.com/yzletter/go-postery/microservice-backend/auth/infra/etcd"
 	"github.com/yzletter/go-postery/microservice-backend/auth/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/microservice-backend/auth/infra/jaeger"
@@ -33,8 +34,9 @@ import (
 )
 
 var (
-	ServiceName  string // 微服务名
-	GoPostery    string // GoPostery 公共配置前缀
+	ServiceName  string = "auth_service" // 微服务名
+	GoPostery    string = "go_postery"   // GoPostery 公共配置前缀
+	prefix       string = ""
 	EtcdEndPoint string // etcd 地址
 )
 
@@ -45,25 +47,22 @@ func main() {
 
 	// 本地测试
 	if *env == "local" {
-		ServiceName = "test_auth_service"
-		GoPostery = "test_go_postery"
+		prefix = "test_"
 		EtcdEndPoint = "localhost:12379"
 	} else {
-		ServiceName = "auth_service"
-		GoPostery = "go_postery"
 		EtcdEndPoint = "172.16.131.223:2379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                               // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery+"_") // Get Config From Remote Config Center
-	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                             // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
+	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
 	// gRPC Common Infrastructure
-	infraSlog.InitSlog(Config.Log)                                            // Init Slog
-	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, ServiceName) // Init JaegerTracer
+	infraSlog.InitSlog(Config.Log)                                                   // Init Slog
+	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, prefix+ServiceName) // Init JaegerTracer
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(Config.Redis)           // Init Redis
@@ -88,12 +87,16 @@ func main() {
 	// Service 层
 	AuthService := service.NewAuthService(AuthRepo, JwtManager, PasswordHasher, IDGenerator, CodeClient) // 注册 AuthService
 	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := service.NewMetricService(ServiceName)
+	MetricService := service.NewMetricService(prefix + ServiceName)
+
+	// ServiceHub
+	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
 
 	// gRPC Server
 	AuthServiceServer := grpc_server.NewAuthServiceServer(AuthService)
 	server := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(ServiceName+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -109,18 +112,37 @@ func main() {
 		}
 	}()
 
+	// Start gRPC Server
+	if lis, err := net.Listen("tcp", Config.GRPC.Addr); err != nil {
+		panic(err)
+	} else {
+		go func() {
+			if err := server.Serve(lis); err != nil {
+				slog.Error("Service gRPC Server Start Failed", "service", prefix+ServiceName, "error", err)
+				panic(err)
+			}
+		}()
+	}
+
+	// 向服务中心注册服务, 这里不加前缀 prefix
+	if leaseID, err := ServiceHubProxy.Register(ctx, ServiceName, Config.GRPC.Addr, 0); err != nil {
+		slog.Error("Service Auth Server Register Failed", "service", ServiceName, "error", err)
+		panic(err)
+	} else {
+		// 自动续约
+		go func() {
+			for {
+				leaseID, err = ServiceHubProxy.Register(ctx, ServiceName, Config.GRPC.Addr, leaseID)
+				if err != nil {
+					slog.Error("Service Auth Server Register Failed", "service", ServiceName, "error", err)
+				}
+				time.Sleep(time.Duration(Config.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
+			}
+		}()
+	}
+
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
 		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).AddFunc(CodeClient.Close).
-		Build()
-
-	// Start gRPC Server
-	lis, err := net.Listen("tcp", Config.GRPC.Addr)
-	if err != nil {
-		panic(err)
-	}
-	if err := server.Serve(lis); err != nil {
-		slog.Error("Service gRPC Server Start Failed", "service", ServiceName, "error", err)
-		panic(err)
-	}
+		BuildBlock()
 }

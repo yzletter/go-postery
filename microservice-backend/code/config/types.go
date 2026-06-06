@@ -11,13 +11,14 @@ type Config struct {
 }
 
 type CommonMicroServiceConfig struct {
-	MySQL    MySQLConfig
-	Redis    RedisConfig
-	Kafka    KafkaConfig
-	RabbitMQ RabbitMQConfig
-	RocketMQ RocketMQConfig
-	Qdrant   QdrantConfig
-	Jaeger   JaegerConfig
+	MySQL      MySQLConfig
+	Redis      RedisConfig
+	Kafka      KafkaConfig
+	RabbitMQ   RabbitMQConfig
+	RocketMQ   RocketMQConfig
+	Qdrant     QdrantConfig
+	Jaeger     JaegerConfig
+	ServiceHub ServiceHubConfig
 }
 
 type RedisConfig struct {
@@ -82,4 +83,9 @@ type LogConfig struct {
 
 type GRPCConfig struct {
 	Addr string
+}
+
+type ServiceHubConfig struct {
+	HeartbeatFrequency    int
+	ServiceRegisterPrefix string
 }

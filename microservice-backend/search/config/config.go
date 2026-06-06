@@ -53,6 +53,8 @@ func loadCommonMicroServiceConfig(ctx context.Context, client *etcdv3.Client, pr
 		// 链路追踪与向量数据库
 		Jaeger: loadJaegerConfig(ctx, client, prefix),
 		Qdrant: loadQdrantConfig(ctx, client, prefix),
+		// 服务发现
+		ServiceHub: loadServiceHubConfig(ctx, client, prefix),
 	}
 }
 
@@ -279,6 +281,28 @@ func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) G
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
 			watchKeys[prefix+"grpc_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadServiceHubConfig(ctx context.Context, client *etcdv3.Client, prefix string) ServiceHubConfig {
+	var config ServiceHubConfig
+
+	// 获取心跳频率
+	if resp, err := client.Get(ctx, prefix+"service_hub_heartbeat_frequency"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.HeartbeatFrequency, _ = strconv.Atoi(string(resp.Kvs[0].Value))
+			watchKeys[prefix+"service_hub_heartbeat_frequency"] = struct{}{}
+		}
+	}
+
+	// 获取服务注册前缀
+	if resp, err := client.Get(ctx, prefix+"service_hub_register_prefix"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.ServiceRegisterPrefix = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"service_hub_register_prefix"] = struct{}{}
 		}
 	}
 
