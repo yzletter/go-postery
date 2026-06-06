@@ -15,6 +15,8 @@ var (
 	consumer rmq_client.SimpleConsumer
 	pOnce    sync.Once
 	cOnce    sync.Once
+	pFlag    bool
+	cFlag    bool
 )
 
 type RocketMQ struct {
@@ -24,8 +26,8 @@ type RocketMQ struct {
 
 func Init(config conf.RocketMQConfig) *RocketMQ {
 	// 初始化 RocketMQ 日志
-	os.Setenv(rmq_client.CLIENT_LOG_ROOT, "./logs")
-	os.Setenv(rmq_client.CLIENT_LOG_FILENAME, "rocketmq.log") // 封装的是 Zap log
+	_ = os.Setenv(rmq_client.CLIENT_LOG_ROOT, "./logs")
+	_ = os.Setenv(rmq_client.CLIENT_LOG_FILENAME, "rocketmq.log") // 封装的是 Zap log
 	rmq_client.ResetLogger()
 
 	rocketProducer := newProducer(config.Addr)
@@ -58,15 +60,20 @@ func newProducer(proxyEndpoint string) rmq_client.Producer {
 		)
 		if err != nil {
 			slog.Error("初始化 RocketMQ Producer 失败 ...", "error", err)
+			return
 		}
 
-		err = producer.Start()
-		if err != nil {
+		if err = producer.Start(); err != nil {
 			slog.Error("启动 RocketMQ Producer 失败 ...", "error", err)
+			return
 		}
+
+		pFlag = true
 	})
 
-	slog.Info("初始化 RocketMQ Producer 成功 ...")
+	if pFlag {
+		slog.Info("初始化 RocketMQ Producer 成功 ...")
+	}
 	return producer
 }
 
@@ -94,23 +101,28 @@ func newConsumer(proxyEndpoint string) rmq_client.SimpleConsumer {
 		)
 		if err != nil {
 			slog.Error("初始化 RocketMQ Consumer 失败 ...", "error", err)
+			return
 		}
 
-		err = consumer.Start()
-		if err != nil {
+		if err = consumer.Start(); err != nil {
 			slog.Error("启动 RocketMQ Consumer 失败 ...", "error", err)
+			return
 		}
+
+		cFlag = true
 	})
 
-	slog.Info("初始化 RocketMQ Consumer 成功 ...")
+	if cFlag {
+		slog.Info("初始化 RocketMQ Consumer 成功 ...")
+	}
 	return consumer
 }
 
 func Close() {
 	if producer != nil {
-		producer.GracefulStop()
+		_ = producer.GracefulStop()
 	}
 	if consumer != nil {
-		consumer.GracefulStop()
+		_ = consumer.GracefulStop()
 	}
 }
