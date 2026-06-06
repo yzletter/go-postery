@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/config"
+	"github.com/yzletter/go-postery/microservice-backend/code/conf"
 	"github.com/yzletter/go-postery/microservice-backend/code/service/ports"
 	"gopkg.in/gomail.v2"
 )
@@ -30,7 +30,7 @@ type VerifyEmailData struct {
 	Address   string
 }
 
-func NewSMTPEmailClient(config config.EmailConfig) ports.CodeClient {
+func NewSMTPEmailClient(config conf.EmailConfig) ports.CodeClient {
 	return &QQEmailSMTPManager{
 		from:      config.From,
 		authCode:  config.AuthCode,

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/config"
+	"github.com/yzletter/go-postery/microservice-backend/code/conf"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
@@ -20,7 +20,7 @@ type ETCDServiceHub struct {
 }
 
 // NewEtcdServiceHub 构造函数
-func NewEtcdServiceHub(config config.ServiceHubConfig, client *etcdv3.Client, loadBalancer LoadBalancer) *ETCDServiceHub {
+func NewEtcdServiceHub(config conf.ServiceHubConfig, client *etcdv3.Client, loadBalancer LoadBalancer) *ETCDServiceHub {
 	return &ETCDServiceHub{
 		heartbeatFrequency: int64(config.HeartbeatFrequency),
 		prefix:             config.ServiceRegisterPrefix,

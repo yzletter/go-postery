@@ -12,7 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
-	"github.com/yzletter/go-postery/microservice-backend/code/config"
+	"github.com/yzletter/go-postery/microservice-backend/code/conf"
 	"github.com/yzletter/go-postery/microservice-backend/code/grpc"
 	"github.com/yzletter/go-postery/microservice-backend/code/grpc/hub"
 	"github.com/yzletter/go-postery/microservice-backend/code/infra/email"
@@ -52,8 +52,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                             // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                           // Init Etcd
+	Config := conf.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
 	// Infra
@@ -65,7 +65,6 @@ func main() {
 
 	// Cache
 	CodeCache := cache.NewCodeCache(RedisClient)
-
 	// Repository
 	CodeRepository := repository.NewCodeRepository(CodeCache)
 

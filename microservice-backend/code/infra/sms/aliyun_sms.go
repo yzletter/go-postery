@@ -11,7 +11,6 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 	credential "github.com/aliyun/credentials-go/credentials"
 	"github.com/yzletter/go-postery/microservice-backend/code/conf"
-	"github.com/yzletter/go-postery/microservice-backend/code/config"
 	"github.com/yzletter/go-postery/microservice-backend/code/service/ports"
 )
 
@@ -19,7 +18,7 @@ type AliyunSmsClient struct {
 	internalClient *dypnsapi20170525.Client
 }
 
-func NewAliyunSmsClient(config config.SMSConfig) ports.CodeClient {
+func NewAliyunSmsClient(config conf.SMSConfig) ports.CodeClient {
 	AccessKeyId := config.AccessKeyID
 	AccessKeySecret := config.AccessKeySecret
 
