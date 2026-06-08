@@ -28,6 +28,7 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/user/repository/cache"
 	dao2 "github.com/yzletter/go-postery/microservice-backend/user/repository/dao"
 	service2 "github.com/yzletter/go-postery/microservice-backend/user/service"
+	"github.com/yzletter/go-postery/microservice-backend/user/utils"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
@@ -109,7 +110,15 @@ func main() {
 	}()
 
 	// Start gRPC Server
-	if lis, err := net.Listen("tcp", Config.GRPC.Addr); err != nil {
+	ip, err := utils.GetLocalIP() // 获取本地内网 IP
+	if err != nil {
+		slog.Error("Get Local IP Failed", "error", err)
+		panic(err)
+	}
+	grpcAddr := ip + ":" + Config.GRPC.Port
+
+	// 监听
+	if lis, err := net.Listen("tcp", grpcAddr); err != nil {
 		panic(err)
 	} else {
 		go func() {
@@ -121,14 +130,14 @@ func main() {
 	}
 
 	// 向服务中心注册服务, 这里不加前缀 prefix
-	if leaseID, err := ServiceHubProxy.Register(ctx, ServiceName, Config.GRPC.Addr, 0); err != nil {
+	if leaseID, err := ServiceHubProxy.Register(ctx, ServiceName, grpcAddr, 0); err != nil {
 		slog.Error("Service User Server Register Failed", "service", ServiceName, "error", err)
 		panic(err)
 	} else {
 		// 自动续约
 		go func() {
 			for {
-				leaseID, err = ServiceHubProxy.Register(ctx, ServiceName, Config.GRPC.Addr, leaseID)
+				leaseID, err = ServiceHubProxy.Register(ctx, ServiceName, grpcAddr, leaseID)
 				if err != nil {
 					slog.Error("Service User Server Register Failed", "service", ServiceName, "error", err)
 				}

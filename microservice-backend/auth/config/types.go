@@ -64,7 +64,7 @@ type MetricConfig struct {
 }
 
 type GRPCConfig struct {
-	Addr string
+	Port string
 }
 
 type ServiceHubConfig struct {

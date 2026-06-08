@@ -242,10 +242,10 @@ func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) G
 	var config GRPCConfig
 
 	// 获取 gRPC 端口
-	if resp, err := client.Get(ctx, prefix+"grpc_addr"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"grpc_port"); err == nil {
 		if len(resp.Kvs) > 0 {
-			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"grpc_addr"] = struct{}{}
+			config.Port = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"grpc_port"] = struct{}{}
 		}
 	}
 
