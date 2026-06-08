@@ -5,10 +5,7 @@ import (
 	"time"
 
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 )
 
 type sessionClient struct {
@@ -16,21 +13,8 @@ type sessionClient struct {
 	client session_grpc.SessionServiceClient
 }
 
-func NewSessionClient() (SessionClient, error) {
-	// 建议：启用 ka，避免中间网络设备把长连接静默掐掉
-	ka := keepalive.ClientParameters{
-		Time:                30 * time.Second,
-		Timeout:             10 * time.Second,
-		PermitWithoutStream: true,
-	}
-
-	conn, err := grpc.NewClient(
-		SessionClientAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // 生产用 TLS
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),       // Jaeger
-		grpc.WithKeepaliveParams(ka),
-	)
-	if err != nil {
+func NewSessionClient(conn *grpc.ClientConn) (SessionClient, error) {
+	if err := validateConn(conn); err != nil {
 		return nil, err
 	}
 

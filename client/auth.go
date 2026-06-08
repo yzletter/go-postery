@@ -5,10 +5,7 @@ import (
 	"time"
 
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 )
 
 type authClient struct {
@@ -16,21 +13,8 @@ type authClient struct {
 	client auth_grpc.AuthServiceClient
 }
 
-func NewAuthClient() (AuthClient, error) {
-	// 建议：启用 ka，避免中间网络设备把长连接静默掐掉
-	ka := keepalive.ClientParameters{
-		Time:                30 * time.Second,
-		Timeout:             10 * time.Second,
-		PermitWithoutStream: true,
-	}
-
-	conn, err := grpc.NewClient(
-		AuthClientAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // 生产用 TLS
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),       // Jaeger
-		grpc.WithKeepaliveParams(ka),
-	)
-	if err != nil {
+func NewAuthClient(conn *grpc.ClientConn) (AuthClient, error) {
+	if err := validateConn(conn); err != nil {
 		return nil, err
 	}
 

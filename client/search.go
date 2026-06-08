@@ -6,10 +6,7 @@ import (
 
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	search_model "github.com/yzletter/go-postery/microservice-backend/search/model"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 )
 
 type searchClient struct {
@@ -17,21 +14,8 @@ type searchClient struct {
 	client search_grpc.SearchServiceClient
 }
 
-func NewSearchClient() (SearchClient, error) {
-	// 建议：启用 ka，避免中间网络设备把长连接静默掐掉
-	ka := keepalive.ClientParameters{
-		Time:                30 * time.Second,
-		Timeout:             10 * time.Second,
-		PermitWithoutStream: true,
-	}
-
-	conn, err := grpc.NewClient(
-		SearchClientAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // 生产用 TLS
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),       // Jaeger
-		grpc.WithKeepaliveParams(ka),
-	)
-	if err != nil {
+func NewSearchClient(conn *grpc.ClientConn) (SearchClient, error) {
+	if err := validateConn(conn); err != nil {
 		return nil, err
 	}
 

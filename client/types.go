@@ -14,15 +14,19 @@ import (
 	search_model "github.com/yzletter/go-postery/microservice-backend/search/model"
 )
 
+type ServiceHub interface {
+	GetServiceEndpoint(ctx context.Context, service string) string
+}
+
 const (
-	CodeClientAddr    = "172.16.150.246:9001"
-	AuthClientAddr    = "172.16.150.246:9002"
-	LotteryClientAddr = "172.16.150.246:9003"
-	PostClientAddr    = "172.16.150.246:9004"
-	SearchClientAddr  = "172.16.52.125:9005"
-	AgentClientAddr   = "172.16.52.125:9006"
-	UserClientAddr    = "172.16.150.246:9007"
-	SessionClientAddr = "172.16.150.246:9008"
+	CodeServiceName    = "code_service"
+	AuthServiceName    = "auth_service"
+	LotteryServiceName = "lottery_service"
+	PostServiceName    = "post_service"
+	SearchServiceName  = "search_service"
+	AgentServiceName   = "agent_service"
+	UserServiceName    = "user_service"
+	SessionServiceName = "session_service"
 )
 
 type CodeClient interface {
