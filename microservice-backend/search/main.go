@@ -67,8 +67,17 @@ func main() {
 	Tokenizer := tokenizer.NewJiebaTokenizer()          // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
 
+	// ServiceHub
+	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
+
 	// gRPC Client
-	PostClient, err := client.NewPostClient()
+	ConnCenter := client.NewConnectionCenter(ServiceHubProxy)
+	PostConn, err := ConnCenter.NewConnection(ctx, client.PostServiceName)
+	if err != nil {
+		slog.Error("Init Post gRPC Connection Failed", "error", err)
+	}
+	PostClient, err := client.NewPostClient(PostConn)
 	if err != nil {
 		slog.Error("Init Post gRPC Client Failed", "error", err)
 	}
@@ -79,10 +88,6 @@ func main() {
 
 	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service2.NewMetricService(prefix + ServiceName)
-
-	// ServiceHub
-	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
-	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
 
 	// gRPC Server
 	SearchServiceServer := grpc_server.NewSearchServiceServer(SearchService)

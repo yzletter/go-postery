@@ -79,8 +79,17 @@ func main() {
 	// Repository 层
 	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
 
+	// ServiceHub
+	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
+
 	// gRPC Client
-	CodeClient, err := client.NewCodeClient()
+	ConnCenter := client.NewConnectionCenter(ServiceHubProxy)
+	CodeConn, err := ConnCenter.NewConnection(ctx, client.CodeServiceName)
+	if err != nil {
+		slog.Error("Init Code gRPC Connection Failed", "error", err)
+	}
+	CodeClient, err := client.NewCodeClient(CodeConn)
 	if err != nil {
 		slog.Error("Init Code gRPC Client Failed", "error", err)
 	}
@@ -89,10 +98,6 @@ func main() {
 	AuthService := service.NewAuthService(AuthRepo, JwtManager, PasswordHasher, IDGenerator, CodeClient) // 注册 AuthService
 	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
 	MetricService := service.NewMetricService(prefix + ServiceName)
-
-	// ServiceHub
-	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
-	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
 
 	// gRPC Server
 	AuthServiceServer := grpc_server.NewAuthServiceServer(AuthService)
@@ -152,6 +157,6 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).AddFunc(CodeClient.Close).
+		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		BuildBlock()
 }

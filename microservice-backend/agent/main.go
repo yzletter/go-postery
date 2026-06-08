@@ -14,6 +14,7 @@ import (
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	"github.com/yzletter/go-postery/microservice-backend/agent/config"
 	grpc_server "github.com/yzletter/go-postery/microservice-backend/agent/grpc"
+	"github.com/yzletter/go-postery/microservice-backend/agent/grpc/client"
 	"github.com/yzletter/go-postery/microservice-backend/agent/grpc/hub"
 	infraEtcd "github.com/yzletter/go-postery/microservice-backend/agent/infra/etcd"
 	"github.com/yzletter/go-postery/microservice-backend/agent/infra/graceful_stop"
@@ -80,14 +81,26 @@ func main() {
 	AgentDAO := dao.NewAgentDAO(ctx, MySQLGormDB, QdrantClient, ArkEmbedder.GetInternal())
 	// Repository 层
 	AgentRepo := repository.NewAgentRepository(AgentDAO)
-	// Service 层
-	AgentService := service2.NewAgentService(AgentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator)
-	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := service2.NewMetricService(prefix + ServiceName)
 
 	// ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
 	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
+
+	// gRPC Client
+	ConnCenter := client.NewConnectionCenter(ServiceHubProxy)
+	PostConn, err := ConnCenter.NewConnection(ctx, client.PostServiceName)
+	if err != nil {
+		slog.Error("Init Post gRPC Connection Failed", "error", err)
+	}
+	PostClient, err := client.NewPostClient(PostConn)
+	if err != nil {
+		slog.Error("Init Post gRPC Client Failed", "error", err)
+	}
+
+	// Service 层
+	AgentService := service2.NewAgentService(AgentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator, PostClient)
+	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 10)
+	MetricService := service2.NewMetricService(prefix + ServiceName)
 
 	go AgentService.StartChunkDocConsumer(ctx)     // 开启切分文档协程
 	go AgentService.StartUpsertQdrantConsumer(ctx) // 开启向量数据库协程

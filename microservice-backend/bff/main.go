@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"syscall"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/bff/conf"
 	"github.com/yzletter/go-postery/microservice-backend/bff/config"
 	"github.com/yzletter/go-postery/microservice-backend/bff/grpc/client"
+	"github.com/yzletter/go-postery/microservice-backend/bff/grpc/hub"
 	handler2 "github.com/yzletter/go-postery/microservice-backend/bff/handler"
 	"github.com/yzletter/go-postery/microservice-backend/bff/infra/crontab"
 	infraEtcd "github.com/yzletter/go-postery/microservice-backend/bff/infra/etcd"
@@ -62,15 +64,83 @@ func main() {
 	// Infrastructure 层
 	RabbitMQ := infraRabbitMQ.Init(Config.RabbitMQ) // 初始化 RabbitMQ
 
+	// ServiceHub
+	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
+	ConnCenter := client.NewConnectionCenter(ServiceHubProxy)
+
 	// GRPC Service 层
-	AuthServiceClient, _ := client.NewAuthClient()
-	CodeServiceClient, _ := client.NewCodeClient()
-	UserServiceClient, _ := client.NewUserClient()
-	PostServiceClient, _ := client.NewPostClient()
-	SearchServiceClient, _ := client.NewSearchClient()
-	AgentServiceClient, _ := client.NewAgentClient()
-	LotteryServiceClient, _ := client.NewLotteryClient()
-	SessionServiceClient, _ := client.NewSessionClient()
+	AuthConn, err := ConnCenter.NewConnection(ctx, client.AuthServiceName)
+	if err != nil {
+		slog.Error("Init Auth gRPC Connection Failed", "error", err)
+	}
+	AuthServiceClient, err := client.NewAuthClient(AuthConn)
+	if err != nil {
+		slog.Error("Init Auth gRPC Client Failed", "error", err)
+	}
+
+	CodeConn, err := ConnCenter.NewConnection(ctx, client.CodeServiceName)
+	if err != nil {
+		slog.Error("Init Code gRPC Connection Failed", "error", err)
+	}
+	CodeServiceClient, err := client.NewCodeClient(CodeConn)
+	if err != nil {
+		slog.Error("Init Code gRPC Client Failed", "error", err)
+	}
+
+	UserConn, err := ConnCenter.NewConnection(ctx, client.UserServiceName)
+	if err != nil {
+		slog.Error("Init User gRPC Connection Failed", "error", err)
+	}
+	UserServiceClient, err := client.NewUserClient(UserConn)
+	if err != nil {
+		slog.Error("Init User gRPC Client Failed", "error", err)
+	}
+
+	PostConn, err := ConnCenter.NewConnection(ctx, client.PostServiceName)
+	if err != nil {
+		slog.Error("Init Post gRPC Connection Failed", "error", err)
+	}
+	PostServiceClient, err := client.NewPostClient(PostConn)
+	if err != nil {
+		slog.Error("Init Post gRPC Client Failed", "error", err)
+	}
+
+	SearchConn, err := ConnCenter.NewConnection(ctx, client.SearchServiceName)
+	if err != nil {
+		slog.Error("Init Search gRPC Connection Failed", "error", err)
+	}
+	SearchServiceClient, err := client.NewSearchClient(SearchConn)
+	if err != nil {
+		slog.Error("Init Search gRPC Client Failed", "error", err)
+	}
+
+	AgentConn, err := ConnCenter.NewConnection(ctx, client.AgentServiceName)
+	if err != nil {
+		slog.Error("Init Agent gRPC Connection Failed", "error", err)
+	}
+	AgentServiceClient, err := client.NewAgentClient(AgentConn)
+	if err != nil {
+		slog.Error("Init Agent gRPC Client Failed", "error", err)
+	}
+
+	LotteryConn, err := ConnCenter.NewConnection(ctx, client.LotteryServiceName)
+	if err != nil {
+		slog.Error("Init Lottery gRPC Connection Failed", "error", err)
+	}
+	LotteryServiceClient, err := client.NewLotteryClient(LotteryConn)
+	if err != nil {
+		slog.Error("Init Lottery gRPC Client Failed", "error", err)
+	}
+
+	SessionConn, err := ConnCenter.NewConnection(ctx, client.SessionServiceName)
+	if err != nil {
+		slog.Error("Init Session gRPC Connection Failed", "error", err)
+	}
+	SessionServiceClient, err := client.NewSessionClient(SessionConn)
+	if err != nil {
+		slog.Error("Init Session gRPC Client Failed", "error", err)
+	}
 
 	// Service 层
 	MetricSvc := service2.NewMetricService()                                                              // 注册 MetricService

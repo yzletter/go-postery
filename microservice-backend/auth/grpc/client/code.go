@@ -5,10 +5,7 @@ import (
 	"time"
 
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 )
 
 type codeClient struct {
@@ -16,22 +13,8 @@ type codeClient struct {
 	client code_grpc.CodeServiceClient
 }
 
-func NewCodeClient() (CodeClient, error) {
-	// 建议：启用 ka，避免中间网络设备把长连接静默掐掉
-	ka := keepalive.ClientParameters{
-		Time:                30 * time.Second,
-		Timeout:             10 * time.Second,
-		PermitWithoutStream: true,
-	}
-
-	conn, err := grpc.NewClient(
-		CodeClientAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // 生产用 TLS
-		CircuitBreakerDialOption(),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()), // Jaeger
-		grpc.WithKeepaliveParams(ka),
-	)
-	if err != nil {
+func NewCodeClient(conn *grpc.ClientConn) (CodeClient, error) {
+	if err := validateConn(conn); err != nil {
 		return nil, err
 	}
 

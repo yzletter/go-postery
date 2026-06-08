@@ -49,6 +49,7 @@ func (center *ConnCenter) NewConnection(ctx context.Context, service string) (*g
 	return grpc.NewClient(
 		endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		CircuitBreakerDialOption(),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithKeepaliveParams(ka),
 	)
