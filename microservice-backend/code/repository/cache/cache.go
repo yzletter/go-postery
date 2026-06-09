@@ -3,6 +3,8 @@ package cache
 import (
 	"context"
 	_ "embed"
+	"errors"
+	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/microservice-backend/code/conf"
@@ -57,9 +59,27 @@ func (cache *redisCodeCache) Verify(ctx context.Context, biz int, identifier str
 		return false, nil
 	}
 
-	if ok, err := cache.client.Eval(ctx, verifyScript, []string{key}, code).Bool(); err != nil {
+	res, err := cache.client.Eval(ctx, verifyScript, []string{key}, code).Int()
+	if err != nil {
 		return false, err
-	} else {
-		return ok, nil
 	}
+
+	switch res {
+	case 0: // 验证码不存在或已过期
+		return false, nil
+	case 1: // 验证码错误
+		return false, nil
+	case 2: // 验证码正确
+		return true, nil
+	default:
+		slog.Error("Unexpected Error")
+		return false, errors.New("Server Internal")
+	}
+
+	//if ok, err := cache.client.Eval(ctx, verifyScript, []string{key}, code).Bool(); err != nil {
+	//	slog.Error("Redis Eval Script Failed", "error", err.Error())
+	//	return false, err
+	//} else {
+	//	return ok, nil
+	//}
 }

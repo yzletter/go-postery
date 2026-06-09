@@ -119,11 +119,11 @@ func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 func loadPrometheusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MetricConfig {
 	var config MetricConfig
 
-	// 获取地址
-	if resp, err := client.Get(ctx, prefix+"prometheus_addr"); err == nil {
+	// 获取端口
+	if resp, err := client.Get(ctx, prefix+"prometheus_port"); err == nil {
 		if len(resp.Kvs) > 0 {
-			config.Addr = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"prometheus_addr"] = struct{}{}
+			config.Port = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"prometheus_port"] = struct{}{}
 		}
 	}
 

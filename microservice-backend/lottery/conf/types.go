@@ -74,7 +74,7 @@ type LogConfig struct {
 }
 
 type MetricConfig struct {
-	Addr string
+	Port string
 }
 
 type GRPCConfig struct {

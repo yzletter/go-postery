@@ -31,9 +31,9 @@ import (
 )
 
 var (
-	ServiceName  string = "code_service" // 微服务名
-	GoPostery    string = "go_postery"   // GoPostery 公共配置前缀
-	prefix       string = ""
+	ServiceName  = "code_service" // 微服务名
+	GoPostery    = "go_postery"   // GoPostery 公共配置前缀
+	prefix       = ""
 	EtcdEndPoint string // etcd 地址
 )
 
@@ -57,7 +57,7 @@ func main() {
 	Config := conf.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
-	// Infra
+	// Infrastructure
 	infraSlog.InitSlog(Config.Log)                                                   // Init Slog
 	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, prefix+ServiceName) // Init JaegerTracer
 	RedisClient := infraRedis.Init(Config.Redis)                                     // Init Redis
@@ -68,16 +68,15 @@ func main() {
 	CodeCache := cache.NewCodeCache(RedisClient)
 	// Repository
 	CodeRepository := repository.NewCodeRepository(CodeCache)
-
 	// Service
 	CodeService := service.NewCodeService(CodeRepository, EmailClient, SmsClient)
-	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 10)
+	// Common Service
+	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 50)
 	MetricService := service.NewMetricService(prefix + ServiceName)
 
-	// ServiceHub
+	// gRPC ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
 	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
-
 	// gRPC Server
 	CodeServiceServer := grpc_server.NewCodeServiceServer(CodeService)
 	server := grpc.NewServer(
@@ -87,22 +86,28 @@ func main() {
 	)
 	code_grpc.RegisterCodeServiceServer(server, CodeServiceServer) // Register gRPC Service
 
-	// Prometheus
-	go func() {
-		mux := http.NewServeMux()
-		// Metric
-		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
-		if err := http.ListenAndServe(Config.Metric.Addr, mux); err != nil {
-			slog.Error("Metric Server Failed", "error", err)
-		}
-	}()
-
 	// Start gRPC Server
 	ip, err := utils.GetLocalIP() // 获取本地内网 IP
+	if *env == "local" {
+		ip = "localhost"
+	}
+	fmt.Println(ip)
 	if err != nil {
 		slog.Error("Get Local IP Failed", "error", err)
 		panic(err)
 	}
+
+	// Prometheus
+	metricAddr := ip + ":" + Config.Metric.Port
+	go func() {
+		mux := http.NewServeMux()
+		// Metric
+		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
+		if err := http.ListenAndServe(metricAddr, mux); err != nil {
+			slog.Error("Metric Server Failed", "error", err)
+		}
+	}()
+
 	grpcAddr := ip + ":" + Config.GRPC.Port
 
 	// 监听

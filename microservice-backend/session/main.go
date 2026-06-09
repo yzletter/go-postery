@@ -97,22 +97,24 @@ func main() {
 	)
 	session_grpc.RegisterSessionServiceServer(server, SessionServiceServer) // Register gRPC Service
 
-	// Prometheus
-	go func() {
-		mux := http.NewServeMux()
-		// Metric
-		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
-		if err := http.ListenAndServe(Config.Metric.Addr, mux); err != nil {
-			slog.Error("Metric Server Failed", "error", err)
-		}
-	}()
-
 	// Start gRPC Server
 	ip, err := utils.GetLocalIP() // 获取本地内网 IP
 	if err != nil {
 		slog.Error("Get Local IP Failed", "error", err)
 		panic(err)
 	}
+
+	// Prometheus
+	metricAddr := ip + ":" + Config.Metric.Port
+	go func() {
+		mux := http.NewServeMux()
+		// Metric
+		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
+		if err := http.ListenAndServe(metricAddr, mux); err != nil {
+			slog.Error("Metric Server Failed", "error", err)
+		}
+	}()
+
 	grpcAddr := ip + ":" + Config.GRPC.Port
 
 	// 监听

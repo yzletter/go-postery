@@ -34,7 +34,7 @@ type MySQLConfig struct {
 }
 
 type MetricConfig struct {
-	Addr string
+	Port string
 }
 
 type JaegerConfig struct {

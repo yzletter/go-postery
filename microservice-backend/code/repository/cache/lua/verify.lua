@@ -1,15 +1,18 @@
-local key = KEYS[1]               -- Redis 存储验证码的 key
-local code = ARGV[1]              -- 要校验的验证码
-local target = redis.call("get", key) -- 获取当前 key 的剩余过期时间
+local key = KEYS[1]
+local code = ARGV[1]
 
-if target == false then
+local target = redis.call("get", key)
+
+if not target then
     -- key 不存在
-    return false
-elseif target ~= code then
-    -- Code 不相等
-    return false
-else
-    -- Code 相等
-    redis.call("del", key)
-    return true
+    return 0
 end
+
+if target ~= code then
+    -- 验证码错误
+    return 1
+end
+
+-- 验证码正确，删除 key，防止重复使用
+redis.call("del", key)
+return 2

@@ -180,7 +180,8 @@ func main() {
 	//	mux := http.NewServeMux()
 	//	// Metric
 	//	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
-	//	if err := http.ListenAndServe(Config.Metric.Addr, mux); err != nil {
+	//	metricAddr := ip + ":" + Config.Metric.Port
+	//	if err := http.ListenAndServe(metricAddr, mux); err != nil {
 	//		slog.Error("Metric Server Failed", "error", err)
 	//	}
 	//}()

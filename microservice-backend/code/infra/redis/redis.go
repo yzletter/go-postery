@@ -2,7 +2,6 @@ package infra
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"sync"
 
@@ -26,8 +25,6 @@ func Init(config conf.RedisConfig) redis.UniversalClient {
 	redisOnce.Do(func() {
 		globalRedisClient = redis.NewClient(redisOption)
 	})
-
-	fmt.Println(config.Addr, config.DB)
 
 	// 尝试 ping 通
 	if err := globalRedisClient.Ping(context.Background()).Err(); err != nil { // 须加上.Err(), 否则会报 ping 通错
