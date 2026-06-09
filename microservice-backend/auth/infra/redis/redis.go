@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/yzletter/go-postery/microservice-backend/auth/config"
+	"github.com/yzletter/go-postery/microservice-backend/auth/conf"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 )
 
 // Init 连接到 Redis 数据库, 生成一个 *redis.Client 赋给全局数据库变量 globalRedisClient
-func Init(config config.RedisConfig) redis.UniversalClient {
+func Init(config conf.RedisConfig) redis.UniversalClient {
 	redisOption := &redis.Options{
 		Addr: config.Addr,
 		DB:   config.DB,

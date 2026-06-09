@@ -1,4 +1,4 @@
-package config
+package conf
 
 type Config struct {
 	CommonMicroServiceConfig

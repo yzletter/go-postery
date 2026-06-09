@@ -13,22 +13,22 @@ import (
 	"github.com/yzletter/go-postery/microservice-backend/auth/conf"
 	"github.com/yzletter/go-postery/microservice-backend/auth/errs"
 	"github.com/yzletter/go-postery/microservice-backend/auth/grpc/client"
-	model2 "github.com/yzletter/go-postery/microservice-backend/auth/model"
-	repository2 "github.com/yzletter/go-postery/microservice-backend/auth/repository"
-	ports2 "github.com/yzletter/go-postery/microservice-backend/auth/service/ports"
+	"github.com/yzletter/go-postery/microservice-backend/auth/model"
+	"github.com/yzletter/go-postery/microservice-backend/auth/repository"
+	"github.com/yzletter/go-postery/microservice-backend/auth/service/ports"
 )
 
 type authService struct {
-	authRepo   repository2.AuthRepository
-	jwtManager ports2.JwtManager
-	passHasher ports2.PasswordHasher
-	idGen      ports2.IDGenerator
+	authRepo   repository.AuthRepository
+	jwtManager ports.JwtManager
+	passHasher ports.PasswordHasher
+	idGen      ports.IDGenerator
 
 	codeClient client.CodeClient
 }
 
 // NewAuthService 构造函数
-func NewAuthService(authRepo repository2.AuthRepository, jwtManager ports2.JwtManager, passHasher ports2.PasswordHasher, idGen ports2.IDGenerator, codeClient client.CodeClient) AuthService {
+func NewAuthService(authRepo repository.AuthRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator, codeClient client.CodeClient) AuthService {
 	return &authService{
 		authRepo:   authRepo,
 		jwtManager: jwtManager,
@@ -43,7 +43,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 	// 获取登录认证
 	authIdentity, err := svc.authRepo.GetAuthIdentityByIdentifier(ctx, identifier)
 	if err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) { // 邮箱或者手机号没有认证过
+		if errors.Is(err, repository.ErrRecordNotFound) { // 邮箱或者手机号没有认证过
 			slog.Error("Invalid Identifier")
 			return 0, errs.ErrInvalidArgument
 		}
@@ -54,7 +54,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 	// 获取密码
 	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, authIdentity.UserID)
 	if err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 不应该发生的错误
 			slog.Error("Get Password Failed", "error", err)
 			return 0, errs.ErrInvalidArgument
@@ -65,7 +65,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 
 	// 比较密码
 	if err := svc.passHasher.Compare(passwordHash, password); err != nil {
-		if errors.Is(err, ports2.ErrInvalidPassword) { // 密码错误, 返回为请求参数错误
+		if errors.Is(err, ports.ErrInvalidPassword) { // 密码错误, 返回为请求参数错误
 			slog.Error("Invalid Password")
 			return 0, errs.ErrInvalidArgument
 		}
@@ -80,7 +80,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 func (svc *authService) LoginByPhone(ctx context.Context, phone string, code string) (int64, error) {
 	// 校验验证码并消费
 	verifyReq := code_grpc.CheckCodeRequest{
-		Biz:        int64(model2.SMSCode),
+		Biz:        int64(model.SMSCode),
 		Identifier: phone,
 		Code:       code,
 	}
@@ -95,18 +95,18 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 	}
 
 	// 获取登录认证
-	authType := model2.AuthTypeFromBiz(model2.SMSCode)
+	authType := model.AuthTypeFromBiz(model.SMSCode)
 	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, phone)
 	if err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 用户不存在, 创建用户（包括用户最小项、用户登录认证、无密码、用户资料、注册扩展功能）
 			uid := svc.idGen.NextID()
 			verifiedAt := time.Now()
-			authType := model2.AuthTypeFromBiz(model2.SMSCode)
+			authType := model.AuthTypeFromBiz(model.SMSCode)
 
 			nickname := newNickname()
-			user := model2.User{ID: uid}
-			authIdentity := model2.AuthIdentity{ // 登录认证方式
+			user := model.User{ID: uid}
+			authIdentity := model.AuthIdentity{ // 登录认证方式
 				ID:         svc.idGen.NextID(),
 				UserID:     uid,
 				AuthType:   authType,
@@ -114,12 +114,12 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 				IsVerified: 1,
 				VerifiedAt: &verifiedAt,
 			}
-			userProfile := model2.UserProfile{UserID: uid, Nickname: nickname}
-			events := make([]*model2.Event, 0)
+			userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
+			events := make([]*model.Event, 0)
 
 			// 注册聊天功能 Event
-			registerSessionPayload, _ := sonic.Marshal(model2.RegisterSessionEventPayload{UserID: uid})
-			registerSessionEvent := model2.Event{
+			registerSessionPayload, _ := sonic.Marshal(model.RegisterSessionEventPayload{UserID: uid})
+			registerSessionEvent := model.Event{
 				ID:           svc.idGen.NextID(),
 				Topic:        "session",
 				MessageKey:   "register_session",
@@ -128,8 +128,8 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 			events = append(events, &registerSessionEvent)
 
 			// 初始化用户推荐分数 Event
-			initUserScorePayload, _ := sonic.Marshal(model2.InitUserScoreEventPayload{UserID: uid})
-			initUserScoreEvent := model2.Event{
+			initUserScorePayload, _ := sonic.Marshal(model.InitUserScoreEventPayload{UserID: uid})
+			initUserScoreEvent := model.Event{
 				ID:           svc.idGen.NextID(),
 				Topic:        "follow",
 				MessageKey:   "init_user_score",
@@ -138,7 +138,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 			events = append(events, &initUserScoreEvent)
 
 			// 聚合信息
-			authAggregate := model2.AuthAggregate{
+			authAggregate := model.AuthAggregate{
 				User:         &user,
 				UserProfile:  &userProfile,
 				AuthPassword: nil, // 无密码
@@ -146,7 +146,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 				Events:       events,
 			}
 			if err := svc.authRepo.CreateUser(ctx, &authAggregate); err != nil {
-				if errors.Is(err, repository2.ErrUniqueKey) {
+				if errors.Is(err, repository.ErrUniqueKey) {
 					// 不应该出现的错误
 					slog.Error("Create User Failed", "error", err)
 					return 0, errs.ErrAlreadyExits
@@ -166,11 +166,11 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 // HasPassword 查询密码状态
 func (svc *authService) HasPassword(ctx context.Context, id int64) (bool, error) {
 	if has, err := svc.authRepo.HasPassword(ctx, id); err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) { // 未设置密码, 不是错误
+		if errors.Is(err, repository.ErrRecordNotFound) { // 未设置密码, 不是错误
 			return false, nil
 		}
 		slog.Error("Server Internal Error", "error", err)
-		return false, repository2.ErrServerInternal
+		return false, repository.ErrServerInternal
 	} else {
 		return has, nil
 	}
@@ -179,9 +179,9 @@ func (svc *authService) HasPassword(ctx context.Context, id int64) (bool, error)
 // SetPassword 初始化密码
 func (svc *authService) SetPassword(ctx context.Context, uid int64, code string, password string) error {
 	// 获取当前用户认证的手机号
-	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model2.AuthTypeFromBiz(model2.SMSCode))
+	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(model.SMSCode))
 	if err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 不应该出现的错误
 			slog.Error("Set Password Without AuthIdentity", "error", err)
 			return errs.ErrUnauthenticated
@@ -192,7 +192,7 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 
 	// 校验验证码并消费
 	verifyReq := code_grpc.CheckCodeRequest{
-		Biz:        int64(model2.SMSCode),
+		Biz:        int64(model.SMSCode),
 		Identifier: authIdentity.Identifier,
 		Code:       code,
 	}
@@ -214,12 +214,12 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 	}
 
 	// 初始化密码
-	var authPassword = model2.AuthPassword{
+	var authPassword = model.AuthPassword{
 		UserID:       uid,
 		PasswordHash: passwordHash,
 	}
 	if err := svc.authRepo.SetPassword(ctx, &authPassword); err != nil {
-		if errors.Is(err, repository2.ErrUniqueKey) {
+		if errors.Is(err, repository.ErrUniqueKey) {
 			// 不应该出现的错误
 			slog.Error("Set Password Failed", "error", err)
 			return errs.ErrInternal
@@ -236,7 +236,7 @@ func (svc *authService) UpdatePassword(ctx context.Context, uid int64, oldPasswo
 	// 获取旧密码
 	oldPasswordHash, err := svc.authRepo.GetPasswordHash(ctx, uid)
 	if err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Error("User Not Found")
 			return errs.ErrNotFound
 		}
@@ -246,7 +246,7 @@ func (svc *authService) UpdatePassword(ctx context.Context, uid int64, oldPasswo
 
 	// 判断旧密码是否正确
 	if err := svc.passHasher.Compare(oldPasswordHash, oldPassword); err != nil {
-		if errors.Is(err, ports2.ErrInvalidPassword) {
+		if errors.Is(err, ports.ErrInvalidPassword) {
 			// 旧密码错误
 			slog.Error("Invalid Old Password")
 			return errs.ErrInvalidArgument
@@ -264,7 +264,7 @@ func (svc *authService) UpdatePassword(ctx context.Context, uid int64, oldPasswo
 
 	// 改新密码
 	if err := svc.authRepo.UpdatePasswordHash(ctx, uid, newPassHash); err != nil {
-		if errors.Is(err, repository2.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 不应该出现的错误
 			slog.Error("User Not Found")
 			return errs.ErrNotFound
@@ -296,7 +296,7 @@ func (svc *authService) IssueTokens(ctx context.Context, uid int64, role int, us
 	// AccessToken 的 Claims
 	ssid := uuid.New().String()
 	expir := time.Now().Add(conf.AccessTokenExpiration * time.Second)
-	accessClaims := ports2.JWTTokenClaims{
+	accessClaims := ports.JWTTokenClaims{
 		Uid:       uid,
 		SSid:      ssid,
 		Role:      role,
@@ -352,11 +352,11 @@ func (svc *authService) ClearTokens(ctx context.Context, accessToken string, ref
 }
 
 // VerifyAccessToken 校验 AccessToken
-func (svc *authService) VerifyAccessToken(ctx context.Context, accessToken string) (*ports2.JWTTokenClaims, error) {
+func (svc *authService) VerifyAccessToken(ctx context.Context, accessToken string) (*ports.JWTTokenClaims, error) {
 	claim, err := svc.jwtManager.VerifyToken(accessToken)
 	if err != nil { // AccessToken 校验失败
 		slog.Error("Invalid Access Token", "error", err)
-		return &ports2.JWTTokenClaims{}, errs.ErrUnauthenticated
+		return &ports.JWTTokenClaims{}, errs.ErrUnauthenticated
 	}
 	return claim, nil
 }
