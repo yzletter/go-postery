@@ -698,6 +698,78 @@ func (x *ClearUnreadRequest) GetSessionID() int64 {
 	return 0
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_session_v1_session_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_session_v1_session_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_session_v1_session_proto_rawDescGZIP(), []int{11}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_session_v1_session_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_session_v1_session_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_session_v1_session_proto_rawDescGZIP(), []int{12}
+}
+
 var File_api_proto_session_v1_session_proto protoreflect.FileDescriptor
 
 const file_api_proto_session_v1_session_proto_rawDesc = "" +
@@ -751,7 +823,9 @@ const file_api_proto_session_v1_session_proto_rawDesc = "" +
 	"\x05Delta\x18\x06 \x01(\x03R\x05Delta\"J\n" +
 	"\x12ClearUnreadRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
-	"\tSessionID\x18\x02 \x01(\x03R\tSessionID2\x9f\x04\n" +
+	"\tSessionID\x18\x02 \x01(\x03R\tSessionID\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\xef\x04\n" +
 	"\x0eSessionService\x125\n" +
 	"\tListByUID\x12\x12.session.v1.UserID\x1a\x14.session.v1.Sessions\x129\n" +
 	"\n" +
@@ -760,7 +834,8 @@ const file_api_proto_session_v1_session_proto_rawDesc = "" +
 	"\x06Delete\x12\x19.session.v1.DeleteRequest\x1a .session.v1.SessionEmptyResponse\x12Q\n" +
 	"\fUpdateUnread\x12\x1f.session.v1.UpdateUnreadRequest\x1a .session.v1.SessionEmptyResponse\x12O\n" +
 	"\vClearUnread\x12\x1e.session.v1.ClearUnreadRequest\x1a .session.v1.SessionEmptyResponse\x129\n" +
-	"\rCreateMessage\x12\x13.session.v1.Message\x1a\x13.session.v1.MessageBBZ@github.com/yzletter/go-postery/api/proto/session/v1;session_grpcb\x06proto3"
+	"\rCreateMessage\x12\x13.session.v1.Message\x1a\x13.session.v1.Message\x12N\n" +
+	"\vHealthCheck\x12\x1e.session.v1.HealthCheckRequest\x1a\x1f.session.v1.HealthCheckResponseBBZ@github.com/yzletter/go-postery/api/proto/session/v1;session_grpcb\x06proto3"
 
 var (
 	file_api_proto_session_v1_session_proto_rawDescOnce sync.Once
@@ -774,7 +849,7 @@ func file_api_proto_session_v1_session_proto_rawDescGZIP() []byte {
 	return file_api_proto_session_v1_session_proto_rawDescData
 }
 
-var file_api_proto_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_api_proto_session_v1_session_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_api_proto_session_v1_session_proto_goTypes = []any{
 	(*UserID)(nil),                           // 0: session.v1.UserID
 	(*Session)(nil),                          // 1: session.v1.Session
@@ -787,14 +862,16 @@ var file_api_proto_session_v1_session_proto_goTypes = []any{
 	(*Message)(nil),                          // 8: session.v1.Message
 	(*UpdateUnreadRequest)(nil),              // 9: session.v1.UpdateUnreadRequest
 	(*ClearUnreadRequest)(nil),               // 10: session.v1.ClearUnreadRequest
-	(*timestamppb.Timestamp)(nil),            // 11: google.protobuf.Timestamp
+	(*HealthCheckRequest)(nil),               // 11: session.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),              // 12: session.v1.HealthCheckResponse
+	(*timestamppb.Timestamp)(nil),            // 13: google.protobuf.Timestamp
 }
 var file_api_proto_session_v1_session_proto_depIdxs = []int32{
 	1,  // 0: session.v1.Sessions.Sessions:type_name -> session.v1.Session
 	8,  // 1: session.v1.GetHistoryMessagesByPageResponse.Messages:type_name -> session.v1.Message
-	11, // 2: session.v1.Message.UpdatedAt:type_name -> google.protobuf.Timestamp
-	11, // 3: session.v1.Message.DeletedAt:type_name -> google.protobuf.Timestamp
-	11, // 4: session.v1.UpdateUnreadRequest.LastMessageTime:type_name -> google.protobuf.Timestamp
+	13, // 2: session.v1.Message.UpdatedAt:type_name -> google.protobuf.Timestamp
+	13, // 3: session.v1.Message.DeletedAt:type_name -> google.protobuf.Timestamp
+	13, // 4: session.v1.UpdateUnreadRequest.LastMessageTime:type_name -> google.protobuf.Timestamp
 	0,  // 5: session.v1.SessionService.ListByUID:input_type -> session.v1.UserID
 	3,  // 6: session.v1.SessionService.GetSession:input_type -> session.v1.BothUserID
 	5,  // 7: session.v1.SessionService.GetHistoryMessagesByPage:input_type -> session.v1.GetHistoryMessagesByPageRequest
@@ -802,15 +879,17 @@ var file_api_proto_session_v1_session_proto_depIdxs = []int32{
 	9,  // 9: session.v1.SessionService.UpdateUnread:input_type -> session.v1.UpdateUnreadRequest
 	10, // 10: session.v1.SessionService.ClearUnread:input_type -> session.v1.ClearUnreadRequest
 	8,  // 11: session.v1.SessionService.CreateMessage:input_type -> session.v1.Message
-	2,  // 12: session.v1.SessionService.ListByUID:output_type -> session.v1.Sessions
-	1,  // 13: session.v1.SessionService.GetSession:output_type -> session.v1.Session
-	6,  // 14: session.v1.SessionService.GetHistoryMessagesByPage:output_type -> session.v1.GetHistoryMessagesByPageResponse
-	4,  // 15: session.v1.SessionService.Delete:output_type -> session.v1.SessionEmptyResponse
-	4,  // 16: session.v1.SessionService.UpdateUnread:output_type -> session.v1.SessionEmptyResponse
-	4,  // 17: session.v1.SessionService.ClearUnread:output_type -> session.v1.SessionEmptyResponse
-	8,  // 18: session.v1.SessionService.CreateMessage:output_type -> session.v1.Message
-	12, // [12:19] is the sub-list for method output_type
-	5,  // [5:12] is the sub-list for method input_type
+	11, // 12: session.v1.SessionService.HealthCheck:input_type -> session.v1.HealthCheckRequest
+	2,  // 13: session.v1.SessionService.ListByUID:output_type -> session.v1.Sessions
+	1,  // 14: session.v1.SessionService.GetSession:output_type -> session.v1.Session
+	6,  // 15: session.v1.SessionService.GetHistoryMessagesByPage:output_type -> session.v1.GetHistoryMessagesByPageResponse
+	4,  // 16: session.v1.SessionService.Delete:output_type -> session.v1.SessionEmptyResponse
+	4,  // 17: session.v1.SessionService.UpdateUnread:output_type -> session.v1.SessionEmptyResponse
+	4,  // 18: session.v1.SessionService.ClearUnread:output_type -> session.v1.SessionEmptyResponse
+	8,  // 19: session.v1.SessionService.CreateMessage:output_type -> session.v1.Message
+	12, // 20: session.v1.SessionService.HealthCheck:output_type -> session.v1.HealthCheckResponse
+	13, // [13:21] is the sub-list for method output_type
+	5,  // [5:13] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -827,7 +906,7 @@ func file_api_proto_session_v1_session_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_session_v1_session_proto_rawDesc), len(file_api_proto_session_v1_session_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

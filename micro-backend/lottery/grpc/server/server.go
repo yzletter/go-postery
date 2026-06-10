@@ -72,3 +72,7 @@ func (server *LotteryServiceServer) Result(ctx context.Context, id *lottery_grpc
 	// 返回 Response
 	return dto.ToOrder(order, gift), nil
 }
+
+func (server *LotteryServiceServer) HealthCheck(ctx context.Context, request *lottery_grpc.HealthCheckRequest) (*lottery_grpc.HealthCheckResponse, error) {
+	return &lottery_grpc.HealthCheckResponse{}, nil
+}

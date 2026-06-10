@@ -1489,6 +1489,78 @@ func (x *CommentBelongRequest) GetCommentID() int64 {
 	return 0
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{25}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{26}
+}
+
 var File_api_proto_post_v1_post_proto protoreflect.FileDescriptor
 
 const file_api_proto_post_v1_post_proto_rawDesc = "" +
@@ -1595,7 +1667,10 @@ const file_api_proto_post_v1_post_proto_rawDesc = "" +
 	"\tCommentID\x18\x02 \x01(\x03R\tCommentID\"L\n" +
 	"\x14CommentBelongRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
-	"\tCommentID\x18\x02 \x01(\x03R\tCommentID2\xfa\t\n" +
+	"\tCommentID\x18\x02 \x01(\x03R\tCommentID\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\xc4\n" +
+	"\n" +
 	"\vPostService\x129\n" +
 	"\x06Create\x12\x1a.post.v1.CreatePostRequest\x1a\x13.post.v1.PostDetail\x12C\n" +
 	"\rGetDetailByID\x12\x1d.post.v1.GetDetailByIDRequest\x1a\x13.post.v1.PostDetail\x12@\n" +
@@ -1615,7 +1690,8 @@ const file_api_proto_post_v1_post_proto_rawDesc = "" +
 	"\rDeleteComment\x12\x1d.post.v1.DeleteCommentRequest\x1a\x1a.post.v1.PostEmptyResponse\x12Q\n" +
 	"\x11ListCommentByPage\x12!.post.v1.ListCommentByPageRequest\x1a\x19.post.v1.CommentsResponse\x12O\n" +
 	"\x11ListRepliesByPage\x12\x1f.post.v1.ListReplyByPageRequest\x1a\x19.post.v1.CommentsResponse\x12P\n" +
-	"\x16CheckCommentDeleteAuth\x12\x1d.post.v1.CommentBelongRequest\x1a\x17.post.v1.BelongResponseB<Z:github.com/yzletter/go-postery/api/proto/post/v1;post_grpcb\x06proto3"
+	"\x16CheckCommentDeleteAuth\x12\x1d.post.v1.CommentBelongRequest\x1a\x17.post.v1.BelongResponse\x12H\n" +
+	"\vHealthCheck\x12\x1b.post.v1.HealthCheckRequest\x1a\x1c.post.v1.HealthCheckResponseB<Z:github.com/yzletter/go-postery/api/proto/post/v1;post_grpcb\x06proto3"
 
 var (
 	file_api_proto_post_v1_post_proto_rawDescOnce sync.Once
@@ -1629,7 +1705,7 @@ func file_api_proto_post_v1_post_proto_rawDescGZIP() []byte {
 	return file_api_proto_post_v1_post_proto_rawDescData
 }
 
-var file_api_proto_post_v1_post_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_api_proto_post_v1_post_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_api_proto_post_v1_post_proto_goTypes = []any{
 	(*PostDetail)(nil),               // 0: post.v1.PostDetail
 	(*PostBrief)(nil),                // 1: post.v1.PostBrief
@@ -1656,6 +1732,8 @@ var file_api_proto_post_v1_post_proto_goTypes = []any{
 	(*CreateCommentRequest)(nil),     // 22: post.v1.CreateCommentRequest
 	(*DeleteCommentRequest)(nil),     // 23: post.v1.DeleteCommentRequest
 	(*CommentBelongRequest)(nil),     // 24: post.v1.CommentBelongRequest
+	(*HealthCheckRequest)(nil),       // 25: post.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),      // 26: post.v1.HealthCheckResponse
 }
 var file_api_proto_post_v1_post_proto_depIdxs = []int32{
 	0,  // 0: post.v1.PostDetailsResponse.PostDetails:type_name -> post.v1.PostDetail
@@ -1680,26 +1758,28 @@ var file_api_proto_post_v1_post_proto_depIdxs = []int32{
 	18, // 19: post.v1.PostService.ListCommentByPage:input_type -> post.v1.ListCommentByPageRequest
 	19, // 20: post.v1.PostService.ListRepliesByPage:input_type -> post.v1.ListReplyByPageRequest
 	24, // 21: post.v1.PostService.CheckCommentDeleteAuth:input_type -> post.v1.CommentBelongRequest
-	0,  // 22: post.v1.PostService.Create:output_type -> post.v1.PostDetail
-	0,  // 23: post.v1.PostService.GetDetailByID:output_type -> post.v1.PostDetail
-	1,  // 24: post.v1.PostService.GetBriefByID:output_type -> post.v1.PostBrief
-	15, // 25: post.v1.PostService.Top:output_type -> post.v1.TopResponse
-	16, // 26: post.v1.PostService.Update:output_type -> post.v1.PostEmptyResponse
-	10, // 27: post.v1.PostService.ListByPage:output_type -> post.v1.PostDetailsResponse
-	11, // 28: post.v1.PostService.ListByPageAndUid:output_type -> post.v1.PostBriefsResponse
-	10, // 29: post.v1.PostService.ListByPageAndTag:output_type -> post.v1.PostDetailsResponse
-	14, // 30: post.v1.PostService.Belong:output_type -> post.v1.BelongResponse
-	16, // 31: post.v1.PostService.Delete:output_type -> post.v1.PostEmptyResponse
-	16, // 32: post.v1.PostService.Like:output_type -> post.v1.PostEmptyResponse
-	16, // 33: post.v1.PostService.Unlike:output_type -> post.v1.PostEmptyResponse
-	17, // 34: post.v1.PostService.IfLike:output_type -> post.v1.IfLikeResponse
-	20, // 35: post.v1.PostService.CreateComment:output_type -> post.v1.Comment
-	16, // 36: post.v1.PostService.DeleteComment:output_type -> post.v1.PostEmptyResponse
-	21, // 37: post.v1.PostService.ListCommentByPage:output_type -> post.v1.CommentsResponse
-	21, // 38: post.v1.PostService.ListRepliesByPage:output_type -> post.v1.CommentsResponse
-	14, // 39: post.v1.PostService.CheckCommentDeleteAuth:output_type -> post.v1.BelongResponse
-	22, // [22:40] is the sub-list for method output_type
-	4,  // [4:22] is the sub-list for method input_type
+	25, // 22: post.v1.PostService.HealthCheck:input_type -> post.v1.HealthCheckRequest
+	0,  // 23: post.v1.PostService.Create:output_type -> post.v1.PostDetail
+	0,  // 24: post.v1.PostService.GetDetailByID:output_type -> post.v1.PostDetail
+	1,  // 25: post.v1.PostService.GetBriefByID:output_type -> post.v1.PostBrief
+	15, // 26: post.v1.PostService.Top:output_type -> post.v1.TopResponse
+	16, // 27: post.v1.PostService.Update:output_type -> post.v1.PostEmptyResponse
+	10, // 28: post.v1.PostService.ListByPage:output_type -> post.v1.PostDetailsResponse
+	11, // 29: post.v1.PostService.ListByPageAndUid:output_type -> post.v1.PostBriefsResponse
+	10, // 30: post.v1.PostService.ListByPageAndTag:output_type -> post.v1.PostDetailsResponse
+	14, // 31: post.v1.PostService.Belong:output_type -> post.v1.BelongResponse
+	16, // 32: post.v1.PostService.Delete:output_type -> post.v1.PostEmptyResponse
+	16, // 33: post.v1.PostService.Like:output_type -> post.v1.PostEmptyResponse
+	16, // 34: post.v1.PostService.Unlike:output_type -> post.v1.PostEmptyResponse
+	17, // 35: post.v1.PostService.IfLike:output_type -> post.v1.IfLikeResponse
+	20, // 36: post.v1.PostService.CreateComment:output_type -> post.v1.Comment
+	16, // 37: post.v1.PostService.DeleteComment:output_type -> post.v1.PostEmptyResponse
+	21, // 38: post.v1.PostService.ListCommentByPage:output_type -> post.v1.CommentsResponse
+	21, // 39: post.v1.PostService.ListRepliesByPage:output_type -> post.v1.CommentsResponse
+	14, // 40: post.v1.PostService.CheckCommentDeleteAuth:output_type -> post.v1.BelongResponse
+	26, // 41: post.v1.PostService.HealthCheck:output_type -> post.v1.HealthCheckResponse
+	23, // [23:42] is the sub-list for method output_type
+	4,  // [4:23] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -1716,7 +1796,7 @@ func file_api_proto_post_v1_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_post_v1_post_proto_rawDesc), len(file_api_proto_post_v1_post_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

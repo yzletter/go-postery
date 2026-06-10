@@ -30,6 +30,7 @@ const (
 	UserService_UploadAvatarSign_FullMethodName     = "/user.v1.UserService/UploadAvatarSign"
 	UserService_UploadAvatarCallback_FullMethodName = "/user.v1.UserService/UploadAvatarCallback"
 	UserService_GetAvatarURL_FullMethodName         = "/user.v1.UserService/GetAvatarURL"
+	UserService_HealthCheck_FullMethodName          = "/user.v1.UserService/HealthCheck"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -55,6 +56,8 @@ type UserServiceClient interface {
 	UploadAvatarCallback(ctx context.Context, in *UploadAvatarCallbackRequest, opts ...grpc.CallOption) (*UploadAvatarCallbackResponse, error)
 	// 获取头像预签名 URL
 	GetAvatarURL(ctx context.Context, in *GetAvatarURLRequest, opts ...grpc.CallOption) (*GetAvatarURLResponse, error)
+	// 健康检查
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type userServiceClient struct {
@@ -175,6 +178,16 @@ func (c *userServiceClient) GetAvatarURL(ctx context.Context, in *GetAvatarURLRe
 	return out, nil
 }
 
+func (c *userServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, UserService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -198,6 +211,8 @@ type UserServiceServer interface {
 	UploadAvatarCallback(context.Context, *UploadAvatarCallbackRequest) (*UploadAvatarCallbackResponse, error)
 	// 获取头像预签名 URL
 	GetAvatarURL(context.Context, *GetAvatarURLRequest) (*GetAvatarURLResponse, error)
+	// 健康检查
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -240,6 +255,9 @@ func (UnimplementedUserServiceServer) UploadAvatarCallback(context.Context, *Upl
 }
 func (UnimplementedUserServiceServer) GetAvatarURL(context.Context, *GetAvatarURLRequest) (*GetAvatarURLResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAvatarURL not implemented")
+}
+func (UnimplementedUserServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -460,6 +478,24 @@ func _UserService_GetAvatarURL_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -510,6 +546,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvatarURL",
 			Handler:    _UserService_GetAvatarURL_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _UserService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

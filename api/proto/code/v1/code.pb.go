@@ -217,6 +217,78 @@ func (x *CheckCodeResponse) GetResult() bool {
 	return false
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_code_v1_code_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_code_v1_code_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{4}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_code_v1_code_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_code_v1_code_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{5}
+}
+
 var File_api_proto_code_v1_code_proto protoreflect.FileDescriptor
 
 const file_api_proto_code_v1_code_proto_rawDesc = "" +
@@ -235,10 +307,13 @@ const file_api_proto_code_v1_code_proto_rawDesc = "" +
 	"identifier\x12\x12\n" +
 	"\x04code\x18\x03 \x01(\tR\x04code\"+\n" +
 	"\x11CheckCodeResponse\x12\x16\n" +
-	"\x06result\x18\x01 \x01(\bR\x06result2\x8b\x01\n" +
+	"\x06result\x18\x01 \x01(\bR\x06result\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\xd5\x01\n" +
 	"\vCodeService\x12;\n" +
 	"\x04Send\x12\x18.code.v1.SendCodeRequest\x1a\x19.code.v1.SendCodeResponse\x12?\n" +
-	"\x06Verify\x12\x19.code.v1.CheckCodeRequest\x1a\x1a.code.v1.CheckCodeResponseB<Z:github.com/yzletter/go-postery/api/proto/code/v1;code_grpcb\x06proto3"
+	"\x06Verify\x12\x19.code.v1.CheckCodeRequest\x1a\x1a.code.v1.CheckCodeResponse\x12H\n" +
+	"\vHealthCheck\x12\x1b.code.v1.HealthCheckRequest\x1a\x1c.code.v1.HealthCheckResponseB<Z:github.com/yzletter/go-postery/api/proto/code/v1;code_grpcb\x06proto3"
 
 var (
 	file_api_proto_code_v1_code_proto_rawDescOnce sync.Once
@@ -252,20 +327,24 @@ func file_api_proto_code_v1_code_proto_rawDescGZIP() []byte {
 	return file_api_proto_code_v1_code_proto_rawDescData
 }
 
-var file_api_proto_code_v1_code_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_proto_code_v1_code_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_proto_code_v1_code_proto_goTypes = []any{
-	(*SendCodeRequest)(nil),   // 0: code.v1.SendCodeRequest
-	(*SendCodeResponse)(nil),  // 1: code.v1.SendCodeResponse
-	(*CheckCodeRequest)(nil),  // 2: code.v1.CheckCodeRequest
-	(*CheckCodeResponse)(nil), // 3: code.v1.CheckCodeResponse
+	(*SendCodeRequest)(nil),     // 0: code.v1.SendCodeRequest
+	(*SendCodeResponse)(nil),    // 1: code.v1.SendCodeResponse
+	(*CheckCodeRequest)(nil),    // 2: code.v1.CheckCodeRequest
+	(*CheckCodeResponse)(nil),   // 3: code.v1.CheckCodeResponse
+	(*HealthCheckRequest)(nil),  // 4: code.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 5: code.v1.HealthCheckResponse
 }
 var file_api_proto_code_v1_code_proto_depIdxs = []int32{
 	0, // 0: code.v1.CodeService.Send:input_type -> code.v1.SendCodeRequest
 	2, // 1: code.v1.CodeService.Verify:input_type -> code.v1.CheckCodeRequest
-	1, // 2: code.v1.CodeService.Send:output_type -> code.v1.SendCodeResponse
-	3, // 3: code.v1.CodeService.Verify:output_type -> code.v1.CheckCodeResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 2: code.v1.CodeService.HealthCheck:input_type -> code.v1.HealthCheckRequest
+	1, // 3: code.v1.CodeService.Send:output_type -> code.v1.SendCodeResponse
+	3, // 4: code.v1.CodeService.Verify:output_type -> code.v1.CheckCodeResponse
+	5, // 5: code.v1.CodeService.HealthCheck:output_type -> code.v1.HealthCheckResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -282,7 +361,7 @@ func file_api_proto_code_v1_code_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_code_v1_code_proto_rawDesc), len(file_api_proto_code_v1_code_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

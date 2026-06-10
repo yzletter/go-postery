@@ -32,11 +32,15 @@ message SearchResult {
   repeated DocID DocumentIDs = 1;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 service SearchService {
   rpc Search(SearchRequest) returns(SearchResult);
   rpc DeleteDoc(DocID) returns(AffectedCount);
   rpc AddDoc(model.Document) returns(AffectedCount);
   rpc Count(CountRequest) returns(AffectedCount);
+  rpc HealthCheck(HealthCheckRequest) returns(HealthCheckResponse);
 }
 
 /*

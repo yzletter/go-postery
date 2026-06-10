@@ -148,6 +148,9 @@ message CommentBelongRequest {
   int64 CommentID = 2;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 service PostService {
   // 创建帖子
   rpc Create(CreatePostRequest) returns (PostDetail);
@@ -187,6 +190,8 @@ service PostService {
   rpc ListRepliesByPage(ListReplyByPageRequest) returns (CommentsResponse);
   // 评论是否属于用户
   rpc CheckCommentDeleteAuth(CommentBelongRequest) returns (BelongResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

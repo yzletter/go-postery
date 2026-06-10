@@ -25,12 +25,17 @@ message CheckCodeResponse{
   bool result = 1;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 // 验证码服务
 service CodeService {
   // 发送验证码
   rpc Send(SendCodeRequest) returns (SendCodeResponse);
   // 校验验证码
   rpc Verify(CheckCodeRequest) returns (CheckCodeResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

@@ -33,6 +33,10 @@ func (server *CodeServiceServer) Verify(ctx context.Context, req *code_grpc.Chec
 	}
 }
 
+func (server *CodeServiceServer) HealthCheck(ctx context.Context, req *code_grpc.HealthCheckRequest) (*code_grpc.HealthCheckResponse, error) {
+	return &code_grpc.HealthCheckResponse{}, nil
+}
+
 func NewCodeServiceServer(svc service.CodeService) *CodeServiceServer {
 	return &CodeServiceServer{
 		svc: svc,

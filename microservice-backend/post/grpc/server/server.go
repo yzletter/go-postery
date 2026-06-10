@@ -209,3 +209,7 @@ func (server *PostServiceServer) CheckCommentDeleteAuth(ctx context.Context, req
 	}
 	return &post_grpc.BelongResponse{Result: result}, nil
 }
+
+func (server *PostServiceServer) HealthCheck(ctx context.Context, req *post_grpc.HealthCheckRequest) (*post_grpc.HealthCheckResponse, error) {
+	return &post_grpc.HealthCheckResponse{}, nil
+}

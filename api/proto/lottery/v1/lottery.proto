@@ -50,6 +50,8 @@ message LotteryResponse {
   int64 UserID = 5;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
 
 service LotteryService {
   // 获取索引奖品
@@ -62,6 +64,8 @@ service LotteryService {
   rpc GiveUp(LotteryCommonRequest) returns (EmptyResponse);
   // 查询结果
   rpc Result(UserID) returns (Order);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 

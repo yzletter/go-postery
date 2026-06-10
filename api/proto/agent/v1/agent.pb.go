@@ -141,6 +141,78 @@ func (x *ChatRequest) GetQuery() string {
 	return ""
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_agent_v1_agent_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_agent_v1_agent_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_agent_v1_agent_proto_rawDescGZIP(), []int{2}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_agent_v1_agent_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_agent_v1_agent_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_agent_v1_agent_proto_rawDescGZIP(), []int{3}
+}
+
 var File_api_proto_agent_v1_agent_proto protoreflect.FileDescriptor
 
 const file_api_proto_agent_v1_agent_proto_rawDesc = "" +
@@ -153,9 +225,12 @@ const file_api_proto_agent_v1_agent_proto_rawDesc = "" +
 	"\vChatRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
 	"\tSessionID\x18\x02 \x01(\x03R\tSessionID\x12\x14\n" +
-	"\x05Query\x18\x03 \x01(\tR\x05Query2E\n" +
+	"\x05Query\x18\x03 \x01(\tR\x05Query\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\x91\x01\n" +
 	"\fAgentService\x125\n" +
-	"\x04Chat\x12\x15.agent.v1.ChatRequest\x1a\x16.agent.v1.ChatResponseB>Z<github.com/yzletter/go-postery/api/proto/agent/v1;agent_grpcb\x06proto3"
+	"\x04Chat\x12\x15.agent.v1.ChatRequest\x1a\x16.agent.v1.ChatResponse\x12J\n" +
+	"\vHealthCheck\x12\x1c.agent.v1.HealthCheckRequest\x1a\x1d.agent.v1.HealthCheckResponseB>Z<github.com/yzletter/go-postery/api/proto/agent/v1;agent_grpcb\x06proto3"
 
 var (
 	file_api_proto_agent_v1_agent_proto_rawDescOnce sync.Once
@@ -169,16 +244,20 @@ func file_api_proto_agent_v1_agent_proto_rawDescGZIP() []byte {
 	return file_api_proto_agent_v1_agent_proto_rawDescData
 }
 
-var file_api_proto_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_api_proto_agent_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_api_proto_agent_v1_agent_proto_goTypes = []any{
-	(*ChatResponse)(nil), // 0: agent.v1.ChatResponse
-	(*ChatRequest)(nil),  // 1: agent.v1.ChatRequest
+	(*ChatResponse)(nil),        // 0: agent.v1.ChatResponse
+	(*ChatRequest)(nil),         // 1: agent.v1.ChatRequest
+	(*HealthCheckRequest)(nil),  // 2: agent.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 3: agent.v1.HealthCheckResponse
 }
 var file_api_proto_agent_v1_agent_proto_depIdxs = []int32{
 	1, // 0: agent.v1.AgentService.Chat:input_type -> agent.v1.ChatRequest
-	0, // 1: agent.v1.AgentService.Chat:output_type -> agent.v1.ChatResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: agent.v1.AgentService.HealthCheck:input_type -> agent.v1.HealthCheckRequest
+	0, // 2: agent.v1.AgentService.Chat:output_type -> agent.v1.ChatResponse
+	3, // 3: agent.v1.AgentService.HealthCheck:output_type -> agent.v1.HealthCheckResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -195,7 +274,7 @@ func file_api_proto_agent_v1_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_agent_v1_agent_proto_rawDesc), len(file_api_proto_agent_v1_agent_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

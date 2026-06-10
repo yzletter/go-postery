@@ -123,3 +123,7 @@ func (server *UserServiceServer) GetAvatarURL(ctx context.Context, req *user_grp
 	}
 	return &user_grpc.GetAvatarURLResponse{URL: url}, nil
 }
+
+func (server *UserServiceServer) HealthCheck(ctx context.Context, req *user_grpc.HealthCheckRequest) (*user_grpc.HealthCheckResponse, error) {
+	return &user_grpc.HealthCheckResponse{}, nil
+}

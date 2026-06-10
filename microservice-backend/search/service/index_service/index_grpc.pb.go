@@ -8,8 +8,7 @@ package index_service
 
 import (
 	context "context"
-
-	"github.com/yzletter/go-postery/microservice-backend/search/model"
+	model "github.com/yzletter/go-postery/microservice-backend/search/model"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -21,10 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IndexService_AddDoc_FullMethodName    = "/index_service.IndexService/AddDoc"
-	IndexService_DeleteDoc_FullMethodName = "/index_service.IndexService/DeleteDoc"
-	IndexService_Search_FullMethodName    = "/index_service.IndexService/Search"
-	IndexService_Count_FullMethodName     = "/index_service.IndexService/Count"
+	IndexService_AddDoc_FullMethodName      = "/index_service.IndexService/AddDoc"
+	IndexService_DeleteDoc_FullMethodName   = "/index_service.IndexService/DeleteDoc"
+	IndexService_Search_FullMethodName      = "/index_service.IndexService/Search"
+	IndexService_Count_FullMethodName       = "/index_service.IndexService/Count"
+	IndexService_HealthCheck_FullMethodName = "/index_service.IndexService/HealthCheck"
 )
 
 // IndexServiceClient is the client API for IndexService service.
@@ -37,6 +37,7 @@ type IndexServiceClient interface {
 	DeleteDoc(ctx context.Context, in *DocID, opts ...grpc.CallOption) (*AffectedCount, error)
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResult, error)
 	Count(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*AffectedCount, error)
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type indexServiceClient struct {
@@ -87,6 +88,16 @@ func (c *indexServiceClient) Count(ctx context.Context, in *CountRequest, opts .
 	return out, nil
 }
 
+func (c *indexServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, IndexService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IndexServiceServer is the server API for IndexService service.
 // All implementations must embed UnimplementedIndexServiceServer
 // for forward compatibility.
@@ -97,6 +108,7 @@ type IndexServiceServer interface {
 	DeleteDoc(context.Context, *DocID) (*AffectedCount, error)
 	Search(context.Context, *SearchRequest) (*SearchResult, error)
 	Count(context.Context, *CountRequest) (*AffectedCount, error)
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedIndexServiceServer()
 }
 
@@ -118,6 +130,9 @@ func (UnimplementedIndexServiceServer) Search(context.Context, *SearchRequest) (
 }
 func (UnimplementedIndexServiceServer) Count(context.Context, *CountRequest) (*AffectedCount, error) {
 	return nil, status.Error(codes.Unimplemented, "method Count not implemented")
+}
+func (UnimplementedIndexServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedIndexServiceServer) mustEmbedUnimplementedIndexServiceServer() {}
 func (UnimplementedIndexServiceServer) testEmbeddedByValue()                      {}
@@ -212,6 +227,24 @@ func _IndexService_Count_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IndexService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IndexServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IndexService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IndexServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IndexService_ServiceDesc is the grpc.ServiceDesc for IndexService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -234,6 +267,10 @@ var IndexService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Count",
 			Handler:    _IndexService_Count_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _IndexService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

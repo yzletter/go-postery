@@ -24,6 +24,7 @@ const (
 	LotteryService_Pay_FullMethodName         = "/lottery.v1.LotteryService/Pay"
 	LotteryService_GiveUp_FullMethodName      = "/lottery.v1.LotteryService/GiveUp"
 	LotteryService_Result_FullMethodName      = "/lottery.v1.LotteryService/Result"
+	LotteryService_HealthCheck_FullMethodName = "/lottery.v1.LotteryService/HealthCheck"
 )
 
 // LotteryServiceClient is the client API for LotteryService service.
@@ -40,6 +41,8 @@ type LotteryServiceClient interface {
 	GiveUp(ctx context.Context, in *LotteryCommonRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
 	// 查询结果
 	Result(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Order, error)
+	// 健康检查
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type lotteryServiceClient struct {
@@ -100,6 +103,16 @@ func (c *lotteryServiceClient) Result(ctx context.Context, in *UserID, opts ...g
 	return out, nil
 }
 
+func (c *lotteryServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, LotteryService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LotteryServiceServer is the server API for LotteryService service.
 // All implementations must embed UnimplementedLotteryServiceServer
 // for forward compatibility.
@@ -114,6 +127,8 @@ type LotteryServiceServer interface {
 	GiveUp(context.Context, *LotteryCommonRequest) (*EmptyResponse, error)
 	// 查询结果
 	Result(context.Context, *UserID) (*Order, error)
+	// 健康检查
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedLotteryServiceServer()
 }
 
@@ -138,6 +153,9 @@ func (UnimplementedLotteryServiceServer) GiveUp(context.Context, *LotteryCommonR
 }
 func (UnimplementedLotteryServiceServer) Result(context.Context, *UserID) (*Order, error) {
 	return nil, status.Error(codes.Unimplemented, "method Result not implemented")
+}
+func (UnimplementedLotteryServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedLotteryServiceServer) mustEmbedUnimplementedLotteryServiceServer() {}
 func (UnimplementedLotteryServiceServer) testEmbeddedByValue()                        {}
@@ -250,6 +268,24 @@ func _LotteryService_Result_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LotteryService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LotteryServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LotteryService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LotteryServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LotteryService_ServiceDesc is the grpc.ServiceDesc for LotteryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -276,6 +312,10 @@ var LotteryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Result",
 			Handler:    _LotteryService_Result_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _LotteryService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

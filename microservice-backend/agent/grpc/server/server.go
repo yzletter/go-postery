@@ -30,3 +30,7 @@ func (server *AgentServiceServer) Chat(ctx context.Context, req *agent_grpc.Chat
 		Documents: documents,
 	}, nil
 }
+
+func (server *AgentServiceServer) HealthCheck(ctx context.Context, req *agent_grpc.HealthCheckRequest) (*agent_grpc.HealthCheckResponse, error) {
+	return &agent_grpc.HealthCheckResponse{}, nil
+}

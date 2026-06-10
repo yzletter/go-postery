@@ -54,3 +54,7 @@ func (server *SearchServiceServer) Count(ctx context.Context, req *search_grpc.C
 	count := server.svc.Count(ctx)
 	return &search_grpc.AffectedCount{Count: int32(count)}, nil
 }
+
+func (server *SearchServiceServer) HealthCheck(ctx context.Context, req *search_grpc.HealthCheckRequest) (*search_grpc.HealthCheckResponse, error) {
+	return &search_grpc.HealthCheckResponse{}, nil
+}

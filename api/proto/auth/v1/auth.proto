@@ -93,6 +93,9 @@ message CheckBlackListResponse {
   bool Result = 1;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 service AuthService {
   rpc LoginByPassword(LoginByPasswordRequest) returns (UserID);
   rpc LoginByPhone(LoginByPhoneRequest) returns (UserID);
@@ -105,6 +108,7 @@ service AuthService {
   rpc VerifyAccessToken(AccessToken) returns (JWTTokenClaims);
   rpc GetInfoByRefreshToken(RefreshToken) returns (GetInfoByRefreshTokenResponse);
   rpc CheckBlackList(CheckBlackListRequest) returns (CheckBlackListResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

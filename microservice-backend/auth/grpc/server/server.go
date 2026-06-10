@@ -138,3 +138,7 @@ func (server *AuthServiceServer) CheckBlackList(ctx context.Context, req *auth_g
 	// 返回 Response
 	return &auth_grpc.CheckBlackListResponse{Result: exist}, nil
 }
+
+func (server *AuthServiceServer) HealthCheck(ctx context.Context, req *auth_grpc.HealthCheckRequest) (*auth_grpc.HealthCheckResponse, error) {
+	return &auth_grpc.HealthCheckResponse{}, nil
+}

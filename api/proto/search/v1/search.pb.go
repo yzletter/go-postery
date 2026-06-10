@@ -7,13 +7,12 @@
 package search_grpc
 
 import (
+	model "github.com/yzletter/go-postery/microservice-backend/search/model"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -193,7 +192,7 @@ func (x *SearchRequest) GetQueries() []string {
 
 type Query struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TermQuery     *model2.TermQuery      `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
+	TermQuery     *model.TermQuery       `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
 	OnFlag        uint64                 `protobuf:"varint,2,opt,name=OnFlag,proto3" json:"OnFlag,omitempty"`
 	OffFlag       uint64                 `protobuf:"varint,3,opt,name=OffFlag,proto3" json:"OffFlag,omitempty"`
 	OrFlags       []uint64               `protobuf:"varint,4,rep,packed,name=OrFlags,proto3" json:"OrFlags,omitempty"`
@@ -231,7 +230,7 @@ func (*Query) Descriptor() ([]byte, []int) {
 	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *Query) GetTermQuery() *model2.TermQuery {
+func (x *Query) GetTermQuery() *model.TermQuery {
 	if x != nil {
 		return x.TermQuery
 	}
@@ -303,6 +302,78 @@ func (x *SearchResult) GetDocumentIDs() []*DocID {
 	return nil
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{6}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{7}
+}
+
 var File_api_proto_search_v1_search_proto protoreflect.FileDescriptor
 
 const file_api_proto_search_v1_search_proto_rawDesc = "" +
@@ -321,12 +392,15 @@ const file_api_proto_search_v1_search_proto_rawDesc = "" +
 	"\aOffFlag\x18\x03 \x01(\x04R\aOffFlag\x12\x18\n" +
 	"\aOrFlags\x18\x04 \x03(\x04R\aOrFlags\"B\n" +
 	"\fSearchResult\x122\n" +
-	"\vDocumentIDs\x18\x01 \x03(\v2\x10.search.v1.DocIDR\vDocumentIDs2\xf6\x01\n" +
+	"\vDocumentIDs\x18\x01 \x03(\v2\x10.search.v1.DocIDR\vDocumentIDs\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\xc4\x02\n" +
 	"\rSearchService\x12;\n" +
 	"\x06Search\x12\x18.search.v1.SearchRequest\x1a\x17.search.v1.SearchResult\x127\n" +
 	"\tDeleteDoc\x12\x10.search.v1.DocID\x1a\x18.search.v1.AffectedCount\x123\n" +
 	"\x06AddDoc\x12\x0f.model.Document\x1a\x18.search.v1.AffectedCount\x12:\n" +
-	"\x05Count\x12\x17.search.v1.CountRequest\x1a\x18.search.v1.AffectedCountB@Z>github.com/yzletter/go-postery/api/proto/search/v1;search_grpcb\x06proto3"
+	"\x05Count\x12\x17.search.v1.CountRequest\x1a\x18.search.v1.AffectedCount\x12L\n" +
+	"\vHealthCheck\x12\x1d.search.v1.HealthCheckRequest\x1a\x1e.search.v1.HealthCheckResponseB@Z>github.com/yzletter/go-postery/api/proto/search/v1;search_grpcb\x06proto3"
 
 var (
 	file_api_proto_search_v1_search_proto_rawDescOnce sync.Once
@@ -340,30 +414,34 @@ func file_api_proto_search_v1_search_proto_rawDescGZIP() []byte {
 	return file_api_proto_search_v1_search_proto_rawDescData
 }
 
-var file_api_proto_search_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_api_proto_search_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_proto_search_v1_search_proto_goTypes = []any{
-	(*DocID)(nil),            // 0: search.v1.DocID
-	(*AffectedCount)(nil),    // 1: search.v1.AffectedCount
-	(*CountRequest)(nil),     // 2: search.v1.CountRequest
-	(*SearchRequest)(nil),    // 3: search.v1.SearchRequest
-	(*Query)(nil),            // 4: search.v1.Query
-	(*SearchResult)(nil),     // 5: search.v1.SearchResult
-	(*model2.TermQuery)(nil), // 6: model.TermQuery
-	(*model2.Document)(nil),  // 7: model.Document
+	(*DocID)(nil),               // 0: search.v1.DocID
+	(*AffectedCount)(nil),       // 1: search.v1.AffectedCount
+	(*CountRequest)(nil),        // 2: search.v1.CountRequest
+	(*SearchRequest)(nil),       // 3: search.v1.SearchRequest
+	(*Query)(nil),               // 4: search.v1.Query
+	(*SearchResult)(nil),        // 5: search.v1.SearchResult
+	(*HealthCheckRequest)(nil),  // 6: search.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 7: search.v1.HealthCheckResponse
+	(*model.TermQuery)(nil),     // 8: model.TermQuery
+	(*model.Document)(nil),      // 9: model.Document
 }
 var file_api_proto_search_v1_search_proto_depIdxs = []int32{
-	6, // 0: search.v1.Query.TermQuery:type_name -> model.TermQuery
+	8, // 0: search.v1.Query.TermQuery:type_name -> model.TermQuery
 	0, // 1: search.v1.SearchResult.DocumentIDs:type_name -> search.v1.DocID
 	3, // 2: search.v1.SearchService.Search:input_type -> search.v1.SearchRequest
 	0, // 3: search.v1.SearchService.DeleteDoc:input_type -> search.v1.DocID
-	7, // 4: search.v1.SearchService.AddDoc:input_type -> model.Document
+	9, // 4: search.v1.SearchService.AddDoc:input_type -> model.Document
 	2, // 5: search.v1.SearchService.Count:input_type -> search.v1.CountRequest
-	5, // 6: search.v1.SearchService.Search:output_type -> search.v1.SearchResult
-	1, // 7: search.v1.SearchService.DeleteDoc:output_type -> search.v1.AffectedCount
-	1, // 8: search.v1.SearchService.AddDoc:output_type -> search.v1.AffectedCount
-	1, // 9: search.v1.SearchService.Count:output_type -> search.v1.AffectedCount
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
+	6, // 6: search.v1.SearchService.HealthCheck:input_type -> search.v1.HealthCheckRequest
+	5, // 7: search.v1.SearchService.Search:output_type -> search.v1.SearchResult
+	1, // 8: search.v1.SearchService.DeleteDoc:output_type -> search.v1.AffectedCount
+	1, // 9: search.v1.SearchService.AddDoc:output_type -> search.v1.AffectedCount
+	1, // 10: search.v1.SearchService.Count:output_type -> search.v1.AffectedCount
+	7, // 11: search.v1.SearchService.HealthCheck:output_type -> search.v1.HealthCheckResponse
+	7, // [7:12] is the sub-list for method output_type
+	2, // [2:7] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -380,7 +458,7 @@ func file_api_proto_search_v1_search_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_search_v1_search_proto_rawDesc), len(file_api_proto_search_v1_search_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

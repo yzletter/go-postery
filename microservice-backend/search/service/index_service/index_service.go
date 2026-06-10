@@ -95,3 +95,7 @@ func (service *IndexServiceWorker) Count(ctx context.Context, request *CountRequ
 	n := service.Indexer.Count()
 	return &AffectedCount{Count: int32(n)}, nil
 }
+
+func (service *IndexServiceWorker) HealthCheck(ctx context.Context, request *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return &HealthCheckResponse{}, nil
+}

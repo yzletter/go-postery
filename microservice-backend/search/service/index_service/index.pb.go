@@ -7,13 +7,12 @@
 package index_service
 
 import (
+	model "github.com/yzletter/go-postery/microservice-backend/search/model"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	model2 "github.com/yzletter/go-postery/microservice-backend/search/model"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -113,7 +112,7 @@ func (x *AffectedCount) GetCount() int32 {
 
 type SearchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TermQuery     *model2.TermQuery      `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
+	TermQuery     *model.TermQuery       `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
 	OnFlag        uint64                 `protobuf:"varint,2,opt,name=OnFlag,proto3" json:"OnFlag,omitempty"`
 	OffFlag       uint64                 `protobuf:"varint,3,opt,name=OffFlag,proto3" json:"OffFlag,omitempty"`
 	OrFlags       []uint64               `protobuf:"varint,4,rep,packed,name=OrFlags,proto3" json:"OrFlags,omitempty"`
@@ -151,7 +150,7 @@ func (*SearchRequest) Descriptor() ([]byte, []int) {
 	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SearchRequest) GetTermQuery() *model2.TermQuery {
+func (x *SearchRequest) GetTermQuery() *model.TermQuery {
 	if x != nil {
 		return x.TermQuery
 	}
@@ -181,7 +180,7 @@ func (x *SearchRequest) GetOrFlags() []uint64 {
 
 type SearchResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Results       []*model2.Document     `protobuf:"bytes,1,rep,name=Results,proto3" json:"Results,omitempty"`
+	Results       []*model.Document      `protobuf:"bytes,1,rep,name=Results,proto3" json:"Results,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -216,7 +215,7 @@ func (*SearchResult) Descriptor() ([]byte, []int) {
 	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *SearchResult) GetResults() []*model2.Document {
+func (x *SearchResult) GetResults() []*model.Document {
 	if x != nil {
 		return x.Results
 	}
@@ -259,6 +258,78 @@ func (*CountRequest) Descriptor() ([]byte, []int) {
 	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{4}
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_search_service_index_service_index_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_search_service_index_service_index_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{5}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_search_service_index_service_index_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_search_service_index_service_index_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_search_service_index_service_index_proto_rawDescGZIP(), []int{6}
+}
+
 var File_search_service_index_service_index_proto protoreflect.FileDescriptor
 
 const file_search_service_index_service_index_proto_rawDesc = "" +
@@ -275,12 +346,15 @@ const file_search_service_index_service_index_proto_rawDesc = "" +
 	"\aOrFlags\x18\x04 \x03(\x04R\aOrFlags\"9\n" +
 	"\fSearchResult\x12)\n" +
 	"\aResults\x18\x01 \x03(\v2\x0f.model.DocumentR\aResults\"\x0e\n" +
-	"\fCountRequest2\x91\x02\n" +
+	"\fCountRequest\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\xe7\x02\n" +
 	"\fIndexService\x127\n" +
 	"\x06AddDoc\x12\x0f.model.Document\x1a\x1c.index_service.AffectedCount\x12?\n" +
 	"\tDeleteDoc\x12\x14.index_service.DocID\x1a\x1c.index_service.AffectedCount\x12C\n" +
 	"\x06Search\x12\x1c.index_service.SearchRequest\x1a\x1b.index_service.SearchResult\x12B\n" +
-	"\x05Count\x12\x1b.index_service.CountRequest\x1a\x1c.index_service.AffectedCountBKZIgithub.com/yzletter/go-postery/search/service/index_service;index_serviceb\x06proto3"
+	"\x05Count\x12\x1b.index_service.CountRequest\x1a\x1c.index_service.AffectedCount\x12T\n" +
+	"\vHealthCheck\x12!.index_service.HealthCheckRequest\x1a\".index_service.HealthCheckResponseBKZIgithub.com/yzletter/go-postery/search/service/index_service;index_serviceb\x06proto3"
 
 var (
 	file_search_service_index_service_index_proto_rawDescOnce sync.Once
@@ -294,29 +368,33 @@ func file_search_service_index_service_index_proto_rawDescGZIP() []byte {
 	return file_search_service_index_service_index_proto_rawDescData
 }
 
-var file_search_service_index_service_index_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_search_service_index_service_index_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_search_service_index_service_index_proto_goTypes = []any{
-	(*DocID)(nil),            // 0: index_service.DocID
-	(*AffectedCount)(nil),    // 1: index_service.AffectedCount
-	(*SearchRequest)(nil),    // 2: index_service.SearchRequest
-	(*SearchResult)(nil),     // 3: index_service.SearchResult
-	(*CountRequest)(nil),     // 4: index_service.CountRequest
-	(*model2.TermQuery)(nil), // 5: model.TermQuery
-	(*model2.Document)(nil),  // 6: model.Document
+	(*DocID)(nil),               // 0: index_service.DocID
+	(*AffectedCount)(nil),       // 1: index_service.AffectedCount
+	(*SearchRequest)(nil),       // 2: index_service.SearchRequest
+	(*SearchResult)(nil),        // 3: index_service.SearchResult
+	(*CountRequest)(nil),        // 4: index_service.CountRequest
+	(*HealthCheckRequest)(nil),  // 5: index_service.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 6: index_service.HealthCheckResponse
+	(*model.TermQuery)(nil),     // 7: model.TermQuery
+	(*model.Document)(nil),      // 8: model.Document
 }
 var file_search_service_index_service_index_proto_depIdxs = []int32{
-	5, // 0: index_service.SearchRequest.TermQuery:type_name -> model.TermQuery
-	6, // 1: index_service.SearchResult.Results:type_name -> model.Document
-	6, // 2: index_service.IndexService.AddDoc:input_type -> model.Document
+	7, // 0: index_service.SearchRequest.TermQuery:type_name -> model.TermQuery
+	8, // 1: index_service.SearchResult.Results:type_name -> model.Document
+	8, // 2: index_service.IndexService.AddDoc:input_type -> model.Document
 	0, // 3: index_service.IndexService.DeleteDoc:input_type -> index_service.DocID
 	2, // 4: index_service.IndexService.Search:input_type -> index_service.SearchRequest
 	4, // 5: index_service.IndexService.Count:input_type -> index_service.CountRequest
-	1, // 6: index_service.IndexService.AddDoc:output_type -> index_service.AffectedCount
-	1, // 7: index_service.IndexService.DeleteDoc:output_type -> index_service.AffectedCount
-	3, // 8: index_service.IndexService.Search:output_type -> index_service.SearchResult
-	1, // 9: index_service.IndexService.Count:output_type -> index_service.AffectedCount
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
+	5, // 6: index_service.IndexService.HealthCheck:input_type -> index_service.HealthCheckRequest
+	1, // 7: index_service.IndexService.AddDoc:output_type -> index_service.AffectedCount
+	1, // 8: index_service.IndexService.DeleteDoc:output_type -> index_service.AffectedCount
+	3, // 9: index_service.IndexService.Search:output_type -> index_service.SearchResult
+	1, // 10: index_service.IndexService.Count:output_type -> index_service.AffectedCount
+	6, // 11: index_service.IndexService.HealthCheck:output_type -> index_service.HealthCheckResponse
+	7, // [7:12] is the sub-list for method output_type
+	2, // [2:7] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -333,7 +411,7 @@ func file_search_service_index_service_index_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_search_service_index_service_index_proto_rawDesc), len(file_search_service_index_service_index_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

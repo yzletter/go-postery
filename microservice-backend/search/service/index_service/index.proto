@@ -29,12 +29,16 @@ message SearchResult {
 message CountRequest{
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 // 定义服务
 service IndexService {
   rpc AddDoc(model.Document) returns (AffectedCount);
   rpc DeleteDoc(DocID) returns (AffectedCount);
   rpc Search(SearchRequest) returns (SearchResult);
   rpc Count(CountRequest) returns (AffectedCount);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

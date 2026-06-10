@@ -493,6 +493,78 @@ func (x *LotteryResponse) GetUserID() int64 {
 	return 0
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_lottery_v1_lottery_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_lottery_v1_lottery_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_lottery_v1_lottery_proto_rawDescGZIP(), []int{8}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_lottery_v1_lottery_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_lottery_v1_lottery_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_lottery_v1_lottery_proto_rawDescGZIP(), []int{9}
+}
+
 var File_api_proto_lottery_v1_lottery_proto protoreflect.FileDescriptor
 
 const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
@@ -530,13 +602,16 @@ const file_api_proto_lottery_v1_lottery_proto_rawDesc = "" +
 	"\vTempOrderID\x18\x02 \x01(\x03R\vTempOrderID\x12\x18\n" +
 	"\aSuccess\x18\x03 \x01(\bR\aSuccess\x12 \n" +
 	"\vDescription\x18\x04 \x01(\tR\vDescription\x12\x16\n" +
-	"\x06UserID\x18\x05 \x01(\x03R\x06UserID2\xc4\x02\n" +
+	"\x06UserID\x18\x05 \x01(\x03R\x06UserID\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\x94\x03\n" +
 	"\x0eLotteryService\x12:\n" +
 	"\vGetAllGifts\x12\x18.lottery.v1.EmptyRequest\x1a\x11.lottery.v1.Gifts\x12:\n" +
 	"\aLottery\x12\x12.lottery.v1.UserID\x1a\x1b.lottery.v1.LotteryResponse\x12B\n" +
 	"\x03Pay\x12 .lottery.v1.LotteryCommonRequest\x1a\x19.lottery.v1.EmptyResponse\x12E\n" +
 	"\x06GiveUp\x12 .lottery.v1.LotteryCommonRequest\x1a\x19.lottery.v1.EmptyResponse\x12/\n" +
-	"\x06Result\x12\x12.lottery.v1.UserID\x1a\x11.lottery.v1.OrderBBZ@github.com/yzletter/go-postery/api/proto/lottery/v1;lottery_grpcb\x06proto3"
+	"\x06Result\x12\x12.lottery.v1.UserID\x1a\x11.lottery.v1.Order\x12N\n" +
+	"\vHealthCheck\x12\x1e.lottery.v1.HealthCheckRequest\x1a\x1f.lottery.v1.HealthCheckResponseBBZ@github.com/yzletter/go-postery/api/proto/lottery/v1;lottery_grpcb\x06proto3"
 
 var (
 	file_api_proto_lottery_v1_lottery_proto_rawDescOnce sync.Once
@@ -550,7 +625,7 @@ func file_api_proto_lottery_v1_lottery_proto_rawDescGZIP() []byte {
 	return file_api_proto_lottery_v1_lottery_proto_rawDescData
 }
 
-var file_api_proto_lottery_v1_lottery_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_api_proto_lottery_v1_lottery_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_api_proto_lottery_v1_lottery_proto_goTypes = []any{
 	(*EmptyRequest)(nil),         // 0: lottery.v1.EmptyRequest
 	(*EmptyResponse)(nil),        // 1: lottery.v1.EmptyResponse
@@ -560,6 +635,8 @@ var file_api_proto_lottery_v1_lottery_proto_goTypes = []any{
 	(*Gift)(nil),                 // 5: lottery.v1.Gift
 	(*Gifts)(nil),                // 6: lottery.v1.Gifts
 	(*LotteryResponse)(nil),      // 7: lottery.v1.LotteryResponse
+	(*HealthCheckRequest)(nil),   // 8: lottery.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),  // 9: lottery.v1.HealthCheckResponse
 }
 var file_api_proto_lottery_v1_lottery_proto_depIdxs = []int32{
 	5, // 0: lottery.v1.Order.Gift:type_name -> lottery.v1.Gift
@@ -570,13 +647,15 @@ var file_api_proto_lottery_v1_lottery_proto_depIdxs = []int32{
 	3, // 5: lottery.v1.LotteryService.Pay:input_type -> lottery.v1.LotteryCommonRequest
 	3, // 6: lottery.v1.LotteryService.GiveUp:input_type -> lottery.v1.LotteryCommonRequest
 	2, // 7: lottery.v1.LotteryService.Result:input_type -> lottery.v1.UserID
-	6, // 8: lottery.v1.LotteryService.GetAllGifts:output_type -> lottery.v1.Gifts
-	7, // 9: lottery.v1.LotteryService.Lottery:output_type -> lottery.v1.LotteryResponse
-	1, // 10: lottery.v1.LotteryService.Pay:output_type -> lottery.v1.EmptyResponse
-	1, // 11: lottery.v1.LotteryService.GiveUp:output_type -> lottery.v1.EmptyResponse
-	4, // 12: lottery.v1.LotteryService.Result:output_type -> lottery.v1.Order
-	8, // [8:13] is the sub-list for method output_type
-	3, // [3:8] is the sub-list for method input_type
+	8, // 8: lottery.v1.LotteryService.HealthCheck:input_type -> lottery.v1.HealthCheckRequest
+	6, // 9: lottery.v1.LotteryService.GetAllGifts:output_type -> lottery.v1.Gifts
+	7, // 10: lottery.v1.LotteryService.Lottery:output_type -> lottery.v1.LotteryResponse
+	1, // 11: lottery.v1.LotteryService.Pay:output_type -> lottery.v1.EmptyResponse
+	1, // 12: lottery.v1.LotteryService.GiveUp:output_type -> lottery.v1.EmptyResponse
+	4, // 13: lottery.v1.LotteryService.Result:output_type -> lottery.v1.Order
+	9, // 14: lottery.v1.LotteryService.HealthCheck:output_type -> lottery.v1.HealthCheckResponse
+	9, // [9:15] is the sub-list for method output_type
+	3, // [3:9] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -593,7 +672,7 @@ func file_api_proto_lottery_v1_lottery_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_lottery_v1_lottery_proto_rawDesc), len(file_api_proto_lottery_v1_lottery_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

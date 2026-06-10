@@ -26,6 +26,7 @@ const (
 	SessionService_UpdateUnread_FullMethodName             = "/session.v1.SessionService/UpdateUnread"
 	SessionService_ClearUnread_FullMethodName              = "/session.v1.SessionService/ClearUnread"
 	SessionService_CreateMessage_FullMethodName            = "/session.v1.SessionService/CreateMessage"
+	SessionService_HealthCheck_FullMethodName              = "/session.v1.SessionService/HealthCheck"
 )
 
 // SessionServiceClient is the client API for SessionService service.
@@ -39,6 +40,7 @@ type SessionServiceClient interface {
 	UpdateUnread(ctx context.Context, in *UpdateUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
 	ClearUnread(ctx context.Context, in *ClearUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
 	CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type sessionServiceClient struct {
@@ -119,6 +121,16 @@ func (c *sessionServiceClient) CreateMessage(ctx context.Context, in *Message, o
 	return out, nil
 }
 
+func (c *sessionServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, SessionService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SessionServiceServer is the server API for SessionService service.
 // All implementations must embed UnimplementedSessionServiceServer
 // for forward compatibility.
@@ -130,6 +142,7 @@ type SessionServiceServer interface {
 	UpdateUnread(context.Context, *UpdateUnreadRequest) (*SessionEmptyResponse, error)
 	ClearUnread(context.Context, *ClearUnreadRequest) (*SessionEmptyResponse, error)
 	CreateMessage(context.Context, *Message) (*Message, error)
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedSessionServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedSessionServiceServer) ClearUnread(context.Context, *ClearUnre
 }
 func (UnimplementedSessionServiceServer) CreateMessage(context.Context, *Message) (*Message, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateMessage not implemented")
+}
+func (UnimplementedSessionServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {}
 func (UnimplementedSessionServiceServer) testEmbeddedByValue()                        {}
@@ -308,6 +324,24 @@ func _SessionService_CreateMessage_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SessionService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SessionService_ServiceDesc is the grpc.ServiceDesc for SessionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -342,6 +376,10 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateMessage",
 			Handler:    _SessionService_CreateMessage_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _SessionService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -73,6 +73,9 @@ message ClearUnreadRequest {
   int64 SessionID = 2;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 service SessionService {
   rpc ListByUID(UserID) returns (Sessions);
   rpc GetSession(BothUserID) returns (Session);
@@ -81,6 +84,7 @@ service SessionService {
   rpc UpdateUnread(UpdateUnreadRequest) returns (SessionEmptyResponse);
   rpc ClearUnread(ClearUnreadRequest) returns (SessionEmptyResponse);
   rpc CreateMessage(Message) returns (Message);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

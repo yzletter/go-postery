@@ -105,3 +105,7 @@ func (server *SessionServiceServer) CreateMessage(ctx context.Context, message *
 
 	return dto.ToMessage(created), nil
 }
+
+func (server *SessionServiceServer) HealthCheck(ctx context.Context, req *session_grpc.HealthCheckRequest) (*session_grpc.HealthCheckResponse, error) {
+	return &session_grpc.HealthCheckResponse{}, nil
+}

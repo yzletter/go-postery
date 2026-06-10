@@ -16,8 +16,12 @@ message ChatRequest {
   string Query = 3;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 service AgentService {
   rpc Chat(ChatRequest) returns (ChatResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

@@ -98,6 +98,9 @@ message GetAvatarURLResponse {
   string URL = 1;
 }
 
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
 service UserService {
   // 根据用户 ID 获取用户资料
   rpc GetProfileById(GetProfileByIdRequest) returns (UserDetail);
@@ -118,6 +121,8 @@ service UserService {
   rpc UploadAvatarCallback(UploadAvatarCallbackRequest) returns (UploadAvatarCallbackResponse);
   // 获取头像预签名 URL
   rpc GetAvatarURL(GetAvatarURLRequest) returns (GetAvatarURLResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 /*

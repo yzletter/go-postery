@@ -896,6 +896,78 @@ func (x *CheckBlackListResponse) GetResult() bool {
 	return false
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{16}
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{17}
+}
+
 var File_api_proto_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_api_proto_auth_v1_auth_proto_rawDesc = "" +
@@ -957,7 +1029,9 @@ const file_api_proto_auth_v1_auth_proto_rawDesc = "" +
 	"\x15CheckBlackListRequest\x12\x12\n" +
 	"\x04SSID\x18\x01 \x01(\tR\x04SSID\"0\n" +
 	"\x16CheckBlackListResponse\x12\x16\n" +
-	"\x06Result\x18\x01 \x01(\bR\x06Result2\x94\x06\n" +
+	"\x06Result\x18\x01 \x01(\bR\x06Result\"\x14\n" +
+	"\x12HealthCheckRequest\"\x15\n" +
+	"\x13HealthCheckResponse2\xde\x06\n" +
 	"\vAuthService\x12C\n" +
 	"\x0fLoginByPassword\x12\x1f.auth.v1.LoginByPasswordRequest\x1a\x0f.auth.v1.UserID\x12=\n" +
 	"\fLoginByPhone\x12\x1c.auth.v1.LoginByPhoneRequest\x1a\x0f.auth.v1.UserID\x12<\n" +
@@ -969,7 +1043,8 @@ const file_api_proto_auth_v1_auth_proto_rawDesc = "" +
 	"\vClearTokens\x12\x13.auth.v1.DualTokens\x1a\x1a.auth.v1.AuthEmptyResponse\x12B\n" +
 	"\x11VerifyAccessToken\x12\x14.auth.v1.AccessToken\x1a\x17.auth.v1.JWTTokenClaims\x12V\n" +
 	"\x15GetInfoByRefreshToken\x12\x15.auth.v1.RefreshToken\x1a&.auth.v1.GetInfoByRefreshTokenResponse\x12Q\n" +
-	"\x0eCheckBlackList\x12\x1e.auth.v1.CheckBlackListRequest\x1a\x1f.auth.v1.CheckBlackListResponseB<Z:github.com/yzletter/go-postery/api/proto/auth/v1;auth_grpcb\x06proto3"
+	"\x0eCheckBlackList\x12\x1e.auth.v1.CheckBlackListRequest\x1a\x1f.auth.v1.CheckBlackListResponse\x12H\n" +
+	"\vHealthCheck\x12\x1b.auth.v1.HealthCheckRequest\x1a\x1c.auth.v1.HealthCheckResponseB<Z:github.com/yzletter/go-postery/api/proto/auth/v1;auth_grpcb\x06proto3"
 
 var (
 	file_api_proto_auth_v1_auth_proto_rawDescOnce sync.Once
@@ -983,7 +1058,7 @@ func file_api_proto_auth_v1_auth_proto_rawDescGZIP() []byte {
 	return file_api_proto_auth_v1_auth_proto_rawDescData
 }
 
-var file_api_proto_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_api_proto_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_proto_auth_v1_auth_proto_goTypes = []any{
 	(*UserID)(nil),                        // 0: auth.v1.UserID
 	(*LoginByPasswordRequest)(nil),        // 1: auth.v1.LoginByPasswordRequest
@@ -1001,12 +1076,14 @@ var file_api_proto_auth_v1_auth_proto_goTypes = []any{
 	(*GetInfoByRefreshTokenResponse)(nil), // 13: auth.v1.GetInfoByRefreshTokenResponse
 	(*CheckBlackListRequest)(nil),         // 14: auth.v1.CheckBlackListRequest
 	(*CheckBlackListResponse)(nil),        // 15: auth.v1.CheckBlackListResponse
-	(*timestamppb.Timestamp)(nil),         // 16: google.protobuf.Timestamp
+	(*HealthCheckRequest)(nil),            // 16: auth.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),           // 17: auth.v1.HealthCheckResponse
+	(*timestamppb.Timestamp)(nil),         // 18: google.protobuf.Timestamp
 }
 var file_api_proto_auth_v1_auth_proto_depIdxs = []int32{
-	16, // 0: auth.v1.JWTTokenClaims.ExpiresAt:type_name -> google.protobuf.Timestamp
-	16, // 1: auth.v1.JWTTokenClaims.NotBefore:type_name -> google.protobuf.Timestamp
-	16, // 2: auth.v1.JWTTokenClaims.IssuedAt:type_name -> google.protobuf.Timestamp
+	18, // 0: auth.v1.JWTTokenClaims.ExpiresAt:type_name -> google.protobuf.Timestamp
+	18, // 1: auth.v1.JWTTokenClaims.NotBefore:type_name -> google.protobuf.Timestamp
+	18, // 2: auth.v1.JWTTokenClaims.IssuedAt:type_name -> google.protobuf.Timestamp
 	1,  // 3: auth.v1.AuthService.LoginByPassword:input_type -> auth.v1.LoginByPasswordRequest
 	2,  // 4: auth.v1.AuthService.LoginByPhone:input_type -> auth.v1.LoginByPhoneRequest
 	0,  // 5: auth.v1.AuthService.HasPassword:input_type -> auth.v1.UserID
@@ -1018,19 +1095,21 @@ var file_api_proto_auth_v1_auth_proto_depIdxs = []int32{
 	10, // 11: auth.v1.AuthService.VerifyAccessToken:input_type -> auth.v1.AccessToken
 	11, // 12: auth.v1.AuthService.GetInfoByRefreshToken:input_type -> auth.v1.RefreshToken
 	14, // 13: auth.v1.AuthService.CheckBlackList:input_type -> auth.v1.CheckBlackListRequest
-	0,  // 14: auth.v1.AuthService.LoginByPassword:output_type -> auth.v1.UserID
-	0,  // 15: auth.v1.AuthService.LoginByPhone:output_type -> auth.v1.UserID
-	5,  // 16: auth.v1.AuthService.HasPassword:output_type -> auth.v1.HasPasswordResponse
-	6,  // 17: auth.v1.AuthService.SetPassword:output_type -> auth.v1.AuthEmptyResponse
-	6,  // 18: auth.v1.AuthService.UpdatePassword:output_type -> auth.v1.AuthEmptyResponse
-	7,  // 19: auth.v1.AuthService.GetAuthIdentityByUID:output_type -> auth.v1.AuthIdentity
-	9,  // 20: auth.v1.AuthService.IssueTokens:output_type -> auth.v1.DualTokens
-	6,  // 21: auth.v1.AuthService.ClearTokens:output_type -> auth.v1.AuthEmptyResponse
-	12, // 22: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.JWTTokenClaims
-	13, // 23: auth.v1.AuthService.GetInfoByRefreshToken:output_type -> auth.v1.GetInfoByRefreshTokenResponse
-	15, // 24: auth.v1.AuthService.CheckBlackList:output_type -> auth.v1.CheckBlackListResponse
-	14, // [14:25] is the sub-list for method output_type
-	3,  // [3:14] is the sub-list for method input_type
+	16, // 14: auth.v1.AuthService.HealthCheck:input_type -> auth.v1.HealthCheckRequest
+	0,  // 15: auth.v1.AuthService.LoginByPassword:output_type -> auth.v1.UserID
+	0,  // 16: auth.v1.AuthService.LoginByPhone:output_type -> auth.v1.UserID
+	5,  // 17: auth.v1.AuthService.HasPassword:output_type -> auth.v1.HasPasswordResponse
+	6,  // 18: auth.v1.AuthService.SetPassword:output_type -> auth.v1.AuthEmptyResponse
+	6,  // 19: auth.v1.AuthService.UpdatePassword:output_type -> auth.v1.AuthEmptyResponse
+	7,  // 20: auth.v1.AuthService.GetAuthIdentityByUID:output_type -> auth.v1.AuthIdentity
+	9,  // 21: auth.v1.AuthService.IssueTokens:output_type -> auth.v1.DualTokens
+	6,  // 22: auth.v1.AuthService.ClearTokens:output_type -> auth.v1.AuthEmptyResponse
+	12, // 23: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.JWTTokenClaims
+	13, // 24: auth.v1.AuthService.GetInfoByRefreshToken:output_type -> auth.v1.GetInfoByRefreshTokenResponse
+	15, // 25: auth.v1.AuthService.CheckBlackList:output_type -> auth.v1.CheckBlackListResponse
+	17, // 26: auth.v1.AuthService.HealthCheck:output_type -> auth.v1.HealthCheckResponse
+	15, // [15:27] is the sub-list for method output_type
+	3,  // [3:15] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1047,7 +1126,7 @@ func file_api_proto_auth_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_auth_v1_auth_proto_rawDesc), len(file_api_proto_auth_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

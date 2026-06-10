@@ -37,6 +37,7 @@ const (
 	PostService_ListCommentByPage_FullMethodName      = "/post.v1.PostService/ListCommentByPage"
 	PostService_ListRepliesByPage_FullMethodName      = "/post.v1.PostService/ListRepliesByPage"
 	PostService_CheckCommentDeleteAuth_FullMethodName = "/post.v1.PostService/CheckCommentDeleteAuth"
+	PostService_HealthCheck_FullMethodName            = "/post.v1.PostService/HealthCheck"
 )
 
 // PostServiceClient is the client API for PostService service.
@@ -77,6 +78,8 @@ type PostServiceClient interface {
 	ListRepliesByPage(ctx context.Context, in *ListReplyByPageRequest, opts ...grpc.CallOption) (*CommentsResponse, error)
 	// 评论是否属于用户
 	CheckCommentDeleteAuth(ctx context.Context, in *CommentBelongRequest, opts ...grpc.CallOption) (*BelongResponse, error)
+	// 健康检查
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type postServiceClient struct {
@@ -267,6 +270,16 @@ func (c *postServiceClient) CheckCommentDeleteAuth(ctx context.Context, in *Comm
 	return out, nil
 }
 
+func (c *postServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, PostService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility.
@@ -305,6 +318,8 @@ type PostServiceServer interface {
 	ListRepliesByPage(context.Context, *ListReplyByPageRequest) (*CommentsResponse, error)
 	// 评论是否属于用户
 	CheckCommentDeleteAuth(context.Context, *CommentBelongRequest) (*BelongResponse, error)
+	// 健康检查
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -368,6 +383,9 @@ func (UnimplementedPostServiceServer) ListRepliesByPage(context.Context, *ListRe
 }
 func (UnimplementedPostServiceServer) CheckCommentDeleteAuth(context.Context, *CommentBelongRequest) (*BelongResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckCommentDeleteAuth not implemented")
+}
+func (UnimplementedPostServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 func (UnimplementedPostServiceServer) testEmbeddedByValue()                     {}
@@ -714,6 +732,24 @@ func _PostService_CheckCommentDeleteAuth_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -792,6 +828,10 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckCommentDeleteAuth",
 			Handler:    _PostService_CheckCommentDeleteAuth_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _PostService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

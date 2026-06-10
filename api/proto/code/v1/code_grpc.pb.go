@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CodeService_Send_FullMethodName   = "/code.v1.CodeService/Send"
-	CodeService_Verify_FullMethodName = "/code.v1.CodeService/Verify"
+	CodeService_Send_FullMethodName        = "/code.v1.CodeService/Send"
+	CodeService_Verify_FullMethodName      = "/code.v1.CodeService/Verify"
+	CodeService_HealthCheck_FullMethodName = "/code.v1.CodeService/HealthCheck"
 )
 
 // CodeServiceClient is the client API for CodeService service.
@@ -33,6 +34,8 @@ type CodeServiceClient interface {
 	Send(ctx context.Context, in *SendCodeRequest, opts ...grpc.CallOption) (*SendCodeResponse, error)
 	// 校验验证码
 	Verify(ctx context.Context, in *CheckCodeRequest, opts ...grpc.CallOption) (*CheckCodeResponse, error)
+	// 健康检查
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type codeServiceClient struct {
@@ -63,6 +66,16 @@ func (c *codeServiceClient) Verify(ctx context.Context, in *CheckCodeRequest, op
 	return out, nil
 }
 
+func (c *codeServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, CodeService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CodeServiceServer is the server API for CodeService service.
 // All implementations must embed UnimplementedCodeServiceServer
 // for forward compatibility.
@@ -73,6 +86,8 @@ type CodeServiceServer interface {
 	Send(context.Context, *SendCodeRequest) (*SendCodeResponse, error)
 	// 校验验证码
 	Verify(context.Context, *CheckCodeRequest) (*CheckCodeResponse, error)
+	// 健康检查
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedCodeServiceServer()
 }
 
@@ -88,6 +103,9 @@ func (UnimplementedCodeServiceServer) Send(context.Context, *SendCodeRequest) (*
 }
 func (UnimplementedCodeServiceServer) Verify(context.Context, *CheckCodeRequest) (*CheckCodeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Verify not implemented")
+}
+func (UnimplementedCodeServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedCodeServiceServer) mustEmbedUnimplementedCodeServiceServer() {}
 func (UnimplementedCodeServiceServer) testEmbeddedByValue()                     {}
@@ -146,6 +164,24 @@ func _CodeService_Verify_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CodeService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CodeServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CodeService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CodeServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CodeService_ServiceDesc is the grpc.ServiceDesc for CodeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +196,10 @@ var CodeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Verify",
 			Handler:    _CodeService_Verify_Handler,
+		},
+		{
+			MethodName: "HealthCheck",
+			Handler:    _CodeService_HealthCheck_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
