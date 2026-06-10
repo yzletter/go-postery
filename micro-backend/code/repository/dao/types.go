@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/model"
+	"github.com/yzletter/go-postery/micro-backend/code/model"
 )
 
 type CodeDAO interface {

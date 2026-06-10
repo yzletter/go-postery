@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"

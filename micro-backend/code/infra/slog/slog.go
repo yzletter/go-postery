@@ -6,7 +6,7 @@ import (
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
 )
 
 // InitSlog 初始化 Slog

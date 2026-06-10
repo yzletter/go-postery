@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
-	"github.com/yzletter/go-postery/microservice-backend/code/model"
-	"github.com/yzletter/go-postery/microservice-backend/code/repository/cache"
-	"github.com/yzletter/go-postery/microservice-backend/code/repository/dao"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
+	"github.com/yzletter/go-postery/micro-backend/code/model"
+	"github.com/yzletter/go-postery/micro-backend/code/repository/cache"
+	"github.com/yzletter/go-postery/micro-backend/code/repository/dao"
 )
 
 type codeRepository struct {

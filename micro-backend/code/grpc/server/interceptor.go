@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/errs"
+	"github.com/yzletter/go-postery/micro-backend/code/errs"
 	_grpc "google.golang.org/grpc"
 )
 

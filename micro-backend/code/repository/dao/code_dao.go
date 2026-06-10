@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/microservice-backend/code/model"
+	"github.com/yzletter/go-postery/micro-backend/code/model"
 	"gorm.io/gorm"
 )
 

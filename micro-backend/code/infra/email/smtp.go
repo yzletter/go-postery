@@ -6,8 +6,8 @@ import (
 	"html/template"
 	"log/slog"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
-	"github.com/yzletter/go-postery/microservice-backend/code/service/ports"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
+	"github.com/yzletter/go-postery/micro-backend/code/service/ports"
 	"gopkg.in/gomail.v2"
 )
 

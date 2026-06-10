@@ -8,7 +8,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

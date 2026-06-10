@@ -12,22 +12,22 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
-	"github.com/yzletter/go-postery/microservice-backend/code/grpc/hub"
-	"github.com/yzletter/go-postery/microservice-backend/code/grpc/server"
-	"github.com/yzletter/go-postery/microservice-backend/code/infra/email"
-	infraEtcd "github.com/yzletter/go-postery/microservice-backend/code/infra/etcd"
-	"github.com/yzletter/go-postery/microservice-backend/code/infra/graceful_stop"
-	infraJaeger "github.com/yzletter/go-postery/microservice-backend/code/infra/jaeger"
-	infraMySQL "github.com/yzletter/go-postery/microservice-backend/code/infra/mysql"
-	infraRedis "github.com/yzletter/go-postery/microservice-backend/code/infra/redis"
-	infraSlog "github.com/yzletter/go-postery/microservice-backend/code/infra/slog"
-	"github.com/yzletter/go-postery/microservice-backend/code/infra/sms"
-	"github.com/yzletter/go-postery/microservice-backend/code/repository"
-	"github.com/yzletter/go-postery/microservice-backend/code/repository/cache"
-	"github.com/yzletter/go-postery/microservice-backend/code/repository/dao"
-	"github.com/yzletter/go-postery/microservice-backend/code/service"
-	"github.com/yzletter/go-postery/microservice-backend/code/utils"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
+	hub2 "github.com/yzletter/go-postery/micro-backend/code/grpc/hub"
+	server2 "github.com/yzletter/go-postery/micro-backend/code/grpc/server"
+	"github.com/yzletter/go-postery/micro-backend/code/infra/email"
+	infraEtcd "github.com/yzletter/go-postery/micro-backend/code/infra/etcd"
+	"github.com/yzletter/go-postery/micro-backend/code/infra/graceful_stop"
+	infraJaeger "github.com/yzletter/go-postery/micro-backend/code/infra/jaeger"
+	infraMySQL "github.com/yzletter/go-postery/micro-backend/code/infra/mysql"
+	infraRedis "github.com/yzletter/go-postery/micro-backend/code/infra/redis"
+	infraSlog "github.com/yzletter/go-postery/micro-backend/code/infra/slog"
+	"github.com/yzletter/go-postery/micro-backend/code/infra/sms"
+	"github.com/yzletter/go-postery/micro-backend/code/repository"
+	"github.com/yzletter/go-postery/micro-backend/code/repository/cache"
+	"github.com/yzletter/go-postery/micro-backend/code/repository/dao"
+	service2 "github.com/yzletter/go-postery/micro-backend/code/service"
+	"github.com/yzletter/go-postery/micro-backend/code/utils"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
@@ -44,9 +44,16 @@ func main() {
 	env := flag.String("env", "production", "运行环境: local/production")
 	flag.Parse()
 
+	ip, err := utils.GetLocalIP() // 获取本地内网 IP
+	if err != nil {
+		slog.Error("Get Local IP Failed", "error", err)
+		panic(err)
+	}
+
 	// 本地测试
 	if *env == "local" {
 		prefix = "test_"
+		ip = "localhost"
 		EtcdEndPoint = "localhost:12379"
 	} else {
 		EtcdEndPoint = "172.16.131.223:2379"
@@ -74,35 +81,25 @@ func main() {
 	// Repository
 	CodeRepository := repository.NewCodeRepository(CodeDAO, CodeCache)
 	// Service
-	CodeService := service.NewCodeService(CodeRepository, EmailClient, SmsClient)
+	CodeService := service2.NewCodeService(CodeRepository, EmailClient, SmsClient)
 	// Common Service
-	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 50)
-	MetricService := service.NewMetricService(prefix + ServiceName)
+	RateLimitService := service2.NewRateLimitService(RedisClient, time.Minute, 50)
+	MetricService := service2.NewMetricService(prefix + ServiceName)
 
 	// gRPC ServiceHub
-	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	ETCDServiceHub := hub2.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub2.NewRoundRobinLoadBalancer())
 	// gRPC Server
-	CodeServiceServer := server.NewCodeServiceServer(CodeService)
+	CodeServiceServer := server2.NewCodeServiceServer(CodeService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(server.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(server2.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
 	code_grpc.RegisterCodeServiceServer(ServiceRegistrar, CodeServiceServer) // Register gRPC Service
 
-	// Start gRPC Server
-	ip, err := utils.GetLocalIP() // 获取本地内网 IP
-	if *env == "local" {
-		ip = "localhost"
-	}
-	fmt.Println(ip)
-	if err != nil {
-		slog.Error("Get Local IP Failed", "error", err)
-		panic(err)
-	}
-
 	// Prometheus
 	metricAddr := ip + ":" + Config.Metric.Port
+	slog.Info("Metric Addr Get Success", "addr", metricAddr)
 	go func() {
 		mux := http.NewServeMux()
 		// Metric
@@ -114,6 +111,7 @@ func main() {
 
 	// 监听 gRPC
 	grpcAddr := ip + ":" + Config.GRPC.Port
+	slog.Info("gRPC Addr Get Success", "addr", grpcAddr)
 	if lis, err := net.Listen("tcp", grpcAddr); err != nil {
 		panic(err)
 	} else {

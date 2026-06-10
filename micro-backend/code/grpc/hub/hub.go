@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/conf"
+	"github.com/yzletter/go-postery/micro-backend/code/conf"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )

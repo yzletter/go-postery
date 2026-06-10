@@ -7,20 +7,20 @@ import (
 	"log/slog"
 	"math/rand/v2"
 
-	"github.com/yzletter/go-postery/microservice-backend/code/errs"
-	"github.com/yzletter/go-postery/microservice-backend/code/repository"
-	"github.com/yzletter/go-postery/microservice-backend/code/service/ports"
+	"github.com/yzletter/go-postery/micro-backend/code/errs"
+	repository2 "github.com/yzletter/go-postery/micro-backend/code/repository"
+	"github.com/yzletter/go-postery/micro-backend/code/service/ports"
 )
 
 // 验证码服务
 type codeService struct {
-	repository  repository.CodeRepository // Code 模块 Repository 层
-	emailClient ports.CodeClient          // 发送邮箱验证码
-	smsClient   ports.CodeClient          // 发送短信验证码
+	repository  repository2.CodeRepository // Code 模块 Repository 层
+	emailClient ports.CodeClient           // 发送邮箱验证码
+	smsClient   ports.CodeClient           // 发送短信验证码
 }
 
 // NewCodeService 构造函数
-func NewCodeService(repository repository.CodeRepository, emailClient ports.CodeClient, smsClient ports.CodeClient) CodeService {
+func NewCodeService(repository repository2.CodeRepository, emailClient ports.CodeClient, smsClient ports.CodeClient) CodeService {
 	return &codeService{
 		repository:  repository,
 		emailClient: emailClient,
@@ -39,7 +39,7 @@ func (svc *codeService) Send(ctx context.Context, biz int, identifier string) er
 
 	// 检查是否能发送验证码
 	if err := svc.repository.Allow(ctx, biz, identifier, code); err != nil {
-		if errors.Is(err, repository.ErrResourceConflict) {
+		if errors.Is(err, repository2.ErrResourceConflict) {
 			slog.Error("Send Code Too Frequent", "error", err)
 			return errs.ErrAlreadyExits
 		}
