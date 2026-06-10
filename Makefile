@@ -5,7 +5,7 @@ build:
 	@go mod tidy
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/code_service ./micro-backend/code
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/auth_service ./microservice-backend/auth
-	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/lottery_service ./microservice-backend/lottery
+	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/lottery_service ./micro-backend/lottery
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/post_service ./microservice-backend/post
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/agent_service ./microservice-backend/agent
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/user_service ./microservice-backend/user
@@ -15,7 +15,8 @@ build:
 	@scp ./app/linux/code_service production1:~/app/code_service
 	@scp ./app/linux/code_service production2:~/app/code_service
 	@scp ./app/linux/code_service production3:~/app/code_service
-
+	@scp ./app/linux/lottery_service production1:~/app/lottery_service
+	@scp ./app/linux/lottery_service production3:~/app/lottery_service
 	@scp ./app/linux/auth_service production1:~/app/auth_service
 	@scp ./app/linux/lottery_service production1:~/app/lottery_service
 	@scp ./app/linux/agent_service production2:~/app/agent_service
