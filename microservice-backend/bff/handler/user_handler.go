@@ -297,7 +297,7 @@ func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
 func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
 	// 对请求进行验签
 	if ok, err := utils.VerifyOSS(ctx.Request); !ok || err != nil {
-		slog.Error("Invaild Request") // 验签失败
+		slog.Error("OSS Callback Invaild Request", "error", err, "request", ctx.Request) // 验签失败
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}

@@ -47,6 +47,21 @@ func (hub *ETCDServiceHub) LoadEndpoints(ctx context.Context, service string) {
 	}
 }
 
+func (hub *ETCDServiceHub) GetEndpoints(ctx context.Context, service string) []*Endpoint {
+	lock := hub.getLock(service)
+	lock.Lock()
+	defer lock.Unlock()
+
+	addrs := hub.getEndpoints(ctx, service)
+	endpoints := make([]*Endpoint, 0, len(addrs))
+	for _, addr := range addrs {
+		if _, ok := hub.pool[addr]; ok {
+			endpoints = append(endpoints, hub.pool[addr])
+		}
+	}
+	return endpoints
+}
+
 // AddEndpoint 向连接池中添加一个 Endpoint
 func (hub *ETCDServiceHub) AddEndpoint(ctx context.Context, service string, addr string) {
 	// 放入连接池

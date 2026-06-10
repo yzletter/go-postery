@@ -12,6 +12,7 @@ type ServiceHub interface {
 	WatchEndpointsFromServiceHub(ctx context.Context, service string)                            // Watch 一个服务
 	Register(ctx context.Context, service string, endpoint string, leaseID int64) (int64, error) // 下游服务向 ServiceHub 注册 / 续约服务
 	Unregister(ctx context.Context, service string, endpoint string) error                       // 下游服务向 ServiceHub 取消注册服务
+	GetEndpoints(ctx context.Context, service string) []*Endpoint                                // 获取所有可用节点
 }
 
 type LoadBalancer interface {
