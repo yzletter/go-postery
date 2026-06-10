@@ -1,4 +1,10 @@
-package config
+package conf
+
+const (
+	KeyUserScore = "user:score"
+	KafkaTopic   = "follow"
+	KafkaGroup   = "follow"
+)
 
 // Config 需要的所有配置
 type Config struct {

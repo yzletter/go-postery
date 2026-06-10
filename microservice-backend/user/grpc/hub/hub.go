@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/yzletter/go-postery/microservice-backend/user/config"
+	"github.com/yzletter/go-postery/microservice-backend/user/conf"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
@@ -26,7 +26,7 @@ type ETCDServiceHub struct {
 }
 
 // NewEtcdServiceHub 构造函数
-func NewEtcdServiceHub(config config.ServiceHubConfig, client *etcdv3.Client, loadBalancer LoadBalancer) *ETCDServiceHub {
+func NewEtcdServiceHub(config conf.ServiceHubConfig, client *etcdv3.Client, loadBalancer LoadBalancer) *ETCDServiceHub {
 	return &ETCDServiceHub{
 		globalMu:           sync.RWMutex{},
 		locks:              make(map[string]*sync.RWMutex),

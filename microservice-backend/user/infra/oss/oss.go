@@ -17,7 +17,7 @@ import (
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	sdk_credentials "github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
 	"github.com/aliyun/credentials-go/credentials"
-	"github.com/yzletter/go-postery/microservice-backend/user/config"
+	"github.com/yzletter/go-postery/microservice-backend/user/conf"
 	"github.com/yzletter/go-postery/microservice-backend/user/service/ports"
 )
 
@@ -54,7 +54,7 @@ type AliyunOSSManager struct {
 	Arn             string
 }
 
-func Init(config config.OSSConfig) ports.OSSManager {
+func Init(config conf.OSSConfig) ports.OSSManager {
 	region = "cn-hongkong"    // Bucket 所处地域
 	bucketName = "go-postery" // Bucket 名称
 	callbackUrl = "http://gopostery.top/api/v1/users/callback"
@@ -73,9 +73,9 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 
 	config := new(credentials.Config).
 		SetType("ram_role_arn").
-		SetAccessKeyId(manager.AccessKeyID). // 填写 AccessKeyID
+		SetAccessKeyId(manager.AccessKeyID).         // 填写 AccessKeyID
 		SetAccessKeySecret(manager.AccessKeySecret). // 填写 AccessKeySecret
-		SetRoleArn(manager.Arn). // 填写 Arn
+		SetRoleArn(manager.Arn).                     // 填写 Arn
 		SetRoleSessionName("Upload").
 		SetPolicy("").
 		SetRoleSessionExpiration(3600)

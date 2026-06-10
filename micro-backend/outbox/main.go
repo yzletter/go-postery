@@ -10,7 +10,6 @@ import (
 	"syscall"
 
 	conf2 "github.com/yzletter/go-postery/micro-backend/outbox/conf"
-	"github.com/yzletter/go-postery/micro-backend/outbox/config"
 	infraEtcd "github.com/yzletter/go-postery/micro-backend/outbox/infra/etcd"
 	infraKafka "github.com/yzletter/go-postery/micro-backend/outbox/infra/kafka"
 	"github.com/yzletter/go-postery/micro-backend/outbox/infra/mysql"
@@ -49,8 +48,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                             // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                            // Init Etcd
+	Config := conf2.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
 	// gRPC Common Infrastructure

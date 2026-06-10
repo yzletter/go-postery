@@ -1,4 +1,4 @@
-package config
+package conf
 
 // Config 需要的所有配置
 type Config struct {

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/yzletter/go-postery/microservice-backend/user/config"
+	"github.com/yzletter/go-postery/microservice-backend/user/conf"
 )
 
 // InitSlog 初始化 Slog
-func InitSlog(config config.LogConfig) {
+func InitSlog(config conf.LogConfig) {
 	// 设置 rotatelogs 滚动日志相关配置
 	logFile, err := rotatelogs.New(
 		config.FilePath+".%Y%m%d%H",              // 日志文件路径

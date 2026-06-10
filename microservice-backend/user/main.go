@@ -12,7 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/microservice-backend/user/config"
+	"github.com/yzletter/go-postery/microservice-backend/user/conf"
 	"github.com/yzletter/go-postery/microservice-backend/user/grpc/hub"
 	grpc_server "github.com/yzletter/go-postery/microservice-backend/user/grpc/server"
 	infraEtcd "github.com/yzletter/go-postery/microservice-backend/user/infra/etcd"
@@ -63,8 +63,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                             // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                           // Init Etcd
+	Config := conf.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
 	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
 	// gRPC Common Infrastructure

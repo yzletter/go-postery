@@ -7,7 +7,6 @@ import (
 
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/microservice-backend/user/conf"
-	"github.com/yzletter/go-postery/microservice-backend/user/config"
 )
 
 var (
@@ -30,7 +29,7 @@ func InitProducer(brokers []string) *kafka.Writer {
 	return producer
 }
 
-func InitConsumer(config config.KafkaConfig) *kafka.Reader {
+func InitConsumer(config conf.KafkaConfig) *kafka.Reader {
 	consumer := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        []string{config.Addr}, // 支持传入多个broker的ip:port
 		Topic:          conf.KafkaTopic,
