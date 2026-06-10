@@ -12,17 +12,20 @@ build:
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/session_service ./microservice-backend/session
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/outbox_service ./microservice-backend/outbox
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/bff_service ./microservice-backend/bff
+
 	@scp ./app/linux/code_service production1:~/app/code_service
 	@scp ./app/linux/code_service production2:~/app/code_service
 	@scp ./app/linux/code_service production3:~/app/code_service
+
 	@scp ./app/linux/lottery_service production1:~/app/lottery_service
 	@scp ./app/linux/lottery_service production3:~/app/lottery_service
+
+	@scp ./app/linux/outbox_service production3:~/app/outbox_service
+
 	@scp ./app/linux/auth_service production1:~/app/auth_service
-	@scp ./app/linux/lottery_service production1:~/app/lottery_service
 	@scp ./app/linux/agent_service production2:~/app/agent_service
 	@scp ./app/linux/user_service production1:~/app/user_service
 	@scp ./app/linux/session_service production1:~/app/session_services
-	@scp ./app/linux/outbox_service production2:~/app/outbox_service
 
 build-macos:
 	@mkdir -p ./app/macos
