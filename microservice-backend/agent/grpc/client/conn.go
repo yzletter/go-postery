@@ -4,11 +4,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 )
 
 var (
@@ -33,23 +30,16 @@ func (center *ConnCenter) NewConnection(ctx context.Context, service string) (*g
 		return nil, ErrNilServiceHub
 	}
 
-	endpoint := center.serviceHub.GetServiceEndpoint(ctx, service)
-	if endpoint == "" {
+	center.serviceHub.LoadEndpoints(ctx, service)
+	center.serviceHub.WatchEndpointsFromServiceHub(ctx, service)
+
+	endpoint := center.serviceHub.Take(ctx, service)
+	if endpoint == nil || endpoint.Conn == nil {
 		slog.Error("No Available Service Endpoint", "service", service)
 		return nil, ErrNoAvailableServiceEndpoint
 	}
 
-	ka := keepalive.ClientParameters{
-		Time:                30 * time.Second,
-		Timeout:             10 * time.Second,
-		PermitWithoutStream: true,
-	}
-
-	return grpc.NewClient(
-		endpoint,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithKeepaliveParams(ka),
-	)
+	return endpoint.Conn, nil
 }
 
 func validateConn(conn *grpc.ClientConn) error {

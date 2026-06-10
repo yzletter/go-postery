@@ -27,8 +27,9 @@ func ListenTermSignal(f func()) {
 }
 
 var (
-	ServiceName  string // 微服务名
-	GoPostery    string // GoPostery 公共配置前缀
+	ServiceName  = "outbox_service" // 微服务名
+	GoPostery    = "go_postery"     // GoPostery 公共配置前缀
+	prefix       = ""
 	EtcdEndPoint string // etcd 地址
 )
 
@@ -39,21 +40,18 @@ func main() {
 
 	// 本地测试
 	if *env == "local" {
-		ServiceName = "test_outbox_service"
-		GoPostery = "test_go_postery"
+		prefix = "test_"
 		EtcdEndPoint = "localhost:12379"
 	} else {
-		ServiceName = "outbox_service"
-		GoPostery = "go_postery"
 		EtcdEndPoint = "172.16.131.223:2379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                               // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery+"_") // Get Config From Remote Config Center
-	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                             // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
+	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(Config.Log) // Init Slog
@@ -65,5 +63,9 @@ func main() {
 	// 开启协程
 	go infraMySQL.ScanOutbox(ctx, KafkaProducer) // 开启扫表发消息协程
 
-	ListenTermSignal(cancel)
+	ListenTermSignal(func() {
+		infraKafka.Close()
+		infraMySQL.Close()
+		cancel()
+	})
 }

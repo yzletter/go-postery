@@ -28,8 +28,9 @@ import (
 )
 
 var (
-	ServiceName  string // 微服务名
-	GoPostery    string // GoPostery 公共配置前缀
+	ServiceName  = "bff_service" // 微服务名
+	GoPostery    = "go_postery"  // GoPostery 公共配置前缀
+	prefix       = ""
 	EtcdEndPoint string // etcd 地址
 )
 
@@ -40,34 +41,30 @@ func main() {
 
 	// 本地测试
 	if *env == "local" {
-		ServiceName = "test_bff_service"
-		GoPostery = "test_go_postery"
+		prefix = "test_"
 		EtcdEndPoint = "localhost:12379"
 	} else {
-		ServiceName = "bff_service"
-		GoPostery = "go_postery"
 		EtcdEndPoint = "172.16.131.223:2379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                               // Init Etcd
-	Config := config.LoadGlobalConfig(ctx, EtcdClient, ServiceName+"_", GoPostery+"_") // Get Config From Remote Config Center
-	fmt.Printf("%s Init Config Success %+v\n", ServiceName, Config)
+	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint})                                             // Init Etcd
+	Config := config.LoadGlobalConfig(ctx, EtcdClient, prefix+ServiceName+"_", prefix+GoPostery+"_") // Get Config From Remote Config Center
+	fmt.Printf("%s Init Config Success %+v\n", prefix+ServiceName, Config)
 
 	// gRPC Common Infrastructure
-	infraSlog.InitSlog(Config.Log)                                            // Init Slog
-	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, ServiceName) // Init JaegerTracer
-	RedisClient := infraRedis.Init(Config.Redis)                              // 初始化 Redis
+	infraSlog.InitSlog(Config.Log)                                                   // Init Slog
+	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, prefix+ServiceName) // Init JaegerTracer
+	RedisClient := infraRedis.Init(Config.Redis)                                     // 初始化 Redis
 
 	// Infrastructure 层
 	RabbitMQ := infraRabbitMQ.Init(Config.RabbitMQ) // 初始化 RabbitMQ
 
 	// ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
-	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
-	ConnCenter := client.NewConnectionCenter(ServiceHubProxy)
+	ConnCenter := client.NewConnectionCenter(ETCDServiceHub)
 
 	// GRPC Service 层
 	AuthConn, err := ConnCenter.NewConnection(ctx, client.AuthServiceName)
@@ -188,7 +185,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(infraRabbitMQ.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		Build()
 
 	// 初始化 gin
@@ -197,7 +194,7 @@ func main() {
 
 	// 注册全局中间件
 	engine.Use(
-		middleware2.TracingMiddleware(ServiceName), // OpenTelemetry tracing 中间件
+		middleware2.TracingMiddleware(prefix+ServiceName), // OpenTelemetry tracing 中间件
 		CorsMdl,      // CorsMdl 跨域中间件
 		MetricMdl,    // Prometheus 监控中间件
 		RateLimitMdl, // 限流中间件

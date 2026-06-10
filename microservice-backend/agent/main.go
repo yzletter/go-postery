@@ -13,9 +13,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	"github.com/yzletter/go-postery/microservice-backend/agent/config"
-	grpc_server "github.com/yzletter/go-postery/microservice-backend/agent/grpc"
 	"github.com/yzletter/go-postery/microservice-backend/agent/grpc/client"
 	"github.com/yzletter/go-postery/microservice-backend/agent/grpc/hub"
+	grpc_server "github.com/yzletter/go-postery/microservice-backend/agent/grpc/server"
 	infraEtcd "github.com/yzletter/go-postery/microservice-backend/agent/infra/etcd"
 	"github.com/yzletter/go-postery/microservice-backend/agent/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/microservice-backend/agent/infra/jaeger"
@@ -35,9 +35,9 @@ import (
 )
 
 var (
-	ServiceName  string = "agent_service" // 微服务名
-	GoPostery    string = "go_postery"    // GoPostery 公共配置前缀
-	prefix       string = ""
+	ServiceName  = "agent_service" // 微服务名
+	GoPostery    = "go_postery"    // GoPostery 公共配置前缀
+	prefix       = ""
 	EtcdEndPoint string // etcd 地址
 )
 
@@ -46,9 +46,16 @@ func main() {
 	env := flag.String("env", "production", "运行环境: local/production")
 	flag.Parse()
 
+	ip, err := utils.GetLocalIP() // 获取本地内网 IP
+	if err != nil {
+		slog.Error("Get Local IP Failed", "error", err)
+		panic(err)
+	}
+
 	// 本地测试
 	if *env == "local" {
 		prefix = "test_"
+		ip = "localhost"
 		EtcdEndPoint = "localhost:12379"
 	} else {
 		EtcdEndPoint = "172.16.131.223:2379"
@@ -84,10 +91,9 @@ func main() {
 
 	// ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(Config.ServiceHub, EtcdClient, hub.NewRoundRobinLoadBalancer())
-	ServiceHubProxy := hub.GetServiceHubProxy(ETCDServiceHub)
 
 	// gRPC Client
-	ConnCenter := client.NewConnectionCenter(ServiceHubProxy)
+	ConnCenter := client.NewConnectionCenter(ETCDServiceHub)
 	PostConn, err := ConnCenter.NewConnection(ctx, client.PostServiceName)
 	if err != nil {
 		slog.Error("Init Post gRPC Connection Failed", "error", err)
@@ -107,22 +113,16 @@ func main() {
 
 	// gRPC Server
 	AgentServiceServer := grpc_server.NewAgentServiceServer(AgentService)
-	server := grpc.NewServer(
+	ServiceRegistrar := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_server.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
-	agent_grpc.RegisterAgentServiceServer(server, AgentServiceServer) // Register gRPC Service
-
-	// Start gRPC Server
-	ip, err := utils.GetLocalIP() // 获取本地内网 IP
-	if err != nil {
-		slog.Error("Get Local IP Failed", "error", err)
-		panic(err)
-	}
+	agent_grpc.RegisterAgentServiceServer(ServiceRegistrar, AgentServiceServer) // Register gRPC Service
 
 	// Prometheus
 	metricAddr := ip + ":" + Config.Metric.Port
+	slog.Info("Metric Addr Get Success", "addr", metricAddr)
 	go func() {
 		mux := http.NewServeMux()
 		// Metric
@@ -133,13 +133,12 @@ func main() {
 	}()
 
 	grpcAddr := ip + ":" + Config.GRPC.Port
-
-	// 监听
+	slog.Info("gRPC Addr Get Success", "addr", grpcAddr)
 	if lis, err := net.Listen("tcp", grpcAddr); err != nil {
 		panic(err)
 	} else {
 		go func() {
-			if err := server.Serve(lis); err != nil {
+			if err := ServiceRegistrar.Serve(lis); err != nil {
 				slog.Error("Service gRPC Server Start Failed", "service", prefix+ServiceName, "error", err)
 				panic(err)
 			}
@@ -147,24 +146,33 @@ func main() {
 	}
 
 	// 向服务中心注册服务, 这里不加前缀 prefix
-	if leaseID, err := ServiceHubProxy.Register(ctx, ServiceName, grpcAddr, 0); err != nil {
+	leaseID, err := ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, 0)
+	if err != nil {
 		slog.Error("Service Agent Server Register Failed", "service", ServiceName, "error", err)
 		panic(err)
-	} else {
-		// 自动续约
-		go func() {
-			for {
-				leaseID, err = ServiceHubProxy.Register(ctx, ServiceName, grpcAddr, leaseID)
-				if err != nil {
-					slog.Error("Service Agent Server Register Failed", "service", ServiceName, "error", err)
-				}
-				time.Sleep(time.Duration(Config.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
-			}
-		}()
 	}
+
+	// 自动续约
+	go func() {
+		for {
+			leaseID, err = ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, leaseID)
+			if err != nil {
+				slog.Error("Service Agent Server Register Failed", "service", ServiceName, "error", err)
+			}
+			time.Sleep(time.Duration(Config.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
+		}
+	}()
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(func() {
+			// 注销服务
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			if err := ETCDServiceHub.Unregister(ctx, ServiceName, grpcAddr); err != nil {
+				slog.Error("Service Agent Server Unregister Failed", "service", ServiceName, "error", err)
+			}
+		}).
 		BuildBlock()
 }

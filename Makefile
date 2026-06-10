@@ -3,7 +3,7 @@
 build:
 	@rm -rf ./app/linux || true
 	@go mod tidy
-	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/code_service ./microservice-backend/code
+	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/code_service ./micro-backend/code
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/auth_service ./microservice-backend/auth
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/lottery_service ./microservice-backend/lottery
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/post_service ./microservice-backend/post

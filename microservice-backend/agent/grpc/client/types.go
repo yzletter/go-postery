@@ -4,10 +4,13 @@ import (
 	"context"
 
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
+	hub2 "github.com/yzletter/go-postery/microservice-backend/agent/grpc/hub"
 )
 
 type ServiceHub interface {
-	GetServiceEndpoint(ctx context.Context, service string) string
+	LoadEndpoints(ctx context.Context, service string)
+	WatchEndpointsFromServiceHub(ctx context.Context, service string)
+	Take(ctx context.Context, service string) *hub2.Endpoint
 }
 
 const (

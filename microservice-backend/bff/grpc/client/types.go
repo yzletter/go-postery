@@ -11,11 +11,14 @@ import (
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	hub2 "github.com/yzletter/go-postery/microservice-backend/bff/grpc/hub"
 	search_model "github.com/yzletter/go-postery/microservice-backend/search/model"
 )
 
 type ServiceHub interface {
-	GetServiceEndpoint(ctx context.Context, service string) string
+	LoadEndpoints(ctx context.Context, service string)
+	WatchEndpointsFromServiceHub(ctx context.Context, service string)
+	Take(ctx context.Context, service string) *hub2.Endpoint
 }
 
 const (
