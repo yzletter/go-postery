@@ -1,0 +1,327 @@
+# 建库
+-- 创建数据库 go_postery
+create database go_postery;
+-- 创建用户 go_postery_tester 密码为 123456
+create user 'go_postery_tester' identified by '123456';
+-- 将数据库 go_postery 的全部权限授予用户 go_postery_tester
+grant all on go_postery.* to go_postery_tester;
+-- 切到 go_postery 数据库
+use go_postery;
+
+# 建表
+# 创建 user 表
+CREATE TABLE IF NOT EXISTS users
+(
+    id         BIGINT   NOT NULL COMMENT '用户 ID (雪花算法)',
+    status     TINYINT  NOT NULL DEFAULT 0 COMMENT '用户状态 0 正常, 1 封禁, 2 注销',
+    role       TINYINT  NOT NULL DEFAULT 0 COMMENT '用户权限 0 普通 1 管理员',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    KEY idx_user_status_deleted (status, deleted_at),
+    KEY idx_users_deleted_at (deleted_at),
+
+    CHECK (status IN (0, 1, 2))
+) DEFAULT CHARSET = utf8mb4 COMMENT '最小用户表';
+
+CREATE TABLE IF NOT EXISTS user_profiles
+(
+    user_id         BIGINT      NOT NULL COMMENT 'ID',
+
+    nickname        VARCHAR(32) NOT NULL COMMENT '昵称',
+    nickname_active VARCHAR(32) GENERATED ALWAYS AS (IF(deleted_at IS NULL, nickname, NULL)) STORED COMMENT '未删除时用于唯一约束的昵称',
+    avatar          VARCHAR(255)         DEFAULT NULL COMMENT '头像 URL',
+    bio             VARCHAR(255)         DEFAULT NULL COMMENT '个性签名',
+    gender          TINYINT     NOT NULL DEFAULT 0 COMMENT '性别 0 空, 1 男, 2 女, 3 其他',
+    birthday        DATE                 DEFAULT NULL COMMENT '生日',
+    location        VARCHAR(64)          DEFAULT NULL COMMENT '地区',
+    country         VARCHAR(64)          DEFAULT NULL COMMENT '国家',
+    last_login_ip   VARCHAR(45)          DEFAULT NULL COMMENT '最后登录 IP',
+    last_login_at   DATETIME             DEFAULT NULL COMMENT '最后登录时间',
+
+    created_at      DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at      DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at      DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (user_id),
+    KEY idx_profiles_nickname (nickname),
+    KEY idx_profiles_deleted_at (deleted_at),
+    UNIQUE KEY uk_profiles_nickname_active (nickname_active),
+
+    CHECK (gender IN (0, 1, 2, 3))
+) DEFAULT CHARSET = utf8mb4 COMMENT '个人资料';
+
+CREATE TABLE IF NOT EXISTS auth_identities
+(
+    id          BIGINT       NOT NULL COMMENT 'ID',
+    user_id     BIGINT       NOT NULL COMMENT '用户 ID',
+
+    auth_type   TINYINT      NOT NULL COMMENT '校验方式: phone / email  ... 1 = email 2 = phone',
+    identifier  VARCHAR(128) NOT NULL COMMENT '凭证: 手机号 / 邮箱 ...', # 用户注销时对 identifier 进行迁移
+    is_verified TINYINT      NOT NULL DEFAULT 0 COMMENT '是否已验证',
+
+    verified_at DATETIME              DEFAULT NULL COMMENT '身份验证时间',
+
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    # 不进行软删, 如果软删一条手机号 identity，未来再绑定同手机号会违反唯一键
+
+    PRIMARY KEY (id),
+
+    UNIQUE KEY uk_user_auth_type (user_id, auth_type),                   # 一个用户只能绑定一个手机号一个邮箱
+    UNIQUE KEY uk_type_identifier (auth_type, identifier),
+
+    CHECK (auth_type IN (1, 2)),
+    CHECK (is_verified IN (0, 1))
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户登录认证';
+
+CREATE TABLE auth_passwords
+(
+    user_id       BIGINT       NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    PRIMARY KEY (user_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户密码表';
+
+# 创建 post 表
+CREATE TABLE IF NOT EXISTS posts
+(
+    id            BIGINT       NOT NULL COMMENT '帖子 ID',
+    user_id       BIGINT       NOT NULL COMMENT '发布者 ID',
+    title         varchar(255) NOT NULL COMMENT '标题',
+    content       TEXT COMMENT '正文',
+    content_type  TINYINT      NOT NULL DEFAULT 0 COMMENT '文本类型 0 普通文本 1 Markdown',
+    status        TINYINT      NOT NULL DEFAULT 1 COMMENT '状态 1 正常, 2 封禁',
+    view_count    INT          NOT NULL DEFAULT 0 COMMENT '浏览量',
+    like_count    INT          NOT NULL DEFAULT 0 COMMENT '点赞数',
+    comment_count INT          NOT NULL DEFAULT 0 COMMENT '评论数',
+
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at    DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    KEY idx_user_created (user_id, created_at DESC),
+    KEY idx_created (created_at DESC),
+    KEY idx_status_deleted_created (status, deleted_at, created_at DESC)
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子信息表';
+
+# 创建 follow 表
+CREATE TABLE IF NOT EXISTS follows
+(
+    id          BIGINT   NOT NULL PRIMARY KEY COMMENT '记录 id',
+    follower_id BIGINT   NOT NULL COMMENT '关注者 id',
+    followee_id BIGINT   NOT NULL COMMENT '被关注者 id',
+
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at  DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    UNIQUE KEY uq_follow (follower_id, followee_id),
+    KEY idx_follower (follower_id, deleted_at),
+    KEY idx_followee (followee_id, deleted_at),
+
+    CHECK (follower_id <> followee_id) # 避免自己关注自己
+) DEFAULT CHARSET = utf8mb4 COMMENT '关注信息表';
+
+# Comment 表
+CREATE TABLE IF NOT EXISTS comments
+(
+    id         BIGINT   NOT NULL COMMENT '评论 id',
+    post_id    BIGINT   NOT NULL COMMENT '所属帖子 id',
+    user_id    BIGINT   NOT NULL COMMENT '发布者 id',
+    parent_id  BIGINT   NOT NULL DEFAULT 0 COMMENT '父评论 id',
+    reply_id   BIGINT   NOT NULL DEFAULT 0 COMMENT '回复评论 id',
+    content    TEXT     NOT NULL COMMENT '正文',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    KEY idx_post_created (post_id, created_at),
+    KEY idx_post_parent_created (post_id, parent_id, created_at),
+    KEY idx_post_reply_created (post_id, reply_id, created_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '评论信息表';
+
+# Like 表
+CREATE TABLE IF NOT EXISTS likes
+(
+    id         BIGINT COMMENT '记录 ID',
+    post_id    BIGINT   NOT NULL COMMENT '被点赞帖子 id',
+    user_id    BIGINT   NOT NULL COMMENT '点赞者 id',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_user_post (user_id, post_id),
+    KEY idx_target (post_id),
+    KEY idx_user (user_id),
+    KEY idx_post_deleted (post_id, deleted_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户点赞表';
+
+# Tag 表
+CREATE TABLE IF NOT EXISTS tags
+(
+    id         BIGINT      NOT NULL COMMENT '标签 id',
+    slug       varchar(32) NOT NULL COMMENT '标签名',
+    created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_slug (slug)
+) DEFAULT CHARSET = utf8mb4 COMMENT '标签信息表';
+
+# Post_Tag 表
+CREATE TABLE IF NOT EXISTS post_tag
+(
+    id         BIGINT   NOT NULL COMMENT '记录 id',
+    post_id    BIGINT   NOT NULL COMMENT '帖子 id',
+    tag_id     BIGINT   NOT NULL COMMENT '标签 id',
+
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_post_tag (post_id, tag_id),
+    KEY idx_tag (tag_id),
+    KEY idx_post (post_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子——标签信息表';
+
+
+# Message 表
+CREATE TABLE IF NOT EXISTS messages
+(
+    id           BIGINT   NOT NULL COMMENT 'ID',
+    session_id   BIGINT   NOT NULL COMMENT '会话 ID',
+    session_type TINYINT  NOT NULL COMMENT '会话类型 1 表示 私聊 2 表示 群聊',
+
+    message_from BIGINT   NOT NULL COMMENT '发送方',
+    message_to   BIGINT   NOT NULL COMMENT '接收方',
+
+    content      TEXT     NOT NULL COMMENT '消息内容',
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at   DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '消息记录表';
+
+# Session 表
+CREATE TABLE IF NOT EXISTS session
+(
+    id              BIGINT   NOT NULL COMMENT 'ID',
+    session_id      BIGINT   NOT NULL COMMENT '会话 ID',
+
+    user_id         BIGINT   NOT NULL COMMENT '己方 ID',
+    target_id       BIGINT   NOT NULL COMMENT '对方 ID',
+    target_type     TINYINT  NOT NULL COMMENT '会话类型 1 表示 私聊 2 表示 群聊',
+
+    last_message_id BIGINT COMMENT '最后一条消息 ID',
+    last_message    TEXT COMMENT '最后一条消息摘要',
+    unread_count    INT               DEFAULT 0 COMMENT '未读消息数',
+
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at      DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_user_target_type (user_id, target_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '会话表';
+
+# todo 群聊表
+
+# Order 表
+CREATE TABLE IF NOT EXISTS orders
+(
+    id                         BIGINT   NOT NULL COMMENT 'ID',
+    user_id                    BIGINT   NOT NULL COMMENT '用户 ID',
+    gift_id                    BIGINT   NOT NULL COMMENT '商品 ID',
+    count                      INT      NOT NULL DEFAULT 1 COMMENT '购买数量',
+
+    expire_at                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '过期时间',
+    status                     INT      NOT NULL DEFAULT 0 COMMENT '订单状态 0 待支付，1 已支付，2 已放弃，3 已超时',
+    paid_at                    DATETIME          DEFAULT NULL COMMENT '支付时间',
+
+    stock_rollback_status      INT      NOT NULL DEFAULT 0 COMMENT '回补状态 0 待回补，1 已回补，2 无需回补，3 回补失败',
+    stock_rollback_retry_count INT      NOT NULL DEFAULT 0 COMMENT '已尝试回补次数',
+    next_rollback_at           DATETIME          DEFAULT NULL COMMENT '下次回补时间',
+
+    created_at                 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at                 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at                 DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+# todo user_id + lottery_id 构成
+    UNIQUE KEY uq_user_id (user_id),
+    KEY idx_timeout_scan (status, expire_at, stock_rollback_status, next_rollback_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '订单表';
+
+
+CREATE TABLE IF NOT EXISTS gifts
+(
+    id          BIGINT      NOT NULL COMMENT 'ID',
+    name        VARCHAR(64) NOT NULL COMMENT '商品名',
+    avatar      VARCHAR(255)         DEFAULT NULL COMMENT '商品图片 URL',
+    description VARCHAR(255)         DEFAULT NULL COMMENT '商品描述',
+    prize       INT                  DEFAULT 0 COMMENT '价格',
+    count       INT                  DEFAULT 0 COMMENT '库存',
+
+    created_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at  DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_id_name (id, name)
+) DEFAULT CHARSET = utf8mb4 COMMENT '奖品表';
+
+INSERT INTO gifts (id, name, avatar, description, prize, count)
+VALUES (170406720000000001, '论坛定制马克杯', NULL, '官方定制陶瓷马克杯', 100, 500),
+       (170406720000000002, 'VIP 月度会员', NULL, '论坛 VIP 会员 30 天', 300, 200),
+       (170406720000000003, '机械键盘', NULL, '87 键机械键盘（青轴）', 2000, 100),
+       (170406720000000004, '论坛周边T恤', NULL, '纯棉定制论坛文化衫', 500, 300),
+       (170406720000000005, '无线鼠标', NULL, '2.4G 无线鼠标', 800, 200),
+       (170406720000000006, '积分翻倍卡', NULL, '使用后当天获得积分翻倍', 150, 1000),
+       (170406720000000007, '咖啡兑换券', NULL, '合作商家咖啡兑换券一张', 200, 500),
+       (170406720000000008, '论坛纪念徽章', NULL, '限量版论坛纪念徽章', 120, 500),
+       (170406720000000009, '技术书籍兑换券', NULL, '可兑换一本技术类书籍', 500, 150),
+       (170406720000000010, '谢谢参与', NULL, '谢谢参与', 0, 3000);
+
+
+CREATE TABLE IF NOT EXISTS events
+(
+    id            BIGINT      NOT NULL COMMENT 'ID',
+    status        TINYINT     NOT NULL DEFAULT 0 COMMENT '消息发送状态 0 待发送 1 已发送 2 需重试 3 失败（重试次数超过 5 的消息）',
+    retry_cnt     INT         NOT NULL DEFAULT 0 COMMENT '重试次数',
+    next_retry_at DATETIME             DEFAULT NULL COMMENT '下次重试时间',
+    topic         VARCHAR(64) NOT NULL COMMENT 'Kafka Topic',
+    message_key   VARCHAR(64) NOT NULL COMMENT 'Kafka 消息 Key',
+    message_value TEXT        NOT NULL COMMENT 'Kafka 消息 Value',
+    created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    CHECK (status IN (0, 1, 2, 3)),
+    KEY idx_events_scan (status, next_retry_at, created_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '消息队列表';
+
+CREATE TABLE IF NOT EXISTS chunks
+(
+    id         VARCHAR(255) NOT NULL COMMENT 'ID，用 UUID',
+    batch_id   BIGINT       NOT NULL COMMENT '指定 Chunk 批次',
+    content    TEXT COMMENT '内容',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
+    PRIMARY KEY (id),
+    KEY idx_batch_id (batch_id, id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '语义片段';
