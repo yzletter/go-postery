@@ -64,11 +64,16 @@ func (svc *codeService) Send(ctx context.Context, biz int, identifier string) er
 		return errs.ErrInvalidArgument
 	}
 
+	// 验证码落库
+	if err := svc.repository.RecordSend(ctx, biz, identifier, code); err != nil {
+		slog.Error("Record Code Send Failed", "Biz", biz, "Identifier", identifier, "error", err)
+	}
+
 	slog.Info("Send Code Success", "Biz", biz, "Identifier", identifier, "Code", code)
 	return nil
 }
 
-// Verify 校验验证码
+// Verify 校验验证码并标识验证码已验证
 //
 // biz 表示业务种类 : 1 表示短信验证码, 2 表示邮箱验证码
 //

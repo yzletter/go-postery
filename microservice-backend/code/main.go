@@ -19,11 +19,13 @@ import (
 	infraEtcd "github.com/yzletter/go-postery/microservice-backend/code/infra/etcd"
 	"github.com/yzletter/go-postery/microservice-backend/code/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/microservice-backend/code/infra/jaeger"
+	infraMySQL "github.com/yzletter/go-postery/microservice-backend/code/infra/mysql"
 	infraRedis "github.com/yzletter/go-postery/microservice-backend/code/infra/redis"
 	infraSlog "github.com/yzletter/go-postery/microservice-backend/code/infra/slog"
 	"github.com/yzletter/go-postery/microservice-backend/code/infra/sms"
 	"github.com/yzletter/go-postery/microservice-backend/code/repository"
 	"github.com/yzletter/go-postery/microservice-backend/code/repository/cache"
+	"github.com/yzletter/go-postery/microservice-backend/code/repository/dao"
 	"github.com/yzletter/go-postery/microservice-backend/code/service"
 	"github.com/yzletter/go-postery/microservice-backend/code/utils"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -61,13 +63,16 @@ func main() {
 	infraSlog.InitSlog(Config.Log)                                                   // Init Slog
 	TracerShutdown := infraJaeger.InitJaeger(ctx, Config.Jaeger, prefix+ServiceName) // Init JaegerTracer
 	RedisClient := infraRedis.Init(Config.Redis)                                     // Init Redis
+	MySQLGormDB := infraMySQL.Init(Config.MySQL)                                     // Init MySQL
 	SmsClient := sms.NewAliyunSmsClient(Config.SMS)                                  // Init SMS
 	EmailClient := email.NewSMTPEmailClient(Config.Email)                            // Init Email
 
 	// Cache
 	CodeCache := cache.NewCodeCache(RedisClient)
+	// DAO
+	CodeDAO := dao.NewCodeDAO(MySQLGormDB)
 	// Repository
-	CodeRepository := repository.NewCodeRepository(CodeCache)
+	CodeRepository := repository.NewCodeRepository(CodeDAO, CodeCache)
 	// Service
 	CodeService := service.NewCodeService(CodeRepository, EmailClient, SmsClient)
 	// Common Service
@@ -140,7 +145,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

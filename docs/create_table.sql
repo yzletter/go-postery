@@ -90,6 +90,29 @@ CREATE TABLE auth_passwords
     PRIMARY KEY (user_id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '用户密码表';
 
+# Verification Code 表
+CREATE TABLE IF NOT EXISTS verification_codes
+(
+    id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '验证码记录 ID',
+    biz         TINYINT      NOT NULL COMMENT '业务类型 1 短信 2 邮箱',
+    identifier  VARCHAR(128) NOT NULL COMMENT '手机号或邮箱',
+    code_hash   CHAR(64)     NOT NULL COMMENT '验证码 SHA-256 哈希',
+    status      TINYINT      NOT NULL DEFAULT 0 COMMENT '状态 0 已发送 1 已验证',
+    expires_at  DATETIME     NOT NULL COMMENT '过期时间',
+    verified_at DATETIME              DEFAULT NULL COMMENT '验证时间',
+
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    PRIMARY KEY (id),
+    KEY idx_identifier_biz_created (identifier, biz, created_at),
+    KEY idx_verify_lookup (biz, identifier, code_hash, status, expires_at),
+    KEY idx_expires_at (expires_at),
+
+    CHECK (biz IN (1, 2)),
+    CHECK (status IN (0, 1))
+) DEFAULT CHARSET = utf8mb4 COMMENT '验证码发送记录表';
+
 # 创建 post 表
 CREATE TABLE IF NOT EXISTS posts
 (
@@ -325,3 +348,25 @@ CREATE TABLE IF NOT EXISTS chunks
     PRIMARY KEY (id),
     KEY idx_batch_id (batch_id, id)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '语义片段';
+
+CREATE TABLE IF NOT EXISTS verification_codes
+(
+    id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '验证码记录 ID',
+    biz         TINYINT      NOT NULL COMMENT '业务类型 1 短信 2 邮箱',
+    identifier  VARCHAR(128) NOT NULL COMMENT '手机号或邮箱',
+    code_hash   CHAR(64)     NOT NULL COMMENT '验证码 SHA-256 哈希',
+    status      TINYINT      NOT NULL DEFAULT 0 COMMENT '状态 0 已发送 1 已验证',
+    expires_at  DATETIME     NOT NULL COMMENT '过期时间',
+    verified_at DATETIME              DEFAULT NULL COMMENT '验证时间',
+
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    PRIMARY KEY (id),
+    KEY idx_identifier_biz_created (identifier, biz, created_at),
+    KEY idx_verify_lookup (biz, identifier, code_hash, status, expires_at),
+    KEY idx_expires_at (expires_at),
+
+    CHECK (biz IN (1, 2)),
+    CHECK (status IN (0, 1))
+) DEFAULT CHARSET = utf8mb4 COMMENT '验证码发送记录表';
