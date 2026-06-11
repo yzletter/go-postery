@@ -1,10 +1,10 @@
-package server
+package grpc
 
 import (
 	"context"
 
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
-	"github.com/yzletter/go-postery/microservice-backend/agent/service"
+	"github.com/yzletter/go-postery/backend/micro/agent/service"
 )
 
 type AgentServiceServer struct {

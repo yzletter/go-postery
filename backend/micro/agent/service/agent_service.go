@@ -18,24 +18,24 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	"github.com/yzletter/go-postery/microservice-backend/agent/errs"
-	grpcclient "github.com/yzletter/go-postery/microservice-backend/agent/grpc/client"
-	model2 "github.com/yzletter/go-postery/microservice-backend/agent/model"
-	"github.com/yzletter/go-postery/microservice-backend/agent/repository"
-	ports2 "github.com/yzletter/go-postery/microservice-backend/agent/service/ports"
+	"github.com/yzletter/go-postery/backend/errs"
+	"github.com/yzletter/go-postery/backend/grpc/manager"
+	model2 "github.com/yzletter/go-postery/backend/micro/agent/model"
+	"github.com/yzletter/go-postery/backend/micro/agent/repository"
+	"github.com/yzletter/go-postery/backend/ports"
 )
 
 type agentService struct {
 	agentRepo           repository.AgentRepository
 	agentKafkaConsumer  *kafka.Reader
 	qdrantKafkaConsumer *kafka.Reader
-	embedder            ports2.Embedder
+	embedder            ports.Embedder
 	llmModel            eino_model.ToolCallingChatModel
-	idGenerator         ports2.IDGenerator
-	postClient          grpcclient.PostClient
+	idGenerator         ports.IDGenerator
+	postClient          manager.PostClient
 }
 
-func NewAgentService(agentRepo repository.AgentRepository, agentKafkaConsumer *kafka.Reader, qdrantKafkaConsumer *kafka.Reader, embedder ports2.Embedder, llmModel eino_model.ToolCallingChatModel, idGenerator ports2.IDGenerator, postClient grpcclient.PostClient) AgentService {
+func NewAgentService(agentRepo repository.AgentRepository, agentKafkaConsumer *kafka.Reader, qdrantKafkaConsumer *kafka.Reader, embedder ports.Embedder, llmModel eino_model.ToolCallingChatModel, idGenerator ports.IDGenerator, postClient manager.PostClient) AgentService {
 	return &agentService{
 		agentRepo:           agentRepo,
 		agentKafkaConsumer:  agentKafkaConsumer,

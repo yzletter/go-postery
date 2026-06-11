@@ -9,7 +9,7 @@ import (
 	qdrant_retriever "github.com/cloudwego/eino-ext/components/retriever/qdrant"
 	"github.com/go-sql-driver/mysql"
 	"github.com/qdrant/go-client/qdrant"
-	model2 "github.com/yzletter/go-postery/microservice-backend/agent/model"
+	model2 "github.com/yzletter/go-postery/backend/micro/agent/model"
 	"gorm.io/gorm"
 )
 
