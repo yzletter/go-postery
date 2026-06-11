@@ -2,9 +2,16 @@ package model
 
 import "time"
 
+// status
 const (
 	CodeStatusSent = iota
 	CodeStatusVerified
+)
+
+// biz
+const (
+	SmsCode = iota + 1
+	EmailCode
 )
 
 // VerificationCode 验证码发送记录，用于审计和后续风控统计。

@@ -12,7 +12,6 @@ import (
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
-	search_model "github.com/yzletter/go-postery/microservice-backend/search/model"
 )
 
 type ServiceHub interface {
@@ -77,7 +76,7 @@ type PostClient interface {
 type SearchClient interface {
 	Search(ctx context.Context, req *search_grpc.SearchRequest) (*search_grpc.SearchResult, error)
 	DeleteDoc(ctx context.Context, req *search_grpc.DocID) (*search_grpc.AffectedCount, error)
-	AddDoc(ctx context.Context, req *search_model.Document) (*search_grpc.AffectedCount, error)
+	AddDoc(ctx context.Context, req *search_grpc.Document) (*search_grpc.AffectedCount, error)
 	Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error)
 }
 

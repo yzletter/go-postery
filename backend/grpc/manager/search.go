@@ -7,7 +7,6 @@ import (
 
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	"github.com/yzletter/go-postery/backend/errs"
-	search_model "github.com/yzletter/go-postery/microservice-backend/search/model"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -78,7 +77,7 @@ func (manager *SearchServiceManager) DeleteDoc(ctx context.Context, req *search_
 	return nil, err
 }
 
-func (manager *SearchServiceManager) AddDoc(ctx context.Context, req *search_model.Document) (*search_grpc.AffectedCount, error) {
+func (manager *SearchServiceManager) AddDoc(ctx context.Context, req *search_grpc.Document) (*search_grpc.AffectedCount, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {

@@ -7,7 +7,6 @@
 package search_grpc
 
 import (
-	model "github.com/yzletter/go-postery/microservice-backend/search/model"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -190,9 +189,69 @@ func (x *SearchRequest) GetQueries() []string {
 	return nil
 }
 
+type TermQuery struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Keyword       *Keyword               `protobuf:"bytes,1,opt,name=Keyword,proto3" json:"Keyword,omitempty"` // Keyword 类型引用自 document.proto
+	Must          []*TermQuery           `protobuf:"bytes,2,rep,name=Must,proto3" json:"Must,omitempty"`
+	Should        []*TermQuery           `protobuf:"bytes,3,rep,name=Should,proto3" json:"Should,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TermQuery) Reset() {
+	*x = TermQuery{}
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TermQuery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TermQuery) ProtoMessage() {}
+
+func (x *TermQuery) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TermQuery.ProtoReflect.Descriptor instead.
+func (*TermQuery) Descriptor() ([]byte, []int) {
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *TermQuery) GetKeyword() *Keyword {
+	if x != nil {
+		return x.Keyword
+	}
+	return nil
+}
+
+func (x *TermQuery) GetMust() []*TermQuery {
+	if x != nil {
+		return x.Must
+	}
+	return nil
+}
+
+func (x *TermQuery) GetShould() []*TermQuery {
+	if x != nil {
+		return x.Should
+	}
+	return nil
+}
+
 type Query struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TermQuery     *model.TermQuery       `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
+	TermQuery     *TermQuery             `protobuf:"bytes,1,opt,name=TermQuery,proto3" json:"TermQuery,omitempty"`
 	OnFlag        uint64                 `protobuf:"varint,2,opt,name=OnFlag,proto3" json:"OnFlag,omitempty"`
 	OffFlag       uint64                 `protobuf:"varint,3,opt,name=OffFlag,proto3" json:"OffFlag,omitempty"`
 	OrFlags       []uint64               `protobuf:"varint,4,rep,packed,name=OrFlags,proto3" json:"OrFlags,omitempty"`
@@ -202,7 +261,7 @@ type Query struct {
 
 func (x *Query) Reset() {
 	*x = Query{}
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[4]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -214,7 +273,7 @@ func (x *Query) String() string {
 func (*Query) ProtoMessage() {}
 
 func (x *Query) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[4]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -227,10 +286,10 @@ func (x *Query) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Query.ProtoReflect.Descriptor instead.
 func (*Query) Descriptor() ([]byte, []int) {
-	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *Query) GetTermQuery() *model.TermQuery {
+func (x *Query) GetTermQuery() *TermQuery {
 	if x != nil {
 		return x.TermQuery
 	}
@@ -267,7 +326,7 @@ type SearchResult struct {
 
 func (x *SearchResult) Reset() {
 	*x = SearchResult{}
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[5]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -279,7 +338,7 @@ func (x *SearchResult) String() string {
 func (*SearchResult) ProtoMessage() {}
 
 func (x *SearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[5]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,12 +351,141 @@ func (x *SearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResult.ProtoReflect.Descriptor instead.
 func (*SearchResult) Descriptor() ([]byte, []int) {
-	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SearchResult) GetDocumentIDs() []*DocID {
 	if x != nil {
 		return x.DocumentIDs
+	}
+	return nil
+}
+
+// 用于索引的 Keyword
+type Keyword struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Field         string                 `protobuf:"bytes,1,opt,name=Field,proto3" json:"Field,omitempty"`
+	Word          string                 `protobuf:"bytes,2,opt,name=Word,proto3" json:"Word,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Keyword) Reset() {
+	*x = Keyword{}
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Keyword) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Keyword) ProtoMessage() {}
+
+func (x *Keyword) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Keyword.ProtoReflect.Descriptor instead.
+func (*Keyword) Descriptor() ([]byte, []int) {
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *Keyword) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *Keyword) GetWord() string {
+	if x != nil {
+		return x.Word
+	}
+	return ""
+}
+
+type Document struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IndexID       uint64                 `protobuf:"varint,1,opt,name=IndexID,proto3" json:"IndexID,omitempty"`         // 用于索引 ID
+	DocID         string                 `protobuf:"bytes,2,opt,name=DocID,proto3" json:"DocID,omitempty"`              // 业务 ID
+	BitsFeature   uint64                 `protobuf:"varint,3,opt,name=BitsFeature,proto3" json:"BitsFeature,omitempty"` // 表示 Document 特征 Bits
+	Keywords      []*Keyword             `protobuf:"bytes,4,rep,name=Keywords,proto3" json:"Keywords,omitempty"`        // Document 的关键词
+	Bytes         []byte                 `protobuf:"bytes,5,opt,name=Bytes,proto3" json:"Bytes,omitempty"`              // 业务实体序列化后的结果
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Document) Reset() {
+	*x = Document{}
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Document) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Document) ProtoMessage() {}
+
+func (x *Document) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Document.ProtoReflect.Descriptor instead.
+func (*Document) Descriptor() ([]byte, []int) {
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Document) GetIndexID() uint64 {
+	if x != nil {
+		return x.IndexID
+	}
+	return 0
+}
+
+func (x *Document) GetDocID() string {
+	if x != nil {
+		return x.DocID
+	}
+	return ""
+}
+
+func (x *Document) GetBitsFeature() uint64 {
+	if x != nil {
+		return x.BitsFeature
+	}
+	return 0
+}
+
+func (x *Document) GetKeywords() []*Keyword {
+	if x != nil {
+		return x.Keywords
+	}
+	return nil
+}
+
+func (x *Document) GetBytes() []byte {
+	if x != nil {
+		return x.Bytes
 	}
 	return nil
 }
@@ -310,7 +498,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[6]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +510,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[6]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +523,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{9}
 }
 
 type HealthCheckResponse struct {
@@ -346,7 +534,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[7]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -358,7 +546,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_search_v1_search_proto_msgTypes[7]
+	mi := &file_api_proto_search_v1_search_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -371,34 +559,47 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{7}
+	return file_api_proto_search_v1_search_proto_rawDescGZIP(), []int{10}
 }
 
 var File_api_proto_search_v1_search_proto protoreflect.FileDescriptor
 
 const file_api_proto_search_v1_search_proto_rawDesc = "" +
 	"\n" +
-	" api/proto/search/v1/search.proto\x12\tsearch.v1\x1a\x1bsearch/model/document.proto\x1a\x1dsearch/model/term_query.proto\"\x1d\n" +
+	" api/proto/search/v1/search.proto\x12\tsearch.v1\"\x1d\n" +
 	"\x05DocID\x12\x14\n" +
 	"\x05DocID\x18\x01 \x01(\tR\x05DocID\"%\n" +
 	"\rAffectedCount\x12\x14\n" +
 	"\x05Count\x18\x01 \x01(\x05R\x05Count\"\x0e\n" +
 	"\fCountRequest\")\n" +
 	"\rSearchRequest\x12\x18\n" +
-	"\aQueries\x18\x01 \x03(\tR\aQueries\"\x83\x01\n" +
-	"\x05Query\x12.\n" +
-	"\tTermQuery\x18\x01 \x01(\v2\x10.model.TermQueryR\tTermQuery\x12\x16\n" +
+	"\aQueries\x18\x01 \x03(\tR\aQueries\"\x91\x01\n" +
+	"\tTermQuery\x12,\n" +
+	"\aKeyword\x18\x01 \x01(\v2\x12.search.v1.KeywordR\aKeyword\x12(\n" +
+	"\x04Must\x18\x02 \x03(\v2\x14.search.v1.TermQueryR\x04Must\x12,\n" +
+	"\x06Should\x18\x03 \x03(\v2\x14.search.v1.TermQueryR\x06Should\"\x87\x01\n" +
+	"\x05Query\x122\n" +
+	"\tTermQuery\x18\x01 \x01(\v2\x14.search.v1.TermQueryR\tTermQuery\x12\x16\n" +
 	"\x06OnFlag\x18\x02 \x01(\x04R\x06OnFlag\x12\x18\n" +
 	"\aOffFlag\x18\x03 \x01(\x04R\aOffFlag\x12\x18\n" +
 	"\aOrFlags\x18\x04 \x03(\x04R\aOrFlags\"B\n" +
 	"\fSearchResult\x122\n" +
-	"\vDocumentIDs\x18\x01 \x03(\v2\x10.search.v1.DocIDR\vDocumentIDs\"\x14\n" +
+	"\vDocumentIDs\x18\x01 \x03(\v2\x10.search.v1.DocIDR\vDocumentIDs\"3\n" +
+	"\aKeyword\x12\x14\n" +
+	"\x05Field\x18\x01 \x01(\tR\x05Field\x12\x12\n" +
+	"\x04Word\x18\x02 \x01(\tR\x04Word\"\xa2\x01\n" +
+	"\bDocument\x12\x18\n" +
+	"\aIndexID\x18\x01 \x01(\x04R\aIndexID\x12\x14\n" +
+	"\x05DocID\x18\x02 \x01(\tR\x05DocID\x12 \n" +
+	"\vBitsFeature\x18\x03 \x01(\x04R\vBitsFeature\x12.\n" +
+	"\bKeywords\x18\x04 \x03(\v2\x12.search.v1.KeywordR\bKeywords\x12\x14\n" +
+	"\x05Bytes\x18\x05 \x01(\fR\x05Bytes\"\x14\n" +
 	"\x12HealthCheckRequest\"\x15\n" +
-	"\x13HealthCheckResponse2\xc4\x02\n" +
+	"\x13HealthCheckResponse2\xc8\x02\n" +
 	"\rSearchService\x12;\n" +
 	"\x06Search\x12\x18.search.v1.SearchRequest\x1a\x17.search.v1.SearchResult\x127\n" +
-	"\tDeleteDoc\x12\x10.search.v1.DocID\x1a\x18.search.v1.AffectedCount\x123\n" +
-	"\x06AddDoc\x12\x0f.model.Document\x1a\x18.search.v1.AffectedCount\x12:\n" +
+	"\tDeleteDoc\x12\x10.search.v1.DocID\x1a\x18.search.v1.AffectedCount\x127\n" +
+	"\x06AddDoc\x12\x13.search.v1.Document\x1a\x18.search.v1.AffectedCount\x12:\n" +
 	"\x05Count\x12\x17.search.v1.CountRequest\x1a\x18.search.v1.AffectedCount\x12L\n" +
 	"\vHealthCheck\x12\x1d.search.v1.HealthCheckRequest\x1a\x1e.search.v1.HealthCheckResponseB@Z>github.com/yzletter/go-postery/api/proto/search/v1;search_grpcb\x06proto3"
 
@@ -414,37 +615,42 @@ func file_api_proto_search_v1_search_proto_rawDescGZIP() []byte {
 	return file_api_proto_search_v1_search_proto_rawDescData
 }
 
-var file_api_proto_search_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_api_proto_search_v1_search_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_api_proto_search_v1_search_proto_goTypes = []any{
 	(*DocID)(nil),               // 0: search.v1.DocID
 	(*AffectedCount)(nil),       // 1: search.v1.AffectedCount
 	(*CountRequest)(nil),        // 2: search.v1.CountRequest
 	(*SearchRequest)(nil),       // 3: search.v1.SearchRequest
-	(*Query)(nil),               // 4: search.v1.Query
-	(*SearchResult)(nil),        // 5: search.v1.SearchResult
-	(*HealthCheckRequest)(nil),  // 6: search.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil), // 7: search.v1.HealthCheckResponse
-	(*model.TermQuery)(nil),     // 8: model.TermQuery
-	(*model.Document)(nil),      // 9: model.Document
+	(*TermQuery)(nil),           // 4: search.v1.TermQuery
+	(*Query)(nil),               // 5: search.v1.Query
+	(*SearchResult)(nil),        // 6: search.v1.SearchResult
+	(*Keyword)(nil),             // 7: search.v1.Keyword
+	(*Document)(nil),            // 8: search.v1.Document
+	(*HealthCheckRequest)(nil),  // 9: search.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 10: search.v1.HealthCheckResponse
 }
 var file_api_proto_search_v1_search_proto_depIdxs = []int32{
-	8, // 0: search.v1.Query.TermQuery:type_name -> model.TermQuery
-	0, // 1: search.v1.SearchResult.DocumentIDs:type_name -> search.v1.DocID
-	3, // 2: search.v1.SearchService.Search:input_type -> search.v1.SearchRequest
-	0, // 3: search.v1.SearchService.DeleteDoc:input_type -> search.v1.DocID
-	9, // 4: search.v1.SearchService.AddDoc:input_type -> model.Document
-	2, // 5: search.v1.SearchService.Count:input_type -> search.v1.CountRequest
-	6, // 6: search.v1.SearchService.HealthCheck:input_type -> search.v1.HealthCheckRequest
-	5, // 7: search.v1.SearchService.Search:output_type -> search.v1.SearchResult
-	1, // 8: search.v1.SearchService.DeleteDoc:output_type -> search.v1.AffectedCount
-	1, // 9: search.v1.SearchService.AddDoc:output_type -> search.v1.AffectedCount
-	1, // 10: search.v1.SearchService.Count:output_type -> search.v1.AffectedCount
-	7, // 11: search.v1.SearchService.HealthCheck:output_type -> search.v1.HealthCheckResponse
-	7, // [7:12] is the sub-list for method output_type
-	2, // [2:7] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	7,  // 0: search.v1.TermQuery.Keyword:type_name -> search.v1.Keyword
+	4,  // 1: search.v1.TermQuery.Must:type_name -> search.v1.TermQuery
+	4,  // 2: search.v1.TermQuery.Should:type_name -> search.v1.TermQuery
+	4,  // 3: search.v1.Query.TermQuery:type_name -> search.v1.TermQuery
+	0,  // 4: search.v1.SearchResult.DocumentIDs:type_name -> search.v1.DocID
+	7,  // 5: search.v1.Document.Keywords:type_name -> search.v1.Keyword
+	3,  // 6: search.v1.SearchService.Search:input_type -> search.v1.SearchRequest
+	0,  // 7: search.v1.SearchService.DeleteDoc:input_type -> search.v1.DocID
+	8,  // 8: search.v1.SearchService.AddDoc:input_type -> search.v1.Document
+	2,  // 9: search.v1.SearchService.Count:input_type -> search.v1.CountRequest
+	9,  // 10: search.v1.SearchService.HealthCheck:input_type -> search.v1.HealthCheckRequest
+	6,  // 11: search.v1.SearchService.Search:output_type -> search.v1.SearchResult
+	1,  // 12: search.v1.SearchService.DeleteDoc:output_type -> search.v1.AffectedCount
+	1,  // 13: search.v1.SearchService.AddDoc:output_type -> search.v1.AffectedCount
+	1,  // 14: search.v1.SearchService.Count:output_type -> search.v1.AffectedCount
+	10, // 15: search.v1.SearchService.HealthCheck:output_type -> search.v1.HealthCheckResponse
+	11, // [11:16] is the sub-list for method output_type
+	6,  // [6:11] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_search_v1_search_proto_init() }
@@ -458,7 +664,7 @@ func file_api_proto_search_v1_search_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_search_v1_search_proto_rawDesc), len(file_api_proto_search_v1_search_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

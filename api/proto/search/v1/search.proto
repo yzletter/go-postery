@@ -4,9 +4,6 @@ package search.v1;
 
 option go_package = "github.com/yzletter/go-postery/api/proto/search/v1;search_grpc";
 
-import "search/model/document.proto";
-import "search/model/term_query.proto";
-
 message DocID {
   string DocID = 1;
 }
@@ -21,8 +18,14 @@ message SearchRequest{
   repeated string Queries = 1;
 }
 
+message TermQuery {
+  Keyword Keyword = 1;   // Keyword 类型引用自 document.proto
+  repeated TermQuery Must = 2;
+  repeated TermQuery Should = 3;
+}
+
 message Query {
-  model.TermQuery TermQuery = 1;
+  TermQuery TermQuery = 1;
   uint64 OnFlag = 2;
   uint64 OffFlag = 3;
   repeated uint64 OrFlags = 4;
@@ -32,13 +35,27 @@ message SearchResult {
   repeated DocID DocumentIDs = 1;
 }
 
+// 用于索引的 Keyword
+message Keyword {
+  string Field = 1;
+  string Word = 2;
+}
+
+message Document {
+  uint64 IndexID = 1;             // 用于索引 ID
+  string DocID = 2;               // 业务 ID
+  uint64 BitsFeature = 3;         // 表示 Document 特征 Bits
+  repeated Keyword Keywords = 4;  // Document 的关键词
+  bytes Bytes = 5;                // 业务实体序列化后的结果
+}
+
 message HealthCheckRequest {}
 message HealthCheckResponse {}
 
 service SearchService {
   rpc Search(SearchRequest) returns(SearchResult);
   rpc DeleteDoc(DocID) returns(AffectedCount);
-  rpc AddDoc(model.Document) returns(AffectedCount);
+  rpc AddDoc(Document) returns(AffectedCount);
   rpc Count(CountRequest) returns(AffectedCount);
   rpc HealthCheck(HealthCheckRequest) returns(HealthCheckResponse);
 }

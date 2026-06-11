@@ -8,7 +8,6 @@ package search_grpc
 
 import (
 	context "context"
-	model "github.com/yzletter/go-postery/microservice-backend/search/model"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -33,7 +32,7 @@ const (
 type SearchServiceClient interface {
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResult, error)
 	DeleteDoc(ctx context.Context, in *DocID, opts ...grpc.CallOption) (*AffectedCount, error)
-	AddDoc(ctx context.Context, in *model.Document, opts ...grpc.CallOption) (*AffectedCount, error)
+	AddDoc(ctx context.Context, in *Document, opts ...grpc.CallOption) (*AffectedCount, error)
 	Count(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*AffectedCount, error)
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
@@ -66,7 +65,7 @@ func (c *searchServiceClient) DeleteDoc(ctx context.Context, in *DocID, opts ...
 	return out, nil
 }
 
-func (c *searchServiceClient) AddDoc(ctx context.Context, in *model.Document, opts ...grpc.CallOption) (*AffectedCount, error) {
+func (c *searchServiceClient) AddDoc(ctx context.Context, in *Document, opts ...grpc.CallOption) (*AffectedCount, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AffectedCount)
 	err := c.cc.Invoke(ctx, SearchService_AddDoc_FullMethodName, in, out, cOpts...)
@@ -102,7 +101,7 @@ func (c *searchServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRe
 type SearchServiceServer interface {
 	Search(context.Context, *SearchRequest) (*SearchResult, error)
 	DeleteDoc(context.Context, *DocID) (*AffectedCount, error)
-	AddDoc(context.Context, *model.Document) (*AffectedCount, error)
+	AddDoc(context.Context, *Document) (*AffectedCount, error)
 	Count(context.Context, *CountRequest) (*AffectedCount, error)
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedSearchServiceServer()
@@ -121,7 +120,7 @@ func (UnimplementedSearchServiceServer) Search(context.Context, *SearchRequest) 
 func (UnimplementedSearchServiceServer) DeleteDoc(context.Context, *DocID) (*AffectedCount, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteDoc not implemented")
 }
-func (UnimplementedSearchServiceServer) AddDoc(context.Context, *model.Document) (*AffectedCount, error) {
+func (UnimplementedSearchServiceServer) AddDoc(context.Context, *Document) (*AffectedCount, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddDoc not implemented")
 }
 func (UnimplementedSearchServiceServer) Count(context.Context, *CountRequest) (*AffectedCount, error) {
@@ -188,7 +187,7 @@ func _SearchService_DeleteDoc_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _SearchService_AddDoc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(model.Document)
+	in := new(Document)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -200,7 +199,7 @@ func _SearchService_AddDoc_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: SearchService_AddDoc_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchServiceServer).AddDoc(ctx, req.(*model.Document))
+		return srv.(SearchServiceServer).AddDoc(ctx, req.(*Document))
 	}
 	return interceptor(ctx, in, info, handler)
 }
