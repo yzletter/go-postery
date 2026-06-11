@@ -1,43 +1,18 @@
 package security
 
 import (
-	"errors"
 	"log/slog"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/yzletter/go-postery/backend/ports"
 )
-
-var (
-	ErrTokenGenFailed = errors.New("jwt token gen failed")
-	ErrTokenInvalid   = errors.New("jwt token invalid")
-)
-
-type JWTTokenClaims struct {
-	Uid       int64
-	SSid      string
-	Role      int
-	UserAgent string
-
-	Issuer    string
-	Subject   string
-	Audience  []string
-	ExpiresAt *time.Time
-	NotBefore *time.Time
-	IssuedAt  *time.Time
-	ID        string
-}
-
-type JwtManager interface {
-	GenToken(claim JWTTokenClaims) (string, error)
-	VerifyToken(tokenString string) (*JWTTokenClaims, error)
-}
 
 type jwtManager struct {
 	tokenKey []byte
 }
 
-func NewJwtManager(tokenKey string) *jwtManager {
+func NewJwtManager(tokenKey string) ports.JwtManager {
 	return &jwtManager{
 		tokenKey: []byte(tokenKey),
 	}
@@ -51,7 +26,7 @@ type myJwtClaim struct {
 	jwt.RegisteredClaims
 }
 
-func (manager *jwtManager) GenToken(claim JWTTokenClaims) (string, error) {
+func (manager *jwtManager) GenToken(claim ports.JWTTokenClaims) (string, error) {
 	jwtClaims := myJwtClaim{
 		Uid:       claim.Uid,
 		SSid:      claim.SSid,
@@ -72,16 +47,16 @@ func (manager *jwtManager) GenToken(claim JWTTokenClaims) (string, error) {
 	tokenString, err := token.SignedString(manager.tokenKey)
 	if err != nil {
 		slog.Error("Token Gen Failed", "error", err)
-		return "", ErrTokenGenFailed
+		return "", ports.ErrTokenGenFailed
 	}
 
 	return tokenString, nil
 }
 
-func (manager *jwtManager) VerifyToken(tokenString string) (*JWTTokenClaims, error) {
+func (manager *jwtManager) VerifyToken(tokenString string) (*ports.JWTTokenClaims, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.SigningMethodHS512 {
-			return nil, ErrTokenInvalid
+			return nil, ports.ErrTokenInvalid
 		}
 		return manager.tokenKey, nil
 	}
@@ -89,10 +64,10 @@ func (manager *jwtManager) VerifyToken(tokenString string) (*JWTTokenClaims, err
 	claims := &myJwtClaim{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, keyFunc)
 	if err != nil || token == nil || !token.Valid {
-		return nil, ErrTokenInvalid
+		return nil, ports.ErrTokenInvalid
 	}
 
-	return &JWTTokenClaims{
+	return &ports.JWTTokenClaims{
 		Uid:       claims.Uid,
 		SSid:      claims.SSid,
 		Role:      claims.Role,

@@ -3,12 +3,8 @@ package security
 import (
 	"errors"
 
+	"github.com/yzletter/go-postery/backend/ports"
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	ErrHashFailed      = errors.New("hash failed")
-	ErrInvalidPassword = errors.New("invalid password")
 )
 
 type PasswordHasher interface {
@@ -20,7 +16,7 @@ type BcryptPasswordHasher struct {
 	cost int
 }
 
-func NewBcryptPasswordHasher(cost int) *BcryptPasswordHasher {
+func NewBcryptPasswordHasher(cost int) ports.PasswordHasher {
 	if cost == 0 {
 		cost = bcrypt.DefaultCost
 	}
@@ -32,7 +28,7 @@ func NewBcryptPasswordHasher(cost int) *BcryptPasswordHasher {
 func (hasher *BcryptPasswordHasher) Hash(password string) (string, error) {
 	res, err := bcrypt.GenerateFromPassword([]byte(password), hasher.cost)
 	if err != nil {
-		return "", ErrHashFailed
+		return "", ports.ErrHashFailed
 	}
 
 	return string(res), nil
@@ -42,9 +38,9 @@ func (hasher *BcryptPasswordHasher) Compare(hashedPassword, plainPassword string
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return ErrInvalidPassword
+			return ports.ErrInvalidPassword
 		}
-		return ErrHashFailed
+		return ports.ErrHashFailed
 	}
 	return nil
 }
