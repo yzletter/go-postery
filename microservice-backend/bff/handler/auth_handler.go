@@ -8,7 +8,7 @@ import (
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	conf2 "github.com/yzletter/go-postery/microservice-backend/bff/conf"
+	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/microservice-backend/bff/dto/auth"
 	userdto "github.com/yzletter/go-postery/microservice-backend/bff/dto/user"
 	"github.com/yzletter/go-postery/microservice-backend/bff/errno"
@@ -147,7 +147,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	}
 
 	// 发送邮件
-	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf2.EmailCode), Identifier: req.Email}); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf.EmailCode), Identifier: req.Email}); err != nil {
 		slog.Error("发送邮箱验证码失败", "error", err)
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -171,7 +171,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	}
 
 	// 发送短信
-	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf2.SMSCode), Identifier: req.Phone}); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf.SMSCode), Identifier: req.Phone}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.AlreadyExists:   errno.ErrSendToFrequent,
@@ -198,7 +198,7 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -229,7 +229,7 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -249,7 +249,7 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 // HasPassword 查询密码状态
 func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -269,7 +269,7 @@ func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 // GetAuthIdentity 获取用户身份认证
 func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	uid, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -291,7 +291,7 @@ func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 // Logout 退出登录
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	_, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext)
+	_, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext)
 	if err != nil {
 		slog.Error("Get Uid From CTX Failed", "error", err)
 		response.Error(ctx, errno.ErrUserNotLogin)
@@ -300,7 +300,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 
 	// 从 Header 中获取 AccessToken, 从 Cookie 中获取 RefreshToken
 	accessToken := ExtractToken(ctx)
-	refreshToken := utils2.GetValueFromCookie(ctx, conf2.RefreshTokenInCookie)
+	refreshToken := utils2.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)
 
 	// 服务端清理双 Token
 	if _, err := hdl.authSvc.ClearTokens(ctx, &auth_grpc.DualTokens{AccessToken: accessToken, RefreshToken: refreshToken}); err != nil {
@@ -310,7 +310,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 
 	// 将双 Token 置空
 	ctx.Header("Authorization", "")
-	ctx.SetCookie(conf2.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
 
 	response.Success(ctx, "登出成功", nil)
 }
@@ -318,7 +318,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 // Status 检查登录状态
 func (hdl *AuthHandler) Status(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	if _, err := utils2.GetUidFromCTX(ctx, conf2.UserIDInContext); err != nil {
+	if _, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext); err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -336,7 +336,7 @@ func ExtractToken(ctx *gin.Context) string {
 	}
 
 	// HTTP 从 Cookie 中拿 token
-	if token, err := ctx.Cookie(conf2.AccessTokenInCookie); err == nil {
+	if token, err := ctx.Cookie(conf.AccessTokenInCookie); err == nil {
 		return token
 	}
 
@@ -346,7 +346,7 @@ func ExtractToken(ctx *gin.Context) string {
 // 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	ctx.Header("Authorization", "Bearer "+accessToken)
-	ctx.SetCookie(conf2.RefreshTokenInCookie, refreshToken, conf2.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 }
 
 func mapGRPCErr(err error, mapping map[codes.Code]*errno.Error, fallback *errno.Error) *errno.Error {

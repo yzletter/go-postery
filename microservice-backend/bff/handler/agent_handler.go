@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
-	"github.com/yzletter/go-postery/microservice-backend/bff/conf"
+	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/microservice-backend/bff/dto/agent"
 	"github.com/yzletter/go-postery/microservice-backend/bff/errno"
 	grpcclient "github.com/yzletter/go-postery/microservice-backend/bff/grpc/client"

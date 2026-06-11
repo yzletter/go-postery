@@ -9,7 +9,7 @@ import (
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/microservice-backend/bff/conf"
+	"github.com/yzletter/go-postery/backend/conf"
 	postdto "github.com/yzletter/go-postery/microservice-backend/bff/dto/post"
 	"github.com/yzletter/go-postery/microservice-backend/bff/dto/search"
 	"github.com/yzletter/go-postery/microservice-backend/bff/errno"

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/microservice-backend/bff/conf"
+	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/microservice-backend/bff/errno"
 	"github.com/yzletter/go-postery/microservice-backend/bff/service"
 	"github.com/yzletter/go-postery/microservice-backend/bff/utils"

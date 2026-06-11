@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
-	conf2 "github.com/yzletter/go-postery/microservice-backend/bff/conf"
+	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/microservice-backend/bff/grpc/client"
 	"github.com/yzletter/go-postery/microservice-backend/bff/handler"
 	"github.com/yzletter/go-postery/microservice-backend/bff/utils"
@@ -18,7 +18,7 @@ func AuthRequiredMiddleware(client grpcclient.AuthClient) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 获取 AccessToken 和  RefreshToken
 		accessToken := handler.ExtractToken(ctx)
-		refreshToken := utils.GetValueFromCookie(ctx, conf2.RefreshTokenInCookie)
+		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)
 
 		slog.Info("获取当前用户的 Token", "AccessToken", accessToken, "RefreshToken", refreshToken)
 
@@ -114,14 +114,14 @@ func isBlacklisted(ctx context.Context, client grpcclient.AuthClient, ssid strin
 // 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	ctx.Header("Authorization", "Bearer "+accessToken)
-	ctx.SetCookie(conf2.RefreshTokenInCookie, refreshToken, conf2.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
 }
 
 // 返回没有权限的响应
 func unauthorized(ctx *gin.Context) {
 	// 清除 token
 	ctx.Header("Authorization", "")
-	ctx.SetCookie(conf2.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
 
 	// 退出
 	ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -129,6 +129,6 @@ func unauthorized(ctx *gin.Context) {
 
 // 把用户 ID 放入上下文, 以便后续中间件直接使用
 func accept(ctx *gin.Context, uid int64) {
-	ctx.Set(conf2.UserIDInContext, uid)
+	ctx.Set(conf.UserIDInContext, uid)
 	ctx.Next()
 }

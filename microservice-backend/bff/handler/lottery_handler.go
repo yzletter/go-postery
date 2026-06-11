@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/microservice-backend/bff/conf"
+	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/microservice-backend/bff/dto/lottery"
 	"github.com/yzletter/go-postery/microservice-backend/bff/errno"
 	grpcclient "github.com/yzletter/go-postery/microservice-backend/bff/grpc/client"
