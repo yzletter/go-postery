@@ -38,25 +38,29 @@ func NewAuthService(authRepo repository.AuthRepository, jwtManager ports.JwtMana
 	}
 }
 
-// LoginByPassword 手机号码/邮箱 + 密码登录
+// LoginByPassword 手机号码 / 邮箱 + 密码登录
+//
+// identifier 业务字段: 如手机号码 / 邮箱
+//
+// password 密码 MD5 哈希结果
 func (svc *authService) LoginByPassword(ctx context.Context, identifier string, password string) (int64, error) {
-	// 获取登录认证
-	authIdentity, err := svc.authRepo.GetAuthIdentityByIdentifier(ctx, identifier)
+	// 获取用户登录认证
+	identity, err := svc.authRepo.GetAuthIdentityByIdentifier(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) { // 邮箱或者手机号没有认证过
-			slog.Error("Invalid Identifier")
+			slog.Error("Invalid Identifier", "identifier", identifier)
 			return 0, errs.ErrInvalidArgument
 		}
 		slog.Error("Server Internal Error", "error", err)
 		return 0, errs.ErrInternal
 	}
 
-	// 获取密码
-	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, authIdentity.UserID)
+	// 获取用户密码
+	passwordHash, err := svc.authRepo.GetPasswordHash(ctx, identity.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 不应该发生的错误
-			slog.Error("Get Password Failed", "error", err)
+			slog.Error("Get Password Failed", "error", err, "uid", identity.UserID)
 			return 0, errs.ErrInvalidArgument
 		}
 		slog.Error("Server Internal Error", "error", err)
@@ -66,26 +70,21 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 	// 比较密码
 	if err := svc.passHasher.Compare(passwordHash, password); err != nil {
 		if errors.Is(err, ports.ErrInvalidPassword) { // 密码错误, 返回为请求参数错误
-			slog.Error("Invalid Password")
+			slog.Error("Invalid Password", "uid", identity.UserID)
 			return 0, errs.ErrInvalidArgument
 		}
 		slog.Error("Server Internal Error", "error", err)
 		return 0, errs.ErrInternal
 	}
 
-	return authIdentity.UserID, nil
+	return identity.UserID, nil
 }
 
 // LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (svc *authService) LoginByPhone(ctx context.Context, phone string, code string) (int64, error) {
 	// 校验验证码并消费
-	verifyReq := code_grpc.CheckCodeRequest{
-		Biz:        int64(conf.SMSCode),
-		Identifier: phone,
-		Code:       code,
-	}
-	resp, err := svc.codeServiceManager.Verify(ctx, &verifyReq)
-	if err != nil {
+	verifyReq := code_grpc.CheckCodeRequest{Biz: int64(conf.SMSCode), Identifier: phone, Code: code}
+	if resp, err := svc.codeServiceManager.Verify(ctx, &verifyReq); err != nil {
 		// 下游挂了
 		slog.Error("Code Service Unavailable", "error", err)
 		return 0, errs.ErrInternal
@@ -95,7 +94,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 	}
 
 	// 获取登录认证
-	authType := model.AuthTypeFromBiz(conf.SMSCode)
+	authType := model.AuthTypeFromBiz(conf.SMSCode) // 认证类型
 	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, phone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -196,8 +195,7 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 		Identifier: authIdentity.Identifier,
 		Code:       code,
 	}
-	resp, err := svc.codeServiceManager.Verify(ctx, &verifyReq)
-	if err != nil {
+	if resp, err := svc.codeServiceManager.Verify(ctx, &verifyReq); err != nil {
 		// 下游挂了
 		slog.Error("Code Service Unavailable", "error", err)
 		return errs.ErrInternal
@@ -214,11 +212,7 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 	}
 
 	// 初始化密码
-	var authPassword = model.AuthPassword{
-		UserID:       uid,
-		PasswordHash: passwordHash,
-	}
-	if err := svc.authRepo.SetPassword(ctx, &authPassword); err != nil {
+	if err := svc.authRepo.SetPassword(ctx, &model.AuthPassword{UserID: uid, PasswordHash: passwordHash}); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			// 不应该出现的错误
 			slog.Error("Set Password Failed", "error", err)
@@ -315,17 +309,11 @@ func (svc *authService) IssueTokens(ctx context.Context, uid int64, role int, us
 	// 生成 RefreshToken
 	refreshToken := xid.New().String()
 
-	// 将 < auth:refresh:xxxxxx, ssid > 存入
-	mp := map[string]any{
-		"user_id": uid,
-		"ssid":    ssid,
-		"role":    role,
-	}
-	err = svc.authRepo.SetInfo(ctx, refreshToken, mp)
-	if err != nil {
+	// 将 < auth:refresh:xxxxxx, uid, ssid, role > 存入缓存
+	mp := map[string]any{"user_id": uid, "ssid": ssid, "role": role}
+	if err := svc.authRepo.SetInfo(ctx, refreshToken, mp); err != nil {
 		slog.Error("Server Internal Error", "error", err)
-		return "", "", errs.ErrInternal
-
+		return accessToken, "", errs.ErrInternal
 	}
 	return accessToken, refreshToken, nil
 }
