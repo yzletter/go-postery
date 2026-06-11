@@ -9,7 +9,7 @@ import (
 
 	"github.com/yzletter/go-postery/backend/errs"
 	repository2 "github.com/yzletter/go-postery/backend/micro/code/repository"
-	"github.com/yzletter/go-postery/backend/micro/code/service/ports"
+	"github.com/yzletter/go-postery/backend/ports"
 )
 
 // 验证码服务

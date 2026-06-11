@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	"github.com/yzletter/go-postery/backend/conf"
-	grpc2 "github.com/yzletter/go-postery/backend/grpc"
+	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraRedis "github.com/yzletter/go-postery/backend/infra/cache/redis"
@@ -28,6 +28,8 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/code/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/code/repository/dao"
 	"github.com/yzletter/go-postery/backend/micro/code/service"
+	"github.com/yzletter/go-postery/backend/pkg"
+	"github.com/yzletter/go-postery/backend/pkg/ratelimit"
 	"github.com/yzletter/go-postery/backend/utils"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -88,15 +90,15 @@ func main() {
 	// Service
 	CodeService := service.NewCodeService(CodeRepository, EmailClient, SmsClient)
 	// Common Service
-	RateLimitService := service.NewRateLimitService(RedisClient, time.Minute, 50)
-	MetricService := service.NewMetricService(prefix + ServiceName)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 50)
+	MetricService := pkg.NewMetricService(prefix + ServiceName)
 
 	// gRPC ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, ETCDClient, hub.NewRoundRobinLoadBalancer())
 	// gRPC Server
 	CodeServiceServer := server.NewCodeServiceServer(CodeService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc2.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)

@@ -3,11 +3,12 @@ package email
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"html/template"
 	"log/slog"
 
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/micro/code/service/ports"
+	"github.com/yzletter/go-postery/backend/ports"
 	"gopkg.in/gomail.v2"
 )
 
@@ -73,8 +74,11 @@ func (m *QQEmailSMTPManager) Send(ctx context.Context, identifier string, code s
 	return nil
 }
 
+//go:embed verify_email.html
+var verify_template string
+
 func renderVerifyEmailHTML(data VerifyEmailData) (string, error) {
-	tpl, err := template.ParseFiles("./verify_email.html")
+	tpl, err := template.New("verify_email.html").Parse(verify_template)
 	if err != nil {
 		return "", err
 	}

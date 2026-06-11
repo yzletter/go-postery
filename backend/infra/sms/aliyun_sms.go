@@ -11,7 +11,7 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 	credential "github.com/aliyun/credentials-go/credentials"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/micro/code/service/ports"
+	"github.com/yzletter/go-postery/backend/ports"
 )
 
 type AliyunSmsClient struct {
