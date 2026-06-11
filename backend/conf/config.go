@@ -4,15 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"strconv"
-	"sync"
 
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
 	watchKeys = make(map[string]struct{})
-	conce     sync.Once
-	config    Config
 )
 
 //// LoadGlobalConfig 加载远程配置

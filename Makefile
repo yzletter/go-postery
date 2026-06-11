@@ -10,7 +10,7 @@ build:
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/agent_service ./microservice-backend/agent
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/user_service ./microservice-backend/user
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/session_service ./microservice-backend/session
-	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/outbox_service ./microservice-backend/outbox
+	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/outbox_service ./backend/micro/outbox
 	@GOOS=linux GOARCH=amd64 go build -o ./app/linux/bff_service ./microservice-backend/bff
 
 	@scp ./app/linux/code_service production1:~/app/code_service
@@ -36,5 +36,5 @@ build-macos:
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/agent_service ./microservice-backend/agent
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/user_service ./microservice-backend/user
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/session_service ./microservice-backend/session
-	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/outbox_service ./microservice-backend/outbox
+	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/outbox_service ./backend/micro/outbox
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/bff_service ./microservice-backend/bff

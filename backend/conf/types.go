@@ -1,9 +1,5 @@
 package conf
 
-type Config struct {
-	code CodeServiceConfig
-}
-
 type CommonMicroConf struct {
 	MySQL      MySQLConfig
 	Redis      RedisConfig
