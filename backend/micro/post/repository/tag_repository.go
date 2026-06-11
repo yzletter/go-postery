@@ -1,0 +1,65 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/yzletter/go-postery/backend/micro/post/model"
+	"github.com/yzletter/go-postery/backend/micro/post/repository/dao"
+)
+
+type tagRepository struct {
+	dao dao.TagDAO
+}
+
+func NewTagRepository(tagDAO dao.TagDAO) TagRepository {
+	return &tagRepository{dao: tagDAO}
+}
+
+func (repo *tagRepository) Create(ctx context.Context, tag *model.Tag) error {
+	err := repo.dao.Create(ctx, tag)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *tagRepository) GetBySlug(ctx context.Context, slug string) (*model.Tag, error) {
+	tag, err := repo.dao.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return tag, nil
+}
+
+func (repo *tagRepository) GetByName(ctx context.Context, name string) (*model.Tag, error) {
+	tag, err := repo.dao.GetByName(ctx, name)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return tag, nil
+}
+
+func (repo *tagRepository) Bind(ctx context.Context, postTag *model.PostTag) error {
+	err := repo.dao.Bind(ctx, postTag)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *tagRepository) DeleteBind(ctx context.Context, pid, tid int64) error {
+	err := repo.dao.DeleteBind(ctx, pid, tid)
+	if err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *tagRepository) FindTagsByPostID(ctx context.Context, pid int64) ([]string, error) {
+	tags, err := repo.dao.FindTagsByPostID(ctx, pid)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+
+	return tags, nil
+}
