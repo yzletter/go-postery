@@ -15,10 +15,12 @@ scrape_configs:
         # The label name is added as a label `label_name=<label_value>` to any timeseries scraped from this conf.
         labels:
           app: "prometheus"
+
   - job_name: "code_service"
     static_configs:
       - targets: ["172.16.150.246:9101","172.16.57.13:9101","172.16.52.125:9101"]
     metrics_path: "/metrics"
+
   - job_name: "lottery_service"
     static_configs:
       - targets: [ "172.16.150.246:9103","172.16.52.125:9103"]
