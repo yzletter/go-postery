@@ -291,17 +291,20 @@ VALUES (170406720000000001, '论坛定制马克杯', NULL, '官方定制陶瓷�
 CREATE TABLE IF NOT EXISTS events
 (
     id            BIGINT      NOT NULL COMMENT 'ID',
-    status        TINYINT     NOT NULL DEFAULT 0 COMMENT '消息发送状态 0 待发送 1 已发送 2 需重试 3 失败（重试次数超过 5 的消息）',
+    status        TINYINT     NOT NULL DEFAULT 0 COMMENT '消息发送状态 0 待发送, 1 发送中, 2 已发送, 3 需重试, 4 失败（重试次数超过 5 的消息）',
     retry_cnt     INT         NOT NULL DEFAULT 0 COMMENT '重试次数',
     next_retry_at DATETIME             DEFAULT NULL COMMENT '下次重试时间',
+    lock_owner    VARCHAR(64)          DEFAULT NULL COMMENT '当前处理者',
+    locked_until  DATETIME             DEFAULT NULL COMMENT '锁过期时间',
     topic         VARCHAR(64) NOT NULL COMMENT 'Kafka Topic',
     message_key   VARCHAR(64) NOT NULL COMMENT 'Kafka 消息 Key',
     message_value TEXT        NOT NULL COMMENT 'Kafka 消息 Value',
     created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (id),
-    CHECK (status IN (0, 1, 2, 3)),
-    KEY idx_events_scan (status, next_retry_at, created_at)
+    CHECK (status IN (0, 1, 2, 3, 4)),
+    KEY idx_events_scan (status, next_retry_at, created_at),
+    KEY idx_events_scan_lock (status, next_retry_at, lock_owner, locked_until, created_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '消息队列表';
 
 CREATE TABLE IF NOT EXISTS chunks
