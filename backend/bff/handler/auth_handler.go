@@ -70,7 +70,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	setTokens(ctx, tokens.AccessToken, tokens.RefreshToken)
 
 	// 获取用户
-	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
+	profile, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -119,7 +119,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	setTokens(ctx, tokens.AccessToken, tokens.RefreshToken)
 
 	// 获取用户
-	profile, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
+	profile, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,

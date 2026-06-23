@@ -70,6 +70,15 @@ type websocketService struct {
 }
 
 type WebsocketService interface {
+	// Connect 建立 WebSocket 连接
+	//
+	// Parameter:
+	//	- w: HTTP 响应写入器
+	//	- r: HTTP 请求
+	//	- uid: 用户 ID
+	//
+	// Return:
+	//	- error: 可能返回的错误
 	Connect(ctx context.Context, w http.ResponseWriter, r *http.Request, uid int64) error
 }
 

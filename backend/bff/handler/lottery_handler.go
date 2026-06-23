@@ -157,7 +157,7 @@ func (hdl *LotteryHandler) Result(ctx *gin.Context) {
 	}
 
 	// 查询用户
-	user, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: order.UserID})
+	user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: order.UserID})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,

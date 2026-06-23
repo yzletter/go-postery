@@ -71,7 +71,7 @@ func (hdl *SearchHandler) Search(ctx *gin.Context) {
 		}
 
 		// 查找 User
-		user, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: post.UserID})
+		user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: post.UserID})
 		if err != nil {
 			user = &user_grpc.UserDetail{}
 		}

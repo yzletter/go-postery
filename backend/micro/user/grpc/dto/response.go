@@ -8,7 +8,7 @@ import (
 )
 
 // ToTopUser model.UserProfile 转 user_grpc.TopUser
-func ToTopUser(userProfile *model.UserProfile, score float64) *user_grpc.TopUser {
+func ToTopUser(userProfile *model.Profile, score float64) *user_grpc.TopUser {
 	var res = &user_grpc.TopUser{
 		ID:       userProfile.UserID,
 		Nickname: userProfile.Nickname,
@@ -29,7 +29,7 @@ func ToTopUser(userProfile *model.UserProfile, score float64) *user_grpc.TopUser
 }
 
 // ToUserDetail model.UserProfile 转 user_grpc.UserDetail
-func ToUserDetail(profile *model.UserProfile) *user_grpc.UserDetail {
+func ToUserDetail(profile *model.Profile) *user_grpc.UserDetail {
 	var res = &user_grpc.UserDetail{
 		ID:          profile.UserID,
 		Nickname:    profile.Nickname,
@@ -40,6 +40,7 @@ func ToUserDetail(profile *model.UserProfile) *user_grpc.UserDetail {
 		Location:    "",
 		Country:     "",
 		LastLoginIP: "",
+		CreatedAt:   profile.CreatedAt.Format(time.RFC3339),
 	}
 
 	if profile.Country != nil {
@@ -64,7 +65,7 @@ func ToUserDetail(profile *model.UserProfile) *user_grpc.UserDetail {
 }
 
 // ToUserBrief model.UserProfile 转 user_grpc.UserBrief
-func ToUserBrief(profile *model.UserProfile) *user_grpc.UserBrief {
+func ToUserBrief(profile *model.Profile) *user_grpc.UserBrief {
 	var res = &user_grpc.UserBrief{
 		ID:       profile.UserID,
 		Nickname: profile.Nickname,

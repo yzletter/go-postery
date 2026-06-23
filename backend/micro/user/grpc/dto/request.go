@@ -8,8 +8,8 @@ import (
 )
 
 // UpdateProfileRequestToModel user_grpc.UpdateProfileRequest 转 model.UserProfile
-func UpdateProfileRequestToModel(request *user_grpc.UpdateProfileRequest) *model.UserProfile {
-	profile := &model.UserProfile{
+func UpdateProfileRequestToModel(request *user_grpc.UpdateProfileRequest) *model.Profile {
+	profile := &model.Profile{
 		Nickname: request.Nickname,
 		Avatar:   &request.Avatar,
 		Bio:      &request.Bio,

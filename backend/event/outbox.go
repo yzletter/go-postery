@@ -2,8 +2,8 @@ package event
 
 import "time"
 
-// Event 待投递消息事件
-type Event struct {
+// OutboxEvent 待投递 Outbox 消息事件
+type OutboxEvent struct {
 	ID           int64      `gorm:"column:id;primaryKey"` // 消息 ID
 	Status       int        `gorm:"column:status"`        // 消息发送状态 0 待发送, 1 发送中, 2 已发送, 3 需重试, 4 失败
 	RetryCnt     int        `gorm:"column:retry_cnt"`     // 已重试次数
@@ -17,7 +17,7 @@ type Event struct {
 	UpdatedAt    time.Time  `gorm:"column:updated_at"`    // 更新时间
 }
 
-func (e Event) TableName() string {
+func (e OutboxEvent) TableName() string {
 	return "events"
 }
 
@@ -37,7 +37,7 @@ type InitUserScoreEventPayload struct {
 	UserID int64 `json:"user_id,string"`
 }
 
-type ChunkDocumentEventPayload struct {
+type NewPostPayload struct {
 	ID int64 `json:"id,string"`
 }
 

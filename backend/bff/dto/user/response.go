@@ -2,6 +2,7 @@ package user
 
 import (
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	post_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
 )
 
 type OSSSignDTO struct {
@@ -86,4 +87,11 @@ func ToDetailDTO(profile *user_grpc.UserDetail) DetailDTO {
 		Country:     profile.Country,
 		LastLoginIP: profile.LastLoginIP,
 	}
+}
+
+// PostsResponse 用户发表帖子
+type PostsResponse struct {
+	Total   int64               `json:"total"`
+	HasMore bool                `json:"has_more"`
+	Posts   []post_dto.BriefDTO `json:"posts"`
 }

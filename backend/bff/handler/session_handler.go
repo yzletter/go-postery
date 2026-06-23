@@ -45,7 +45,7 @@ func (hdl *SessionHandler) List(ctx *gin.Context) {
 
 	sessions := make([]sessiondto.SessionDTO, 0, len(resp.Sessions))
 	for _, session := range resp.Sessions {
-		user, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: session.TargetID})
+		user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: session.TargetID})
 		if err != nil {
 			user = &user_grpc.UserDetail{}
 		}
@@ -79,7 +79,7 @@ func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 	}
 
 	// 获取用户
-	user, err := hdl.userSvc.GetProfileById(ctx, &user_grpc.GetProfileByIdRequest{ID: session.TargetID})
+	user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: session.TargetID})
 	if err != nil {
 		user = &user_grpc.UserDetail{}
 	}

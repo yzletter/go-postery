@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"syscall"
 	"time"
 
@@ -142,16 +144,16 @@ func main() {
 		AddFuncWithSpec("*/10 * * * *", infraRedis.Ping).
 		Build()
 
-	//// Prometheus
-	//go func() {
-	//	mux := http.NewServeMux()
-	//	// Metric
-	//	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
-	//	metricAddr := ip + ":" + Config.Metric.Port
-	//	if err := http.ListenAndServe(metricAddr, mux); err != nil {
-	//		slog.Error("Metric Server Failed", "error", err)
-	//	}
-	//}()
+	// Prometheus
+	go func() {
+		mux := http.NewServeMux()
+		// Metric
+		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
+		metricAddr := ip + ":" + Config.Metric.Port
+		if err := http.ListenAndServe(metricAddr, mux); err != nil {
+			slog.Error("Metric Server Failed", "error", err)
+		}
+	}()
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
@@ -178,6 +180,17 @@ func main() {
 	// 业务接口
 	api := engine.Group("/api")
 	v1 := api.Group("/v1")
+
+	// 注册路由
+
+	// 注册用户模块路由
+	users := v1.Group("/users")
+	// api/v1/users
+	UserHdl.RegisterPublicRouter(users)
+	// api/v1/users/authed
+	authedUsers := users.Group("/authed")
+	authedUsers.Use(AuthRequiredMdl)
+	UserHdl.RegisterPrivateRouter(authedUsers)
 
 	// 身份认证模块
 	auth := v1.Group("/auth")
