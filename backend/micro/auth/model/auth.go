@@ -4,17 +4,24 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/event"
 )
 
 // User 用户最小单位
 type User struct {
 	ID        int64      `gorm:"column:id;primaryKey;autoIncrement:false"` // 用户 ID
-	Status    int        `gorm:"column:status"`                            // 状态 1 正常, 2 封禁, 3 注销
+	Status    int        `gorm:"column:status"`                            // 状态 0 正常, 1 封禁, 2 注销
 	Role      int        `gorm:"column:role"`                              // 用户权限 0 普通 1 管理员
 	CreatedAt time.Time  `gorm:"column:created_at"`                        // 创建时间
 	UpdatedAt time.Time  `gorm:"column:updated_at"`                        // 更新时间
 	DeletedAt *time.Time `gorm:"column:deleted_at"`                        // 逻辑删除时间
 }
+
+const (
+	UserStatusNormal = iota
+	UserStatusBanned
+	UserStatusDeleted
+)
 
 func (u User) TableName() string {
 	return "users"
@@ -72,9 +79,9 @@ func (u AuthPassword) TableName() string {
 
 func AuthTypeFromBiz(biz conf.CodeBiz) int {
 	switch biz {
-	case conf.SMSCode:
+	case conf.CodeBizSMS:
 		return 1
-	case conf.EmailCode:
+	case conf.CodeBizEmail:
 		return 2
 	default:
 		return 0
@@ -86,5 +93,5 @@ type AuthAggregate struct {
 	UserProfile  *UserProfile
 	AuthPassword *AuthPassword
 	AuthIdentity *AuthIdentity
-	Events       []*Event
+	Events       []*event.OutboxEvent
 }

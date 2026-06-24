@@ -11,6 +11,7 @@ import (
 	"github.com/rs/xid"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/auth/model"
@@ -23,26 +24,21 @@ type authService struct {
 	jwtManager ports.JwtManager
 	passHasher ports.PasswordHasher
 	idGen      ports.IDGenerator
-
-	codeServiceManager manager.CodeClient
+	codeClient manager.CodeClient
 }
 
 // NewAuthService 构造函数
 func NewAuthService(authRepo repository.AuthRepository, jwtManager ports.JwtManager, passHasher ports.PasswordHasher, idGen ports.IDGenerator, codeServiceManager manager.CodeClient) AuthService {
 	return &authService{
-		authRepo:           authRepo,
-		jwtManager:         jwtManager,
-		passHasher:         passHasher,
-		idGen:              idGen,
-		codeServiceManager: codeServiceManager,
+		authRepo:   authRepo,
+		jwtManager: jwtManager,
+		passHasher: passHasher,
+		idGen:      idGen,
+		codeClient: codeServiceManager,
 	}
 }
 
 // LoginByPassword 手机号码 / 邮箱 + 密码登录
-//
-// identifier 业务字段: 如手机号码 / 邮箱
-//
-// password 密码 MD5 哈希结果
 func (svc *authService) LoginByPassword(ctx context.Context, identifier string, password string) (int64, error) {
 	// 获取用户登录认证
 	identity, err := svc.authRepo.GetAuthIdentityByIdentifier(ctx, identifier)
@@ -77,14 +73,18 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 		return 0, errs.ErrInternal
 	}
 
+	if err := svc.ensureUserCanLogin(ctx, identity.UserID); err != nil {
+		return 0, err
+	}
+
 	return identity.UserID, nil
 }
 
 // LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (svc *authService) LoginByPhone(ctx context.Context, phone string, code string) (int64, error) {
 	// 校验验证码并消费
-	verifyReq := code_grpc.CheckCodeRequest{Biz: int64(conf.SMSCode), Identifier: phone, Code: code}
-	if resp, err := svc.codeServiceManager.Verify(ctx, &verifyReq); err != nil {
+	verifyReq := code_grpc.CheckCodeRequest{Biz: int64(conf.CodeBizSMS), Identifier: phone, Code: code}
+	if resp, err := svc.codeClient.Verify(ctx, &verifyReq); err != nil {
 		// 下游挂了
 		slog.Error("verify login code failed", "error", err)
 		return 0, errs.ErrInternal
@@ -94,18 +94,20 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 	}
 
 	// 获取登录认证
-	authType := model.AuthTypeFromBiz(conf.SMSCode) // 认证类型
+	authType := model.AuthTypeFromBiz(conf.CodeBizSMS) // 认证类型
 	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, phone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 用户不存在, 创建用户（包括用户最小项、用户登录认证、无密码、用户资料、注册扩展功能）
 			uid := svc.idGen.NextID()
 			verifiedAt := time.Now()
-			authType := model.AuthTypeFromBiz(conf.SMSCode)
+			authType := model.AuthTypeFromBiz(conf.CodeBizSMS)
 
 			nickname := newNickname()
 			user := model.User{ID: uid}
-			authIdentity := model.AuthIdentity{ // 登录认证方式
+
+			// 登录认证方式
+			authIdentity := model.AuthIdentity{
 				ID:         svc.idGen.NextID(),
 				UserID:     uid,
 				AuthType:   authType,
@@ -113,28 +115,26 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 				IsVerified: 1,
 				VerifiedAt: &verifiedAt,
 			}
+
+			// 用户资料
 			userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
-			events := make([]*model.Event, 0)
+
+			// Event
+			events := make([]*event.OutboxEvent, 0)
 
 			// 注册聊天功能 Event
-			registerSessionPayload, _ := sonic.Marshal(model.RegisterSessionEventPayload{UserID: uid})
-			registerSessionEvent := model.Event{
-				ID:           svc.idGen.NextID(),
-				Topic:        "session",
-				MessageKey:   "register_session",
-				MessageValue: string(registerSessionPayload),
-			}
-			events = append(events, &registerSessionEvent)
+			value, _ := sonic.MarshalString(event.NewUserEventPayload{ID: uid})
+			sessionEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSessionTopic, event.KafkaSessionGroup, value)
+			events = append(events, sessionEvent)
 
-			// 初始化用户推荐分数 Event
-			initUserScorePayload, _ := sonic.Marshal(model.InitUserScoreEventPayload{UserID: uid})
-			initUserScoreEvent := model.Event{
-				ID:           svc.idGen.NextID(),
-				Topic:        "follow",
-				MessageKey:   "init_user_score",
-				MessageValue: string(initUserScorePayload),
-			}
-			events = append(events, &initUserScoreEvent)
+			// 初始化用户分数 Event
+			value2, _ := sonic.MarshalString(event.UpdateEventPayload{
+				ID:    svc.idGen.NextID(),
+				Biz:   event.UpdateUserScore, // 更新用户分数
+				BizID: uid,
+			})
+			rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, value2)
+			events = append(events, rankEvent)
 
 			// 聚合信息
 			authAggregate := model.AuthAggregate{
@@ -154,11 +154,20 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 				return 0, errs.ErrInternal
 			}
 
+			if err := svc.ensureUserCanLogin(ctx, authIdentity.UserID); err != nil {
+				return 0, err
+			}
+
 			return authIdentity.UserID, nil
 		}
 		slog.Error("get auth identity failed", "error", err)
 		return 0, errs.ErrInternal
 	}
+
+	if err := svc.ensureUserCanLogin(ctx, authIdentity.UserID); err != nil {
+		return 0, err
+	}
+
 	return authIdentity.UserID, nil
 }
 
@@ -178,7 +187,7 @@ func (svc *authService) HasPassword(ctx context.Context, id int64) (bool, error)
 // SetPassword 初始化密码
 func (svc *authService) SetPassword(ctx context.Context, uid int64, code string, password string) error {
 	// 获取当前用户认证的手机号
-	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(conf.SMSCode))
+	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(conf.CodeBizSMS))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 不应该出现的错误
@@ -191,11 +200,11 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 
 	// 校验验证码并消费
 	verifyReq := code_grpc.CheckCodeRequest{
-		Biz:        int64(conf.SMSCode),
+		Biz:        int64(conf.CodeBizSMS),
 		Identifier: authIdentity.Identifier,
 		Code:       code,
 	}
-	if resp, err := svc.codeServiceManager.Verify(ctx, &verifyReq); err != nil {
+	if resp, err := svc.codeClient.Verify(ctx, &verifyReq); err != nil {
 		// 下游挂了
 		slog.Error("verify set password code failed", "uid", uid, "error", err)
 		return errs.ErrInternal
@@ -281,8 +290,26 @@ func (svc *authService) GetAuthIdentityByUID(ctx context.Context, id int64) (str
 }
 
 // IssueTokens 签发双 Token
-func (svc *authService) IssueTokens(ctx context.Context, uid int64, role int, userAgent string) (string, string, error) {
-	// 参数校验
+func (svc *authService) IssueTokens(ctx context.Context, uid int64, _ int, userAgent string) (string, string, error) {
+	// 获取用户最小信息，保证只给真实存在的用户签发 Token
+	user, err := svc.authRepo.GetUser(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Info("issue token rejected: user not found", "uid", uid)
+			return "", "", errs.ErrUnauthenticated
+		}
+		slog.Error("get user for issue token failed", "uid", uid, "error", err)
+		return "", "", errs.ErrInternal
+	}
+
+	// 用户已被禁用或逻辑删除时拒绝签发 Token
+	if user.Status != model.UserStatusNormal || user.DeletedAt != nil {
+		slog.Info("issue token rejected: user disabled", "uid", uid, "status", user.Status)
+		return "", "", errs.ErrUnauthenticated
+	}
+
+	// 使用用户表中的真实 Role，不信任调用方传入的 Role
+	role := user.Role
 	if role > 1 || role < 0 {
 		role = 0
 	}
@@ -353,6 +380,11 @@ func (svc *authService) VerifyAccessToken(ctx context.Context, accessToken strin
 func (svc *authService) GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) {
 	uid, role, ssid, err := svc.authRepo.GetInfoByRefreshToken(ctx, refreshToken)
 	if err != nil {
+		// RefreshToken 不存在、过期、数据损坏都视为认证失败
+		if errors.Is(err, repository.ErrRecordNotFound) || errors.Is(err, repository.ErrInvalidToken) {
+			slog.Info("refresh token rejected", "error", err)
+			return 0, 0, "", errs.ErrUnauthenticated
+		}
 		slog.Error("get refresh token info failed", "error", err)
 		return 0, 0, "", errs.ErrInternal
 	}
@@ -372,4 +404,24 @@ func (svc *authService) CheckBlackList(ctx context.Context, ssid string) (bool, 
 // 生成默认用户名
 func newNickname() string {
 	return "用户_" + uuid.NewString()[:8]
+}
+
+// 校验用户状态能否进行登录
+func (svc *authService) ensureUserCanLogin(ctx context.Context, uid int64) error {
+	user, err := svc.authRepo.GetUser(ctx, uid)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Info("login rejected: user not found", "uid", uid)
+			return errs.ErrUnauthenticated
+		}
+		slog.Error("get user for login failed", "uid", uid, "error", err)
+		return errs.ErrInternal
+	}
+
+	if user.Status != model.UserStatusNormal || user.DeletedAt != nil {
+		slog.Info("login rejected: user disabled", "uid", uid, "status", user.Status)
+		return errs.ErrUnauthenticated
+	}
+
+	return nil
 }

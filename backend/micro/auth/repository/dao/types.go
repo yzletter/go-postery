@@ -23,6 +23,16 @@ type AuthDAO interface {
 	//	- error: 可能返回的错误
 	CreateUser(ctx context.Context, authAggregate *model.AuthAggregate) error
 
+	// GetUser 根据 UID 获取用户最小信息
+	//
+	// Parameter:
+	//	- uid: 用户 ID
+	//
+	// Return:
+	//	- *model.User: 用户最小信息
+	//	- error: 可能返回的错误
+	GetUser(ctx context.Context, uid int64) (*model.User, error)
+
 	// GetAuthIdentity 根据登录方式和凭证获取登录认证
 	//
 	// Parameter:

@@ -29,6 +29,15 @@ func (repo *authRepository) CreateUser(ctx context.Context, authAggregate *model
 	return nil
 }
 
+// GetUser 根据 UID 获取用户最小信息
+func (repo *authRepository) GetUser(ctx context.Context, uid int64) (*model.User, error) {
+	user, err := repo.dao.GetUser(ctx, uid)
+	if err != nil {
+		return nil, toRepositoryErr(err)
+	}
+	return user, nil
+}
+
 // GetAuthIdentity 根据登录方式和凭证获取登录认证
 func (repo *authRepository) GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) {
 	authIdentity, err := repo.dao.GetAuthIdentity(ctx, authType, identifier)
@@ -38,6 +47,7 @@ func (repo *authRepository) GetAuthIdentity(ctx context.Context, authType int, i
 	return authIdentity, nil
 }
 
+// GetAuthIdentityByIdentifier 根据凭证获取登录认证
 func (repo *authRepository) GetAuthIdentityByIdentifier(ctx context.Context, identifier string) (*model.AuthIdentity, error) {
 	authIdentity, err := repo.dao.GetAuthIdentityByIdentifier(ctx, identifier)
 	if err != nil {
@@ -46,6 +56,7 @@ func (repo *authRepository) GetAuthIdentityByIdentifier(ctx context.Context, ide
 	return authIdentity, nil
 }
 
+// GetAuthIdentityByAuthType 根据认证方式获取登录认证
 func (repo *authRepository) GetAuthIdentityByAuthType(ctx context.Context, uid int64, authType int) (*model.AuthIdentity, error) {
 	authIdentity, err := repo.dao.GetAuthIdentityByAuthType(ctx, uid, authType)
 	if err != nil {

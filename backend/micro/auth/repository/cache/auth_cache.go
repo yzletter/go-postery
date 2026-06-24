@@ -26,17 +26,23 @@ func (cache *redisAuthCache) CheckBlackList(ctx context.Context, ssid string) (b
 	return cnt > 0, nil
 }
 
+// GetInfoByRefreshToken 根据 RefreshToken 获取用户信息
 func (cache *redisAuthCache) GetInfoByRefreshToken(ctx context.Context, refreshToken string) (int64, int, string, error) {
+	// 从缓存中取出 RefreshToken 绑定的用户信息
 	mp, err := cache.client.HGetAll(ctx, conf.RefreshTokenPrefix+refreshToken).Result()
-	if err != nil || len(mp) == 0 {
+	if err != nil {
 		return 0, 0, "", err
+	} else if len(mp) == 0 {
+		// RefreshToken 不存在或已过期
+		return 0, 0, "", ErrRecordNotFound
 	}
 
+	// 解析缓存字段，防止损坏数据被当作有效 Token
 	uid, err1 := strconv.ParseInt(mp["user_id"], 10, 64)
 	role, err2 := strconv.Atoi(mp["role"])
 	ssid := mp["ssid"]
 	if ssid == "" || err1 != nil || err2 != nil {
-		return 0, 0, "", err
+		return 0, 0, "", ErrInvalidTokenData
 	}
 
 	return uid, role, ssid, nil

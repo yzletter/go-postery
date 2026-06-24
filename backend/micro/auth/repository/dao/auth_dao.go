@@ -59,6 +59,22 @@ func (dao *gormAuthDAO) CreateUser(ctx context.Context, authAggregate *model.Aut
 	return nil
 }
 
+// GetUser 根据 UID 获取用户最小信息
+func (dao *gormAuthDAO) GetUser(ctx context.Context, uid int64) (*model.User, error) {
+	var user model.User
+	result := dao.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", uid).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrRecordNotFound
+		}
+
+		slog.Error(FindFailed, "uid", uid, "error", result.Error)
+		return nil, ErrServerInternal
+	}
+
+	return &user, nil
+}
+
 // GetAuthIdentity 根据登录方式和凭证获取登录认证
 func (dao *gormAuthDAO) GetAuthIdentity(ctx context.Context, authType int, identifier string) (*model.AuthIdentity, error) {
 	var authIdentity model.AuthIdentity
@@ -78,7 +94,8 @@ func (dao *gormAuthDAO) GetAuthIdentity(ctx context.Context, authType int, ident
 // GetAuthIdentityByIdentifier 根据凭证获取登录认证
 func (dao *gormAuthDAO) GetAuthIdentityByIdentifier(ctx context.Context, identifier string) (*model.AuthIdentity, error) {
 	var authIdentity model.AuthIdentity
-	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).Where("identifier = ? AND is_verified = ?", identifier, 1).First(&authIdentity)
+	result := dao.db.WithContext(ctx).Model(&model.AuthIdentity{}).
+		Where("identifier = ? AND is_verified = ?", identifier, 1).First(&authIdentity)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrRecordNotFound
