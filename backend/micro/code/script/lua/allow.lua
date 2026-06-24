@@ -5,14 +5,14 @@ local expiration = tonumber(ARGV[3]) -- 验证码本身有效期
 local ttl = tonumber(redis.call("ttl", key)) -- 获取当前 key 的剩余过期时间
 
 if ttl == -1 then
-    -- key 存在，但没有过期时间
+    -- key 存在，但没有过期时间 -> 异常 Key
     return -1
 elseif ttl == -2 or ttl < expiration - interval then
-    -- 未发过验证码 或 已经发了挺久超过了 interval
+    -- 未发过验证码 或 已经发了挺久超过了 interval -> 可以发送
     redis.call("set", key, code)
     redis.call("expire", key, expiration)
     return 1
 else
-    -- 已经发过验证码，且还不到 interval
+    -- 已经发过验证码，且还不到 interval -> 发送频繁
    return 0
 end

@@ -11,7 +11,7 @@ import (
 
 	"github.com/yzletter/go-postery/backend/conf"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
-	infraMySQL "github.com/yzletter/go-postery/backend/infra/db/mysql"
+	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/micro/outbox/service"
@@ -26,9 +26,12 @@ func ListenTermSignal(f func()) {
 	os.Exit(0)
 }
 
+const (
+	Service   = "outbox_service" // 微服务名
+	GoPostery = "go_postery"     // GoPostery 公共配置前缀
+)
+
 var (
-	ServiceName  = "outbox_service" // 微服务名
-	GoPostery    = "go_postery"     // GoPostery 公共配置前缀
 	prefix       = ""
 	EtcdEndPoint string // etcd 地址
 )
@@ -53,10 +56,10 @@ func main() {
 
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, prefix+GoPostery+"_")
-	fmt.Printf("%s Init Common Config Success %+v\n", prefix+ServiceName, CommonMicroConf)
+	fmt.Printf("%s Init Common Config Success %+v\n", prefix+Service, CommonMicroConf)
 	// 加载私有配置
-	OutboxServiceConf := conf.LoadOutboxServiceConfig(ctx, EtcdClient, prefix+ServiceName+"_")
-	fmt.Printf("%s Init OutboxService Config Success %+v\n", prefix+ServiceName, OutboxServiceConf)
+	OutboxServiceConf := conf.LoadOutboxServiceConfig(ctx, EtcdClient, prefix+Service+"_")
+	fmt.Printf("%s Init OutboxService Config Success %+v\n", prefix+Service, OutboxServiceConf)
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(OutboxServiceConf.Log) // Init Slog

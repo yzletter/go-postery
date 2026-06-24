@@ -33,14 +33,16 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 				"lock_owner":   lockOwner,                                                            // 加锁者
 				"locked_until": gorm.Expr("DATE_ADD(NOW(), INTERVAL ? SECOND)", conf.OutboxLockTime), // 锁过期时间
 			}
+
 			// 没有发送过, 或需要重试
 			pendingOrRetry := db.
 				Where("status IN (?, ?)", event.StatusEventPending, event.StatusEventRetry).
 				Where("next_retry_at IS NULL OR next_retry_at <= NOW()").
 				Where("lock_owner IS NULL OR locked_until IS NULL OR locked_until <= NOW()")
+
 			// 发送中, 但锁已过期
 			processingExpired := db.Where("status = ? AND (locked_until IS NULL OR locked_until <= NOW())", event.StatusEventProcessing)
-			result := db.Model(&event.Event{}).
+			result := db.Model(&event.OutboxEvent{}).
 				Where(pendingOrRetry).
 				Or(processingExpired).
 				Order("created_at ASC").
@@ -51,8 +53,8 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			}
 
 			// 查哪些 Event 抢到了锁
-			var events []*event.Event
-			result = db.Model(&event.Event{}).
+			var events []*event.OutboxEvent
+			result = db.Model(&event.OutboxEvent{}).
 				Where("status = ? AND lock_owner = ?", event.StatusEventProcessing, lockOwner).
 				Order("created_at ASC").
 				Limit(100).Find(&events)
@@ -100,7 +102,7 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 					}
 
 					// 发送失败的更新失败错误可忽略，原消息在数据库的锁会释放
-					result = db.Model(&event.Event{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
+					result = db.Model(&event.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
 					if result.Error != nil {
 						slog.Error("update event failed", "error", result.Error, "id", e.ID, "topic", e.Topic, "message", e.MessageKey, "value", e.MessageValue)
 					}
@@ -113,7 +115,7 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 					"lock_owner":   nil,
 					"locked_until": nil,
 				}
-				result = db.Model(&event.Event{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
+				result = db.Model(&event.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
 				if result.Error != nil {
 					slog.Error("update event failed", "error", result.Error, "id", e.ID, "topic", e.Topic, "message", e.MessageKey, "value", e.MessageValue)
 				}

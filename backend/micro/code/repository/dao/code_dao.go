@@ -3,10 +3,10 @@ package dao
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/yzletter/go-postery/backend/micro/code/domain"
 	"github.com/yzletter/go-postery/backend/micro/code/model"
 	"gorm.io/gorm"
 )
@@ -28,13 +28,12 @@ func (dao *gormCodeDAO) Create(ctx context.Context, code *model.VerificationCode
 		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
 			return ErrUniqueKey
 		}
-		slog.Error(CreateFailed, "biz", code.Biz, "identifier", code.Identifier, "error", result.Error)
 		return ErrServerInternal
 	}
 	return nil
 }
 
-func (dao *gormCodeDAO) MarkVerified(ctx context.Context, biz int, identifier string, codeHash string) error {
+func (dao *gormCodeDAO) MarkVerified(ctx context.Context, biz domain.BizType, identifier string, codeHash string) error {
 	now := time.Now()
 	result := dao.db.WithContext(ctx).Model(&model.VerificationCode{}).
 		Where("biz = ? AND identifier = ? AND code_hash = ? AND status = ? AND expires_at >= ?", biz, identifier, codeHash, model.CodeStatusSent, now).
@@ -44,9 +43,9 @@ func (dao *gormCodeDAO) MarkVerified(ctx context.Context, biz int, identifier st
 			"verified_at": now,
 		})
 	if result.Error != nil {
-		slog.Error(UpdateFailed, "biz", biz, "identifier", identifier, "error", result.Error)
 		return ErrServerInternal
 	}
+
 	if result.RowsAffected == 0 {
 		return ErrRecordNotFound
 	}

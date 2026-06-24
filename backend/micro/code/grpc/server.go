@@ -4,6 +4,7 @@ import (
 	"context"
 
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	"github.com/yzletter/go-postery/backend/micro/code/domain"
 	"github.com/yzletter/go-postery/backend/micro/code/service"
 )
 
@@ -13,10 +14,16 @@ type CodeServiceServer struct {
 	code_grpc.UnimplementedCodeServiceServer
 }
 
+func NewCodeServiceServer(svc service.CodeService) *CodeServiceServer {
+	return &CodeServiceServer{
+		svc: svc,
+	}
+}
+
 // Send 发送验证码
 func (server *CodeServiceServer) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
 	// 调用 Service
-	if err := server.svc.Send(ctx, int(req.Biz), req.Identifier); err != nil {
+	if err := server.svc.Send(ctx, domain.BizType(req.Biz), req.Identifier); err != nil {
 		return &code_grpc.SendCodeResponse{}, err
 	}
 	// 返回 Response
@@ -26,7 +33,7 @@ func (server *CodeServiceServer) Send(ctx context.Context, req *code_grpc.SendCo
 // Verify 校验验证码
 func (server *CodeServiceServer) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
 	// 调用 Service
-	if res, err := server.svc.Verify(ctx, int(req.Biz), req.Identifier, req.Code); err != nil {
+	if res, err := server.svc.Verify(ctx, domain.BizType(req.Biz), req.Identifier, req.Code); err != nil {
 		return &code_grpc.CheckCodeResponse{Result: false}, err
 	} else {
 		return &code_grpc.CheckCodeResponse{Result: res}, nil
@@ -35,10 +42,4 @@ func (server *CodeServiceServer) Verify(ctx context.Context, req *code_grpc.Chec
 
 func (server *CodeServiceServer) HealthCheck(ctx context.Context, req *code_grpc.HealthCheckRequest) (*code_grpc.HealthCheckResponse, error) {
 	return &code_grpc.HealthCheckResponse{}, nil
-}
-
-func NewCodeServiceServer(svc service.CodeService) *CodeServiceServer {
-	return &CodeServiceServer{
-		svc: svc,
-	}
 }

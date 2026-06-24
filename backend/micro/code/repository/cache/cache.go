@@ -3,18 +3,12 @@ package cache
 import (
 	"context"
 	_ "embed"
-	"errors"
-	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/micro/code/domain"
+	"github.com/yzletter/go-postery/backend/micro/code/script"
 )
-
-//go:embed lua/allow.lua
-var allowScript string // 用于检查发送验证码的 Lua 脚本
-
-//go:embed lua/verify.lua
-var verifyScript string // 用于校验验证码的 Lua 脚本
 
 type redisCodeCache struct {
 	client redis.UniversalClient
@@ -25,17 +19,17 @@ func NewCodeCache(client redis.UniversalClient) CodeCache {
 }
 
 // Allow 检查发送验证码
-func (cache *redisCodeCache) Allow(ctx context.Context, biz int, identifier string, code string) (int, error) {
+func (cache *redisCodeCache) Allow(ctx context.Context, biz domain.BizType, identifier string, code string) (int, error) {
 	var interval int
 	var key string
 	var validTime int
 
 	switch biz {
-	case 1:
+	case domain.BizSMS:
 		key = conf.PhoneCodePrefix + identifier
 		interval = conf.SendSMSInterval
 		validTime = conf.SMSValidTime
-	case 2:
+	case domain.BizEmail:
 		key = conf.EmailCodePrefix + identifier
 		interval = conf.SendEmailInterval
 		validTime = conf.EmailValidTime
@@ -43,43 +37,23 @@ func (cache *redisCodeCache) Allow(ctx context.Context, biz int, identifier stri
 		return -1, nil
 	}
 
-	result, err := cache.client.Eval(ctx, allowScript, []string{key}, code, interval, validTime).Int()
-	return result, err
+	res, err := cache.client.Eval(ctx, script.AllowCodeScript, []string{key}, code, interval, validTime).Int()
+	return res, err
 }
 
 // Verify 校验验证码
-func (cache *redisCodeCache) Verify(ctx context.Context, biz int, identifier string, code string) (bool, error) {
+func (cache *redisCodeCache) Verify(ctx context.Context, biz domain.BizType, identifier string, code string) (int, error) {
 	var key string
 	switch biz {
-	case 1:
+	case domain.BizSMS:
 		key = conf.PhoneCodePrefix + identifier
-	case 2:
+	case domain.BizEmail:
 		key = conf.EmailCodePrefix + identifier
 	default:
-		return false, nil
+		return -1, nil
 	}
 
-	res, err := cache.client.Eval(ctx, verifyScript, []string{key}, code).Int()
-	if err != nil {
-		return false, err
-	}
+	res, err := cache.client.Eval(ctx, script.VerifyCodeScript, []string{key}, code).Int()
+	return res, err
 
-	switch res {
-	case 0: // 验证码不存在或已过期
-		return false, nil
-	case 1: // 验证码错误
-		return false, nil
-	case 2: // 验证码正确
-		return true, nil
-	default:
-		slog.Error("Unexpected Error")
-		return false, errors.New("Server Internal")
-	}
-
-	//if ok, err := cache.client.Eval(ctx, verifyScript, []string{key}, code).Bool(); err != nil {
-	//	slog.Error("Redis Eval Script Failed", "error", err.Error())
-	//	return false, err
-	//} else {
-	//	return ok, nil
-	//}
 }
