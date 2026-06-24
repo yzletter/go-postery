@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -10,8 +11,8 @@ import (
 	inter_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/backend/errs"
 	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/rank/domain"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository"
@@ -49,14 +50,12 @@ func (svc *rankService) RankUser(ctx context.Context, id int64) error {
 			return eerr
 		}
 		if profile == nil {
-			slog.Error("get profile empty", "user_id", id)
-			return errs.ErrInternal
+			return errors.New("profile is empty")
 		}
 
 		tt, err := time.Parse(time.RFC3339, profile.CreatedAt)
 		if err != nil {
-			slog.Error("parse time failed", "error", err)
-			return errs.ErrInternal
+			return err
 		}
 		create = tt.Unix()
 		return nil
@@ -66,19 +65,17 @@ func (svc *rankService) RankUser(ctx context.Context, id int64) error {
 		// 获取关注
 		userInter, err := svc.interClient.GetUserInteractive(ctx, &inter_grpc.UserIDRequest{UserID: id})
 		if err != nil {
-			slog.Error("get user interactive failed", "error", err, "user_id", id)
 			return err
 		}
 		if userInter == nil {
-			slog.Error("get user interactive empty", "user_id", id)
-			return errs.ErrInternal
+			return errors.New("user interactive is empty")
 		}
 		follow = userInter.FollowCnt
 		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
-		slog.Error("get user dimension failed")
+		slog.Error("rank user dimensions failed", "user_id", id, "error", err)
 		return errs.ErrInternal
 	}
 
@@ -101,17 +98,14 @@ func (svc *rankService) RankPost(ctx context.Context, id int64) error {
 	eg.Go(func() error {
 		post, eerr := svc.postClient.GetBriefByID(ctx, &post_grpc.GetBriefByIDRequest{PostID: id})
 		if eerr != nil {
-			slog.Error("get post by id failed", "error", eerr)
-			return errs.ErrInternal
+			return eerr
 		}
 		if post == nil {
-			slog.Error("get post by id empty", "post_id", id)
-			return errs.ErrInternal
+			return errors.New("post is empty")
 		}
 		tt, eerr := time.Parse(time.RFC3339, post.CreatedAt)
 		if eerr != nil {
-			slog.Error("parse time failed", "error", eerr)
-			return errs.ErrInternal
+			return eerr
 		}
 		create = tt.Unix()
 		return nil
@@ -121,19 +115,17 @@ func (svc *rankService) RankPost(ctx context.Context, id int64) error {
 		// 获取喜欢、不喜欢、评论数
 		postInter, eerr := svc.interClient.GetPostInteractive(ctx, &inter_grpc.PostIDRequest{PostID: id})
 		if eerr != nil {
-			slog.Error("get post interactive failed", "error", eerr)
-			return errs.ErrInternal
+			return eerr
 		}
 		if postInter == nil {
-			slog.Error("get post interactive empty", "post_id", id)
-			return errs.ErrInternal
+			return errors.New("post interactive is empty")
 		}
 		like, comment = postInter.LikeCnt, postInter.CommentCnt
 		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
-		slog.Error("get post dimension failed")
+		slog.Error("rank post dimensions failed", "post_id", id, "error", err)
 		return errs.ErrInternal
 	}
 
@@ -155,20 +147,17 @@ func (svc *rankService) RankTopKUser(ctx context.Context) error {
 		TimeAfter: time.Now().AddDate(0, 0, -7).Format(time.RFC3339),
 	})
 	if err != nil {
-		slog.Error("get user by time failed", "error", err)
+		slog.Error("get recent user ids failed", "error", err)
 		return errs.ErrInternal
 	}
 	if resp == nil {
-		slog.Error("get user by time empty")
+		slog.Warn("get recent user ids returned empty response")
 		return errs.ErrInternal
 	}
 
 	// 计算分数
-	ids := resp.IDs
-	for _, id := range ids {
-		if err := svc.RankUser(ctx, id); err != nil {
-			slog.Error("rank user failed", "error", err, "id", id)
-		}
+	for _, id := range resp.IDs {
+		_ = svc.RankUser(ctx, id)
 	}
 	return nil
 }
@@ -180,20 +169,17 @@ func (svc *rankService) RankTopKPost(ctx context.Context) error {
 		TimeAt: time.Now().AddDate(0, 0, -7).Format(time.RFC3339),
 	})
 	if err != nil {
-		slog.Error("get post by time failed", "error", err)
+		slog.Error("get recent post ids failed", "error", err)
 		return errs.ErrInternal
 	}
 	if resp == nil {
-		slog.Error("get post by time empty")
+		slog.Warn("get recent post ids returned empty response")
 		return errs.ErrInternal
 	}
 
 	// 计算分数
-	ids := resp.IDs
-	for _, id := range ids {
-		if err := svc.RankPost(ctx, id); err != nil {
-			slog.Error("rank post failed", "error", err, "id", id)
-		}
+	for _, id := range resp.IDs {
+		_ = svc.RankPost(ctx, id)
 	}
 	return nil
 }
@@ -218,6 +204,7 @@ func (svc *rankService) TopKPost(ctx context.Context) ([]domain.Post, error) {
 	return posts, nil
 }
 
+// CronRankTopK 定时计算榜单
 func (svc *rankService) CronRankTopK() {
 	ctx := context.Background()
 	go svc.RankTopKPost(ctx)
@@ -238,7 +225,7 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 				if ctx.Err() != nil {
 					return
 				}
-				slog.Error("server internal error", "error", err)
+				slog.Warn("fetch rank event failed", "error", err)
 
 				// 失败进行退避
 				time.Sleep(backoff)
@@ -252,9 +239,9 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 			backoff = time.Second
 
 			// 反序列化消息
-			var e event.UpdateEvent
+			var e event.UpdateEventPayload
 			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
-				slog.Error("unmarshal event failed", "error", err)
+				slog.Warn("unmarshal rank event failed", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				// 脏消息 Commit 掉
 				_ = svc.consumer.CommitMessages(ctx, msg)
 				continue
@@ -263,20 +250,16 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 			// 判断类型, 计算分数
 			switch e.Biz {
 			case event.UpdateUserScore:
-				if err := svc.RankUser(ctx, e.BizID); err != nil {
-					slog.Error("rank user failed", "error", err, "biz_id", e.BizID)
-				}
+				_ = svc.RankUser(ctx, e.BizID)
 			case event.UpdatePostScore:
-				if err := svc.RankPost(ctx, e.BizID); err != nil {
-					slog.Error("rank post failed", "error", err, "biz_id", e.BizID)
-				}
+				_ = svc.RankPost(ctx, e.BizID)
 			default:
-				slog.Error("unknown rank update biz", "biz", e.Biz, "biz_id", e.BizID)
+				slog.Warn("unknown rank event biz", "biz", e.Biz, "biz_id", e.BizID)
 			}
 
 			// 将消息全都 Commit 不管成功失败
 			if err := svc.consumer.CommitMessages(ctx, msg); err != nil {
-				slog.Error("commit messages failed", "error", err)
+				slog.Error("commit rank event failed", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				continue
 			}
 		}

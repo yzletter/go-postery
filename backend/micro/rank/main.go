@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -36,16 +35,13 @@ import (
 )
 
 const (
-	Service            = "rank_service" // 微服务名
-	GoPostery          = "go_postery"   // GoPostery 公共配置前缀
-	UserService        = "user_service"
-	PostService        = "post_service"
-	InteractiveService = "interactive_service"
+	Service   = manager.RankService // 微服务名
+	GoPostery = "go_postery"        // GoPostery 公共配置前缀
 )
 
 var (
-	prefix       = ""
-	ETCDEndpoint = hub.ETCD // etcd 地址
+	suffix       = ""
+	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
 )
 
 func main() {
@@ -61,27 +57,26 @@ func main() {
 
 	// 本地测试
 	if *env == "local" {
-		prefix = "test_"
+		suffix = "_test"
 		ip = "localhost"
 		ETCDEndpoint = "localhost:12379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// 远程配置中心
-	ETCDClient := infraEtcd.Init([]string{ETCDEndpoint})
+	// 初始化远程配置中心
+	etcdClient := infraEtcd.Init([]string{ETCDEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, ETCDClient, prefix+GoPostery+"_")
-	fmt.Printf("%s init common config success \n%+v\n", prefix+Service, CommonMicroConf)
+	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 
 	// 加载私有配置
-	RankServiceConf := conf.LoadRankServiceConfig(ctx, ETCDClient, prefix+Service+"_")
-	fmt.Printf("%s init private config success \n%+v\n", prefix+Service, RankServiceConf)
+	RankServiceConf := conf.LoadRankServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
-	// gRPC Common Infrastructure
-	infraSlog.InitSlog(RankServiceConf.Log)                                               // Init Slog
-	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, prefix+Service) // Init JaegerTracer
+	// gRPC Common Infrastructures
+	infraSlog.InitSlog(RankServiceConf.Log) // Init Slog
+	slog.Info("config loaded", "service", Service+suffix, "grpc_port", RankServiceConf.GRPC.Port, "metric_port", RankServiceConf.Metric.Port)
+	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service+suffix) // Init JaegerTracer
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // Init Redis
@@ -95,20 +90,20 @@ func main() {
 	RankRepo := repository.NewRankRepository(RankCache) // 注册 RankRepository
 
 	// ServiceHub 层
-	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, ETCDClient, hub.NewRoundRobinLoadBalancer())
+	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Client
-	ETCDServiceHub.LoadEndpoints(ctx, UserService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, UserService)
-	UserManager := manager.NewUserManager(UserService, ETCDServiceHub)
+	ETCDServiceHub.LoadEndpoints(ctx, manager.UserService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.UserService)
+	UserManager := manager.NewUserManager(manager.UserService, ETCDServiceHub)
 
-	ETCDServiceHub.LoadEndpoints(ctx, PostService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, PostService)
-	PostManager := manager.NewPostManager(PostService, ETCDServiceHub)
+	ETCDServiceHub.LoadEndpoints(ctx, manager.PostService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.PostService)
+	PostManager := manager.NewPostManager(manager.PostService, ETCDServiceHub)
 
-	ETCDServiceHub.LoadEndpoints(ctx, InteractiveService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, InteractiveService)
-	InteractiveManager := manager.NewInteractiveManager(InteractiveService, ETCDServiceHub)
+	ETCDServiceHub.LoadEndpoints(ctx, manager.InteractiveService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.InteractiveService)
+	InteractiveManager := manager.NewInteractiveManager(manager.InteractiveService, ETCDServiceHub)
 
 	// Service 层
 	RankService := service.NewRankService(RankRepo, UserManager, PostManager, InteractiveManager, KafkaConsumer) // 注册 RankService
@@ -118,12 +113,12 @@ func main() {
 	Cron.AddFuncWithSpec("*/10 * * * *", RankService.CronRankTopK).Build()
 
 	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := pkg.NewMetricService(prefix + Service) // 注册 MetricService
+	MetricService := pkg.NewMetricService(Service + suffix) // 注册 MetricService
 
 	// gRPC Server
 	RankServiceServer := server.NewRankServiceServer(RankService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(prefix+Service+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+suffix+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -148,13 +143,13 @@ func main() {
 	} else {
 		go func() {
 			if err := ServiceRegistrar.Serve(lis); err != nil {
-				slog.Error("Service gRPC Server Start Failed", "service", prefix+Service, "error", err)
+				slog.Error("Service gRPC Server Start Failed", "service", Service+suffix, "error", err)
 				panic(err)
 			}
 		}()
 	}
 
-	// 向服务中心注册服务, 这里不加前缀 prefix
+	// 向服务中心注册服务, 这里不加环境后缀
 	leaseID, err := ETCDServiceHub.Register(ctx, Service, grpcAddr, 0)
 	if err != nil {
 		slog.Error("Service Rank Server Register Failed", "service", Service, "error", err)

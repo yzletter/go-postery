@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -18,7 +17,7 @@ import (
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraRedis "github.com/yzletter/go-postery/backend/infra/cache/redis"
-	infraMySQL "github.com/yzletter/go-postery/backend/infra/db/mysql"
+	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
 	"github.com/yzletter/go-postery/backend/infra/security"
@@ -36,11 +35,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	Service   = manager.AuthService // 微服务名
+	GoPostery = "go_postery"        // GoPostery 公共配置前缀
+)
+
 var (
-	ServiceName  = "auth_service" // 微服务名
-	GoPostery    = "go_postery"   // GoPostery 公共配置前缀
-	prefix       = ""
-	EtcdEndPoint string // etcd 地址
+	suffix       = ""
+	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
 )
 
 func main() {
@@ -56,28 +58,25 @@ func main() {
 
 	// 本地测试
 	if *env == "local" {
-		prefix = "test_"
+		suffix = "_test"
 		ip = "localhost"
-		EtcdEndPoint = "localhost:12379"
-	} else {
-		EtcdEndPoint = "172.16.131.223:2379"
+		ETCDEndpoint = "localhost:12379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint}) // Init Etcd
+	etcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // Init Etcd
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, prefix+GoPostery+"_")
-	fmt.Printf("%s Init Common Config Success %+v\n", prefix+ServiceName, CommonMicroConf)
+	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	AuthServiceConf := conf.LoadAuthServiceConfig(ctx, EtcdClient, prefix+ServiceName+"_")
-	fmt.Printf("%s Init AuthService Config Success %+v\n", prefix+ServiceName, AuthServiceConf)
+	AuthServiceConf := conf.LoadAuthServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructure
-	infraSlog.InitSlog(AuthServiceConf.Log)                                                   // Init Slog
-	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, prefix+ServiceName) // Init JaegerTracer
+	infraSlog.InitSlog(AuthServiceConf.Log) // Init Slog
+	slog.Info("config loaded", "service", Service+suffix, "grpc_port", AuthServiceConf.GRPC.Port, "metric_port", AuthServiceConf.Metric.Port)
+	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service+suffix) // Init JaegerTracer
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis)  // Init Redis
@@ -94,23 +93,22 @@ func main() {
 	AuthRepo := repository.NewAuthRepository(AuthDAO, AuthCache)
 
 	// ServiceHub
-	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Client
-	CodeServiceName := "code_service"
-	ETCDServiceHub.LoadEndpoints(ctx, CodeServiceName)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, CodeServiceName)
-	CodeManager := manager.NewCodeManager(CodeServiceName, ETCDServiceHub)
+	ETCDServiceHub.LoadEndpoints(ctx, manager.CodeService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.CodeService)
+	CodeManager := manager.NewCodeManager(manager.CodeService, ETCDServiceHub)
 
 	// Service 层
 	AuthService := service.NewAuthService(AuthRepo, JwtManager, PasswordHasher, IDGenerator, CodeManager) // 注册 AuthService
 	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := pkg.NewMetricService(prefix + ServiceName)
+	MetricService := pkg.NewMetricService(Service + suffix)
 
 	// gRPC Server
 	AuthServiceServer := server.NewAuthServiceServer(AuthService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+suffix+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -135,25 +133,25 @@ func main() {
 	} else {
 		go func() {
 			if err := ServiceRegistrar.Serve(lis); err != nil {
-				slog.Error("Service gRPC Server Start Failed", "service", prefix+ServiceName, "error", err)
+				slog.Error("Service gRPC Server Start Failed", "service", Service+suffix, "error", err)
 				panic(err)
 			}
 		}()
 	}
 
-	// 向服务中心注册服务, 这里不加前缀 prefix
-	leaseID, err := ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, 0)
+	// 向服务中心注册服务, 这里不加环境后缀
+	leaseID, err := ETCDServiceHub.Register(ctx, Service, grpcAddr, 0)
 	if err != nil {
-		slog.Error("Service Auth Server Register Failed", "service", ServiceName, "error", err)
+		slog.Error("Service Auth Server Register Failed", "service", Service, "error", err)
 		panic(err)
 	}
 
 	// 自动续约
 	go func() {
 		for {
-			leaseID, err = ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, leaseID)
+			leaseID, err = ETCDServiceHub.Register(ctx, Service, grpcAddr, leaseID)
 			if err != nil {
-				slog.Error("Service Auth Server Register Failed", "service", ServiceName, "error", err)
+				slog.Error("Service Auth Server Register Failed", "service", Service, "error", err)
 			}
 			time.Sleep(time.Duration(CommonMicroConf.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
 		}
@@ -166,8 +164,8 @@ func main() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
-			if err := ETCDServiceHub.Unregister(ctx, ServiceName, grpcAddr); err != nil {
-				slog.Error("Service Auth Server Unregister Failed", "service", ServiceName, "error", err)
+			if err := ETCDServiceHub.Unregister(ctx, Service, grpcAddr); err != nil {
+				slog.Error("Service Auth Server Unregister Failed", "service", Service, "error", err)
 			}
 		}).
 		BuildBlock()
