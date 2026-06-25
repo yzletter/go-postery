@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -60,7 +59,6 @@ func (dao *gormOrderDAO) GetTempOrder(ctx context.Context, uid int64) (*model.Or
 func (dao *gormOrderDAO) CreateTempOrder(ctx context.Context, order *model.Order) error {
 	// 兜底
 	if order.Status != model.OrderStatusPending {
-		slog.Error("order status is invalid")
 		order.Status = model.OrderStatusPending
 	}
 

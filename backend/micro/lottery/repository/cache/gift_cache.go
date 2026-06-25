@@ -33,14 +33,14 @@ func NewGiftCache(client redis.UniversalClient) GiftCache {
 func (cache *redisGiftCache) InitInventory(ctx context.Context, gifts []*model.Gift) {
 	for _, gift := range gifts {
 		if gift.Count <= 0 {
-			slog.Error("Gift Count Invaild", "gift", gift)
+			slog.Warn("skip invalid gift inventory", "gift_id", gift.ID, "count", gift.Count)
 			continue
 		}
 
 		// 初始化
 		err := cache.client.Set(ctx, lotteryGiftPrefix+strconv.FormatInt(gift.ID, 10), gift.Count, 0).Err()
 		if err != nil {
-			slog.Error("Set Failed", "error", err)
+			slog.Warn("set gift inventory cache failed", "gift_id", gift.ID, "error", err)
 		}
 	}
 }
