@@ -10,11 +10,12 @@ import (
 	"syscall"
 
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/event/outbox/service"
+	"github.com/yzletter/go-postery/backend/grpc/hub"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
-	"github.com/yzletter/go-postery/backend/micro/outbox/service"
 )
 
 func ListenTermSignal(f func()) {
@@ -32,8 +33,8 @@ const (
 )
 
 var (
-	prefix       = ""
-	EtcdEndPoint string // etcd 地址
+	suffix       = ""
+	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
 )
 
 func main() {
@@ -43,23 +44,21 @@ func main() {
 
 	// 本地测试
 	if *env == "local" {
-		prefix = "test_"
-		EtcdEndPoint = "localhost:12379"
-	} else {
-		EtcdEndPoint = "172.16.131.223:2379"
+		suffix = "_test"
+		ETCDEndpoint = "localhost:12379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint}) // Init Etcd
+	EtcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // Init Etcd
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, prefix+GoPostery+"_")
-	fmt.Printf("%s Init Common Config Success %+v\n", prefix+Service, CommonMicroConf)
+	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, GoPostery+suffix+"/")
+	fmt.Printf("%s Init Common Config Success %+v\n", Service+suffix, CommonMicroConf)
 	// 加载私有配置
-	OutboxServiceConf := conf.LoadOutboxServiceConfig(ctx, EtcdClient, prefix+Service+"_")
-	fmt.Printf("%s Init OutboxService Config Success %+v\n", prefix+Service, OutboxServiceConf)
+	OutboxServiceConf := conf.LoadOutboxServiceConfig(ctx, EtcdClient, Service+suffix+"/")
+	fmt.Printf("%s Init OutboxService Config Success %+v\n", Service+suffix, OutboxServiceConf)
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(OutboxServiceConf.Log) // Init Slog
@@ -74,6 +73,7 @@ func main() {
 	ListenTermSignal(func() {
 		infraKafka.Close()
 		infraMySQL.Close()
+		KafkaProducer.Close()
 		cancel()
 	})
 }
