@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -24,8 +23,6 @@ func (dao *gormTagDAO) Create(ctx context.Context, tag *model.Tag) error {
 	// 1. 恢复软删除
 	result := dao.db.WithContext(ctx).Model(&model.Tag{}).Where("(name = ? OR slug = ?) AND deleted_at IS NOT NULL", tag.Name, tag.Slug).Update("deleted_at", nil)
 	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(UpdateFailed, "tag", tag, "error", result.Error)
 		return ErrServerInternal
 	}
 	if result.RowsAffected != 0 {
@@ -42,8 +39,6 @@ func (dao *gormTagDAO) Create(ctx context.Context, tag *model.Tag) error {
 			return nil
 		}
 
-		// 系统层面错误
-		slog.Error(CreateFailed, "tag", tag, "error", result.Error)
 		return ErrServerInternal
 	}
 
@@ -59,8 +54,6 @@ func (dao *gormTagDAO) GetBySlug(ctx context.Context, slug string) (*model.Tag, 
 			// 业务层面错误
 			return nil, ErrRecordNotFound
 		}
-		// 系统层面错误
-		slog.Error(FindFailed, "tag_slug", slug, "error", result.Error)
 		return nil, ErrServerInternal
 	}
 	return tag, nil
@@ -75,8 +68,6 @@ func (dao *gormTagDAO) GetByName(ctx context.Context, name string) (*model.Tag, 
 			// 业务层面错误
 			return nil, ErrRecordNotFound
 		}
-		// 系统层面错误
-		slog.Error(FindFailed, "tag_name", name, "error", result.Error)
 		return nil, ErrServerInternal
 	}
 	return tag, nil
@@ -87,8 +78,6 @@ func (dao *gormTagDAO) Bind(ctx context.Context, postTag *model.PostTag) error {
 	// 1. 恢复软删除
 	result := dao.db.WithContext(ctx).Model(&model.PostTag{}).Where("post_id = ? AND tag_id = ? AND deleted_at IS NOT NULL", postTag.PostID, postTag.TagID).Update("deleted_at", nil)
 	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(UpdateFailed, "post_tag", postTag, "error", result.Error)
 		return ErrServerInternal
 	}
 	if result.RowsAffected != 0 {
@@ -105,8 +94,6 @@ func (dao *gormTagDAO) Bind(ctx context.Context, postTag *model.PostTag) error {
 			return nil
 		}
 
-		// 系统层面错误
-		slog.Error(CreateFailed, "post_tag", postTag, "error", result.Error)
 		return ErrServerInternal
 	}
 
@@ -118,8 +105,6 @@ func (dao *gormTagDAO) DeleteBind(ctx context.Context, pid, tid int64) error {
 	now := time.Now()
 	result := dao.db.WithContext(ctx).Model(&model.PostTag{}).Where("post_id = ? AND tag_id = ? AND deleted_at IS NULL", pid, tid).Update("deleted_at", &now)
 	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(DeleteFailed, "post_id", pid, "tag_id", tid, "error", result.Error)
 		return ErrServerInternal
 	}
 	if result.RowsAffected == 0 {
@@ -139,8 +124,6 @@ func (dao *gormTagDAO) FindTagsByPostID(ctx context.Context, pid int64) ([]strin
 		Pluck("t.name", &names)
 
 	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(FindFailed, "post_id", pid, "error", result.Error)
 		return nil, ErrServerInternal
 	}
 	return names, nil

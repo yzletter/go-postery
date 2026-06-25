@@ -2,9 +2,13 @@ package grpc
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	"github.com/yzletter/go-postery/backend/micro/post/dto"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
+	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	"github.com/yzletter/go-postery/backend/micro/post/grpc/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/service"
 )
 
@@ -20,19 +24,25 @@ func NewPostServiceServer(svc service.PostService) *PostServiceServer {
 }
 
 func (server *PostServiceServer) Create(ctx context.Context, req *post_grpc.CreatePostRequest) (*post_grpc.PostDetail, error) {
-	postWithTags, err := server.svc.Create(ctx, req.UserID, req.Title, req.Content, int(req.ContentType), req.Tags)
+	post, err := server.svc.Create(ctx, domain.Post{
+		User:        domain.User{UserID: req.UserID},
+		Title:       req.Title,
+		Content:     req.Content,
+		ContentType: int(req.ContentType),
+		Tags:        req.Tags,
+	})
 	if err != nil {
 		return &post_grpc.PostDetail{}, err
 	}
-	return dto.ToPostDetail(postWithTags.Post, postWithTags.Tags), nil
+	return dto.ToPostDetail(post), nil
 }
 
 func (server *PostServiceServer) GetDetailByID(ctx context.Context, req *post_grpc.GetDetailByIDRequest) (*post_grpc.PostDetail, error) {
-	postWithTags, err := server.svc.GetDetailByID(ctx, req.PostID, req.AddViewCnt)
+	post, err := server.svc.GetDetailByID(ctx, req.PostID, req.AddViewCnt)
 	if err != nil {
 		return &post_grpc.PostDetail{}, err
 	}
-	return dto.ToPostDetail(postWithTags.Post, postWithTags.Tags), nil
+	return dto.ToPostDetail(post), nil
 }
 
 func (server *PostServiceServer) GetBriefByID(ctx context.Context, req *post_grpc.GetBriefByIDRequest) (*post_grpc.PostBrief, error) {
@@ -58,8 +68,27 @@ func (server *PostServiceServer) Top(ctx context.Context, req *post_grpc.PostEmp
 	return &post_grpc.TopResponse{TopPosts: topPosts}, nil
 }
 
+func (server *PostServiceServer) GetPostByTime(ctx context.Context, req *post_grpc.GetPostByTimeRequest) (*post_grpc.PostIDs, error) {
+	timeAt, err := time.Parse(time.RFC3339, req.TimeAt)
+	if err != nil {
+		return &post_grpc.PostIDs{}, errs.ErrInvalidArgument
+	}
+
+	ids, err := server.svc.GetPostByTime(ctx, timeAt)
+	if err != nil {
+		return &post_grpc.PostIDs{}, err
+	}
+	return &post_grpc.PostIDs{IDs: ids}, nil
+}
+
 func (server *PostServiceServer) Update(ctx context.Context, req *post_grpc.UpdateRequest) (*post_grpc.PostEmptyResponse, error) {
-	if err := server.svc.Update(ctx, req.UserID, req.PostID, req.Title, req.Content, req.Tags); err != nil {
+	if err := server.svc.Update(ctx, domain.Post{
+		ID:      req.PostID,
+		User:    domain.User{UserID: req.UserID},
+		Title:   req.Title,
+		Content: req.Content,
+		Tags:    req.Tags,
+	}); err != nil {
 		return &post_grpc.PostEmptyResponse{}, err
 	}
 	return &post_grpc.PostEmptyResponse{}, nil
@@ -73,7 +102,7 @@ func (server *PostServiceServer) ListByPage(ctx context.Context, req *post_grpc.
 
 	postDetails := make([]*post_grpc.PostDetail, 0, len(posts))
 	for _, post := range posts {
-		postDetails = append(postDetails, dto.ToPostDetail(post.Post, post.Tags))
+		postDetails = append(postDetails, dto.ToPostDetail(post))
 	}
 
 	return &post_grpc.PostDetailsResponse{
@@ -90,7 +119,7 @@ func (server *PostServiceServer) ListByPageAndUid(ctx context.Context, req *post
 
 	postBriefs := make([]*post_grpc.PostBrief, 0, len(posts))
 	for _, post := range posts {
-		postBriefs = append(postBriefs, dto.ToPostBrief(post))
+		postBriefs = append(postBriefs, dto.ToPostBrief(post.Briefed()))
 	}
 
 	return &post_grpc.PostBriefsResponse{
@@ -107,7 +136,7 @@ func (server *PostServiceServer) ListByPageAndTag(ctx context.Context, req *post
 
 	postDetails := make([]*post_grpc.PostDetail, 0, len(posts))
 	for _, post := range posts {
-		postDetails = append(postDetails, dto.ToPostDetail(post.Post, post.Tags))
+		postDetails = append(postDetails, dto.ToPostDetail(post))
 	}
 
 	return &post_grpc.PostDetailsResponse{
@@ -131,83 +160,23 @@ func (server *PostServiceServer) Delete(ctx context.Context, req *post_grpc.Post
 	return &post_grpc.PostEmptyResponse{}, nil
 }
 
-func (server *PostServiceServer) Like(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error) {
-	if err := server.svc.Like(ctx, req.UserID, req.PostID); err != nil {
-		return &post_grpc.PostEmptyResponse{}, err
-	}
-	return &post_grpc.PostEmptyResponse{}, nil
-}
-
-func (server *PostServiceServer) Unlike(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error) {
-	if err := server.svc.Unlike(ctx, req.UserID, req.PostID); err != nil {
-		return &post_grpc.PostEmptyResponse{}, err
-	}
-	return &post_grpc.PostEmptyResponse{}, nil
-}
-
-func (server *PostServiceServer) IfLike(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.IfLikeResponse, error) {
-	result, err := server.svc.IfLike(ctx, req.UserID, req.PostID)
+func (server *PostServiceServer) ExistPost(ctx context.Context, req *post_grpc.ExistPostRequest) (*post_grpc.ExistPostResponse, error) {
+	_, err := server.svc.GetBriefByID(ctx, req.PostID)
 	if err != nil {
-		return &post_grpc.IfLikeResponse{Result: false}, err
+		if errors.Is(err, errs.ErrNotFound) {
+			return &post_grpc.ExistPostResponse{Exist: false}, nil
+		}
+		return &post_grpc.ExistPostResponse{Exist: false}, err
 	}
-	return &post_grpc.IfLikeResponse{Result: result}, nil
+	return &post_grpc.ExistPostResponse{Exist: true}, nil
 }
 
-func (server *PostServiceServer) CreateComment(ctx context.Context, req *post_grpc.CreateCommentRequest) (*post_grpc.Comment, error) {
-	comment, err := server.svc.CreateComment(ctx, req.PostID, req.ParentID, req.ReplyID, req.UserID, req.Content)
+func (server *PostServiceServer) CheckPostAuth(ctx context.Context, req *post_grpc.CheckPostAuthRequest) (*post_grpc.CheckPostAuthResponse, error) {
+	result, err := server.svc.Belong(ctx, req.UserID, req.PostID)
 	if err != nil {
-		return &post_grpc.Comment{}, err
+		return &post_grpc.CheckPostAuthResponse{Exist: false}, err
 	}
-	return dto.ToComment(comment), nil
-}
-
-func (server *PostServiceServer) DeleteComment(ctx context.Context, req *post_grpc.DeleteCommentRequest) (*post_grpc.PostEmptyResponse, error) {
-	if err := server.svc.DeleteComment(ctx, req.CommentID, req.UserID); err != nil {
-		return &post_grpc.PostEmptyResponse{}, err
-	}
-	return &post_grpc.PostEmptyResponse{}, nil
-}
-
-func (server *PostServiceServer) ListCommentByPage(ctx context.Context, req *post_grpc.ListCommentByPageRequest) (*post_grpc.CommentsResponse, error) {
-	total, comments, err := server.svc.ListCommentByPage(ctx, req.PostID, int(req.PageNo), int(req.PageSize))
-	if err != nil {
-		return &post_grpc.CommentsResponse{}, err
-	}
-
-	respComments := make([]*post_grpc.Comment, 0, len(comments))
-	for _, comment := range comments {
-		respComments = append(respComments, dto.ToComment(comment))
-	}
-
-	return &post_grpc.CommentsResponse{
-		Count:    uint64(total),
-		Comments: respComments,
-	}, nil
-}
-
-func (server *PostServiceServer) ListRepliesByPage(ctx context.Context, req *post_grpc.ListReplyByPageRequest) (*post_grpc.CommentsResponse, error) {
-	total, comments, err := server.svc.ListRepliesByPage(ctx, req.CommentID, int(req.PageNo), int(req.PageSize))
-	if err != nil {
-		return &post_grpc.CommentsResponse{}, err
-	}
-
-	respComments := make([]*post_grpc.Comment, 0, len(comments))
-	for _, comment := range comments {
-		respComments = append(respComments, dto.ToComment(comment))
-	}
-
-	return &post_grpc.CommentsResponse{
-		Count:    uint64(total),
-		Comments: respComments,
-	}, nil
-}
-
-func (server *PostServiceServer) CheckCommentDeleteAuth(ctx context.Context, req *post_grpc.CommentBelongRequest) (*post_grpc.BelongResponse, error) {
-	result, err := server.svc.CheckCommentDeleteAuth(ctx, req.CommentID, req.UserID)
-	if err != nil {
-		return &post_grpc.BelongResponse{Result: false}, err
-	}
-	return &post_grpc.BelongResponse{Result: result}, nil
+	return &post_grpc.CheckPostAuthResponse{Exist: result}, nil
 }
 
 func (server *PostServiceServer) HealthCheck(ctx context.Context, req *post_grpc.HealthCheckRequest) (*post_grpc.HealthCheckResponse, error) {

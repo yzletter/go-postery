@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/redis/go-redis/v9"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 )
@@ -14,6 +15,8 @@ import (
 const (
 	postInteractiveKeyPrefix = "post:interactive"
 	PostExpireTime           = time.Minute * 15
+	postCacheKeyPrefix       = "post:cache"
+	authorHomePageKeyPrefix  = "post:author:homepage"
 )
 
 //go:embed lua/change_cnt_script.lua
@@ -25,6 +28,75 @@ type redisPostCache struct {
 
 func NewPostCache(client redis.UniversalClient) PostCache {
 	return &redisPostCache{client: client}
+}
+
+func (cache *redisPostCache) Del(ctx context.Context, id int64) error {
+	return cache.client.Del(ctx, postCacheKeyPrefix+strconv.FormatInt(id, 10)).Err()
+}
+
+func (cache *redisPostCache) Set(ctx context.Context, id int64, post model.Post) error {
+	// 序列化
+	bytes, err := sonic.Marshal(post)
+	if err != nil {
+		return nil
+	}
+	return cache.client.Set(ctx, postCacheKeyPrefix+strconv.FormatInt(id, 10), bytes, time.Minute).Err()
+}
+
+// SetPost 设置帖子缓存
+func (cache *redisPostCache) SetPost(ctx context.Context, id int64, post *model.Post) error {
+	bytes, err := sonic.Marshal(post)
+	if err != nil {
+		return nil
+	}
+	return cache.client.Set(ctx, fmt.Sprintf("%s:%d", postCacheKeyPrefix, id), bytes, time.Minute).Err()
+}
+
+// DelPost 删除帖子缓存
+func (cache *redisPostCache) DelPost(ctx context.Context, id int64) error {
+	return cache.client.Del(ctx, fmt.Sprintf("%s:%d", postCacheKeyPrefix, id)).Err()
+}
+
+// GetPost 获取帖子缓存
+func (cache *redisPostCache) GetPost(ctx context.Context, id int64) (*model.Post, error) {
+	bytes, err := cache.client.Get(ctx, fmt.Sprintf("%s:%d", postCacheKeyPrefix, id)).Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	var post model.Post
+	if err := sonic.Unmarshal(bytes, &post); err != nil {
+		return nil, err
+	}
+	return &post, nil
+}
+
+// SetAuthorHomePage 设置作者首页帖子缓存
+func (cache *redisPostCache) SetAuthorHomePage(ctx context.Context, authorID int64, posts []*model.Post) error {
+	bytes, err := sonic.Marshal(posts)
+	if err != nil {
+		return nil
+	}
+	return cache.client.Set(ctx, fmt.Sprintf("%s:%d", authorHomePageKeyPrefix, authorID), bytes, time.Minute).Err()
+}
+
+// DelAuthorHomePage 删除作者首页帖子缓存
+func (cache *redisPostCache) DelAuthorHomePage(ctx context.Context, authorID int64) error {
+	return cache.client.Del(ctx, fmt.Sprintf("%s:%d", authorHomePageKeyPrefix, authorID)).Err()
+}
+
+// GetAuthorHomePage 获取作者首页帖子缓存
+func (cache *redisPostCache) GetAuthorHomePage(ctx context.Context, authorID int64) ([]*model.Post, error) {
+	bytes, err := cache.client.Get(ctx, fmt.Sprintf("%s:%d", authorHomePageKeyPrefix, authorID)).Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	var posts []*model.Post
+	if err := sonic.Unmarshal(bytes, &posts); err != nil {
+		return nil, err
+	}
+	return posts, nil
 }
 
 func (cache *redisPostCache) DeleteScore(ctx context.Context, id int64) error {

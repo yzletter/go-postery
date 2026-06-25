@@ -5,174 +5,264 @@ import (
 	"log/slog"
 	"time"
 
-	model2 "github.com/yzletter/go-postery/backend/micro/post/model"
+	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"github.com/yzletter/go-postery/backend/micro/post/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/post/repository/dao"
+	"github.com/yzletter/go-postery/backend/ports"
+	"github.com/yzletter/go-postery/backend/utils"
 )
 
-const OneWeekTimeSecs = 60 * 60 * 24 * 7
+//const OneWeekTimeSecs = 60 * 60 * 24 * 7
 
 type postRepository struct {
 	dao   dao.PostDAO
 	cache cache.PostCache
+	idGen ports.IDGenerator
 }
 
-func NewPostRepository(postDao dao.PostDAO, postCache cache.PostCache) PostRepository {
-	return &postRepository{dao: postDao, cache: postCache}
+func NewPostRepository(postDao dao.PostDAO, postCache cache.PostCache, idGen ports.IDGenerator) PostRepository {
+	return &postRepository{dao: postDao, cache: postCache, idGen: idGen}
 }
 
-func (repo *postRepository) Create(ctx context.Context, post *model2.Post, events []*model2.Event) error {
-	// 创建文章
-	err := repo.dao.Create(ctx, post, events)
-	if err != nil {
+// Create 创建帖子
+func (repo *postRepository) Create(ctx context.Context, post domain.Post, events []*event.OutboxEvent) error {
+	// 构造 Post、Tag 和 PostTag
+	m := domain.ToModelPost(post)
+	tags := make([]*model.Tag, 0, len(post.Tags))
+	postTags := make([]*model.PostTag, 0, len(post.Tags))
+	for _, tagName := range post.Tags {
+		tags = append(tags, &model.Tag{
+			ID:   repo.idGen.NextID(),
+			Name: tagName,
+			Slug: utils.Slugify(tagName),
+		})
+		postTags = append(postTags, &model.PostTag{
+			ID:     repo.idGen.NextID(),
+			PostID: post.ID,
+		})
+	}
+
+	// 写入 MySQL
+	if err := repo.dao.Create(ctx, &m, tags, postTags, events); err != nil {
 		return toRepositoryErr(err)
 	}
 
-	// todo 写 Cache
-
-	// 初始化文章分数
-	err = repo.cache.SetScore(ctx, post.ID)
-	if err != nil {
-		return ErrServerInternal
-	}
-	return nil
-}
-
-func (repo *postRepository) Delete(ctx context.Context, id int64) error {
-	err := repo.dao.Delete(ctx, id)
-	if err != nil {
-		return toRepositoryErr(err)
-	}
-
-	// todo 删 Cache
-	err = repo.cache.DeleteScore(ctx, id)
-	if err != nil {
-		return ErrServerInternal
-	}
-	return nil
-}
-
-func (repo *postRepository) UpdateCount(ctx context.Context, id int64, field model2.PostCntField, delta int) error {
-	// DAO
-	err := repo.dao.UpdateCount(ctx, id, field, delta)
-	if err != nil {
-		return toRepositoryErr(err)
-	}
-
-	post, _ := repo.dao.GetByID(ctx, id)
-
-	// Cache
-	ok, err := repo.cache.ChangeInteractiveCnt(ctx, id, field, delta)
-	if err != nil || !ok {
-		// 获取失败的 Field 名
-		col, colErr := field.Column()
-		if colErr != nil {
-			col = "invalid"
-		}
-		slog.Error("Cache ChangeInteractiveCnt Failed", "id", id, "field", col, "delta", delta, "error", err)
-		if post != nil {
-			fields := []model2.PostCntField{model2.PostViewCount, model2.PostCommentCount, model2.PostLikeCount}
-			vals := []int{post.ViewCount, post.ViewCount, post.LikeCount}
-			repo.cache.SetInteractiveKey(ctx, id, fields, vals)
-		}
+	// 删除作者首页缓存
+	if err := repo.cache.DelAuthorHomePage(ctx, post.User.UserID); err != nil {
+		slog.Warn("delete author home page post cache failed", "author_id", post.User.UserID, "error", err)
 	}
 
 	return nil
 }
 
-func (repo *postRepository) Update(ctx context.Context, id int64, updates map[string]any) error {
-	err := repo.dao.Update(ctx, id, updates)
-	if err != nil {
+// Delete 删除帖子
+func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID int64) error {
+	if err := repo.dao.Delete(ctx, postID); err != nil {
 		return toRepositoryErr(err)
 	}
 
-	// todo 改Cache
+	// 删除 Rank 分数
+	if err := repo.cache.DeleteScore(ctx, postID); err != nil {
+		slog.Warn("delete post rank score failed", "post_id", postID, "error", err)
+	}
 
+	// 删除作者首页缓存
+	if err := repo.cache.DelAuthorHomePage(ctx, authorID); err != nil {
+		slog.Warn("delete author home page post cache failed", "author_id", authorID, "error", err)
+	}
+
+	// 删帖子缓存
+	if err := repo.cache.DelPost(ctx, postID); err != nil {
+		slog.Warn("delete post cache failed", "post_id", postID, "error", err)
+	}
 	return nil
 }
 
-func (repo *postRepository) GetByID(ctx context.Context, id int64) (*model2.Post, error) {
-	// todo 读 Cache
+//func (repo *postRepository) UpdateCount(ctx context.Context, id int64, field model.PostCntField, delta int) error {
+//	// DAO
+//	err := repo.dao.UpdateCount(ctx, id, field, delta)
+//	if err != nil {
+//		return toRepositoryErr(err)
+//	}
+//
+//	post, _ := repo.dao.GetByID(ctx, id)
+//
+//	// Cache
+//	ok, err := repo.cache.ChangeInteractiveCnt(ctx, id, field, delta)
+//	if err != nil || !ok {
+//		// 获取失败的 Field 名
+//		col, colErr := field.Column()
+//		if colErr != nil {
+//			col = "invalid"
+//		}
+//		slog.Error("Cache ChangeInteractiveCnt Failed", "id", id, "field", col, "delta", delta, "error", err)
+//		if post != nil {
+//			fields := []model.PostCntField{model.PostViewCount, model.PostCommentCount, model.PostLikeCount}
+//			vals := []int{post.ViewCount, post.ViewCount, post.LikeCount}
+//			repo.cache.SetInteractiveKey(ctx, id, fields, vals)
+//		}
+//	}
+//
+//	return nil
+//}
 
+// Update 更新帖子
+func (repo *postRepository) Update(ctx context.Context, post domain.Post) error {
+	// 构造 Post、Tag 和 PostTag
+	m := domain.ToModelPost(post)
+	tags := make([]*model.Tag, 0, len(post.Tags))
+	postTags := make([]*model.PostTag, 0, len(post.Tags))
+	for _, tagName := range post.Tags {
+		tags = append(tags, &model.Tag{
+			ID:   repo.idGen.NextID(),
+			Name: tagName,
+			Slug: utils.Slugify(tagName),
+		})
+		postTags = append(postTags, &model.PostTag{
+			ID:     repo.idGen.NextID(),
+			PostID: post.ID,
+		})
+	}
+
+	// 更新帖子和标签
+	if err := repo.dao.Update(ctx, &m, tags, postTags); err != nil {
+		return toRepositoryErr(err)
+	}
+
+	// 删除作者首页缓存
+	if err := repo.cache.DelAuthorHomePage(ctx, post.User.UserID); err != nil {
+		slog.Warn("delete author home page post cache failed", "author_id", post.User.UserID, "error", err)
+	}
+
+	// 删帖子缓存
+	if err := repo.cache.DelPost(ctx, post.ID); err != nil {
+		slog.Warn("delete post cache failed", "post_id", post.ID, "error", err)
+	}
+	return nil
+}
+
+// GetByID 根据帖子 ID 获取帖子
+func (repo *postRepository) GetByID(ctx context.Context, id int64) (domain.Post, error) {
+	// 查缓存
+	if post, err := repo.cache.GetPost(ctx, id); err == nil {
+		return domain.ToDomainPost(post), nil
+	}
+
+	// 查数据库
 	post, err := repo.dao.GetByID(ctx, id)
+	if err != nil {
+		return domain.Post{}, toRepositoryErr(err)
+	}
+
+	// 写帖子缓存
+	if err := repo.cache.SetPost(ctx, id, post); err != nil {
+		slog.Warn("set post cache failed", "post_id", id, "error", err)
+	}
+
+	// 返回结果
+	return domain.ToDomainPost(post), nil
+}
+
+// GetPostByTime 根据时间查找帖子 ID
+func (repo *postRepository) GetPostByTime(ctx context.Context, timeAt time.Time) ([]int64, error) {
+	ids, err := repo.dao.GetPostByTime(ctx, timeAt)
 	if err != nil {
 		return nil, toRepositoryErr(err)
 	}
-
-	return post, nil
+	return ids, nil
 }
 
-func (repo *postRepository) GetByUid(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model2.Post, error) {
-	// todo 读 Cache
+// GetAuthorHomePage 获取用户首页帖子
+func (repo *postRepository) GetAuthorHomePage(ctx context.Context, userID int64) ([]domain.Post, error) {
+	// 查缓存
+	if posts, err := repo.cache.GetAuthorHomePage(ctx, userID); err == nil {
+		return domain.ToDomainPosts(posts), nil
+	}
 
+	// 查数据库
+	_, posts, err := repo.GetByAuthor(ctx, userID, 1, 10)
+	if err != nil {
+		return nil, err
+	}
+
+	// 更新作者首页缓存
+	if err := repo.cache.SetAuthorHomePage(ctx, userID, domain.ToModelPosts(posts)); err != nil {
+		slog.Warn("set author home page post cache failed", "author_id", userID, "error", err)
+	}
+
+	return posts, nil
+}
+
+// GetByAuthor 根据作者按页获取帖子
+func (repo *postRepository) GetByAuthor(ctx context.Context, id int64, pageNo, pageSize int) (int64, []domain.Post, error) {
 	total, posts, err := repo.dao.GetByUid(ctx, id, pageNo, pageSize)
 	if err != nil {
 		return 0, nil, toRepositoryErr(err)
 	}
 
-	return total, posts, nil
+	return total, domain.ToDomainPosts(posts), nil
 }
 
-func (repo *postRepository) GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []*model2.Post, error) {
-	// todo 读 Cache
-
+// GetByPage 按页获取帖子
+func (repo *postRepository) GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []domain.Post, error) {
 	total, posts, err := repo.dao.GetByPage(ctx, pageNo, pageSize)
 	if err != nil {
 		return 0, nil, toRepositoryErr(err)
 	}
 
-	return total, posts, nil
+	return total, domain.ToDomainPosts(posts), nil
 }
 
-func (repo *postRepository) GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []*model2.Post, error) {
-	// todo 读 Cache
-
+// GetByPageAndTag 按页 + Tag获取帖子
+func (repo *postRepository) GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []domain.Post, error) {
 	total, posts, err := repo.dao.GetByPageAndTag(ctx, tid, pageNo, pageSize)
 	if err != nil {
 		return 0, nil, toRepositoryErr(err)
 	}
 
-	return total, posts, nil
+	return total, domain.ToDomainPosts(posts), nil
 }
 
-// ChangeScore 修改帖子分数
-func (repo *postRepository) ChangeScore(ctx context.Context, pid int64, delta int) {
-	// 查询是否在热度期内
-	value, err := repo.cache.CheckPostLikeTime(ctx, pid)
-	if err != nil {
-		slog.Error("Check Post Like Time Failed", "error", err)
-		return
-	}
+//// ChangeScore 修改帖子分数
+//func (repo *postRepository) ChangeScore(ctx context.Context, pid int64, delta int) {
+//	// 查询是否在热度期内
+//	value, err := repo.cache.CheckPostLikeTime(ctx, pid)
+//	if err != nil {
+//		slog.Error("Check Post Like Time Failed", "error", err)
+//		return
+//	}
+//
+//	// 过了热度期，热度不再波动
+//	if float64(time.Now().Unix())-value > OneWeekTimeSecs {
+//		return
+//	}
+//
+//	err = repo.cache.ChangeScore(ctx, pid, delta)
+//	if err != nil {
+//		slog.Error("Change Post Score Failed", "error", err)
+//		return
+//	}
+//}
 
-	// 过了热度期，热度不再波动
-	if float64(time.Now().Unix())-value > OneWeekTimeSecs {
-		return
-	}
-
-	err = repo.cache.ChangeScore(ctx, pid, delta)
-	if err != nil {
-		slog.Error("Change Post Score Failed", "error", err)
-		return
-	}
-}
-
-func (repo *postRepository) Top(ctx context.Context) ([]*model2.Post, []float64, error) {
-	ids, scores, err := repo.cache.Top(ctx)
-	if err != nil {
-		return nil, nil, ErrServerInternal
-	}
-
-	var posts []*model2.Post
-	for _, id := range ids {
-		post, err := repo.dao.GetByID(ctx, id)
-		if err != nil {
-			post = &model2.Post{
-				ID:    0,
-				Title: "未知文章",
-			}
-		}
-		posts = append(posts, post)
-	}
-
-	return posts, scores, nil
-}
+//func (repo *postRepository) Top(ctx context.Context) ([]*model.Post, []float64, error) {
+//	ids, scores, err := repo.cache.Top(ctx)
+//	if err != nil {
+//		return nil, nil, ErrServerInternal
+//	}
+//
+//	var posts []*model.Post
+//	for _, id := range ids {
+//		post, err := repo.dao.GetByID(ctx, id)
+//		if err != nil {
+//			post = &model.Post{
+//				ID:    0,
+//				Title: "未知文章",
+//			}
+//		}
+//		posts = append(posts, post)
+//	}
+//
+//	return posts, scores, nil
+//}
