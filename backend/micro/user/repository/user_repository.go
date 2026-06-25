@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"time"
 
-	"github.com/yzletter/go-postery/backend/micro/user/model"
+	"github.com/redis/go-redis/v9"
+	"github.com/yzletter/go-postery/backend/micro/user/domain"
 	"github.com/yzletter/go-postery/backend/micro/user/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/user/repository/dao"
 )
@@ -14,68 +17,67 @@ type userRepository struct {
 	cache cache.UserCache
 }
 
+// NewUserRepository 构造函数
 func NewUserRepository(userDAO dao.UserDAO, userCache cache.UserCache) UserRepository {
 	return &userRepository{dao: userDAO, cache: userCache}
 }
 
-func (repo *userRepository) UpdateAvatar(ctx context.Context, uid int64, avatar string) error {
-	if err := repo.dao.UpdateAvatar(ctx, uid, avatar); err != nil {
-		return toRepositoryErr(err)
-	}
-	return nil
+// userRepositoryLogger 构造用户仓储日志
+func userRepositoryLogger(method string) *slog.Logger {
+	return slog.With("component", "user_repository", "method", method)
 }
 
-// GetProfileByID 根据 ID 查找用户资料
-func (repo *userRepository) GetProfileByID(ctx context.Context, uid int64) (*model.UserProfile, error) {
-	userProfile, err := repo.dao.GetProfileByID(ctx, uid)
-	if err != nil {
-		return nil, toRepositoryErr(err)
+// GetProfile 根据 ID 查找用户资料
+func (repo *userRepository) GetProfile(ctx context.Context, id int64) (domain.Profile, error) {
+	logger := userRepositoryLogger("GetProfile").With("user_id", id)
+
+	// 先查缓存
+	if cachedProfile, err := repo.cache.GetProfile(ctx, id); err == nil {
+		logger.Debug("profile cache hit")
+		return cachedProfile, nil
+	} else if !errors.Is(err, redis.Nil) {
+		logger.Warn("get profile cache failed", "error", err)
 	}
 
-	return userProfile, nil
+	// 缓存未命中时查数据库
+	profile, err := repo.dao.GetProfile(ctx, id)
+	if err != nil {
+		return domain.Profile{}, toRepositoryErr(err)
+	}
+
+	// model 转 domain
+	back := domain.ToDomainProfile(profile)
+
+	// 更新缓存
+	if err := repo.cache.SetProfile(ctx, id, back); err != nil {
+		logger.Warn("set profile cache failed", "error", err)
+	}
+
+	return back, nil
 }
 
 // UpdateProfile 根据 ID 修改用户资料的多个字段
 func (repo *userRepository) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
-	err := repo.dao.UpdateProfile(ctx, id, updates)
-	if err != nil {
+	logger := userRepositoryLogger("UpdateProfile").With("user_id", id)
+
+	// 写数据库
+	if err := repo.dao.UpdateProfile(ctx, id, updates); err != nil {
 		return toRepositoryErr(err)
 	}
 
-	// todo 更新 Cache
+	// 删缓存
+	if err := repo.cache.DelProfile(ctx, id); err != nil {
+		logger.Warn("delete profile cache failed", "error", err)
+	}
 
 	return nil
 }
 
-// Top 返回热门推荐用户
-func (repo *userRepository) Top(ctx context.Context) ([]*model.UserProfile, []float64, error) {
-	ids, scores, err := repo.cache.Top(ctx)
+// GetIDAfterTime 根据时间查找之后创建的用户 ID
+func (repo *userRepository) GetIDAfterTime(ctx context.Context, timeAfter time.Time) ([]int64, error) {
+	ids, err := repo.dao.GetIDAfterTime(ctx, timeAfter)
 	if err != nil {
-		return nil, nil, toRepositoryErr(err)
+		return nil, toRepositoryErr(err)
 	}
-
-	var userProfiles []*model.UserProfile
-	for _, id := range ids {
-		userProfile, err := repo.dao.GetProfileByID(ctx, id)
-		if err != nil {
-			userProfile = &model.UserProfile{
-				UserID:   0,
-				Nickname: "未知用户",
-			}
-		}
-		userProfiles = append(userProfiles, userProfile)
-	}
-
-	return userProfiles, scores, nil
-}
-
-// ChangeScore 修改用户分数
-func (repo *userRepository) ChangeScore(ctx context.Context, uid int64, delta int) error {
-	err := repo.cache.ChangeScore(ctx, uid, delta)
-	if err != nil {
-		slog.Error("Change User Score Failed", "error", err)
-		return toRepositoryErr(err)
-	}
-
-	return nil
+	return ids, nil
 }

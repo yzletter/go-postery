@@ -3,8 +3,9 @@ package dao
 import (
 	"context"
 	"errors"
-	"log/slog"
+	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/backend/micro/user/model"
 	"gorm.io/gorm"
 )
@@ -21,68 +22,67 @@ func NewUserDAO(db *gorm.DB) UserDAO {
 	}
 }
 
-// UpdateAvatar 修改用户头像链接
-func (dao *gormUserDAO) UpdateAvatar(ctx context.Context, uid int64, avatar string) error {
-	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).Model(&model.UserProfile{}).Where("user_id = ? AND deleted_at IS NULL", uid).Update("avatar", avatar)
-	if result.Error != nil {
-		// 业务层面错误
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return ErrRecordNotFound
-		}
-		// 系统层面错误
-		slog.Error(UpdateFailed, "id", uid, "error", result.Error)
-		return ErrServerInternal
-	}
-
-	return nil
-}
-
-// GetProfileByID 根据 ID 查找用户资料
-func (dao *gormUserDAO) GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error) {
+// GetProfile 根据 ID 查找用户资料
+func (dao *gormUserDAO) GetProfile(ctx context.Context, id int64) (*model.Profile, error) {
 	// 1. 构造结构体对象
-	userProfile := &model.UserProfile{}
+	profile := &model.Profile{}
 
 	// 2. 操作数据库
-	result := dao.db.WithContext(ctx).Where("user_id = ? AND deleted_at IS NULL", id).First(userProfile)
+	result := dao.db.WithContext(ctx).
+		Where("user_id = ? AND deleted_at IS NULL", id).
+		First(profile)
+
 	if result.Error != nil {
 		// 业务层面错误
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrRecordNotFound
 		}
-		// 系统层面错误
-		slog.Error(FindFailed, "id", id, "error", result.Error)
 		return nil, ErrServerInternal
 	}
 
 	// 3. 返回结果
-	return userProfile, nil
+	return profile, nil
+}
+
+// GetIDAfterTime 根据时间查找之后创建的用户 ID
+func (dao *gormUserDAO) GetIDAfterTime(ctx context.Context, timeAt time.Time) ([]int64, error) {
+	var ids []int64
+	result := dao.db.WithContext(ctx).Model(&model.Profile{}).
+		Where("created_at >= ? AND deleted_at IS NULL", timeAt).
+		Pluck("user_id", &ids)
+
+	if result.Error != nil {
+		return nil, ErrServerInternal
+	}
+	return ids, nil
 }
 
 // UpdateProfile 根据 ID 修改用户资料的多个字段
 func (dao *gormUserDAO) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
 	// 1. 操作数据库
-	result := dao.db.WithContext(ctx).Model(&model.UserProfile{}).Where("user_id = ? AND deleted_at IS NULL", id).Updates(updates)
+	result := dao.db.WithContext(ctx).Model(&model.Profile{}).
+		Where("user_id = ? AND deleted_at IS NULL", id).
+		Updates(updates)
+
 	if result.Error != nil {
-		// 系统层面错误
-		slog.Error(UpdateFailed, "id", id, "error", result.Error)
+		var mysqlErr *mysql.MySQLError
+		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+			return ErrUniqueKey
+		}
 		return ErrServerInternal
 	} else if result.RowsAffected == 0 {
-		// 业务层面错误
-		var cnt int64
-		result2 := dao.db.WithContext(ctx).Model(&model.UserProfile{}).Where("id = ? AND deleted_at IS NULL", id).Count(&cnt)
-		if result2.Error != nil {
-			// 系统层面错误
-			slog.Error(FindFailed, "id", id, "error", result.Error)
+		// 没有字段变化时 Gorm 也可能返回 0 行，回查确认用户资料是否存在
+		var count int64
+		err := dao.db.WithContext(ctx).Model(&model.Profile{}).
+			Where("user_id = ? AND deleted_at IS NULL", id).
+			Count(&count).Error
+		if err != nil {
 			return ErrServerInternal
 		}
-
-		if cnt == 0 {
-			// 记录不存在
+		if count == 0 {
 			return ErrRecordNotFound
 		}
 	}
-
 	// 2. 返回结果
 	return nil
 }

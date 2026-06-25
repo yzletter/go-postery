@@ -5,288 +5,275 @@ import (
 	"errors"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
-	"github.com/segmentio/kafka-go"
-	"github.com/yzletter/go-postery/backend/errs"
-	"github.com/yzletter/go-postery/backend/micro/user/model"
+	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
+	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
+	"github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/user/domain"
 	"github.com/yzletter/go-postery/backend/micro/user/repository"
 	"github.com/yzletter/go-postery/backend/ports"
 )
 
 type userService struct {
-	userRepository   repository.UserRepository   // 依赖 UserRepository
-	followRepository repository.FollowRepository // 依赖 FollowRepository
-	kafkaConsumer    *kafka.Reader
-	ossManager       ports.OSSManager
-	idGen            ports.IDGenerator
+	userRepo    repository.UserRepository
+	interClient manager.InteractiveClient
+	rankClient  manager.RankClient
+	ossManager  ports.OSSManager
+	idGen       ports.IDGenerator
 }
 
-func NewUserService(userRepository repository.UserRepository, followRepository repository.FollowRepository, kafkaConsumer *kafka.Reader, ossManager ports.OSSManager, idGen ports.IDGenerator) UserService {
+// NewUserService 构造函数
+func NewUserService(userRepository repository.UserRepository, interClient manager.InteractiveClient, rankClient manager.RankClient, ossManager ports.OSSManager, idGen ports.IDGenerator) UserService {
 	return &userService{
-		userRepository:   userRepository,
-		followRepository: followRepository,
-		kafkaConsumer:    kafkaConsumer,
-		ossManager:       ossManager,
-		idGen:            idGen,
+		userRepo:    userRepository,
+		interClient: interClient,
+		rankClient:  rankClient,
+		ossManager:  ossManager,
+		idGen:       idGen,
 	}
 }
 
-// UploadAvatarSign 获取上传头像 OSS 的签名
-func (svc *userService) UploadAvatarSign(ctx context.Context, uid int64) (string, error) {
-	// users/avatar/uid/filename
-	dir := "users/avatar/" + strconv.FormatInt(uid, 64) + "/"
-	resp, err := svc.ossManager.Sign(dir)
-	if err != nil {
-		return "", errs.ErrInternal
-	}
-	return resp, err
+// serviceLogger 构造用户服务日志
+func serviceLogger(method string) *slog.Logger {
+	return slog.With("component", "user_service", "method", method)
 }
 
-// UploadAvatarCallback OSS 信息落库
-func (svc *userService) UploadAvatarCallback(ctx context.Context, uid int64, objectName string) error {
-	// 落库
-	if err := svc.userRepository.UpdateAvatar(ctx, uid, objectName); err != nil {
-		// 用户不存在
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			return errs.ErrNotFound
-		}
-		return errs.ErrInternal
-	}
-	return nil
-}
-
-// GetAvatarURL 获取头像预签名 URL
-func (svc *userService) GetAvatarURL(ctx context.Context, objectName string) (string, error) {
-	url, err := svc.ossManager.Resign(objectName)
-	if err != nil {
-		return "", errs.ErrInternal
-	}
-	return url, nil
-}
-
-func (svc *userService) GetProfileByID(ctx context.Context, id int64) (*model.UserProfile, error) {
+// GetProfile 获取用户资料
+func (svc *userService) GetProfile(ctx context.Context, id int64) (domain.Profile, error) {
+	logger := serviceLogger("GetProfile").With("user_id", id)
 	if id <= 0 {
-		slog.Error("Invalid User ID")
-		return nil, errs.ErrInvalidArgument
+		logger.Debug("get profile rejected: invalid user id")
+		return domain.Profile{}, errs.ErrInvalidArgument
 	}
 
-	// 获取用户
-	profile, err := svc.userRepository.GetProfileByID(ctx, id)
+	// 获取用户资料
+	profile, err := svc.userRepo.GetProfile(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			slog.Error("User Not Found", "error", err)
-			return nil, errs.ErrNotFound
+			logger.Debug("profile not found")
+			return domain.Profile{}, errs.ErrNotFound
 		}
-		slog.Error("Server Internal Error", "error", err)
-		return nil, errs.ErrInternal
-	}
-
-	if profile == nil {
-		slog.Error("User Not Found", "error", err)
-		return nil, errs.ErrNotFound
+		logger.Error("get profile failed", "error", err)
+		return domain.Profile{}, errs.ErrInternal
 	}
 
 	return profile, nil
 }
 
-func (svc *userService) UpdateProfile(ctx context.Context, profile *model.UserProfile) error {
-	if profile == nil || profile.UserID <= 0 {
-		slog.Error("Invalid User ID")
+// UploadAvatarSign 获取上传头像 OSS 签名
+func (svc *userService) UploadAvatarSign(ctx context.Context, id int64) (string, error) {
+	logger := serviceLogger("UploadAvatarSign").With("user_id", id)
+	if id <= 0 {
+		logger.Debug("sign avatar upload rejected: invalid user id")
+		return "", errs.ErrInvalidArgument
+	}
+
+	// 用户头像只能上传到 users/avatar/{id}/ 目录下
+	dir := "users/avatar/" + strconv.FormatInt(id, 64) + "/"
+	resp, err := svc.ossManager.Sign(dir)
+	if err != nil {
+		logger.Error("sign avatar upload failed", "error", err, "dir", dir)
+		return "", errs.ErrInternal
+	}
+	return resp, err
+}
+
+// UploadAvatarCallback 处理头像上传回调
+func (svc *userService) UploadAvatarCallback(ctx context.Context, id int64, object string) error {
+	logger := serviceLogger("UploadAvatarCallback").With("user_id", id, "object", object)
+	if id <= 0 {
+		logger.Debug("avatar callback rejected: invalid user id")
+		return errs.ErrInvalidArgument
+	}
+	prefix := "users/avatar/" + strconv.FormatInt(id, 64) + "/"
+	if object == "" || !strings.HasPrefix(object, prefix) {
+		logger.Debug("avatar callback rejected: invalid object")
 		return errs.ErrInvalidArgument
 	}
 
-	updates := map[string]any{
-		"nickname": profile.Nickname,
-		"avatar":   profile.Avatar,
-		"bio":      profile.Bio,
-		"gender":   profile.Gender,
-		"birthday": profile.Birthday,
-		"location": profile.Location,
-		"country":  profile.Country,
-	}
-
-	if err := svc.userRepository.UpdateProfile(ctx, profile.UserID, updates); err != nil {
+	// 更新头像对象名
+	if err := svc.userRepo.UpdateProfile(ctx, id, map[string]any{"avatar": object}); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			slog.Error("User Not Found", "error", err)
+			logger.Debug("avatar callback rejected: profile not found")
 			return errs.ErrNotFound
 		}
-		slog.Error("Server Internal Error", "error", err)
+		logger.Error("update avatar failed", "error", err)
 		return errs.ErrInternal
 	}
-
 	return nil
 }
 
-func (svc *userService) Top(ctx context.Context) ([]*model.UserProfile, []float64, error) {
-	profiles, scores, err := svc.userRepository.Top(ctx)
-	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
-		return nil, nil, errs.ErrInternal
+// GetAvatarURL 获取头像访问预签名 URL
+func (svc *userService) GetAvatarURL(ctx context.Context, object string) (string, error) {
+	logger := serviceLogger("GetAvatarURL").With("object", object)
+	if object == "" || !strings.HasPrefix(object, "users/avatar/") {
+		logger.Debug("get avatar url rejected: invalid object")
+		return "", errs.ErrInvalidArgument
 	}
 
-	return profiles, scores, nil
+	url, err := svc.ossManager.Resign(object)
+	if err != nil {
+		logger.Error("resign avatar url failed", "error", err)
+		return "", errs.ErrInternal
+	}
+	return url, nil
 }
 
-// Follow 关注用户
-func (svc *userService) Follow(ctx context.Context, followerID int64, followeeID int64) error {
-	res, err := svc.followRepository.Exists(ctx, followerID, followeeID)
+// GetIDAfterTime 根据时间获取之后创建的用户 ID
+func (svc *userService) GetIDAfterTime(ctx context.Context, timeAt time.Time) ([]int64, error) {
+	logger := serviceLogger("GetIDAfterTime").With("time_after", timeAt)
+	if timeAt.IsZero() {
+		logger.Debug("get user ids rejected: invalid time")
+		return nil, errs.ErrInvalidArgument
+	}
+
+	ids, err := svc.userRepo.GetIDAfterTime(ctx, timeAt)
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
-		return errs.ErrInternal
+		logger.Error("get user ids after time failed", "error", err)
+		return nil, errs.ErrInternal
 	}
-
-	if res == 1 || res == 3 { // 已经关注过了
-		slog.Error("Duplicated Follow")
-		return errs.ErrAlreadyExits
-	}
-
-	follow := &model.Follow{
-		ID:         svc.idGen.NextID(),
-		FollowerID: followerID,
-		FolloweeID: followeeID,
-	}
-	if err = svc.followRepository.Create(ctx, follow); err != nil {
-		if errors.Is(err, repository.ErrUniqueKey) { // 检查过仍冲突
-			slog.Error("Duplicated Follow")
-			return errs.ErrAlreadyExits
-		}
-		slog.Error("Server Internal Error", "error", err)
-		return errs.ErrInternal
-	}
-	_ = svc.userRepository.ChangeScore(ctx, followeeID, 1)
-	return nil
+	return ids, nil
 }
 
-// UnFollow 取消关注
-func (svc *userService) UnFollow(ctx context.Context, followerID int64, followeeID int64) error {
-	res, err := svc.followRepository.Exists(ctx, followerID, followeeID)
-	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
-		return errs.ErrInternal
+// UpdateProfile 更新用户资料
+func (svc *userService) UpdateProfile(ctx context.Context, id int64, updates map[string]any) error {
+	logger := serviceLogger("UpdateProfile").With("user_id", id)
+	if id <= 0 {
+		logger.Debug("update profile rejected: invalid user id")
+		return errs.ErrInvalidArgument
 	}
 
-	if res == 2 || res == 0 { // 只有对方关注了我，或者互不关注
-		slog.Error("Duplicated UnFollow")
-		return errs.ErrAlreadyExits
+	if len(updates) == 0 {
+		return nil
 	}
 
-	if err := svc.followRepository.Delete(ctx, followerID, followeeID); err != nil {
+	if err := svc.userRepo.UpdateProfile(ctx, id, updates); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			slog.Error("Duplicated UnFollow")
+			logger.Debug("update profile rejected: profile not found")
+			return errs.ErrNotFound
+		}
+		if errors.Is(err, repository.ErrUniqueKey) {
+			logger.Debug("update profile rejected: unique key conflict")
 			return errs.ErrAlreadyExits
 		}
-		slog.Error("Server Internal Error", "error", err)
+		logger.Error("update profile failed", "error", err)
 		return errs.ErrInternal
 	}
-
-	_ = svc.userRepository.ChangeScore(ctx, followeeID, -1)
 
 	return nil
 }
 
-// IfFollow 判断关注关系
-func (svc *userService) IfFollow(ctx context.Context, followerID int64, followeeID int64) (int, error) {
-	res, err := svc.followRepository.Exists(ctx, followerID, followeeID)
-	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
-		return -1, errs.ErrInternal // 数据库内部错误
+// ListFollowers 按页查找粉丝
+func (svc *userService) ListFollowers(ctx context.Context, id int64, pageNo int, pageSize int) (int64, []domain.ProfileBrief, error) {
+	logger := serviceLogger("ListFollowers").With("user_id", id, "page_no", pageNo, "page_size", pageSize)
+	if id <= 0 || pageNo < 1 || pageSize < 1 || pageSize > 100 {
+		logger.Debug("list followers rejected: invalid params")
+		return 0, nil, errs.ErrInvalidArgument
 	}
-	return int(res), nil
-}
 
-// ListFollowersByPage 按页查找粉丝
-func (svc *userService) ListFollowersByPage(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []*model.UserProfile, error) {
-	total, followersId, err := svc.followRepository.GetFollowers(ctx, userID, pageNo, pageSize)
+	resp, err := svc.interClient.GetFollowers(ctx, &interactive_grpc.ListFollowRequest{UserID: id, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		logger.Error("get followers failed", "error", err)
 		return 0, nil, errs.ErrInternal
 	}
 
-	userProfiles := make([]*model.UserProfile, 0)
-	for _, id := range followersId {
-		profile, err := svc.userRepository.GetProfileByID(ctx, id)
-		if err != nil {
-			continue
+	// 获取粉丝资料，资料缺失时降级为未知用户
+	profiles := make([]domain.ProfileBrief, 0, len(resp.IDs))
+	fallback := 0
+	for _, fid := range resp.IDs {
+		if profile, err := svc.userRepo.GetProfile(ctx, fid); err == nil {
+			profiles = append(profiles, profile.Briefed())
+		} else {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				fallback++
+				profiles = append(profiles, domain.ProfileBrief{UserID: fid, Nickname: "未知用户"})
+				logger.Warn("use fallback follower profile", "follower_id", fid)
+				continue
+			}
+			logger.Error("get follower profile failed", "follower_id", fid, "error", err)
+			return int64(resp.Count), nil, errs.ErrInternal
 		}
-		userProfiles = append(userProfiles, profile)
+	}
+	if fallback > 0 {
+		logger.Warn("some follower profiles used fallback", "fallback", fallback, "requested", len(resp.IDs))
 	}
 
-	return total, userProfiles, nil
-
+	return int64(resp.Count), profiles, nil
 }
 
-// ListFolloweesByPage 按页查找关注的人
-func (svc *userService) ListFolloweesByPage(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []*model.UserProfile, error) {
-	total, followeesId, err := svc.followRepository.GetFollowees(ctx, userID, pageNo, pageSize)
+// ListFollowees 按页查找关注的人
+func (svc *userService) ListFollowees(ctx context.Context, id int64, pageNo int, pageSize int) (int64, []domain.ProfileBrief, error) {
+	logger := serviceLogger("ListFollowees").With("user_id", id, "page_no", pageNo, "page_size", pageSize)
+	if id <= 0 || pageNo < 1 || pageSize < 1 || pageSize > 100 {
+		logger.Debug("list followees rejected: invalid params")
+		return 0, nil, errs.ErrInvalidArgument
+	}
+
+	resp, err := svc.interClient.GetFollowees(ctx, &interactive_grpc.ListFollowRequest{UserID: id, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		logger.Error("get followees failed", "error", err)
 		return 0, nil, errs.ErrInternal
 	}
 
-	userProfiles := make([]*model.UserProfile, 0)
-	for _, id := range followeesId {
-		profile, err := svc.userRepository.GetProfileByID(ctx, id)
-		if err != nil {
-			continue
+	// 获取关注用户资料，资料缺失时降级为未知用户
+	profiles := make([]domain.ProfileBrief, 0, len(resp.IDs))
+	fallback := 0
+	for _, fid := range resp.IDs {
+		if profile, err := svc.userRepo.GetProfile(ctx, fid); err == nil {
+			profiles = append(profiles, profile.Briefed())
+		} else {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				fallback++
+				profiles = append(profiles, domain.ProfileBrief{UserID: fid, Nickname: "未知用户"})
+				logger.Warn("use fallback followee profile", "followee_id", fid)
+				continue
+			}
+			logger.Error("get followee profile failed", "followee_id", fid, "error", err)
+			return int64(resp.Count), nil, errs.ErrInternal
 		}
-		userProfiles = append(userProfiles, profile)
+	}
+	if fallback > 0 {
+		logger.Warn("some followee profiles used fallback", "fallback", fallback, "requested", len(resp.IDs))
 	}
 
-	return total, userProfiles, nil
+	return int64(resp.Count), profiles, nil
 }
 
-// StartInitUserScoreConsumer 开启初始化用户分数的 Kafka 消费者协程
-func (svc *userService) StartInitUserScoreConsumer(ctx context.Context) {
-	backoff := time.Second
-	for {
-		select {
-		case <-ctx.Done():
-			slog.Info("Close Init Score Consumer Success ...")
-			return
-		default:
-			// Fetch 消息
-			message, err := svc.kafkaConsumer.FetchMessage(ctx)
-			if err != nil {
-				if ctx.Err() != nil { // 正常退出
-					return
-				}
+// Top 获取用户排行榜
+func (svc *userService) Top(ctx context.Context) ([]domain.ProfileTop, error) {
+	logger := serviceLogger("Top")
 
-				slog.Error("Fetch Message Failed", "Topic", "Session", "error", err)
+	resp, err := svc.rankClient.TopKUser(ctx, &rank_grpc.RankEmptyRequest{})
+	if err != nil {
+		logger.Error("get top users failed", "error", err)
+		return nil, errs.ErrInternal
+	}
 
-				// 简单退避，避免狂刷日志
-				time.Sleep(backoff)
-				if backoff < 10*time.Second {
-					backoff *= 2
-				}
+	// 获取排行榜用户资料，资料缺失时降级为未知用户
+	profiles := make([]domain.ProfileTop, 0, len(resp.Users))
+	fallback := 0
+	for _, user := range resp.Users {
+		if profile, err := svc.userRepo.GetProfile(ctx, user.ID); err == nil {
+			profiles = append(profiles, profile.Topped(user.Score))
+		} else {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				fallback++
+				profiles = append(profiles, domain.ProfileTop{
+					ProfileBrief: domain.ProfileBrief{UserID: user.ID, Nickname: "未知用户"},
+					Score:        user.Score,
+				})
+				logger.Warn("use fallback ranked user profile", "rank_user_id", user.ID, "score", user.Score)
 				continue
 			}
-
-			backoff = time.Second // 重置
-
-			// 解析 JSON
-			var payload model.InitUserScoreEventPayload
-			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
-				// 脏消息 Commit 掉
-				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
-				continue
-			}
-
-			// 进行初始化用户分数
-			if err := svc.userRepository.ChangeScore(ctx, payload.UserID, int(time.Now().Unix())); err != nil {
-				slog.Error("Init User Score Failed", "error", err)
-				time.Sleep(time.Second) // 最小退避，避免打爆
-				continue                // 不 commit -> 重试
-			}
-
-			// 初始化用户分数成功, 把消息 Commit 掉
-			if err := svc.kafkaConsumer.CommitMessages(ctx, message); err != nil {
-				slog.Error("Commit Kafka Message Failed", "uid", payload.UserID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
-				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
-				continue
-			}
+			logger.Error("get ranked user profile failed", "rank_user_id", user.ID, "score", user.Score, "error", err)
+			return nil, errs.ErrInternal
 		}
 	}
+	if fallback > 0 {
+		logger.Warn("some ranked user profiles used fallback", "fallback", fallback, "requested", len(resp.Users))
+	}
+	return profiles, nil
 }

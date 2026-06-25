@@ -4,76 +4,55 @@ import (
 	"time"
 
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	"github.com/yzletter/go-postery/backend/micro/user/model"
+	"github.com/yzletter/go-postery/backend/micro/user/domain"
 )
 
-// ToTopUser model.UserProfile 转 user_grpc.TopUser
-func ToTopUser(userProfile *model.Profile, score float64) *user_grpc.TopUser {
-	var res = &user_grpc.TopUser{
-		ID:       userProfile.UserID,
-		Nickname: userProfile.Nickname,
-		Bio:      "",
-		Avatar:   "",
-		Score:    float32(score),
-	}
-
-	if userProfile.Bio != nil {
-		res.Bio = *userProfile.Bio
-	}
-
-	if userProfile.Avatar != nil {
-		res.Avatar = *userProfile.Avatar
+// ToProfileTop domain.ProfileTop 转 user_grpc.ProfileTop
+func ToProfileTop(profile domain.ProfileTop) *user_grpc.ProfileTop {
+	var res = &user_grpc.ProfileTop{
+		UserID:   profile.UserID,
+		Nickname: profile.Nickname,
+		Bio:      profile.Bio,
+		Avatar:   profile.Avatar,
+		Score:    profile.Score,
 	}
 
 	return res
 }
 
-// ToUserDetail model.UserProfile 转 user_grpc.UserDetail
-func ToUserDetail(profile *model.Profile) *user_grpc.UserDetail {
-	var res = &user_grpc.UserDetail{
-		ID:          profile.UserID,
+// ToProfile domain.Profile 转 user_grpc.Profile
+func ToProfile(profile domain.Profile) *user_grpc.Profile {
+	var res = &user_grpc.Profile{
+		UserID:      profile.UserID,
 		Nickname:    profile.Nickname,
-		Avatar:      "",
-		Bio:         "",
-		Gender:      uint32(profile.Gender),
+		Avatar:      profile.Avatar,
+		Bio:         profile.Bio,
+		Gender:      int32(profile.Gender),
 		Birthday:    "",
-		Location:    "",
-		Country:     "",
-		LastLoginIP: "",
+		Location:    profile.Location,
+		Country:     profile.Country,
+		LastLoginAt: "",
+		LastLoginIP: profile.LastLoginIP,
 		CreatedAt:   profile.CreatedAt.Format(time.RFC3339),
 	}
 
-	if profile.Country != nil {
-		res.Country = *profile.Country
-	}
-	if profile.LastLoginIP != nil {
-		res.LastLoginIP = *profile.LastLoginIP
-	}
-	if profile.Location != nil {
-		res.Location = *profile.Location
-	}
-	if profile.Birthday != nil {
+	if !profile.Birthday.IsZero() {
 		res.Birthday = profile.Birthday.Format(time.RFC3339)
 	}
-	if profile.Bio != nil {
-		res.Bio = *profile.Bio
-	}
-	if profile.Avatar != nil {
-		res.Avatar = *profile.Avatar
+	if !profile.LastLoginAt.IsZero() {
+		res.LastLoginAt = profile.LastLoginAt.Format(time.RFC3339)
 	}
 	return res
 }
 
-// ToUserBrief model.UserProfile 转 user_grpc.UserBrief
-func ToUserBrief(profile *model.Profile) *user_grpc.UserBrief {
-	var res = &user_grpc.UserBrief{
-		ID:       profile.UserID,
+// ToProfileBrief domain.ProfileBrief 转 user_grpc.ProfileBrief
+func ToProfileBrief(profile domain.ProfileBrief) *user_grpc.ProfileBrief {
+	var res = &user_grpc.ProfileBrief{
+		UserID:   profile.UserID,
 		Nickname: profile.Nickname,
-		Avatar:   "",
+		Avatar:   profile.Avatar,
+		Bio:      profile.Bio,
 	}
 
-	if profile.Avatar != nil {
-		res.Avatar = *profile.Avatar
-	}
 	return res
 }

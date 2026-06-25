@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -15,12 +14,12 @@ import (
 	"github.com/yzletter/go-postery/backend/conf"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
+	"github.com/yzletter/go-postery/backend/grpc/manager"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraRedis "github.com/yzletter/go-postery/backend/infra/cache/redis"
-	infraMySQL "github.com/yzletter/go-postery/backend/infra/db/mysql"
+	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
-	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraOSS "github.com/yzletter/go-postery/backend/infra/oss"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
@@ -36,135 +35,139 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	Service   = manager.UserService // 微服务名
+	GoPostery = "go_postery"        // GoPostery 公共配置前缀
+)
+
 var (
-	ServiceName  = "user_service" // 微服务名
-	GoPostery    = "go_postery"   // GoPostery 公共配置前缀
-	prefix       = ""
-	EtcdEndPoint string // etcd 地址
+	suffix       = ""
+	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
 )
 
 func main() {
-	// 启动参数, 默认线上环境
+	// 启动参数，默认线上环境
 	env := flag.String("env", "production", "运行环境: local/production")
 	flag.Parse()
 
 	ip, err := utils.GetLocalIP() // 获取本地内网 IP
 	if err != nil {
-		slog.Error("Get Local IP Failed", "error", err)
+		slog.Error("get local ip failed", "error", err)
 		panic(err)
 	}
 
 	// 本地测试
 	if *env == "local" {
-		prefix = "test_"
+		suffix = "_test"
 		ip = "localhost"
-		EtcdEndPoint = "localhost:12379"
-	} else {
-		EtcdEndPoint = "172.16.131.223:2379"
+		ETCDEndpoint = "localhost:12379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint}) // Init Etcd
+	// 配置中心
+	etcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // 初始化 Etcd
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, prefix+GoPostery+"_")
-	fmt.Printf("%s Init Common Config Success %+v\n", prefix+ServiceName, CommonMicroConf)
+	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	UserServiceConf := conf.LoadUserServiceConfig(ctx, EtcdClient, prefix+ServiceName+"_")
-	fmt.Printf("%s Init UserService Config Success %+v\n", prefix+ServiceName, UserServiceConf)
+	UserServiceConf := conf.LoadUserServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
-	// gRPC Common Infrastructure
-	infraSlog.InitSlog(UserServiceConf.Log)                                                   // Init Slog
-	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, prefix+ServiceName) // Init JaegerTracer
+	// 公共基础设施
+	infraSlog.InitSlog(UserServiceConf.Log) // 初始化日志
+	slog.Info("config loaded", "service", Service+suffix, "grpc_port", UserServiceConf.GRPC.Port, "metric_port", UserServiceConf.Metric.Port)
+	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service+suffix) // 初始化 Jaeger
 
-	// Infrastructure 层
-	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // Init Redis
+	// 基础设施层
+	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // 初始化 Redis
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL) // 初始化 MySQL
-	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化 雪花算法
+	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化雪花算法
 	OSSManager := infraOSS.Init(UserServiceConf.OSS)      // 初始化 OSS
-	FollowKafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, conf.UserKafkaTopic, conf.UserKafkaGroup)
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
 	// DAO 层
 	UserDAO := dao.NewUserDAO(MySQLGormDB)
-	FollowDAO := dao.NewFollowDAO(MySQLGormDB)
 	// Repository 层
-	UserRepo := repository.NewUserRepository(UserDAO, UserCache) // 注册 userRepo
-	FollowRepo := repository.NewFollowRepository(FollowDAO)      // 注册 FollowRepository
+	UserRepo := repository.NewUserRepository(UserDAO, UserCache) // 注册 UserRepository
+
+	// 服务注册中心
+	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
+
+	// gRPC Client 层
+	ETCDServiceHub.LoadEndpoints(ctx, manager.InteractiveService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.InteractiveService)
+	InteractiveManager := manager.NewInteractiveManager(manager.InteractiveService, ETCDServiceHub) // 注册 InteractiveClient
+	ETCDServiceHub.LoadEndpoints(ctx, manager.RankService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.RankService)
+	RankManager := manager.NewRankManager(manager.RankService, ETCDServiceHub) // 注册 RankClient
+
 	// Service 层
-	UserService := service.NewUserService(UserRepo, FollowRepo, FollowKafkaConsumer, OSSManager, IDGenerator) // 注册 userSvc
+	UserService := service.NewUserService(UserRepo, InteractiveManager, RankManager, OSSManager, IDGenerator) // 注册 UserService
 	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := pkg.NewMetricService(prefix + ServiceName)
+	MetricService := pkg.NewMetricService(Service + suffix) // 注册指标服务
 
-	// ServiceHub
-	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, EtcdClient, hub.NewRoundRobinLoadBalancer())
-
-	go UserService.StartInitUserScoreConsumer(ctx)
-
-	// gRPC Server
+	// gRPC Server 层
 	UserServiceServer := server.NewUserServiceServer(UserService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+suffix+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
-	user_grpc.RegisterUserServiceServer(ServiceRegistrar, UserServiceServer) // Register gRPC Service
+	user_grpc.RegisterUserServiceServer(ServiceRegistrar, UserServiceServer) // 注册 gRPC Service
 
-	// Prometheus
+	// Prometheus 指标服务
 	metricAddr := ip + ":" + UserServiceConf.Metric.Port
-	slog.Info("Metric Addr Get Success", "addr", metricAddr)
+	slog.Info("metric server address resolved", "addr", metricAddr)
 	go func() {
 		mux := http.NewServeMux()
-		// Metric
+		// 注册指标接口
 		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
 		if err := http.ListenAndServe(metricAddr, mux); err != nil {
-			slog.Error("Metric Server Failed", "error", err)
+			slog.Error("metric server failed", "addr", metricAddr, "error", err)
 		}
 	}()
 
 	grpcAddr := ip + ":" + UserServiceConf.GRPC.Port
-	slog.Info("gRPC Addr Get Success", "addr", grpcAddr)
+	slog.Info("grpc server address resolved", "addr", grpcAddr)
 	if lis, err := net.Listen("tcp", grpcAddr); err != nil {
 		panic(err)
 	} else {
 		go func() {
 			if err := ServiceRegistrar.Serve(lis); err != nil {
-				slog.Error("Service gRPC Server Start Failed", "service", prefix+ServiceName, "error", err)
+				slog.Error("grpc server failed", "service", Service+suffix, "addr", grpcAddr, "error", err)
 				panic(err)
 			}
 		}()
 	}
 
-	// 向服务中心注册服务, 这里不加前缀 prefix
-	leaseID, err := ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, 0)
+	// 向服务中心注册服务，这里不加环境后缀
+	leaseID, err := ETCDServiceHub.Register(ctx, Service, grpcAddr, 0)
 	if err != nil {
-		slog.Error("Service User Server Register Failed", "service", ServiceName, "error", err)
+		slog.Error("register user service failed", "service", Service, "addr", grpcAddr, "error", err)
 		panic(err)
 	}
 
 	// 自动续约
 	go func() {
 		for {
-			leaseID, err = ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, leaseID)
+			leaseID, err = ETCDServiceHub.Register(ctx, Service, grpcAddr, leaseID)
 			if err != nil {
-				slog.Error("Service User Server Register Failed", "service", ServiceName, "error", err)
+				slog.Error("renew user service registration failed", "service", Service, "addr", grpcAddr, "error", err)
 			}
 			time.Sleep(time.Duration(CommonMicroConf.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
 		}
 	}()
 
-	// Graceful Stop
+	// 优雅退出
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
 		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
-			if err := ETCDServiceHub.Unregister(ctx, ServiceName, grpcAddr); err != nil {
-				slog.Error("Service User Server Unregister Failed", "service", ServiceName, "error", err)
+			if err := ETCDServiceHub.Unregister(ctx, Service, grpcAddr); err != nil {
+				slog.Error("unregister user service failed", "service", Service, "addr", grpcAddr, "error", err)
 			}
 		}).
 		BuildBlock()
