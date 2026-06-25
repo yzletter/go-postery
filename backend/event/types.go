@@ -2,6 +2,14 @@ package event
 
 import "time"
 
+const (
+	OutboxEventStatusPending    = iota // 待发送
+	OutboxEventStatusProcessing        // 发送中
+	OutboxEventStatusSent              // 已发送
+	OutboxEventStatusRetry             // 需重试
+	OutboxEventStatusFailed            // 失败
+)
+
 // OutboxEvent 待投递 Outbox 消息事件
 type OutboxEvent struct {
 	ID           int64      `gorm:"column:id;primaryKey"` // 消息 ID
@@ -21,26 +29,15 @@ func (e OutboxEvent) TableName() string {
 	return "events"
 }
 
-const (
-	StatusEventPending    = iota // 待发送
-	StatusEventProcessing        // 发送中
-	StatusEventSent              // 已发送
-	StatusEventRetry             // 需重试
-	StatusEventFailed            // 失败
-)
-
-type RegisterSessionEventPayload struct {
-	UserID int64 `json:"user_id,string"`
+// ProcessedEvent 消费成功同时写幂等表
+type ProcessedEvent struct {
+	ID        int64     `gorm:"column:id;primaryKey"`
+	Consumer  string    `gorm:"column:consumer"`
+	EventID   int64     `gorm:"column:event_id"`
+	Topic     string    `gorm:"column:topic"`
+	CreatedAt time.Time `gorm:"column:created_at"`
 }
 
-type InitUserScoreEventPayload struct {
-	UserID int64 `json:"user_id,string"`
-}
-
-type NewPostPayload struct {
-	ID int64 `json:"id,string"`
-}
-
-type UpsertQdrantEventPayload struct {
-	BatchID int64 `json:"batch_id,string"`
+func (e ProcessedEvent) TableName() string {
+	return "proceed_events"
 }

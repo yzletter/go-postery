@@ -15,12 +15,3 @@ type Follow struct {
 func (f Follow) TableName() string {
 	return "follows"
 }
-
-type FollowType int
-
-const (
-	FollowNone FollowType = iota
-	FollowIFollow
-	FollowFollowMe
-	FollowMutual
-)
