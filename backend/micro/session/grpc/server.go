@@ -4,8 +4,9 @@ import (
 	"context"
 
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	"github.com/yzletter/go-postery/backend/micro/session/dto"
-	model2 "github.com/yzletter/go-postery/backend/micro/session/model"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
+	"github.com/yzletter/go-postery/backend/micro/session/domain"
+	"github.com/yzletter/go-postery/backend/micro/session/grpc/dto"
 	"github.com/yzletter/go-postery/backend/micro/session/service"
 	"github.com/yzletter/go-postery/backend/utils"
 )
@@ -44,6 +45,10 @@ func (server *SessionServiceServer) GetSession(ctx context.Context, id *session_
 }
 
 func (server *SessionServiceServer) GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error) {
+	if req == nil || req.PageNo == 0 || req.PageSize == 0 || req.PageSize > 100 {
+		return &session_grpc.GetHistoryMessagesByPageResponse{}, errs.ErrInvalidArgument
+	}
+
 	total, messages, err := server.svc.GetHistoryMessagesByPage(ctx, req.UserID, req.TargetID, int(req.PageNo), int(req.PageSize))
 	if err != nil {
 		return &session_grpc.GetHistoryMessagesByPageResponse{}, err
@@ -68,8 +73,8 @@ func (server *SessionServiceServer) Delete(ctx context.Context, req *session_grp
 }
 
 func (server *SessionServiceServer) UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
-	updates := model2.UpdateUnread{
-		Updates: model2.Updates{
+	updates := domain.UpdateUnread{
+		Updates: domain.Updates{
 			LastMessageID:   req.LastMessageID,
 			LastMessage:     req.LastMessage,
 			LastMessageTime: utils.RPCTimeToGoTime(req.LastMessageTime),
@@ -90,7 +95,7 @@ func (server *SessionServiceServer) ClearUnread(ctx context.Context, req *sessio
 }
 
 func (server *SessionServiceServer) CreateMessage(ctx context.Context, message *session_grpc.Message) (*session_grpc.Message, error) {
-	messageModel := &model2.Message{
+	messageDomain := domain.Message{
 		SessionID:   message.SessionID,
 		SessionType: int(message.SessionType),
 		MessageFrom: message.MessageFrom,
@@ -98,7 +103,7 @@ func (server *SessionServiceServer) CreateMessage(ctx context.Context, message *
 		Content:     message.Content,
 	}
 
-	created, err := server.svc.CreateMessage(ctx, messageModel)
+	created, err := server.svc.CreateMessage(ctx, messageDomain)
 	if err != nil {
 		return &session_grpc.Message{}, err
 	}

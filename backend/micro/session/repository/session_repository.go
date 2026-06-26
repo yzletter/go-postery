@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/backend/micro/session/model"
+	"github.com/yzletter/go-postery/backend/micro/session/domain"
 	"github.com/yzletter/go-postery/backend/micro/session/repository/dao"
 )
 
@@ -17,25 +17,33 @@ func NewSessionRepository(dao dao.SessionDAO) SessionRepository {
 	}
 }
 
-func (repo *sessionRepository) Create(ctx context.Context, session *model.Session) error {
-	err := repo.dao.Create(ctx, session)
-	if err != nil {
+func (repo *sessionRepository) Create(ctx context.Context, session ...domain.Session) error {
+	models := domain.ToModelSessions(session...)
+	if err := repo.dao.Create(ctx, models...); err != nil {
 		return toRepositoryErr(err)
 	}
 	return nil
 }
 
-func (repo *sessionRepository) GetByUidAndTargetID(ctx context.Context, uid, targetID int64) (*model.Session, error) {
+func (repo *sessionRepository) Recover(ctx context.Context, uid, targetID int64) (domain.Session, error) {
+	session, err := repo.dao.Recover(ctx, uid, targetID)
+	if err != nil {
+		return domain.Session{}, toRepositoryErr(err)
+	}
+	return domain.ToDomainSession(session), nil
+}
+
+func (repo *sessionRepository) GetByUidAndTargetID(ctx context.Context, uid, targetID int64) (domain.Session, error) {
 	// 查数据库
 	session, err := repo.dao.GetByUidAndTargetID(ctx, uid, targetID)
 	if err != nil {
-		return nil, toRepositoryErr(err)
+		return domain.Session{}, toRepositoryErr(err)
 	}
 
-	return session, nil
+	return domain.ToDomainSession(session), nil
 }
 
-func (repo *sessionRepository) ListByUid(ctx context.Context, uid int64) ([]*model.Session, error) {
+func (repo *sessionRepository) ListByUid(ctx context.Context, uid int64) ([]domain.Session, error) {
 	// todo 查缓存
 
 	// 查数据库
@@ -44,15 +52,15 @@ func (repo *sessionRepository) ListByUid(ctx context.Context, uid int64) ([]*mod
 		return nil, ErrServerInternal
 	}
 
-	return sessions, nil
+	return domain.ToDomainSessions(sessions), nil
 }
 
-func (repo *sessionRepository) GetByID(ctx context.Context, uid, sid int64) (*model.Session, error) {
+func (repo *sessionRepository) GetByID(ctx context.Context, uid, sid int64) (domain.Session, error) {
 	session, err := repo.dao.GetByID(ctx, uid, sid)
 	if err != nil {
-		return nil, toRepositoryErr(err)
+		return domain.Session{}, toRepositoryErr(err)
 	}
-	return session, nil
+	return domain.ToDomainSession(session), nil
 }
 
 func (repo *sessionRepository) Delete(ctx context.Context, uid, sid int64) error {
@@ -63,8 +71,8 @@ func (repo *sessionRepository) Delete(ctx context.Context, uid, sid int64) error
 	return nil
 }
 
-func (repo *sessionRepository) UpdateUnread(ctx context.Context, uid int64, sid int64, updates model.UpdateUnread) error {
-	err := repo.dao.UpdateUnread(ctx, uid, sid, updates)
+func (repo *sessionRepository) UpdateUnread(ctx context.Context, uid int64, sid int64, updates domain.UpdateUnread) error {
+	err := repo.dao.UpdateUnread(ctx, uid, sid, domain.ToModelUpdateUnread(updates))
 	if err != nil {
 		return toRepositoryErr(err)
 	}

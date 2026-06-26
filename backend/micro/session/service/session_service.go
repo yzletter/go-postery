@@ -10,21 +10,22 @@ import (
 	"github.com/bytedance/sonic"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
-	"github.com/yzletter/go-postery/backend/errs"
-	model2 "github.com/yzletter/go-postery/backend/micro/session/model"
-	repository2 "github.com/yzletter/go-postery/backend/micro/session/repository"
+	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
+	"github.com/yzletter/go-postery/backend/micro/session/domain"
+	repository "github.com/yzletter/go-postery/backend/micro/session/repository"
 	"github.com/yzletter/go-postery/backend/ports"
 )
 
 type sessionService struct {
-	sessionRepo   repository2.SessionRepository
-	messageRepo   repository2.MessageRepository
+	sessionRepo   repository.SessionRepository
+	messageRepo   repository.MessageRepository
 	mqConn        *amqp.Connection
 	kafkaConsumer *kafka.Reader
 	idGen         ports.IDGenerator
 }
 
-func NewSessionService(sessionRepo repository2.SessionRepository, messageRepo repository2.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
+func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
 	return &sessionService{
 		sessionRepo:   sessionRepo,
 		messageRepo:   messageRepo,
@@ -39,7 +40,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("关闭 Session Register Consumer 成功 ...")
+			slog.Info("session register consumer closed")
 			return
 		default:
 			message, err := svc.kafkaConsumer.FetchMessage(ctx)
@@ -48,7 +49,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 					return
 				}
 
-				slog.Error("Fetch Message From Kafka Failed", "Kafka", "SessionKafka", "error", err)
+				slog.Warn("fetch session register event failed", "backoff", backoff, "error", err)
 
 				// 简单退避，避免狂刷日志
 				time.Sleep(backoff)
@@ -59,26 +60,26 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 			}
 
 			backoff = time.Second
-			var payload model2.RegisterSessionEventPayload
+			var payload event.NewUserEventPayload
 			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
 				// 脏消息
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
-				_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把 脏消息 Commit 掉，避免卡住
+				slog.Warn("invalid session register event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
+				_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把脏消息 Commit 掉，避免卡住
 				continue
 			}
 
-			slog.Info("Read Kafka Message", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "key", string(message.Key), "value", string(message.Value))
+			slog.Info("session register event received", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "uid", payload.ID)
 
 			// 进行注册, 幂等
-			if err := svc.register(ctx, payload.UserID); err != nil {
-				slog.Error("Register Session Failed", "error", err)
+			if err := svc.register(ctx, payload.ID); err != nil {
+				slog.Error("register session queue failed", "uid", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
 				continue                // 不 commit -> 重试
 			}
 
 			// 把消息 Commit 掉
 			if err := svc.kafkaConsumer.CommitMessages(ctx, message); err != nil {
-				slog.Error("Commit Kafka Message Failed", "uid", payload.UserID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
+				slog.Error("commit session register event failed", "uid", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
@@ -87,37 +88,37 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 	}
 }
 
-func (svc *sessionService) ListByUID(ctx context.Context, userID int64) ([]*model2.Session, error) {
+func (svc *sessionService) ListByUID(ctx context.Context, userID int64) ([]domain.Session, error) {
 	sessions, err := svc.sessionRepo.ListByUid(ctx, userID)
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("list sessions failed", "user_id", userID, "error", err)
 		return nil, errs.ErrInternal
 	}
 
 	return sessions, nil
 }
 
-func (svc *sessionService) GetSession(ctx context.Context, userID int64, targetID int64) (*model2.Session, error) {
+func (svc *sessionService) GetSession(ctx context.Context, userID int64, targetID int64) (domain.Session, error) {
 	session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, userID, targetID)
 	if err != nil {
 		// 系统层面错误
-		if !errors.Is(err, repository2.ErrRecordNotFound) {
-			slog.Error("Server Internal Error", "error", err)
-			return nil, errs.ErrInternal
+		if !errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Error("get session failed", "user_id", userID, "target_id", targetID, "error", err)
+			return domain.Session{}, errs.ErrInternal
 		}
 
 		// 查找对方 session
 		session, err := svc.sessionRepo.GetByUidAndTargetID(ctx, targetID, userID)
 		if err != nil {
 			// 系统层面错误
-			if !errors.Is(err, repository2.ErrRecordNotFound) {
-				slog.Error("Server Internal Error", "error", err)
-				return nil, errs.ErrInternal
+			if !errors.Is(err, repository.ErrRecordNotFound) {
+				slog.Error("get peer session failed", "user_id", targetID, "target_id", userID, "error", err)
+				return domain.Session{}, errs.ErrInternal
 			}
 
 			// 双边都没找到，新建会话
 			ssid := svc.idGen.NextID()
-			newSession1 := &model2.Session{
+			newSession1 := domain.Session{
 				ID:         svc.idGen.NextID(),
 				SessionID:  ssid,
 				UserID:     userID,
@@ -125,7 +126,7 @@ func (svc *sessionService) GetSession(ctx context.Context, userID int64, targetI
 				TargetType: 1,
 			}
 
-			newSession2 := &model2.Session{
+			newSession2 := domain.Session{
 				ID:         svc.idGen.NextID(),
 				SessionID:  ssid,
 				UserID:     targetID,
@@ -133,45 +134,49 @@ func (svc *sessionService) GetSession(ctx context.Context, userID int64, targetI
 				TargetType: 1,
 			}
 
-			err = svc.sessionRepo.Create(ctx, newSession1)
-			if err != nil {
-				slog.Error("Server Internal Error", "error", err)
-				return nil, errs.ErrInternal
+			if err = svc.sessionRepo.Create(ctx, newSession1, newSession2); err != nil {
+				slog.Error("create session failed", "user_id", userID, "target_id", targetID, "session_id", ssid, "error", err)
+				return domain.Session{}, errs.ErrInternal
 			}
 
-			err = svc.sessionRepo.Create(ctx, newSession2)
-			if err != nil {
-				slog.Error("Server Internal Error", "error", err)
-				return nil, errs.ErrInternal
-			}
-			return newSession1, nil
-		} else {
-			// 对方的会话有，说明只有我单边删除，同一个 sessionID 单边新建
-			ssid := session.SessionID
-			newSession1 := &model2.Session{
-				ID:         svc.idGen.NextID(),
-				SessionID:  ssid,
-				UserID:     userID,
-				TargetID:   targetID,
-				TargetType: 1,
-			}
-
-			err = svc.sessionRepo.Create(ctx, newSession1)
-			if err != nil {
-				slog.Error("Server Internal Error", "error", err)
-				return nil, errs.ErrInternal
-			}
 			return newSession1, nil
 		}
+
+		// 对方的会话有，说明只有我单边删除，同一个 sessionID 单边恢复
+		ssid := session.SessionID
+		if session, err := svc.sessionRepo.Recover(ctx, userID, targetID); err == nil {
+			return session, nil
+		}
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Info("recover session skipped: deleted session not found", "user_id", userID, "target_id", targetID, "session_id", ssid)
+		} else {
+			slog.Warn("recover session failed", "user_id", userID, "target_id", targetID, "session_id", ssid, "error", err)
+		}
+
+		// 恢复失败进行创建
+		newSession1 := domain.Session{
+			ID:         svc.idGen.NextID(),
+			SessionID:  ssid,
+			UserID:     userID,
+			TargetID:   targetID,
+			TargetType: 1,
+		}
+
+		err = svc.sessionRepo.Create(ctx, newSession1)
+		if err != nil {
+			slog.Error("create one-side session failed", "user_id", userID, "target_id", targetID, "session_id", ssid, "error", err)
+			return domain.Session{}, errs.ErrInternal
+		}
+		return newSession1, nil
 	}
 
 	return session, nil
 }
 
-// Register 注册用户的 Exchange 和 Queue
+// register 注册用户的 Exchange 和 Queue
 func (svc *sessionService) register(ctx context.Context, uid int64) error {
 
-	// 定义 Exchange 和 Queue 名字
+	// 定义 Exchange 和 Queue 名称
 	exchangeName := fmt.Sprintf("%d_exchange", uid)
 	queueNameComputer := fmt.Sprintf("%d_computer", uid)
 	queueNameMobile := fmt.Sprintf("%d_mobile", uid)
@@ -179,6 +184,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 
 	ch, err := svc.mqConn.Channel()
 	if err != nil {
+		slog.Error("open rabbitmq channel failed", "uid", uid, "error", err)
 		return errs.ErrInternal
 	}
 	defer ch.Close()
@@ -194,7 +200,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 		nil)
 
 	if err != nil {
-		slog.Error("Exchange Declare Failed", "uid", uid)
+		slog.Error("declare session exchange failed", "uid", uid, "error", err)
 		return errs.ErrInternal
 	}
 
@@ -203,9 +209,9 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 		"x-dead-letter-exchange": "dlx",                        // 过期消息丢入死信队列
 	}
 	for _, queueName := range queueNames {
-		// 申明队列
+		// 声明队列
 		if _, err := ch.QueueDeclare(queueName, true, false, false, false, args); err != nil {
-			slog.Error("Queue Declare Failed", "uid", uid)
+			slog.Error("declare session queue failed", "uid", uid, "queue", queueName, "error", err)
 			return errs.ErrInternal
 		}
 
@@ -219,7 +225,7 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 		)
 
 		if err != nil {
-			slog.Error("Queue BindTag Failed", "queue_name", queueName)
+			slog.Error("bind session queue failed", "queue", queueName, "exchange", exchangeName, "error", err)
 			return errs.ErrInternal
 		}
 	}
@@ -227,10 +233,10 @@ func (svc *sessionService) register(ctx context.Context, uid int64) error {
 	return nil
 }
 
-func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, userID int64, targetID int64, pageNo int, pageSize int) (int64, []*model2.Message, error) {
+func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, userID int64, targetID int64, pageNo int, pageSize int) (int64, []domain.Message, error) {
 	total, messages, err := svc.messageRepo.GetByPage(ctx, userID, targetID, pageNo, pageSize)
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("get history messages failed", "user_id", userID, "target_id", targetID, "page_no", pageNo, "page_size", pageSize, "error", err)
 		return 0, nil, errs.ErrInternal
 	}
 
@@ -238,42 +244,42 @@ func (svc *sessionService) GetHistoryMessagesByPage(ctx context.Context, userID 
 }
 
 func (svc *sessionService) Delete(ctx context.Context, userID int64, sessionID int64) error {
-	// 查当前用户这边的会话
+	// 查当前用户侧会话
 	session, err := svc.sessionRepo.GetByID(ctx, userID, sessionID)
 	if err != nil {
 		// 幂等
-		if errors.Is(err, repository2.ErrRecordNotFound) {
-			slog.Error("Sesison Not Found", "error", err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Info("delete session skipped: session not found", "user_id", userID, "session_id", sessionID)
 			return nil
 		}
 		// 系统层面错误
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("get session before delete failed", "user_id", userID, "session_id", sessionID, "error", err)
 		return errs.ErrInternal
 	}
 
 	if session.UserID != userID {
-		slog.Error("Unauthenticated")
+		slog.Info("delete session rejected: unauthenticated", "user_id", userID, "session_id", sessionID)
 		return errs.ErrUnauthenticated
 	}
 
-	// 删除当前用户这边的会话, 要传 uid
+	// 软删除当前用户侧会话
 	if err := svc.sessionRepo.Delete(ctx, userID, sessionID); err != nil {
 		// 幂等
-		if errors.Is(err, repository2.ErrRecordNotFound) {
-			slog.Error("Sesison Not Found", "error", err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Info("delete session skipped: session not found", "user_id", userID, "session_id", sessionID)
 			return nil
 		}
 		// 系统层面错误
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("delete session failed", "user_id", userID, "session_id", sessionID, "error", err)
 		return errs.ErrInternal
 	}
 
 	return nil
 }
 
-func (svc *sessionService) UpdateUnread(ctx context.Context, userID int64, sessionID int64, updates model2.UpdateUnread) error {
+func (svc *sessionService) UpdateUnread(ctx context.Context, userID int64, sessionID int64, updates domain.UpdateUnread) error {
 	if err := svc.sessionRepo.UpdateUnread(ctx, userID, sessionID, updates); err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("update unread failed", "user_id", userID, "session_id", sessionID, "error", err)
 		return errs.ErrInternal
 	}
 	return nil
@@ -281,14 +287,14 @@ func (svc *sessionService) UpdateUnread(ctx context.Context, userID int64, sessi
 
 func (svc *sessionService) ClearUnread(ctx context.Context, userID int64, sessionID int64) error {
 	if err := svc.sessionRepo.ClearUnread(ctx, userID, sessionID); err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("clear unread failed", "user_id", userID, "session_id", sessionID, "error", err)
 		return errs.ErrInternal
 	}
 	return nil
 }
 
-func (svc *sessionService) CreateMessage(ctx context.Context, message *model2.Message) (*model2.Message, error) {
-	messageModel := &model2.Message{
+func (svc *sessionService) CreateMessage(ctx context.Context, message domain.Message) (domain.Message, error) {
+	messageModel := domain.Message{
 		ID:          svc.idGen.NextID(), // 补充 ID
 		SessionID:   message.SessionID,
 		SessionType: message.SessionType,
@@ -298,8 +304,8 @@ func (svc *sessionService) CreateMessage(ctx context.Context, message *model2.Me
 	}
 
 	if err := svc.messageRepo.Create(ctx, messageModel); err != nil {
-		slog.Error("Server Internal Error", "error", err)
-		return &model2.Message{}, errs.ErrInternal
+		slog.Error("create message failed", "session_id", message.SessionID, "from", message.MessageFrom, "to", message.MessageTo, "error", err)
+		return domain.Message{}, errs.ErrInternal
 	}
 
 	return messageModel, nil

@@ -4,21 +4,11 @@ import (
 	"time"
 
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	model2 "github.com/yzletter/go-postery/backend/micro/session/model"
+	"github.com/yzletter/go-postery/backend/micro/session/domain"
 )
 
-type DTO struct {
-	Content     string `json:"content"`
-	MessageFrom int64  `json:"message_from,string"`
-	MessageTo   int64  `json:"message_to,string"`
-	ID          int64  `json:"id,string"`
-	SessionID   int64  `json:"session_id,string"`
-	SessionType int    `json:"session_type"`
-	CreatedAt   string `json:"created_at"` // 创建时间
-}
-
-// ToMessage model.Message 转 session_grpc.Message
-func ToMessage(message *model2.Message) *session_grpc.Message {
+// ToMessage domain.Message 转 session_grpc.Message
+func ToMessage(message domain.Message) *session_grpc.Message {
 	return &session_grpc.Message{
 		ID:          message.ID,
 		SessionID:   message.SessionID,
@@ -30,10 +20,9 @@ func ToMessage(message *model2.Message) *session_grpc.Message {
 	}
 }
 
-// ToSession model 转 session_grpc.Session
-func ToSession(session *model2.Session) *session_grpc.Session {
+// ToSession domain.Session 转 session_grpc.Session
+func ToSession(session domain.Session) *session_grpc.Session {
 	return &session_grpc.Session{
-		//ID:              session.ID,
 		SessionID:       session.SessionID,
 		TargetID:        session.TargetID,
 		LastMessageID:   session.LastMessageID,
