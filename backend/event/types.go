@@ -2,6 +2,7 @@ package event
 
 import "time"
 
+// OutboxEvent 发送状态
 const (
 	OutboxEventStatusPending    = iota // 待发送
 	OutboxEventStatusProcessing        // 发送中
@@ -39,5 +40,5 @@ type ProcessedEvent struct {
 }
 
 func (e ProcessedEvent) TableName() string {
-	return "proceed_events"
+	return "processed_events"
 }
