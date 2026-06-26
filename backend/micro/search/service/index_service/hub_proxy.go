@@ -10,18 +10,55 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// ServiceHubInterface 服务注册中心要实现的接口, 代理通过继承实现该接口
+// ServiceHubInterface 服务注册中心接口, 代理通过组合实现该接口
 type ServiceHubInterface interface {
-	Register(service string, endpoint string, leaseID etcdv3.LeaseID) (etcdv3.LeaseID, error) // 注册服务
-	Unregister(service string, endpoint string) error                                         // 注销服务
-	GetServiceEndpoints(service string) []string                                              // 服务发现
-	GetServiceEndpoint(service string) string                                                 // 选择服务的一台endpoint
-	Close()                                                                                   //关闭etcd client connection
+	// Register 注册服务
+	//
+	// Parameter:
+	//	- service: 服务名
+	//	- endpoint: 服务节点
+	//	- leaseID: 租约 ID
+	//
+	// Return:
+	//	- etcdv3.LeaseID: 租约 ID
+	//	- error: 可能返回的错误
+	Register(service string, endpoint string, leaseID etcdv3.LeaseID) (etcdv3.LeaseID, error)
+
+	// Unregister 注销服务
+	//
+	// Parameter:
+	//	- service: 服务名
+	//	- endpoint: 服务节点
+	//
+	// Return:
+	//	- error: 可能返回的错误
+	Unregister(service string, endpoint string) error
+
+	// GetServiceEndpoints 服务发现
+	//
+	// Parameter:
+	//	- service: 服务名
+	//
+	// Return:
+	//	- []string: 服务节点列表
+	GetServiceEndpoints(service string) []string
+
+	// GetServiceEndpoint 选择服务的一个 endpoint
+	//
+	// Parameter:
+	//	- service: 服务名
+	//
+	// Return:
+	//	- string: 服务节点
+	GetServiceEndpoint(service string) string
+
+	// Close 关闭 etcd Client 连接
+	Close()
 }
 
-// ServiceHubProxy 代理模式, 提供缓存和限流服务
+// ServiceHubProxy 代理模式, 提供缓存和限流能力
 //
-// endpointCache 维护每一个service下的所有servers
+// endpointCache 维护每个 service 下的所有 endpoint
 //
 // limiter 限流服务
 type ServiceHubProxy struct {
@@ -37,11 +74,11 @@ var (
 
 // GetServiceHubProxy 构造函数
 //
-// etcdServers etcd 监听的地址
+// etcdServers etcd 监听地址
 //
 // heartbeatFrequency etcd 心跳上报周期, 单位为秒
 //
-// qps 每隔 1E9 / qps 纳秒产生一个令牌, 即一秒钟之内产生 qps 个令牌, 令牌桶的容量为 qps
+// qps 每秒产生 qps 个令牌, 令牌桶容量也为 qps
 func GetServiceHubProxy(etcdServers []string, heartbeatFrequency int64, qps int) *ServiceHubProxy {
 	proxyOnce.Do(func() {
 		serviceHub := GetServiceHub(etcdServers, heartbeatFrequency)
@@ -60,7 +97,7 @@ func GetServiceHubProxy(etcdServers []string, heartbeatFrequency int64, qps int)
 
 // GetServiceEndpoints 服务发现
 //
-// 把第一次查询 etcd 的结果缓存起来, 然后安装一个Watcher, 仅 etcd 数据变化时更新本地缓存，这样可以降低 etcd 的访问压力, 同时加上限流保护
+// 第一次查询 etcd 后写入缓存, 后续通过 Watch 更新缓存, 降低 etcd 访问压力
 //
 // service 服务名
 func (proxy *ServiceHubProxy) GetServiceEndpoints(service string) []string {
@@ -87,20 +124,20 @@ func (proxy *ServiceHubProxy) GetServiceEndpoints(service string) []string {
 func (proxy *ServiceHubProxy) watchEndpointsOfService(service string) {
 	ctx := context.Background()
 	if _, exists := proxy.watched.LoadOrStore(service, true); exists { // watched 从父类继承
-		return //监听过了，不用重复监听
+		return // 监听过了, 不用重复监听
 	}
 
 	// 拼接前缀
 	keyPrefix := strings.TrimRight(ServiceRootPath, "/") + "/" + service + "/"
 
-	// 根据前缀监听, 每一个修改都会放入管道ch
+	// 根据前缀监听, 每次修改都会放入 ch
 	ch := proxy.client.Watch(ctx, keyPrefix, etcdv3.WithPrefix())
 
 	go func() {
 		// 遍历 ch
 		for response := range ch {
-			for _, event := range response.Events { // Events 是切片
-				// 只需要 Key, 把 Key 按照 / 切分
+			for _, event := range response.Events {
+				// 只需要 Key, 把 Key 按 / 切分
 				segments := strings.Split(string(event.Kv.Key), "/")
 				if len(segments) > 2 {
 					service := segments[len(segments)-2] // 倒数第二个是服务名

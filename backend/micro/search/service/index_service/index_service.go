@@ -34,25 +34,25 @@ func (service *IndexServiceWorker) Init(DocNumEstimate int, DataDir string) erro
 func (service *IndexServiceWorker) Register(etcdServers []string, servicePort int) error {
 	// 参数校验
 	if len(etcdServers) <= 0 {
-		return errors.New("Invalid Etcd Servers")
+		return errors.New("invalid etcd servers")
 	} else if servicePort <= 1024 {
-		return errors.New("Invalid Service Port")
+		return errors.New("invalid service port")
 	}
 
 	// 获取本机内网 IP
 	localIP, err := utils.GetLocalIP()
 	if err != nil {
-		slog.Error("Get Local IP Failed", "error", err)
+		slog.Error("get local ip failed", "error", err)
 		panic(err)
 	}
-	localIP = "127.0.0.1" // TODO 单机模拟分布式时，把 localIP 写死为 127.0.0.1
+	localIP = "127.0.0.1" // TODO 单机模拟分布式时临时固定为 127.0.0.1
 
 	service.selfAddr = localIP + ":" + strconv.Itoa(servicePort)
 	var heartBeat int64 = 3                      // 每隔3秒上报一次心跳
 	hub := GetServiceHub(etcdServers, heartBeat) // 单例
 	leaseID, err := hub.Register(INDEX_SERVICE, service.selfAddr, 0)
 	if err != nil {
-		slog.Error("Index Service Register Failed", "error", err)
+		slog.Error("register search index worker failed", "addr", service.selfAddr, "error", err)
 		panic(err)
 	}
 	service.serviceHub = hub
@@ -60,7 +60,11 @@ func (service *IndexServiceWorker) Register(etcdServers []string, servicePort in
 	// 启动协程进行续约
 	go func() {
 		for {
-			hub.Register(INDEX_SERVICE, service.selfAddr, leaseID)
+			var err error
+			leaseID, err = hub.Register(INDEX_SERVICE, service.selfAddr, leaseID)
+			if err != nil {
+				slog.Error("renew search index worker failed", "addr", service.selfAddr, "lease_id", leaseID, "error", err)
+			}
 			time.Sleep(time.Duration(heartBeat)*time.Second - 100*time.Millisecond)
 		}
 	}()
@@ -76,26 +80,31 @@ func (service *IndexServiceWorker) Close() error {
 	return service.Indexer.Close()
 }
 
+// AddDoc 添加文档索引
 func (service *IndexServiceWorker) AddDoc(ctx context.Context, document *model.Document) (*AffectedCount, error) {
 	n, err := service.Indexer.AddDoc(document)
 	return &AffectedCount{Count: int32(n)}, err
 }
 
+// DeleteDoc 删除文档索引
 func (service *IndexServiceWorker) DeleteDoc(ctx context.Context, id *DocID) (*AffectedCount, error) {
 	n := service.Indexer.DeleteDoc(id.DocID)
 	return &AffectedCount{Count: int32(n)}, nil
 }
 
+// Search 搜索文档
 func (service *IndexServiceWorker) Search(ctx context.Context, request *SearchRequest) (*SearchResult, error) {
 	res := service.Indexer.Search(request.TermQuery, request.OnFlag, request.OffFlag, request.OrFlags)
 	return &SearchResult{Results: res}, nil
 }
 
+// Count 获取索引文档数量
 func (service *IndexServiceWorker) Count(ctx context.Context, request *CountRequest) (*AffectedCount, error) {
 	n := service.Indexer.Count()
 	return &AffectedCount{Count: int32(n)}, nil
 }
 
+// HealthCheck 健康检查
 func (service *IndexServiceWorker) HealthCheck(ctx context.Context, request *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return &HealthCheckResponse{}, nil
 }

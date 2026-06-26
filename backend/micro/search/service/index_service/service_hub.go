@@ -17,7 +17,7 @@ const (
 	ServiceRootPath = "/go-postery-search/index"
 )
 
-// ServiceHub 服务注册中心
+// ServiceHub 搜索索引 Worker 注册中心
 //
 // client etcd Client
 //
@@ -32,25 +32,25 @@ type ServiceHub struct {
 }
 
 var (
-	serviceHub *ServiceHub // 该全局变量包外不可见，包外想使用时通过 GetServiceHub() 获得
+	serviceHub *ServiceHub // 包级单例, 包外通过 GetServiceHub 获取
 	hubOnce    sync.Once
 )
 
 // GetServiceHub 构造函数
 //
-// etcdServers etcd 监听的地址
+// etcdServers etcd 监听地址
 //
 // heartbeatFrequency etcd 心跳上报周期, 单位为秒
 func GetServiceHub(etcdServers []string, heartbeatFrequency int64) *ServiceHub {
 	hubOnce.Do(func() {
 		client, err := etcdv3.New(etcdv3.Config{Endpoints: etcdServers, DialTimeout: 3 * time.Second})
 		if err != nil {
-			slog.Error("Init Etcd Failed", "error", err)
+			slog.Error("init search index etcd client failed", "error", err)
 			return
 		}
 		serviceHub = &ServiceHub{
 			client:             client,
-			heartbeatFrequency: heartbeatFrequency, // 租约的有效期
+			heartbeatFrequency: heartbeatFrequency, // 租约有效期
 			loadBalancer:       &RoundRobin{},
 		}
 	})
@@ -61,7 +61,7 @@ func GetServiceHub(etcdServers []string, heartbeatFrequency int64) *ServiceHub {
 //
 // service 服务名
 //
-// endpoint 微服务 server 的地址
+// endpoint 微服务 Server 地址
 //
 // leaseID 租约 ID, 首次注册时置为 0 即可
 func (hub *ServiceHub) Register(service string, endpoint string, leaseID etcdv3.LeaseID) (etcdv3.LeaseID, error) {
@@ -71,7 +71,7 @@ func (hub *ServiceHub) Register(service string, endpoint string, leaseID etcdv3.
 		newLease, err := hub.client.Grant(ctx, hub.heartbeatFrequency)
 		if err != nil {
 			// 初始化租约失败
-			slog.Error("Etcd Grant Lease False", "error", err)
+			slog.Error("grant search index lease failed", "service", service, "endpoint", endpoint, "error", err)
 			return 0, err
 		}
 		// 拼接 Key = ServiceRootPath / service / endpoint
@@ -79,7 +79,7 @@ func (hub *ServiceHub) Register(service string, endpoint string, leaseID etcdv3.
 
 		// 进行服务注册, 只需要 Key 不需要 Value
 		if _, err := hub.client.Put(ctx, key, "", etcdv3.WithLease(newLease.ID)); err != nil {
-			slog.Error("Service Register Failed", "error", err)
+			slog.Error("register search index worker failed", "service", service, "endpoint", endpoint, "error", err)
 			return 0, err
 		}
 
@@ -92,7 +92,7 @@ func (hub *ServiceHub) Register(service string, endpoint string, leaseID etcdv3.
 			// 租约不存在, 重新注册
 			return hub.Register(service, endpoint, 0)
 		}
-		slog.Error("Keep Lease Failed", "error", err)
+		slog.Error("renew search index lease failed", "service", service, "endpoint", endpoint, "lease_id", leaseID, "error", err)
 		return 0, err
 	}
 
@@ -104,15 +104,15 @@ func (hub *ServiceHub) Register(service string, endpoint string, leaseID etcdv3.
 //
 // service 服务名
 //
-// endpoint 微服务 server 的地址
+// endpoint 微服务 Server 地址
 func (hub *ServiceHub) Unregister(service string, endpoint string) error {
 	ctx := context.Background()
 
-	// 拼接 Key = ServiceRootPath + service + endpoint
+	// 拼接 Key = ServiceRootPath / service / endpoint
 	key := strings.TrimRight(ServiceRootPath, "/") + "/" + service + "/" + endpoint
 
 	if _, err := hub.client.Delete(ctx, key); err != nil {
-		slog.Error("Unregister Failed", "error", err)
+		slog.Error("unregister search index worker failed", "service", service, "endpoint", endpoint, "error", err)
 		return err
 	}
 
@@ -131,16 +131,16 @@ func (hub *ServiceHub) GetServiceEndpoints(service string) []string {
 	// 按前缀查找
 	resp, err := hub.client.Get(ctx, keyPrefix, etcdv3.WithPrefix())
 	if err != nil {
-		slog.Error("Get Service Endpoints Failed", "error", err)
+		slog.Error("get search index endpoints failed", "service", service, "error", err)
 		return nil
 	}
 
 	res := make([]string, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		// 只需要 Key, 把 Key 按照 / 切分
+		// 只需要 Key, 把 Key 按 / 切分
 		segments := strings.Split(string(kv.Key), "/")
 
-		// 最后一段记录答案
+		// 最后一段就是 endpoint
 		res = append(res, segments[len(segments)-1])
 	}
 

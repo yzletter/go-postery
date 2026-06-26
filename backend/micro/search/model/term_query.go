@@ -6,20 +6,20 @@ func NewTermQuery(field, word string) *TermQuery {
 	return &TermQuery{Keyword: &Keyword{Field: field, Word: word}}
 }
 
-func (q *TermQuery) And(querys ...*TermQuery) *TermQuery {
-	if len(querys) == 0 {
+func (q *TermQuery) And(queries ...*TermQuery) *TermQuery {
+	if len(queries) == 0 {
 		return q
 	}
 
 	// 构造 Must 数组
-	arr := make([]*TermQuery, 0, len(querys)+1)
+	arr := make([]*TermQuery, 0, len(queries)+1)
 	if !q.Empty() {
 		arr = append(arr, q)
 	}
 
-	// 遍历每个 Query
-	for _, query := range querys {
-		if !query.Empty() { // 排除空 Query
+	// 过滤空 Query
+	for _, query := range queries {
+		if !query.Empty() {
 			arr = append(arr, query)
 		}
 	}
@@ -27,20 +27,20 @@ func (q *TermQuery) And(querys ...*TermQuery) *TermQuery {
 	return &TermQuery{Must: arr}
 }
 
-func (q *TermQuery) Or(querys ...*TermQuery) *TermQuery {
-	if len(querys) == 0 {
+func (q *TermQuery) Or(queries ...*TermQuery) *TermQuery {
+	if len(queries) == 0 {
 		return q
 	}
 
 	// 构造 Should 数组
-	arr := make([]*TermQuery, 0, len(querys)+1)
+	arr := make([]*TermQuery, 0, len(queries)+1)
 	if !q.Empty() {
 		arr = append(arr, q)
 	}
 
-	// 遍历每个 Query
-	for _, query := range querys {
-		if !query.Empty() { // 排除空 Query
+	// 过滤空 Query
+	for _, query := range queries {
+		if !query.Empty() {
 			arr = append(arr, query)
 		}
 	}

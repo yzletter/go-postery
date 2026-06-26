@@ -25,13 +25,13 @@ func (index *BoltForwardIndex) AddBucket(bucket string) *BoltForwardIndex {
 }
 
 func (index *BoltForwardIndex) Open() error {
-	// 打开数据库
+	// 打开 BoltDB
 	db, err := bolt.Open(index.GetDbPath(), 0o600, bolt.DefaultOptions)
 	if err != nil {
 		return err
 	}
 
-	// 创建存储桶
+	// 初始化存储桶
 	if err := db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists(index.bucket)
 		return err
@@ -78,7 +78,7 @@ func (index *BoltForwardIndex) Get(k []byte) ([]byte, error) {
 	})
 
 	if len(value) == 0 {
-		return nil, errors.New("No Data")
+		return nil, errors.New("no data")
 	}
 
 	return value, nil
@@ -122,7 +122,7 @@ func (index *BoltForwardIndex) Has(k []byte) bool {
 		return nil
 	})
 
-	// b == nil
+	// 没有读到数据
 	if err != nil || string(value) == "" {
 		return false
 	}

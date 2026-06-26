@@ -27,7 +27,7 @@ type SkipListNodeValue struct {
 
 // NewSkipListReverseIndex 构造函数传入预估 Document 数量
 func NewSkipListReverseIndex(DocumentNumEstimate int) *SkipListReverseIndex {
-	// 以 CPU 核数 * 500 为小 Map 数
+	// 按 CPU 核数拆分小 Map, 降低并发写冲突
 	mp := utils.NewConcurrentMap(runtime.NumCPU()*500, DocumentNumEstimate)
 	locks := make([]sync.RWMutex, 1000)
 	return &SkipListReverseIndex{
@@ -38,18 +38,18 @@ func NewSkipListReverseIndex(DocumentNumEstimate int) *SkipListReverseIndex {
 
 // Add 添加倒排索引
 func (index *SkipListReverseIndex) Add(document *model2.Document) {
-	// 获取文档关键词
+	// 获取文档关键词列表
 	keywords := document.Keywords
 
 	// 给每个关键词的倒排链加上当前文档
 	for _, keyword := range keywords {
 		key := keyword.ToString()
 
-		// 获取锁
+		// 同一个关键词固定落到同一把锁
 		lock := index.getLock(key)
 		lock.Lock()
 
-		// 要插入的跳表节点 Value
+		// 写入跳表节点 Value
 		nodeValue := SkipListNodeValue{DocID: document.DocID, DocFeature: document.BitsFeature}
 
 		if value, exist := index.table.Get(key); !exist { // 不存在当前 Keyword 对应链表
@@ -141,7 +141,7 @@ func (index *SkipListReverseIndex) search(query *model2.TermQuery, onFlag uint64
 			list := value.(*skiplist.SkipList)
 			res := skiplist.New(skiplist.Uint64) // 答案
 
-			// 遍历倒排链所有节点进行过筛
+			// 遍历倒排链并按 BitsFeature 过筛
 			node := list.Front()
 			for node != nil {
 				indexID := node.Key().(uint64)
@@ -155,7 +155,7 @@ func (index *SkipListReverseIndex) search(query *model2.TermQuery, onFlag uint64
 			return res
 		}
 	} else if len(query.Must) > 0 {
-		// 对每个 Must 进行 search 后求交集
+		// Must 条件取交集
 		lists := make([]*skiplist.SkipList, 0, len(query.Must))
 		for _, q := range query.Must {
 			list := index.search(q, onFlag, offFlag, orFlags)
@@ -163,7 +163,7 @@ func (index *SkipListReverseIndex) search(query *model2.TermQuery, onFlag uint64
 		}
 		return intersectionOfSkipList(lists...)
 	} else if len(query.Should) > 0 {
-		// 对每个 Should 进行 search 后求并集
+		// Should 条件取并集
 		lists := make([]*skiplist.SkipList, 0, len(query.Should))
 		for _, q := range query.Should {
 			list := index.search(q, onFlag, offFlag, orFlags)
@@ -174,7 +174,7 @@ func (index *SkipListReverseIndex) search(query *model2.TermQuery, onFlag uint64
 	return nil
 }
 
-// 多跳表求交集
+// intersectionOfSkipList 多跳表求交集
 func intersectionOfSkipList(lists ...*skiplist.SkipList) *skiplist.SkipList {
 	if len(lists) == 0 {
 		return nil
@@ -237,7 +237,7 @@ func intersectionOfSkipList(lists ...*skiplist.SkipList) *skiplist.SkipList {
 	}
 }
 
-// 多跳表求并集
+// unionSetOfSkipList 多跳表求并集
 func unionSetOfSkipList(lists ...*skiplist.SkipList) *skiplist.SkipList {
 	if len(lists) == 0 {
 		return nil

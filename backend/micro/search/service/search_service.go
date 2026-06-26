@@ -10,7 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	"github.com/yzletter/go-postery/backend/errs"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	model2 "github.com/yzletter/go-postery/backend/micro/search/model"
 	"github.com/yzletter/go-postery/backend/micro/search/service/index_service"
@@ -36,17 +36,18 @@ func NewSearchService(kafkaConsumer *kafka.Reader, tokenizer ports.Tokenizer, id
 	}
 
 	if err := service.indexer.Init(5000000, "data/local_db/search"); err != nil {
-		slog.Error("Init Search Index Failed", "error", err)
+		slog.Error("init search index failed", "error", err)
 		return nil
 	}
-	service.indexer.LoadFromIndexFile() // 从正排中加载数据
+	loadedCount := service.indexer.LoadFromIndexFile() // 从正排中加载历史索引
+	slog.Info("search index loaded", "count", loadedCount)
 
 	return service
 }
 
 func (svc *searchService) Search(ctx context.Context, queries []string) ([]string, error) {
 	_ = ctx
-	// 构造搜索语句 不同空格之间的应该是和
+	// 构造搜索语句, 同一字段内多个词取交集, 标题和正文取并集
 	var searchQuery = new(model2.TermQuery)
 	var titleQuery = new(model2.TermQuery)
 	var contentQuery = new(model2.TermQuery)
@@ -84,9 +85,14 @@ func (svc *searchService) DeleteDoc(ctx context.Context, docID string) (int, err
 
 func (svc *searchService) AddDoc(ctx context.Context, doc *model2.Document) (int, error) {
 	_ = ctx
+	if doc == nil {
+		slog.Warn("empty search document, skip")
+		return 0, errs.ErrInvalidArgument
+	}
+
 	affectedCount, err := svc.indexer.AddDoc(doc)
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("add search document failed", "doc_id", doc.DocID, "keyword_count", len(doc.Keywords), "error", err)
 		return affectedCount, errs.ErrInternal
 	}
 	return affectedCount, nil
@@ -103,7 +109,7 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("关闭 Index Doc Consumer 成功 ...")
+			slog.Info("close search index event consumer success")
 			return
 		default:
 			// Fetch 消息
@@ -113,7 +119,7 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 					return
 				}
 
-				slog.Error("Fetch Message From Kafka Failed", "Kafka", "Search Kafka", "error", err)
+				slog.Warn("fetch search index event failed", "backoff", backoff, "error", err)
 
 				// 简单退避，避免狂刷日志
 				time.Sleep(backoff)
@@ -128,22 +134,24 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 			// 解析 JSON
 			var payload model2.IndexPayload
 			if err = sonic.Unmarshal(message.Value, &payload); err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
+				slog.Warn("invalid search index event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// 脏消息 Commit 掉
-				_ = svc.kafkaConsumer.CommitMessages(ctx, message)
+				if commitErr := svc.kafkaConsumer.CommitMessages(ctx, message); commitErr != nil {
+					slog.Error("commit invalid search index event failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", commitErr)
+				}
 				continue
 			}
 
 			// 消费消息
 			if err = svc.Index(ctx, payload.ID); err != nil {
-				slog.Error("Index Failed", "error", err)
+				slog.Error("index post failed", "post_id", payload.ID, "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
 				continue                // 不 commit -> 重试
 			}
 
 			// 消费成功, 把消息 Commit 掉
 			if err = svc.kafkaConsumer.CommitMessages(ctx, message); err != nil {
-				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
+				slog.Error("commit search index event failed", "post_id", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}
@@ -153,13 +161,13 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 
 // Index 为新 Post 建立索引
 func (svc *searchService) Index(ctx context.Context, postID int64) error {
-	// 读文本
+	// 查询帖子详情
 	post, err := svc.postClient.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{
 		PostID:     postID,
 		AddViewCnt: false,
 	})
 	if err != nil {
-		slog.Error("Post Service Unavailable", "error", err)
+		slog.Error("get post for search index failed", "post_id", postID, "error", err)
 		return errs.ErrUnavailable
 	}
 
@@ -175,15 +183,26 @@ func (svc *searchService) Index(ctx context.Context, postID int64) error {
 	keywords = append(keywords, titleKeywords...)
 	keywords = append(keywords, contentKeywords...)
 
-	// 建索引
-	bs, _ := sonic.Marshal(post) // todo 用 Protobuf
+	// 序列化原始帖子, 后续查询命中时可直接回源
+	bs, err := sonic.Marshal(post) // TODO 后续改为 Protobuf
+	if err != nil {
+		slog.Error("marshal post for search index failed", "post_id", postID, "error", err)
+		return errs.ErrInternal
+	}
+
+	// 写入索引
 	_, err = svc.indexer.AddDoc(&model2.Document{
 		IndexID:     svc.idGen.NextIDUint64(),
 		DocID:       strconv.FormatInt(postID, 10),
-		BitsFeature: 0, // todo 完善 Post BitsFeature
+		BitsFeature: 0, // TODO 后续补充 Post BitsFeature
 		Keywords:    keywords,
 		Bytes:       bs,
 	})
+	if err != nil {
+		slog.Error("add post to search index failed", "post_id", postID, "keyword_count", len(keywords), "error", err)
+		return errs.ErrInternal
+	}
+
 	return nil
 }
 

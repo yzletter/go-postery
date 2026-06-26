@@ -1,6 +1,7 @@
 package index_service
 
 import (
+	"errors"
 	"strings"
 	"sync/atomic"
 
@@ -38,20 +39,26 @@ func (indexer *Indexer) Close() error {
 
 func (indexer *Indexer) AddDoc(doc *model2.Document) (int, error) {
 	// 参数校验
+	if doc == nil {
+		return 0, errors.New("empty search document")
+	}
 	docID := strings.TrimSpace(doc.DocID)
 	if len(docID) == 0 {
-		return 0, nil
+		return 0, errors.New("empty search document id")
 	}
+	doc.DocID = docID
 
 	// 获取索引 ID
 	doc.IndexID = atomic.AddUint64(&indexer.maxIndexID, 1)
 
 	// 序列化后写入正排
 	key := []byte(docID)
-	value, _ := sonic.Marshal(doc)
-	err := indexer.forwardIndex.Set(key, value)
+	value, err := sonic.Marshal(doc)
 	if err != nil {
-		return 0, nil
+		return 0, err
+	}
+	if err = indexer.forwardIndex.Set(key, value); err != nil {
+		return 0, err
 	}
 
 	// 写入倒排
@@ -79,6 +86,7 @@ func (indexer *Indexer) DeleteDoc(docID string) int {
 
 	var document model2.Document
 	if err = sonic.Unmarshal(docBytes, &document); err != nil {
+		slog.Warn("invalid search document, skip delete", "doc_id", docID, "error", err)
 		return 0
 	}
 
@@ -89,6 +97,7 @@ func (indexer *Indexer) DeleteDoc(docID string) int {
 
 	// 删正排
 	if err = indexer.forwardIndex.Delete([]byte(docID)); err != nil {
+		slog.Error("delete forward index failed", "doc_id", docID, "error", err)
 		return 0
 	}
 
@@ -110,15 +119,16 @@ func (indexer *Indexer) Search(query *model2.TermQuery, onFlag uint64, offFlag u
 	// 找正排
 	docs, err := indexer.forwardIndex.BatchGet(keys)
 	if err != nil {
-		slog.Error("Read Forward Indexer Failed", "error", err)
+		slog.Error("read forward index failed", "doc_count", len(keys), "error", err)
 		return nil
 	}
 
 	res := make([]*model2.Document, 0, len(docIDs))
-	for _, docBytes := range docs {
+	for i, docBytes := range docs {
 		var document model2.Document
 		err = sonic.Unmarshal(docBytes, &document)
 		if err != nil {
+			slog.Warn("invalid search document, skip", "doc_id", string(keys[i]), "error", err)
 			continue
 		}
 		res = append(res, &document)
@@ -139,14 +149,17 @@ func (indexer *Indexer) Count() int {
 
 // LoadFromIndexFile 系统重启时，直接从正排里加载数据
 func (indexer *Indexer) LoadFromIndexFile() int {
-	cnt := indexer.forwardIndex.IterDB(func(k, v []byte) error {
+	loadedCount := 0
+	indexer.forwardIndex.IterDB(func(k, v []byte) error {
 		var document model2.Document
 		if err := sonic.Unmarshal(v, &document); err != nil {
-			return err
+			slog.Warn("invalid search index file document, skip", "doc_id", string(k), "error", err)
+			return nil
 		}
 		indexer.reverseIndex.Add(&document)
+		loadedCount++
 		return nil
 	})
 
-	return int(cnt)
+	return loadedCount
 }

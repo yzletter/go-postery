@@ -28,21 +28,21 @@ func (sentinel *Sentinel) AddDoc(doc *model2.Document) (int, error) {
 	// 根据负载均衡算法选中一个 Worker
 	endpoint := sentinel.hub.GetServiceEndpoint(INDEX_SERVICE)
 	if len(endpoint) <= 0 {
-		return 0, errors.New("Get Endpoint Failed")
+		return 0, errors.New("get search worker endpoint failed")
 	}
 
 	// 获取连接
 	conn := sentinel.getConn(endpoint)
 	if conn == nil {
-		return 0, errors.New("Get grpc Connection Failed")
+		return 0, errors.New("get search worker grpc connection failed")
 	}
 
 	// 构造 grpc 客户端
 	client := NewIndexServiceClient(conn)
 	affected, err := client.AddDoc(context.Background(), doc)
 	if err != nil {
-		slog.Error("Worker Delete Document Failed", "endpoint", endpoint, "error", err)
-		return 0, errors.New("Add Doc Failed")
+		slog.Error("add document on search worker failed", "endpoint", endpoint, "doc_id", doc.DocID, "error", err)
+		return 0, errors.New("add search document failed")
 	}
 
 	return int(affected.Count), nil
@@ -80,7 +80,7 @@ func (sentinel *Sentinel) DeleteDoc(docID string) int {
 			client := NewIndexServiceClient(conn)
 			affected, err := client.DeleteDoc(context.Background(), &DocID{DocID: docID})
 			if err != nil {
-				slog.Error("Worker Delete Document Failed", "endpoint", endpoint, "error", err)
+				slog.Error("delete document on search worker failed", "endpoint", endpoint, "doc_id", docID, "error", err)
 				return
 			}
 			if affected.Count > 0 {
@@ -107,7 +107,7 @@ func (sentinel *Sentinel) Search(query *model2.TermQuery, onFlag uint64, offFlag
 	res := make([]*model2.Document, 0, 1000)
 	resultCh := make(chan *model2.Document, 1000)
 
-	// 开启协程异步从每个 Worker 上进行计数
+	// 开启协程异步从每个 Worker 上进行搜索
 	for _, endpoint := range endpoints {
 		go func(endpoint string) {
 			defer wg.Done()
@@ -126,7 +126,7 @@ func (sentinel *Sentinel) Search(query *model2.TermQuery, onFlag uint64, offFlag
 				OrFlags:   orFlags,
 			})
 			if err != nil {
-				slog.Error("Worker Delete Document Failed", "endpoint", endpoint, "error", err)
+				slog.Error("search on index worker failed", "endpoint", endpoint, "error", err)
 				return
 			}
 			if len(searchResults.Results) > 0 {
@@ -147,7 +147,7 @@ func (sentinel *Sentinel) Search(query *model2.TermQuery, onFlag uint64, offFlag
 			}
 			res = append(res, doc)
 		}
-		allFinish <- struct{}{} //3
+		allFinish <- struct{}{}
 	}()
 
 	wg.Wait()
@@ -182,7 +182,7 @@ func (sentinel *Sentinel) Count() int {
 			client := NewIndexServiceClient(conn)
 			affected, err := client.Count(context.Background(), &CountRequest{})
 			if err != nil {
-				slog.Error("Worker Delete Document Failed", "endpoint", endpoint, "error", err)
+				slog.Error("count documents on search worker failed", "endpoint", endpoint, "error", err)
 				return
 			}
 			if affected.Count > 0 {
@@ -204,7 +204,7 @@ func NewSentinel(etcdServers []string) *Sentinel {
 	}
 }
 
-// Close 关闭各个 grpc client connection 和 etcd client connection
+// Close 关闭所有 gRPC Client 连接和 etcd 连接
 func (sentinel *Sentinel) Close() (err error) {
 	sentinel.connPool.Range(
 		func(key, value any) bool {
@@ -238,14 +238,14 @@ func (sentinel *Sentinel) getConn(endpoint string) *grpc.ClientConn {
 	}
 
 	conn, err := grpc.NewClient(endpoint,
-		grpc.WithTransportCredentials(insecure.NewCredentials()), // Credential即使为空，也必须设置
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // Credential 即使为空也必须设置
 		my_grpc.CircuitBreakerDialOption(),
 		grpc.WithKeepaliveParams(ka),
 		// grpc.WithBlock(),
-		// grpc.Dial是异步连接的，连接状态为正在连接。但如果你设置了 grpc.WithBlock 选项，就会阻塞等待（等待握手成功）。另外你需要注意，当未设置 grpc.WithBlock 时，ctx 超时控制对其无任何效果。
+		// grpc.Dial 是异步连接的, 未设置 grpc.WithBlock 时 ctx 超时控制不会生效
 	)
 	if err != nil {
-		slog.Error("New grpc Connection Failed", "error", err)
+		slog.Error("create search worker grpc connection failed", "endpoint", endpoint, "error", err)
 		return nil
 	}
 	sentinel.connPool.Store(endpoint, conn)

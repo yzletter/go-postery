@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -33,11 +32,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	Service   = manager.SearchService // 微服务名
+	GoPostery = "go_postery"          // GoPostery 公共配置前缀
+)
+
 var (
-	ServiceName  = "search_service" // 微服务名
-	GoPostery    = "go_postery"     // GoPostery 公共配置前缀
-	prefix       = ""
-	EtcdEndPoint string // etcd 地址
+	suffix       = ""
+	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
 )
 
 func main() {
@@ -47,104 +49,101 @@ func main() {
 
 	ip, err := utils.GetLocalIP() // 获取本地内网 IP
 	if err != nil {
-		slog.Error("Get Local IP Failed", "error", err)
+		slog.Error("get local ip failed", "error", err)
 		panic(err)
 	}
 
 	// 本地测试
 	if *env == "local" {
-		prefix = "test_"
+		suffix = "_test"
 		ip = "localhost"
-		EtcdEndPoint = "localhost:12379"
-	} else {
-		EtcdEndPoint = "172.16.131.223:2379"
+		ETCDEndpoint = "localhost:12379"
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{EtcdEndPoint}) // Init Etcd
+	// 初始化远程配置中心
+	etcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // 初始化 Etcd
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, prefix+GoPostery+"_")
-	fmt.Printf("%s Init Common Config Success %+v\n", prefix+ServiceName, CommonMicroConf)
+	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	SearchServiceConf := conf.LoadSearchServiceConfig(ctx, EtcdClient, prefix+ServiceName+"_")
-	fmt.Printf("%s Init SearchService Config Success %+v\n", prefix+ServiceName, SearchServiceConf)
+	SearchServiceConf := conf.LoadSearchServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
-	// gRPC Common Infrastructure
-	infraSlog.InitSlog(SearchServiceConf.Log)                                                 // Init Slog
-	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, prefix+ServiceName) // Init JaegerTracer
+	// gRPC 公共基础设施
+	infraSlog.InitSlog(SearchServiceConf.Log) // 初始化 Slog
+	slog.Info("config loaded", "service", Service+suffix, "grpc_port", SearchServiceConf.GRPC.Port, "metric_port", SearchServiceConf.Metric.Port)
+	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service+suffix) // 初始化 JaegerTracer
 
-	// Infrastructure
-	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // 初始化 Redis
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, conf.SearchKafkaTopic, conf.SearchKafkaGroup)
-	Tokenizer := tokenizer.NewJiebaTokenizer()          // 初始化分词器
+	// Infrastructure 层
+	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                         // 初始化 Redis
+	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, conf.SearchKafkaTopic, conf.SearchKafkaGroup) // 初始化 KafkaConsumer
+	//Tokenizer := tokenizer.NewJiebaTokenizer()                                                                    // 初始化分词器
+	Tokenizer := tokenizer.NewSegoTokenizer()           // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
 
-	// ServiceHub
-	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, EtcdClient, hub.NewRoundRobinLoadBalancer())
+	// ServiceHub 层
+	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
-	// gRPC Client
-	PostServiceName := "post_service"
-	ETCDServiceHub.LoadEndpoints(ctx, PostServiceName)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, PostServiceName)
-	PostManager := manager.NewPostManager(PostServiceName, ETCDServiceHub)
+	// gRPC Client 层
+	ETCDServiceHub.LoadEndpoints(ctx, manager.PostService)
+	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.PostService)
+	PostManager := manager.NewPostManager(manager.PostService, ETCDServiceHub)
 
 	// Service 层
 	SearchService := service.NewSearchService(KafkaConsumer, Tokenizer, IDGenerator, PostManager)
 	go SearchService.StartConsumer(ctx) // 开启协程消费消息对新文章进行索引
 
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := pkg.NewMetricService(prefix + ServiceName)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10) // 注册限流服务
+	MetricService := pkg.NewMetricService(Service + suffix)                         // 注册 MetricService
 
 	// gRPC Server
 	SearchServiceServer := server.NewSearchServiceServer(SearchService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(prefix+ServiceName+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+suffix+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
-	search_grpc.RegisterSearchServiceServer(ServiceRegistrar, SearchServiceServer) // Register gRPC Service
+	search_grpc.RegisterSearchServiceServer(ServiceRegistrar, SearchServiceServer) // 注册 gRPC Service
 
 	// Prometheus
 	metricAddr := ip + ":" + SearchServiceConf.Metric.Port
-	slog.Info("Metric Addr Get Success", "addr", metricAddr)
+	slog.Info("metric server address resolved", "addr", metricAddr)
 	go func() {
 		mux := http.NewServeMux()
-		// Metric
+		// 注册 Metric 路由
 		mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) { promhttp.Handler().ServeHTTP(w, r) })
 		if err := http.ListenAndServe(metricAddr, mux); err != nil {
-			slog.Error("Metric Server Failed", "error", err)
+			slog.Error("metric server failed", "addr", metricAddr, "error", err)
 		}
 	}()
 
 	grpcAddr := ip + ":" + SearchServiceConf.GRPC.Port
-	slog.Info("gRPC Addr Get Success", "addr", grpcAddr)
+	slog.Info("grpc server address resolved", "addr", grpcAddr)
 	if lis, err := net.Listen("tcp", grpcAddr); err != nil {
 		panic(err)
 	} else {
 		go func() {
 			if err := ServiceRegistrar.Serve(lis); err != nil {
-				slog.Error("Service gRPC Server Start Failed", "service", prefix+ServiceName, "error", err)
+				slog.Error("grpc server failed", "service", Service+suffix, "addr", grpcAddr, "error", err)
 				panic(err)
 			}
 		}()
 	}
 
-	// 向服务中心注册服务, 这里不加前缀 prefix
-	leaseID, err := ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, 0)
+	// 向服务中心注册服务, 这里不加环境后缀
+	leaseID, err := ETCDServiceHub.Register(ctx, Service, grpcAddr, 0)
 	if err != nil {
-		slog.Error("Service Search Server Register Failed", "service", ServiceName, "error", err)
+		slog.Error("register search service failed", "service", Service, "addr", grpcAddr, "error", err)
 		panic(err)
 	}
 
 	// 自动续约
 	go func() {
 		for {
-			leaseID, err = ETCDServiceHub.Register(ctx, ServiceName, grpcAddr, leaseID)
+			leaseID, err = ETCDServiceHub.Register(ctx, Service, grpcAddr, leaseID)
 			if err != nil {
-				slog.Error("Service Search Server Register Failed", "service", ServiceName, "error", err)
+				slog.Error("renew search service registration failed", "service", Service, "addr", grpcAddr, "error", err)
 			}
 			time.Sleep(time.Duration(CommonMicroConf.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
 		}
@@ -157,8 +156,8 @@ func main() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
-			if err := ETCDServiceHub.Unregister(ctx, ServiceName, grpcAddr); err != nil {
-				slog.Error("Service Search Server Unregister Failed", "service", ServiceName, "error", err)
+			if err := ETCDServiceHub.Unregister(ctx, Service, grpcAddr); err != nil {
+				slog.Error("unregister search service failed", "service", Service, "addr", grpcAddr, "error", err)
 			}
 		}).
 		BuildBlock()
