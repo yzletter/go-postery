@@ -83,7 +83,7 @@ type LogConfig struct {
 	FilePath string
 }
 
-type GRPCConfig struct {
+type GrpcConfig struct {
 	Port string
 }
 

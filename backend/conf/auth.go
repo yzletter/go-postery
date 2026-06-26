@@ -3,6 +3,7 @@ package conf
 import (
 	"context"
 
+	"github.com/yzletter/go-postery/backend/micro/code/domain"
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -10,17 +11,17 @@ const (
 	UserIDInContext = "user_id" // uid 在上下文中的 Name
 )
 
-type CodeBiz int
+type CodeBiz = domain.BizType
 
 const (
-	SMSCode CodeBiz = iota + 1
-	EmailCode
+	CodeBizSMS   CodeBiz = domain.BizSMS
+	CodeBizEmail CodeBiz = domain.BizEmail
 )
 
 type AuthServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 }
 
 // LoadAuthServiceConfig 加载 AuthService 的非公共配置。

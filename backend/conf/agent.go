@@ -16,7 +16,7 @@ const (
 type AgentServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 	Ark    ArkConfig
 }
 

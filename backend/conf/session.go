@@ -14,7 +14,7 @@ const (
 type SessionServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 }
 
 func LoadSessionServiceConfig(ctx context.Context, client *etcdv3.Client, prefix string) SessionServiceConfig {

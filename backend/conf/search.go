@@ -7,14 +7,16 @@ import (
 )
 
 const (
+	// SearchKafkaTopic 搜索索引消息 Topic
 	SearchKafkaTopic = "index_search"
+	// SearchKafkaGroup 搜索索引消费者组
 	SearchKafkaGroup = "search_index"
 )
 
 type SearchServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 }
 
 func LoadSearchServiceConfig(ctx context.Context, client *etcdv3.Client, prefix string) SearchServiceConfig {

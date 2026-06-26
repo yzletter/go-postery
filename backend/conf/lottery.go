@@ -18,7 +18,7 @@ const (
 type LotteryServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 }
 
 // LoadLotteryServiceConfig 加载 LotteryService 的非公共配置。

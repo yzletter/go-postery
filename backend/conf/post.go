@@ -9,7 +9,7 @@ import (
 type PostServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 }
 
 // LoadPostServiceConfig 加载 PostService 的非公共配置。

@@ -413,8 +413,8 @@ func loadLogConfig(ctx context.Context, client *etcdv3.Client, prefix string) Lo
 	return config
 }
 
-func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) GRPCConfig {
-	var config GRPCConfig
+func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) GrpcConfig {
+	var config GrpcConfig
 
 	// 获取 gRPC 端口
 	if resp, err := client.Get(ctx, prefix+"grpc_port"); err == nil {

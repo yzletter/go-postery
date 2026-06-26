@@ -15,14 +15,14 @@ const (
 
 // 邮箱验证码
 const (
-	SendEmailInterval = 60
-	EmailValidTime    = 600
-	EmailCodePrefix   = "email:code:"
+	SendEmailInterval = 60            // 发送间隔
+	EmailValidTime    = 600           // 有效时间
+	EmailCodePrefix   = "email:code:" // 前缀
 )
 
 type CodeServiceConfig struct {
 	Metric MetricConfig
-	GRPC   GRPCConfig
+	GRPC   GrpcConfig
 	Email  EmailConfig
 	SMS    SMSConfig
 	Log    LogConfig
