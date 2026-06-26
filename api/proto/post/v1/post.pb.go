@@ -141,6 +141,7 @@ type PostBrief struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ID            int64                  `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	Title         string                 `protobuf:"bytes,5,opt,name=Title,proto3" json:"Title,omitempty"`
+	Abstract      string                 `protobuf:"bytes,6,opt,name=Abstract,proto3" json:"Abstract,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,8,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
 	UserID        int64                  `protobuf:"varint,9,opt,name=UserID,proto3" json:"UserID,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -187,6 +188,13 @@ func (x *PostBrief) GetID() int64 {
 func (x *PostBrief) GetTitle() string {
 	if x != nil {
 		return x.Title
+	}
+	return ""
+}
+
+func (x *PostBrief) GetAbstract() string {
+	if x != nil {
+		return x.Abstract
 	}
 	return ""
 }
@@ -965,6 +973,94 @@ func (x *TopResponse) GetTopPosts() []*TopPost {
 	return nil
 }
 
+type GetPostByTimeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TimeAt        string                 `protobuf:"bytes,1,opt,name=TimeAt,proto3" json:"TimeAt,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPostByTimeRequest) Reset() {
+	*x = GetPostByTimeRequest{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPostByTimeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPostByTimeRequest) ProtoMessage() {}
+
+func (x *GetPostByTimeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPostByTimeRequest.ProtoReflect.Descriptor instead.
+func (*GetPostByTimeRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetPostByTimeRequest) GetTimeAt() string {
+	if x != nil {
+		return x.TimeAt
+	}
+	return ""
+}
+
+type PostIDs struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IDs           []int64                `protobuf:"varint,1,rep,packed,name=IDs,proto3" json:"IDs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PostIDs) Reset() {
+	*x = PostIDs{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PostIDs) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostIDs) ProtoMessage() {}
+
+func (x *PostIDs) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostIDs.ProtoReflect.Descriptor instead.
+func (*PostIDs) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *PostIDs) GetIDs() []int64 {
+	if x != nil {
+		return x.IDs
+	}
+	return nil
+}
+
 type PostEmptyResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -973,7 +1069,7 @@ type PostEmptyResponse struct {
 
 func (x *PostEmptyResponse) Reset() {
 	*x = PostEmptyResponse{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[16]
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -985,7 +1081,7 @@ func (x *PostEmptyResponse) String() string {
 func (*PostEmptyResponse) ProtoMessage() {}
 
 func (x *PostEmptyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[16]
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -998,31 +1094,31 @@ func (x *PostEmptyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostEmptyResponse.ProtoReflect.Descriptor instead.
 func (*PostEmptyResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{16}
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{18}
 }
 
-type IfLikeResponse struct {
+type ExistPostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Result        bool                   `protobuf:"varint,1,opt,name=Result,proto3" json:"Result,omitempty"`
+	PostID        int64                  `protobuf:"varint,1,opt,name=PostID,proto3" json:"PostID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *IfLikeResponse) Reset() {
-	*x = IfLikeResponse{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[17]
+func (x *ExistPostRequest) Reset() {
+	*x = ExistPostRequest{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *IfLikeResponse) String() string {
+func (x *ExistPostRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*IfLikeResponse) ProtoMessage() {}
+func (*ExistPostRequest) ProtoMessage() {}
 
-func (x *IfLikeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[17]
+func (x *ExistPostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1033,252 +1129,84 @@ func (x *IfLikeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use IfLikeResponse.ProtoReflect.Descriptor instead.
-func (*IfLikeResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{17}
+// Deprecated: Use ExistPostRequest.ProtoReflect.Descriptor instead.
+func (*ExistPostRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *IfLikeResponse) GetResult() bool {
+func (x *ExistPostRequest) GetPostID() int64 {
 	if x != nil {
-		return x.Result
+		return x.PostID
+	}
+	return 0
+}
+
+type ExistPostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Exist         bool                   `protobuf:"varint,1,opt,name=Exist,proto3" json:"Exist,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExistPostResponse) Reset() {
+	*x = ExistPostResponse{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExistPostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExistPostResponse) ProtoMessage() {}
+
+func (x *ExistPostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExistPostResponse.ProtoReflect.Descriptor instead.
+func (*ExistPostResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ExistPostResponse) GetExist() bool {
+	if x != nil {
+		return x.Exist
 	}
 	return false
 }
 
-type ListCommentByPageRequest struct {
+type CheckPostAuthRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PostID        int64                  `protobuf:"varint,1,opt,name=PostID,proto3" json:"PostID,omitempty"`
-	PageNo        uint32                 `protobuf:"varint,2,opt,name=PageNo,proto3" json:"PageNo,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,3,opt,name=PageSize,proto3" json:"PageSize,omitempty"`
+	UserID        int64                  `protobuf:"varint,2,opt,name=UserID,proto3" json:"UserID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListCommentByPageRequest) Reset() {
-	*x = ListCommentByPageRequest{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListCommentByPageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListCommentByPageRequest) ProtoMessage() {}
-
-func (x *ListCommentByPageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListCommentByPageRequest.ProtoReflect.Descriptor instead.
-func (*ListCommentByPageRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *ListCommentByPageRequest) GetPostID() int64 {
-	if x != nil {
-		return x.PostID
-	}
-	return 0
-}
-
-func (x *ListCommentByPageRequest) GetPageNo() uint32 {
-	if x != nil {
-		return x.PageNo
-	}
-	return 0
-}
-
-func (x *ListCommentByPageRequest) GetPageSize() uint32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-type ListReplyByPageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CommentID     int64                  `protobuf:"varint,1,opt,name=CommentID,proto3" json:"CommentID,omitempty"`
-	PageNo        uint32                 `protobuf:"varint,2,opt,name=PageNo,proto3" json:"PageNo,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,3,opt,name=PageSize,proto3" json:"PageSize,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListReplyByPageRequest) Reset() {
-	*x = ListReplyByPageRequest{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListReplyByPageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListReplyByPageRequest) ProtoMessage() {}
-
-func (x *ListReplyByPageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListReplyByPageRequest.ProtoReflect.Descriptor instead.
-func (*ListReplyByPageRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *ListReplyByPageRequest) GetCommentID() int64 {
-	if x != nil {
-		return x.CommentID
-	}
-	return 0
-}
-
-func (x *ListReplyByPageRequest) GetPageNo() uint32 {
-	if x != nil {
-		return x.PageNo
-	}
-	return 0
-}
-
-func (x *ListReplyByPageRequest) GetPageSize() uint32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-type Comment struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ID            int64                  `protobuf:"varint,1,opt,name=ID,proto3" json:"ID,omitempty"`
-	PostID        int64                  `protobuf:"varint,2,opt,name=PostID,proto3" json:"PostID,omitempty"`
-	ParentID      int64                  `protobuf:"varint,3,opt,name=ParentID,proto3" json:"ParentID,omitempty"`
-	ReplyID       int64                  `protobuf:"varint,4,opt,name=ReplyID,proto3" json:"ReplyID,omitempty"`
-	UserID        int64                  `protobuf:"varint,5,opt,name=UserID,proto3" json:"UserID,omitempty"`
-	Content       string                 `protobuf:"bytes,6,opt,name=Content,proto3" json:"Content,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,7,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Comment) Reset() {
-	*x = Comment{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Comment) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Comment) ProtoMessage() {}
-
-func (x *Comment) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Comment.ProtoReflect.Descriptor instead.
-func (*Comment) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *Comment) GetID() int64 {
-	if x != nil {
-		return x.ID
-	}
-	return 0
-}
-
-func (x *Comment) GetPostID() int64 {
-	if x != nil {
-		return x.PostID
-	}
-	return 0
-}
-
-func (x *Comment) GetParentID() int64 {
-	if x != nil {
-		return x.ParentID
-	}
-	return 0
-}
-
-func (x *Comment) GetReplyID() int64 {
-	if x != nil {
-		return x.ReplyID
-	}
-	return 0
-}
-
-func (x *Comment) GetUserID() int64 {
-	if x != nil {
-		return x.UserID
-	}
-	return 0
-}
-
-func (x *Comment) GetContent() string {
-	if x != nil {
-		return x.Content
-	}
-	return ""
-}
-
-func (x *Comment) GetCreatedAt() string {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return ""
-}
-
-type CommentsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Count         uint64                 `protobuf:"varint,1,opt,name=Count,proto3" json:"Count,omitempty"`
-	Comments      []*Comment             `protobuf:"bytes,2,rep,name=Comments,proto3" json:"Comments,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CommentsResponse) Reset() {
-	*x = CommentsResponse{}
+func (x *CheckPostAuthRequest) Reset() {
+	*x = CheckPostAuthRequest{}
 	mi := &file_api_proto_post_v1_post_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CommentsResponse) String() string {
+func (x *CheckPostAuthRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CommentsResponse) ProtoMessage() {}
+func (*CheckPostAuthRequest) ProtoMessage() {}
 
-func (x *CommentsResponse) ProtoReflect() protoreflect.Message {
+func (x *CheckPostAuthRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_api_proto_post_v1_post_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1290,124 +1218,47 @@ func (x *CommentsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CommentsResponse.ProtoReflect.Descriptor instead.
-func (*CommentsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CheckPostAuthRequest.ProtoReflect.Descriptor instead.
+func (*CheckPostAuthRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *CommentsResponse) GetCount() uint64 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
-}
-
-func (x *CommentsResponse) GetComments() []*Comment {
-	if x != nil {
-		return x.Comments
-	}
-	return nil
-}
-
-type CreateCommentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PostID        int64                  `protobuf:"varint,2,opt,name=PostID,proto3" json:"PostID,omitempty"`
-	ParentID      int64                  `protobuf:"varint,3,opt,name=ParentID,proto3" json:"ParentID,omitempty"`
-	ReplyID       int64                  `protobuf:"varint,4,opt,name=ReplyID,proto3" json:"ReplyID,omitempty"`
-	UserID        int64                  `protobuf:"varint,5,opt,name=UserID,proto3" json:"UserID,omitempty"`
-	Content       string                 `protobuf:"bytes,6,opt,name=Content,proto3" json:"Content,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateCommentRequest) Reset() {
-	*x = CreateCommentRequest{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateCommentRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateCommentRequest) ProtoMessage() {}
-
-func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateCommentRequest.ProtoReflect.Descriptor instead.
-func (*CreateCommentRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *CreateCommentRequest) GetPostID() int64 {
+func (x *CheckPostAuthRequest) GetPostID() int64 {
 	if x != nil {
 		return x.PostID
 	}
 	return 0
 }
 
-func (x *CreateCommentRequest) GetParentID() int64 {
-	if x != nil {
-		return x.ParentID
-	}
-	return 0
-}
-
-func (x *CreateCommentRequest) GetReplyID() int64 {
-	if x != nil {
-		return x.ReplyID
-	}
-	return 0
-}
-
-func (x *CreateCommentRequest) GetUserID() int64 {
+func (x *CheckPostAuthRequest) GetUserID() int64 {
 	if x != nil {
 		return x.UserID
 	}
 	return 0
 }
 
-func (x *CreateCommentRequest) GetContent() string {
-	if x != nil {
-		return x.Content
-	}
-	return ""
-}
-
-type DeleteCommentRequest struct {
+type CheckPostAuthResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
-	CommentID     int64                  `protobuf:"varint,2,opt,name=CommentID,proto3" json:"CommentID,omitempty"`
+	Exist         bool                   `protobuf:"varint,1,opt,name=Exist,proto3" json:"Exist,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteCommentRequest) Reset() {
-	*x = DeleteCommentRequest{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[23]
+func (x *CheckPostAuthResponse) Reset() {
+	*x = CheckPostAuthResponse{}
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteCommentRequest) String() string {
+func (x *CheckPostAuthResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteCommentRequest) ProtoMessage() {}
+func (*CheckPostAuthResponse) ProtoMessage() {}
 
-func (x *DeleteCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[23]
+func (x *CheckPostAuthResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1418,75 +1269,16 @@ func (x *DeleteCommentRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteCommentRequest.ProtoReflect.Descriptor instead.
-func (*DeleteCommentRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{23}
+// Deprecated: Use CheckPostAuthResponse.ProtoReflect.Descriptor instead.
+func (*CheckPostAuthResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *DeleteCommentRequest) GetUserID() int64 {
+func (x *CheckPostAuthResponse) GetExist() bool {
 	if x != nil {
-		return x.UserID
+		return x.Exist
 	}
-	return 0
-}
-
-func (x *DeleteCommentRequest) GetCommentID() int64 {
-	if x != nil {
-		return x.CommentID
-	}
-	return 0
-}
-
-type CommentBelongRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
-	CommentID     int64                  `protobuf:"varint,2,opt,name=CommentID,proto3" json:"CommentID,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CommentBelongRequest) Reset() {
-	*x = CommentBelongRequest{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CommentBelongRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CommentBelongRequest) ProtoMessage() {}
-
-func (x *CommentBelongRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CommentBelongRequest.ProtoReflect.Descriptor instead.
-func (*CommentBelongRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *CommentBelongRequest) GetUserID() int64 {
-	if x != nil {
-		return x.UserID
-	}
-	return 0
-}
-
-func (x *CommentBelongRequest) GetCommentID() int64 {
-	if x != nil {
-		return x.CommentID
-	}
-	return 0
+	return false
 }
 
 type HealthCheckRequest struct {
@@ -1497,7 +1289,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[25]
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1509,7 +1301,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[25]
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1522,7 +1314,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{25}
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{23}
 }
 
 type HealthCheckResponse struct {
@@ -1533,7 +1325,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[26]
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1545,7 +1337,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_post_v1_post_proto_msgTypes[26]
+	mi := &file_api_proto_post_v1_post_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1558,7 +1350,7 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{26}
+	return file_api_proto_post_v1_post_proto_rawDescGZIP(), []int{24}
 }
 
 var File_api_proto_post_v1_post_proto protoreflect.FileDescriptor
@@ -1578,10 +1370,11 @@ const file_api_proto_post_v1_post_proto_rawDesc = "" +
 	"\tCreatedAt\x18\b \x01(\tR\tCreatedAt\x12\x16\n" +
 	"\x06UserID\x18\t \x01(\x03R\x06UserID\x12\x12\n" +
 	"\x04Tags\x18\n" +
-	" \x03(\tR\x04Tags\"g\n" +
+	" \x03(\tR\x04Tags\"\x83\x01\n" +
 	"\tPostBrief\x12\x0e\n" +
 	"\x02ID\x18\x01 \x01(\x03R\x02ID\x12\x14\n" +
-	"\x05Title\x18\x05 \x01(\tR\x05Title\x12\x1c\n" +
+	"\x05Title\x18\x05 \x01(\tR\x05Title\x12\x1a\n" +
+	"\bAbstract\x18\x06 \x01(\tR\bAbstract\x12\x1c\n" +
 	"\tCreatedAt\x18\b \x01(\tR\tCreatedAt\x12\x16\n" +
 	"\x06UserID\x18\t \x01(\x03R\x06UserID\"E\n" +
 	"\aTopPost\x12\x0e\n" +
@@ -1633,64 +1426,38 @@ const file_api_proto_post_v1_post_proto_rawDesc = "" +
 	"\x0eBelongResponse\x12\x16\n" +
 	"\x06Result\x18\x01 \x01(\bR\x06Result\";\n" +
 	"\vTopResponse\x12,\n" +
-	"\bTopPosts\x18\x01 \x03(\v2\x10.post.v1.TopPostR\bTopPosts\"\x13\n" +
-	"\x11PostEmptyResponse\"(\n" +
-	"\x0eIfLikeResponse\x12\x16\n" +
-	"\x06Result\x18\x01 \x01(\bR\x06Result\"f\n" +
-	"\x18ListCommentByPageRequest\x12\x16\n" +
+	"\bTopPosts\x18\x01 \x03(\v2\x10.post.v1.TopPostR\bTopPosts\".\n" +
+	"\x14GetPostByTimeRequest\x12\x16\n" +
+	"\x06TimeAt\x18\x01 \x01(\tR\x06TimeAt\"\x1b\n" +
+	"\aPostIDs\x12\x10\n" +
+	"\x03IDs\x18\x01 \x03(\x03R\x03IDs\"\x13\n" +
+	"\x11PostEmptyResponse\"*\n" +
+	"\x10ExistPostRequest\x12\x16\n" +
+	"\x06PostID\x18\x01 \x01(\x03R\x06PostID\")\n" +
+	"\x11ExistPostResponse\x12\x14\n" +
+	"\x05Exist\x18\x01 \x01(\bR\x05Exist\"F\n" +
+	"\x14CheckPostAuthRequest\x12\x16\n" +
 	"\x06PostID\x18\x01 \x01(\x03R\x06PostID\x12\x16\n" +
-	"\x06PageNo\x18\x02 \x01(\rR\x06PageNo\x12\x1a\n" +
-	"\bPageSize\x18\x03 \x01(\rR\bPageSize\"j\n" +
-	"\x16ListReplyByPageRequest\x12\x1c\n" +
-	"\tCommentID\x18\x01 \x01(\x03R\tCommentID\x12\x16\n" +
-	"\x06PageNo\x18\x02 \x01(\rR\x06PageNo\x12\x1a\n" +
-	"\bPageSize\x18\x03 \x01(\rR\bPageSize\"\xb7\x01\n" +
-	"\aComment\x12\x0e\n" +
-	"\x02ID\x18\x01 \x01(\x03R\x02ID\x12\x16\n" +
-	"\x06PostID\x18\x02 \x01(\x03R\x06PostID\x12\x1a\n" +
-	"\bParentID\x18\x03 \x01(\x03R\bParentID\x12\x18\n" +
-	"\aReplyID\x18\x04 \x01(\x03R\aReplyID\x12\x16\n" +
-	"\x06UserID\x18\x05 \x01(\x03R\x06UserID\x12\x18\n" +
-	"\aContent\x18\x06 \x01(\tR\aContent\x12\x1c\n" +
-	"\tCreatedAt\x18\a \x01(\tR\tCreatedAt\"V\n" +
-	"\x10CommentsResponse\x12\x14\n" +
-	"\x05Count\x18\x01 \x01(\x04R\x05Count\x12,\n" +
-	"\bComments\x18\x02 \x03(\v2\x10.post.v1.CommentR\bComments\"\x96\x01\n" +
-	"\x14CreateCommentRequest\x12\x16\n" +
-	"\x06PostID\x18\x02 \x01(\x03R\x06PostID\x12\x1a\n" +
-	"\bParentID\x18\x03 \x01(\x03R\bParentID\x12\x18\n" +
-	"\aReplyID\x18\x04 \x01(\x03R\aReplyID\x12\x16\n" +
-	"\x06UserID\x18\x05 \x01(\x03R\x06UserID\x12\x18\n" +
-	"\aContent\x18\x06 \x01(\tR\aContent\"L\n" +
-	"\x14DeleteCommentRequest\x12\x16\n" +
-	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
-	"\tCommentID\x18\x02 \x01(\x03R\tCommentID\"L\n" +
-	"\x14CommentBelongRequest\x12\x16\n" +
-	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12\x1c\n" +
-	"\tCommentID\x18\x02 \x01(\x03R\tCommentID\"\x14\n" +
+	"\x06UserID\x18\x02 \x01(\x03R\x06UserID\"-\n" +
+	"\x15CheckPostAuthResponse\x12\x14\n" +
+	"\x05Exist\x18\x01 \x01(\bR\x05Exist\"\x14\n" +
 	"\x12HealthCheckRequest\"\x15\n" +
-	"\x13HealthCheckResponse2\xc4\n" +
-	"\n" +
+	"\x13HealthCheckResponse2\xd5\a\n" +
 	"\vPostService\x129\n" +
 	"\x06Create\x12\x1a.post.v1.CreatePostRequest\x1a\x13.post.v1.PostDetail\x12C\n" +
 	"\rGetDetailByID\x12\x1d.post.v1.GetDetailByIDRequest\x1a\x13.post.v1.PostDetail\x12@\n" +
 	"\fGetBriefByID\x12\x1c.post.v1.GetBriefByIDRequest\x1a\x12.post.v1.PostBrief\x126\n" +
-	"\x03Top\x12\x19.post.v1.PostEmptyRequest\x1a\x14.post.v1.TopResponse\x12<\n" +
+	"\x03Top\x12\x19.post.v1.PostEmptyRequest\x1a\x14.post.v1.TopResponse\x12@\n" +
+	"\rGetPostByTime\x12\x1d.post.v1.GetPostByTimeRequest\x1a\x10.post.v1.PostIDs\x12<\n" +
 	"\x06Update\x12\x16.post.v1.UpdateRequest\x1a\x1a.post.v1.PostEmptyResponse\x12F\n" +
 	"\n" +
 	"ListByPage\x12\x1a.post.v1.ListByPageRequest\x1a\x1c.post.v1.PostDetailsResponse\x12Q\n" +
 	"\x10ListByPageAndUid\x12 .post.v1.ListByPageAndUidRequest\x1a\x1b.post.v1.PostBriefsResponse\x12R\n" +
 	"\x10ListByPageAndTag\x12 .post.v1.ListByPageAndTagRequest\x1a\x1c.post.v1.PostDetailsResponse\x12=\n" +
 	"\x06Belong\x12\x1a.post.v1.PostCommonRequest\x1a\x17.post.v1.BelongResponse\x12@\n" +
-	"\x06Delete\x12\x1a.post.v1.PostCommonRequest\x1a\x1a.post.v1.PostEmptyResponse\x12>\n" +
-	"\x04Like\x12\x1a.post.v1.PostCommonRequest\x1a\x1a.post.v1.PostEmptyResponse\x12@\n" +
-	"\x06Unlike\x12\x1a.post.v1.PostCommonRequest\x1a\x1a.post.v1.PostEmptyResponse\x12=\n" +
-	"\x06IfLike\x12\x1a.post.v1.PostCommonRequest\x1a\x17.post.v1.IfLikeResponse\x12@\n" +
-	"\rCreateComment\x12\x1d.post.v1.CreateCommentRequest\x1a\x10.post.v1.Comment\x12J\n" +
-	"\rDeleteComment\x12\x1d.post.v1.DeleteCommentRequest\x1a\x1a.post.v1.PostEmptyResponse\x12Q\n" +
-	"\x11ListCommentByPage\x12!.post.v1.ListCommentByPageRequest\x1a\x19.post.v1.CommentsResponse\x12O\n" +
-	"\x11ListRepliesByPage\x12\x1f.post.v1.ListReplyByPageRequest\x1a\x19.post.v1.CommentsResponse\x12P\n" +
-	"\x16CheckCommentDeleteAuth\x12\x1d.post.v1.CommentBelongRequest\x1a\x17.post.v1.BelongResponse\x12H\n" +
+	"\x06Delete\x12\x1a.post.v1.PostCommonRequest\x1a\x1a.post.v1.PostEmptyResponse\x12B\n" +
+	"\tExistPost\x12\x19.post.v1.ExistPostRequest\x1a\x1a.post.v1.ExistPostResponse\x12N\n" +
+	"\rCheckPostAuth\x12\x1d.post.v1.CheckPostAuthRequest\x1a\x1e.post.v1.CheckPostAuthResponse\x12H\n" +
 	"\vHealthCheck\x12\x1b.post.v1.HealthCheckRequest\x1a\x1c.post.v1.HealthCheckResponseB<Z:github.com/yzletter/go-postery/api/proto/post/v1;post_grpcb\x06proto3"
 
 var (
@@ -1705,84 +1472,71 @@ func file_api_proto_post_v1_post_proto_rawDescGZIP() []byte {
 	return file_api_proto_post_v1_post_proto_rawDescData
 }
 
-var file_api_proto_post_v1_post_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_api_proto_post_v1_post_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_api_proto_post_v1_post_proto_goTypes = []any{
-	(*PostDetail)(nil),               // 0: post.v1.PostDetail
-	(*PostBrief)(nil),                // 1: post.v1.PostBrief
-	(*TopPost)(nil),                  // 2: post.v1.TopPost
-	(*CreatePostRequest)(nil),        // 3: post.v1.CreatePostRequest
-	(*GetDetailByIDRequest)(nil),     // 4: post.v1.GetDetailByIDRequest
-	(*GetBriefByIDRequest)(nil),      // 5: post.v1.GetBriefByIDRequest
-	(*UpdateRequest)(nil),            // 6: post.v1.UpdateRequest
-	(*ListByPageRequest)(nil),        // 7: post.v1.ListByPageRequest
-	(*ListByPageAndUidRequest)(nil),  // 8: post.v1.ListByPageAndUidRequest
-	(*ListByPageAndTagRequest)(nil),  // 9: post.v1.ListByPageAndTagRequest
-	(*PostDetailsResponse)(nil),      // 10: post.v1.PostDetailsResponse
-	(*PostBriefsResponse)(nil),       // 11: post.v1.PostBriefsResponse
-	(*PostCommonRequest)(nil),        // 12: post.v1.PostCommonRequest
-	(*PostEmptyRequest)(nil),         // 13: post.v1.PostEmptyRequest
-	(*BelongResponse)(nil),           // 14: post.v1.BelongResponse
-	(*TopResponse)(nil),              // 15: post.v1.TopResponse
-	(*PostEmptyResponse)(nil),        // 16: post.v1.PostEmptyResponse
-	(*IfLikeResponse)(nil),           // 17: post.v1.IfLikeResponse
-	(*ListCommentByPageRequest)(nil), // 18: post.v1.ListCommentByPageRequest
-	(*ListReplyByPageRequest)(nil),   // 19: post.v1.ListReplyByPageRequest
-	(*Comment)(nil),                  // 20: post.v1.Comment
-	(*CommentsResponse)(nil),         // 21: post.v1.CommentsResponse
-	(*CreateCommentRequest)(nil),     // 22: post.v1.CreateCommentRequest
-	(*DeleteCommentRequest)(nil),     // 23: post.v1.DeleteCommentRequest
-	(*CommentBelongRequest)(nil),     // 24: post.v1.CommentBelongRequest
-	(*HealthCheckRequest)(nil),       // 25: post.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil),      // 26: post.v1.HealthCheckResponse
+	(*PostDetail)(nil),              // 0: post.v1.PostDetail
+	(*PostBrief)(nil),               // 1: post.v1.PostBrief
+	(*TopPost)(nil),                 // 2: post.v1.TopPost
+	(*CreatePostRequest)(nil),       // 3: post.v1.CreatePostRequest
+	(*GetDetailByIDRequest)(nil),    // 4: post.v1.GetDetailByIDRequest
+	(*GetBriefByIDRequest)(nil),     // 5: post.v1.GetBriefByIDRequest
+	(*UpdateRequest)(nil),           // 6: post.v1.UpdateRequest
+	(*ListByPageRequest)(nil),       // 7: post.v1.ListByPageRequest
+	(*ListByPageAndUidRequest)(nil), // 8: post.v1.ListByPageAndUidRequest
+	(*ListByPageAndTagRequest)(nil), // 9: post.v1.ListByPageAndTagRequest
+	(*PostDetailsResponse)(nil),     // 10: post.v1.PostDetailsResponse
+	(*PostBriefsResponse)(nil),      // 11: post.v1.PostBriefsResponse
+	(*PostCommonRequest)(nil),       // 12: post.v1.PostCommonRequest
+	(*PostEmptyRequest)(nil),        // 13: post.v1.PostEmptyRequest
+	(*BelongResponse)(nil),          // 14: post.v1.BelongResponse
+	(*TopResponse)(nil),             // 15: post.v1.TopResponse
+	(*GetPostByTimeRequest)(nil),    // 16: post.v1.GetPostByTimeRequest
+	(*PostIDs)(nil),                 // 17: post.v1.PostIDs
+	(*PostEmptyResponse)(nil),       // 18: post.v1.PostEmptyResponse
+	(*ExistPostRequest)(nil),        // 19: post.v1.ExistPostRequest
+	(*ExistPostResponse)(nil),       // 20: post.v1.ExistPostResponse
+	(*CheckPostAuthRequest)(nil),    // 21: post.v1.CheckPostAuthRequest
+	(*CheckPostAuthResponse)(nil),   // 22: post.v1.CheckPostAuthResponse
+	(*HealthCheckRequest)(nil),      // 23: post.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),     // 24: post.v1.HealthCheckResponse
 }
 var file_api_proto_post_v1_post_proto_depIdxs = []int32{
 	0,  // 0: post.v1.PostDetailsResponse.PostDetails:type_name -> post.v1.PostDetail
 	1,  // 1: post.v1.PostBriefsResponse.PostBriefs:type_name -> post.v1.PostBrief
 	2,  // 2: post.v1.TopResponse.TopPosts:type_name -> post.v1.TopPost
-	20, // 3: post.v1.CommentsResponse.Comments:type_name -> post.v1.Comment
-	3,  // 4: post.v1.PostService.Create:input_type -> post.v1.CreatePostRequest
-	4,  // 5: post.v1.PostService.GetDetailByID:input_type -> post.v1.GetDetailByIDRequest
-	5,  // 6: post.v1.PostService.GetBriefByID:input_type -> post.v1.GetBriefByIDRequest
-	13, // 7: post.v1.PostService.Top:input_type -> post.v1.PostEmptyRequest
+	3,  // 3: post.v1.PostService.Create:input_type -> post.v1.CreatePostRequest
+	4,  // 4: post.v1.PostService.GetDetailByID:input_type -> post.v1.GetDetailByIDRequest
+	5,  // 5: post.v1.PostService.GetBriefByID:input_type -> post.v1.GetBriefByIDRequest
+	13, // 6: post.v1.PostService.Top:input_type -> post.v1.PostEmptyRequest
+	16, // 7: post.v1.PostService.GetPostByTime:input_type -> post.v1.GetPostByTimeRequest
 	6,  // 8: post.v1.PostService.Update:input_type -> post.v1.UpdateRequest
 	7,  // 9: post.v1.PostService.ListByPage:input_type -> post.v1.ListByPageRequest
 	8,  // 10: post.v1.PostService.ListByPageAndUid:input_type -> post.v1.ListByPageAndUidRequest
 	9,  // 11: post.v1.PostService.ListByPageAndTag:input_type -> post.v1.ListByPageAndTagRequest
 	12, // 12: post.v1.PostService.Belong:input_type -> post.v1.PostCommonRequest
 	12, // 13: post.v1.PostService.Delete:input_type -> post.v1.PostCommonRequest
-	12, // 14: post.v1.PostService.Like:input_type -> post.v1.PostCommonRequest
-	12, // 15: post.v1.PostService.Unlike:input_type -> post.v1.PostCommonRequest
-	12, // 16: post.v1.PostService.IfLike:input_type -> post.v1.PostCommonRequest
-	22, // 17: post.v1.PostService.CreateComment:input_type -> post.v1.CreateCommentRequest
-	23, // 18: post.v1.PostService.DeleteComment:input_type -> post.v1.DeleteCommentRequest
-	18, // 19: post.v1.PostService.ListCommentByPage:input_type -> post.v1.ListCommentByPageRequest
-	19, // 20: post.v1.PostService.ListRepliesByPage:input_type -> post.v1.ListReplyByPageRequest
-	24, // 21: post.v1.PostService.CheckCommentDeleteAuth:input_type -> post.v1.CommentBelongRequest
-	25, // 22: post.v1.PostService.HealthCheck:input_type -> post.v1.HealthCheckRequest
-	0,  // 23: post.v1.PostService.Create:output_type -> post.v1.PostDetail
-	0,  // 24: post.v1.PostService.GetDetailByID:output_type -> post.v1.PostDetail
-	1,  // 25: post.v1.PostService.GetBriefByID:output_type -> post.v1.PostBrief
-	15, // 26: post.v1.PostService.Top:output_type -> post.v1.TopResponse
-	16, // 27: post.v1.PostService.Update:output_type -> post.v1.PostEmptyResponse
-	10, // 28: post.v1.PostService.ListByPage:output_type -> post.v1.PostDetailsResponse
-	11, // 29: post.v1.PostService.ListByPageAndUid:output_type -> post.v1.PostBriefsResponse
-	10, // 30: post.v1.PostService.ListByPageAndTag:output_type -> post.v1.PostDetailsResponse
-	14, // 31: post.v1.PostService.Belong:output_type -> post.v1.BelongResponse
-	16, // 32: post.v1.PostService.Delete:output_type -> post.v1.PostEmptyResponse
-	16, // 33: post.v1.PostService.Like:output_type -> post.v1.PostEmptyResponse
-	16, // 34: post.v1.PostService.Unlike:output_type -> post.v1.PostEmptyResponse
-	17, // 35: post.v1.PostService.IfLike:output_type -> post.v1.IfLikeResponse
-	20, // 36: post.v1.PostService.CreateComment:output_type -> post.v1.Comment
-	16, // 37: post.v1.PostService.DeleteComment:output_type -> post.v1.PostEmptyResponse
-	21, // 38: post.v1.PostService.ListCommentByPage:output_type -> post.v1.CommentsResponse
-	21, // 39: post.v1.PostService.ListRepliesByPage:output_type -> post.v1.CommentsResponse
-	14, // 40: post.v1.PostService.CheckCommentDeleteAuth:output_type -> post.v1.BelongResponse
-	26, // 41: post.v1.PostService.HealthCheck:output_type -> post.v1.HealthCheckResponse
-	23, // [23:42] is the sub-list for method output_type
-	4,  // [4:23] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	19, // 14: post.v1.PostService.ExistPost:input_type -> post.v1.ExistPostRequest
+	21, // 15: post.v1.PostService.CheckPostAuth:input_type -> post.v1.CheckPostAuthRequest
+	23, // 16: post.v1.PostService.HealthCheck:input_type -> post.v1.HealthCheckRequest
+	0,  // 17: post.v1.PostService.Create:output_type -> post.v1.PostDetail
+	0,  // 18: post.v1.PostService.GetDetailByID:output_type -> post.v1.PostDetail
+	1,  // 19: post.v1.PostService.GetBriefByID:output_type -> post.v1.PostBrief
+	15, // 20: post.v1.PostService.Top:output_type -> post.v1.TopResponse
+	17, // 21: post.v1.PostService.GetPostByTime:output_type -> post.v1.PostIDs
+	18, // 22: post.v1.PostService.Update:output_type -> post.v1.PostEmptyResponse
+	10, // 23: post.v1.PostService.ListByPage:output_type -> post.v1.PostDetailsResponse
+	11, // 24: post.v1.PostService.ListByPageAndUid:output_type -> post.v1.PostBriefsResponse
+	10, // 25: post.v1.PostService.ListByPageAndTag:output_type -> post.v1.PostDetailsResponse
+	14, // 26: post.v1.PostService.Belong:output_type -> post.v1.BelongResponse
+	18, // 27: post.v1.PostService.Delete:output_type -> post.v1.PostEmptyResponse
+	20, // 28: post.v1.PostService.ExistPost:output_type -> post.v1.ExistPostResponse
+	22, // 29: post.v1.PostService.CheckPostAuth:output_type -> post.v1.CheckPostAuthResponse
+	24, // 30: post.v1.PostService.HealthCheck:output_type -> post.v1.HealthCheckResponse
+	17, // [17:31] is the sub-list for method output_type
+	3,  // [3:17] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_post_v1_post_proto_init() }
@@ -1796,7 +1550,7 @@ func file_api_proto_post_v1_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_post_v1_post_proto_rawDesc), len(file_api_proto_post_v1_post_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -19,25 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PostService_Create_FullMethodName                 = "/post.v1.PostService/Create"
-	PostService_GetDetailByID_FullMethodName          = "/post.v1.PostService/GetDetailByID"
-	PostService_GetBriefByID_FullMethodName           = "/post.v1.PostService/GetBriefByID"
-	PostService_Top_FullMethodName                    = "/post.v1.PostService/Top"
-	PostService_Update_FullMethodName                 = "/post.v1.PostService/Update"
-	PostService_ListByPage_FullMethodName             = "/post.v1.PostService/ListByPage"
-	PostService_ListByPageAndUid_FullMethodName       = "/post.v1.PostService/ListByPageAndUid"
-	PostService_ListByPageAndTag_FullMethodName       = "/post.v1.PostService/ListByPageAndTag"
-	PostService_Belong_FullMethodName                 = "/post.v1.PostService/Belong"
-	PostService_Delete_FullMethodName                 = "/post.v1.PostService/Delete"
-	PostService_Like_FullMethodName                   = "/post.v1.PostService/Like"
-	PostService_Unlike_FullMethodName                 = "/post.v1.PostService/Unlike"
-	PostService_IfLike_FullMethodName                 = "/post.v1.PostService/IfLike"
-	PostService_CreateComment_FullMethodName          = "/post.v1.PostService/CreateComment"
-	PostService_DeleteComment_FullMethodName          = "/post.v1.PostService/DeleteComment"
-	PostService_ListCommentByPage_FullMethodName      = "/post.v1.PostService/ListCommentByPage"
-	PostService_ListRepliesByPage_FullMethodName      = "/post.v1.PostService/ListRepliesByPage"
-	PostService_CheckCommentDeleteAuth_FullMethodName = "/post.v1.PostService/CheckCommentDeleteAuth"
-	PostService_HealthCheck_FullMethodName            = "/post.v1.PostService/HealthCheck"
+	PostService_Create_FullMethodName           = "/post.v1.PostService/Create"
+	PostService_GetDetailByID_FullMethodName    = "/post.v1.PostService/GetDetailByID"
+	PostService_GetBriefByID_FullMethodName     = "/post.v1.PostService/GetBriefByID"
+	PostService_Top_FullMethodName              = "/post.v1.PostService/Top"
+	PostService_GetPostByTime_FullMethodName    = "/post.v1.PostService/GetPostByTime"
+	PostService_Update_FullMethodName           = "/post.v1.PostService/Update"
+	PostService_ListByPage_FullMethodName       = "/post.v1.PostService/ListByPage"
+	PostService_ListByPageAndUid_FullMethodName = "/post.v1.PostService/ListByPageAndUid"
+	PostService_ListByPageAndTag_FullMethodName = "/post.v1.PostService/ListByPageAndTag"
+	PostService_Belong_FullMethodName           = "/post.v1.PostService/Belong"
+	PostService_Delete_FullMethodName           = "/post.v1.PostService/Delete"
+	PostService_ExistPost_FullMethodName        = "/post.v1.PostService/ExistPost"
+	PostService_CheckPostAuth_FullMethodName    = "/post.v1.PostService/CheckPostAuth"
+	PostService_HealthCheck_FullMethodName      = "/post.v1.PostService/HealthCheck"
 )
 
 // PostServiceClient is the client API for PostService service.
@@ -52,6 +47,8 @@ type PostServiceClient interface {
 	GetBriefByID(ctx context.Context, in *GetBriefByIDRequest, opts ...grpc.CallOption) (*PostBrief, error)
 	// 返回推荐帖子
 	Top(ctx context.Context, in *PostEmptyRequest, opts ...grpc.CallOption) (*TopResponse, error)
+	// 根据时间获取帖子 ID
+	GetPostByTime(ctx context.Context, in *GetPostByTimeRequest, opts ...grpc.CallOption) (*PostIDs, error)
 	// 更新帖子
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error)
 	// 按页查询帖子
@@ -64,20 +61,8 @@ type PostServiceClient interface {
 	Belong(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*BelongResponse, error)
 	// 删除帖子
 	Delete(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error)
-	// 点赞帖子
-	Like(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error)
-	// 取消点赞帖子
-	Unlike(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error)
-	// 查询用户是否点过赞
-	IfLike(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*IfLikeResponse, error)
-	CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error)
-	DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error)
-	// 根据 PostID 按页获取文章主评论
-	ListCommentByPage(ctx context.Context, in *ListCommentByPageRequest, opts ...grpc.CallOption) (*CommentsResponse, error)
-	// 根据 CommentID 按页获取评论的回复
-	ListRepliesByPage(ctx context.Context, in *ListReplyByPageRequest, opts ...grpc.CallOption) (*CommentsResponse, error)
-	// 评论是否属于用户
-	CheckCommentDeleteAuth(ctx context.Context, in *CommentBelongRequest, opts ...grpc.CallOption) (*BelongResponse, error)
+	ExistPost(ctx context.Context, in *ExistPostRequest, opts ...grpc.CallOption) (*ExistPostResponse, error)
+	CheckPostAuth(ctx context.Context, in *CheckPostAuthRequest, opts ...grpc.CallOption) (*CheckPostAuthResponse, error)
 	// 健康检查
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
@@ -124,6 +109,16 @@ func (c *postServiceClient) Top(ctx context.Context, in *PostEmptyRequest, opts 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TopResponse)
 	err := c.cc.Invoke(ctx, PostService_Top_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) GetPostByTime(ctx context.Context, in *GetPostByTimeRequest, opts ...grpc.CallOption) (*PostIDs, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostIDs)
+	err := c.cc.Invoke(ctx, PostService_GetPostByTime_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,80 +185,20 @@ func (c *postServiceClient) Delete(ctx context.Context, in *PostCommonRequest, o
 	return out, nil
 }
 
-func (c *postServiceClient) Like(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error) {
+func (c *postServiceClient) ExistPost(ctx context.Context, in *ExistPostRequest, opts ...grpc.CallOption) (*ExistPostResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostEmptyResponse)
-	err := c.cc.Invoke(ctx, PostService_Like_FullMethodName, in, out, cOpts...)
+	out := new(ExistPostResponse)
+	err := c.cc.Invoke(ctx, PostService_ExistPost_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postServiceClient) Unlike(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error) {
+func (c *postServiceClient) CheckPostAuth(ctx context.Context, in *CheckPostAuthRequest, opts ...grpc.CallOption) (*CheckPostAuthResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostEmptyResponse)
-	err := c.cc.Invoke(ctx, PostService_Unlike_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *postServiceClient) IfLike(ctx context.Context, in *PostCommonRequest, opts ...grpc.CallOption) (*IfLikeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(IfLikeResponse)
-	err := c.cc.Invoke(ctx, PostService_IfLike_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *postServiceClient) CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Comment)
-	err := c.cc.Invoke(ctx, PostService_CreateComment_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *postServiceClient) DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*PostEmptyResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostEmptyResponse)
-	err := c.cc.Invoke(ctx, PostService_DeleteComment_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *postServiceClient) ListCommentByPage(ctx context.Context, in *ListCommentByPageRequest, opts ...grpc.CallOption) (*CommentsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommentsResponse)
-	err := c.cc.Invoke(ctx, PostService_ListCommentByPage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *postServiceClient) ListRepliesByPage(ctx context.Context, in *ListReplyByPageRequest, opts ...grpc.CallOption) (*CommentsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CommentsResponse)
-	err := c.cc.Invoke(ctx, PostService_ListRepliesByPage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *postServiceClient) CheckCommentDeleteAuth(ctx context.Context, in *CommentBelongRequest, opts ...grpc.CallOption) (*BelongResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BelongResponse)
-	err := c.cc.Invoke(ctx, PostService_CheckCommentDeleteAuth_FullMethodName, in, out, cOpts...)
+	out := new(CheckPostAuthResponse)
+	err := c.cc.Invoke(ctx, PostService_CheckPostAuth_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +227,8 @@ type PostServiceServer interface {
 	GetBriefByID(context.Context, *GetBriefByIDRequest) (*PostBrief, error)
 	// 返回推荐帖子
 	Top(context.Context, *PostEmptyRequest) (*TopResponse, error)
+	// 根据时间获取帖子 ID
+	GetPostByTime(context.Context, *GetPostByTimeRequest) (*PostIDs, error)
 	// 更新帖子
 	Update(context.Context, *UpdateRequest) (*PostEmptyResponse, error)
 	// 按页查询帖子
@@ -304,20 +241,8 @@ type PostServiceServer interface {
 	Belong(context.Context, *PostCommonRequest) (*BelongResponse, error)
 	// 删除帖子
 	Delete(context.Context, *PostCommonRequest) (*PostEmptyResponse, error)
-	// 点赞帖子
-	Like(context.Context, *PostCommonRequest) (*PostEmptyResponse, error)
-	// 取消点赞帖子
-	Unlike(context.Context, *PostCommonRequest) (*PostEmptyResponse, error)
-	// 查询用户是否点过赞
-	IfLike(context.Context, *PostCommonRequest) (*IfLikeResponse, error)
-	CreateComment(context.Context, *CreateCommentRequest) (*Comment, error)
-	DeleteComment(context.Context, *DeleteCommentRequest) (*PostEmptyResponse, error)
-	// 根据 PostID 按页获取文章主评论
-	ListCommentByPage(context.Context, *ListCommentByPageRequest) (*CommentsResponse, error)
-	// 根据 CommentID 按页获取评论的回复
-	ListRepliesByPage(context.Context, *ListReplyByPageRequest) (*CommentsResponse, error)
-	// 评论是否属于用户
-	CheckCommentDeleteAuth(context.Context, *CommentBelongRequest) (*BelongResponse, error)
+	ExistPost(context.Context, *ExistPostRequest) (*ExistPostResponse, error)
+	CheckPostAuth(context.Context, *CheckPostAuthRequest) (*CheckPostAuthResponse, error)
 	// 健康检查
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
@@ -342,6 +267,9 @@ func (UnimplementedPostServiceServer) GetBriefByID(context.Context, *GetBriefByI
 func (UnimplementedPostServiceServer) Top(context.Context, *PostEmptyRequest) (*TopResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Top not implemented")
 }
+func (UnimplementedPostServiceServer) GetPostByTime(context.Context, *GetPostByTimeRequest) (*PostIDs, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPostByTime not implemented")
+}
 func (UnimplementedPostServiceServer) Update(context.Context, *UpdateRequest) (*PostEmptyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Update not implemented")
 }
@@ -360,29 +288,11 @@ func (UnimplementedPostServiceServer) Belong(context.Context, *PostCommonRequest
 func (UnimplementedPostServiceServer) Delete(context.Context, *PostCommonRequest) (*PostEmptyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedPostServiceServer) Like(context.Context, *PostCommonRequest) (*PostEmptyResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Like not implemented")
+func (UnimplementedPostServiceServer) ExistPost(context.Context, *ExistPostRequest) (*ExistPostResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExistPost not implemented")
 }
-func (UnimplementedPostServiceServer) Unlike(context.Context, *PostCommonRequest) (*PostEmptyResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Unlike not implemented")
-}
-func (UnimplementedPostServiceServer) IfLike(context.Context, *PostCommonRequest) (*IfLikeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method IfLike not implemented")
-}
-func (UnimplementedPostServiceServer) CreateComment(context.Context, *CreateCommentRequest) (*Comment, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateComment not implemented")
-}
-func (UnimplementedPostServiceServer) DeleteComment(context.Context, *DeleteCommentRequest) (*PostEmptyResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteComment not implemented")
-}
-func (UnimplementedPostServiceServer) ListCommentByPage(context.Context, *ListCommentByPageRequest) (*CommentsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListCommentByPage not implemented")
-}
-func (UnimplementedPostServiceServer) ListRepliesByPage(context.Context, *ListReplyByPageRequest) (*CommentsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListRepliesByPage not implemented")
-}
-func (UnimplementedPostServiceServer) CheckCommentDeleteAuth(context.Context, *CommentBelongRequest) (*BelongResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CheckCommentDeleteAuth not implemented")
+func (UnimplementedPostServiceServer) CheckPostAuth(context.Context, *CheckPostAuthRequest) (*CheckPostAuthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckPostAuth not implemented")
 }
 func (UnimplementedPostServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
@@ -476,6 +386,24 @@ func _PostService_Top_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).Top(ctx, req.(*PostEmptyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_GetPostByTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPostByTimeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).GetPostByTime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_GetPostByTime_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).GetPostByTime(ctx, req.(*GetPostByTimeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -588,146 +516,38 @@ func _PostService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PostService_Like_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PostCommonRequest)
+func _PostService_ExistPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExistPostRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServiceServer).Like(ctx, in)
+		return srv.(PostServiceServer).ExistPost(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PostService_Like_FullMethodName,
+		FullMethod: PostService_ExistPost_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).Like(ctx, req.(*PostCommonRequest))
+		return srv.(PostServiceServer).ExistPost(ctx, req.(*ExistPostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PostService_Unlike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PostCommonRequest)
+func _PostService_CheckPostAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckPostAuthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServiceServer).Unlike(ctx, in)
+		return srv.(PostServiceServer).CheckPostAuth(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PostService_Unlike_FullMethodName,
+		FullMethod: PostService_CheckPostAuth_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).Unlike(ctx, req.(*PostCommonRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PostService_IfLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PostCommonRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).IfLike(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_IfLike_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).IfLike(ctx, req.(*PostCommonRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PostService_CreateComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateCommentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).CreateComment(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_CreateComment_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).CreateComment(ctx, req.(*CreateCommentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PostService_DeleteComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteCommentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).DeleteComment(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_DeleteComment_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).DeleteComment(ctx, req.(*DeleteCommentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PostService_ListCommentByPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListCommentByPageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).ListCommentByPage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_ListCommentByPage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).ListCommentByPage(ctx, req.(*ListCommentByPageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PostService_ListRepliesByPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListReplyByPageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).ListRepliesByPage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_ListRepliesByPage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).ListRepliesByPage(ctx, req.(*ListReplyByPageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PostService_CheckCommentDeleteAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CommentBelongRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServiceServer).CheckCommentDeleteAuth(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PostService_CheckCommentDeleteAuth_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServiceServer).CheckCommentDeleteAuth(ctx, req.(*CommentBelongRequest))
+		return srv.(PostServiceServer).CheckPostAuth(ctx, req.(*CheckPostAuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -774,6 +594,10 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PostService_Top_Handler,
 		},
 		{
+			MethodName: "GetPostByTime",
+			Handler:    _PostService_GetPostByTime_Handler,
+		},
+		{
 			MethodName: "Update",
 			Handler:    _PostService_Update_Handler,
 		},
@@ -798,36 +622,12 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PostService_Delete_Handler,
 		},
 		{
-			MethodName: "Like",
-			Handler:    _PostService_Like_Handler,
+			MethodName: "ExistPost",
+			Handler:    _PostService_ExistPost_Handler,
 		},
 		{
-			MethodName: "Unlike",
-			Handler:    _PostService_Unlike_Handler,
-		},
-		{
-			MethodName: "IfLike",
-			Handler:    _PostService_IfLike_Handler,
-		},
-		{
-			MethodName: "CreateComment",
-			Handler:    _PostService_CreateComment_Handler,
-		},
-		{
-			MethodName: "DeleteComment",
-			Handler:    _PostService_DeleteComment_Handler,
-		},
-		{
-			MethodName: "ListCommentByPage",
-			Handler:    _PostService_ListCommentByPage_Handler,
-		},
-		{
-			MethodName: "ListRepliesByPage",
-			Handler:    _PostService_ListRepliesByPage_Handler,
-		},
-		{
-			MethodName: "CheckCommentDeleteAuth",
-			Handler:    _PostService_CheckCommentDeleteAuth_Handler,
+			MethodName: "CheckPostAuth",
+			Handler:    _PostService_CheckPostAuth_Handler,
 		},
 		{
 			MethodName: "HealthCheck",

@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package rank.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/rank/v1;rank_grpc";
+
+message RankIDRequest {
+  int64 ID = 1;
+}
+
+message RankEmptyRequest {}
+message RankEmptyResponse {}
+
+message RankUser {
+  int64 ID = 1;
+  int64 Score = 2;
+}
+
+message RankPost {
+  int64 ID = 1;
+  int64 Score = 2;
+}
+
+message TopKUserResponse {
+  repeated RankUser Users = 1;
+}
+
+message TopKPostResponse {
+  repeated RankPost Posts = 1;
+}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service RankService {
+  // 计算用户分数
+  rpc RankUser(RankIDRequest) returns (RankEmptyResponse);
+  // 计算帖子分数
+  rpc RankPost(RankIDRequest) returns (RankEmptyResponse);
+  // 计算用户榜单
+  rpc RankTopKUser(RankEmptyRequest) returns (RankEmptyResponse);
+  // 计算帖子榜单
+  rpc RankTopKPost(RankEmptyRequest) returns (RankEmptyResponse);
+  // 返回用户榜单
+  rpc TopKUser(RankEmptyRequest) returns (TopKUserResponse);
+  // 返回帖子榜单
+  rpc TopKPost(RankEmptyRequest) returns (TopKPostResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/rank/v1/rank.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

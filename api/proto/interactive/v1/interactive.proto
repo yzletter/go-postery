@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package interactive.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/interactive/v1;interactive_grpc";
+
+message PostInteractive {
+  int64 ReadCnt = 1;
+  int64 LikeCnt = 2;
+  int64 CommentCnt = 3;
+}
+
+message UserInteractive {
+  int64 FollowCnt = 1;
+}
+
+message PostIDRequest {
+  int64 PostID = 1;
+}
+
+message UserIDRequest {
+  int64 UserID = 1;
+}
+
+message LikeRequest {
+  int64 UserID = 1;
+  int64 PostID = 2;
+}
+
+message FollowRequest {
+  int64 FollowerID = 1;
+  int64 FolloweeID = 2;
+}
+
+message IfFollowResponse {
+  int32 Result = 1;
+}
+
+message CheckLikeResponse {
+  bool Result = 1;
+}
+
+message CreateCommentRequest {
+  int64 PostID = 1;
+  int64 ParentID = 2;
+  int64 ReplyID = 3;
+  int64 UserID = 4;
+  string Content = 5;
+}
+
+message DeleteCommentRequest {
+  int64 CommentID = 1;
+  int64 UserID = 2;
+}
+
+message CommentIDUserIDRequest {
+  int64 CommentID = 1;
+  int64 UserID = 2;
+}
+
+message CheckCommentDelAuthResponse {
+  bool Result = 1;
+}
+
+message ListCommentByPageRequest {
+  int64 PostID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message ListReplyByPageRequest {
+  int64 CommentID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message InteractiveComment {
+  int64 ID = 1;
+  int64 PostID = 2;
+  int64 ParentID = 3;
+  int64 ReplyID = 4;
+  int64 UserID = 5;
+  string Content = 6;
+}
+
+message CommentsResponse {
+  uint64 Count = 1;
+  repeated InteractiveComment Comments = 2;
+}
+
+message ListFollowRequest {
+  int64 UserID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message ListFollowResponse {
+  uint64 Count = 1;
+  repeated int64 IDs = 2;
+}
+
+message InteractiveEmptyResponse {}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service InteractiveService {
+  // 获取帖子互动信息
+  rpc GetPostInteractive(PostIDRequest) returns (PostInteractive);
+  // 获取用户互动信息
+  rpc GetUserInteractive(UserIDRequest) returns (UserInteractive);
+  // 点赞帖子
+  rpc Like(LikeRequest) returns (InteractiveEmptyResponse);
+  // 取消点赞帖子
+  rpc Unlike(LikeRequest) returns (InteractiveEmptyResponse);
+  // 检查用户是否已点赞帖子
+  rpc CheckLike(LikeRequest) returns (CheckLikeResponse);
+  // 关注用户
+  rpc Follow(FollowRequest) returns (InteractiveEmptyResponse);
+  // 取消关注用户
+  rpc Unfollow(FollowRequest) returns (InteractiveEmptyResponse);
+  // 获取两个用户的关注关系
+  rpc IfFollow(FollowRequest) returns (IfFollowResponse);
+  // 创建帖子评论
+  rpc Comment(CreateCommentRequest) returns (InteractiveComment);
+  // 删除评论
+  rpc DelComment(DeleteCommentRequest) returns (InteractiveEmptyResponse);
+  // 分页获取帖子的主评论
+  rpc ListCommentByPage(ListCommentByPageRequest) returns (CommentsResponse);
+  // 分页获取评论的回复
+  rpc ListRepliesByPage(ListReplyByPageRequest) returns (CommentsResponse);
+  // 检查用户是否有权限删除评论
+  rpc CheckCommentDelAuth(CommentIDUserIDRequest) returns (CheckCommentDelAuthResponse);
+  // 分页获取用户粉丝 ID
+  rpc GetFollowers(ListFollowRequest) returns (ListFollowResponse);
+  // 分页获取用户关注 ID
+  rpc GetFollowees(ListFollowRequest) returns (ListFollowResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/interactive/v1/interactive.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

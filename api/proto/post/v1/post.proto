@@ -20,6 +20,7 @@ message PostDetail {
 message PostBrief {
   int64 ID = 1;
   string Title = 5;
+  string Abstract = 6;
   string CreatedAt = 8;
   int64 UserID = 9;
 }
@@ -97,55 +98,29 @@ message TopResponse {
   repeated TopPost TopPosts = 1;
 }
 
+message GetPostByTimeRequest {
+  string TimeAt = 1;
+}
+
+message PostIDs {
+  repeated int64 IDs = 1;
+}
+
 message PostEmptyResponse {}
 
-message IfLikeResponse {
-  bool Result = 1;
-}
-
-message ListCommentByPageRequest {
+message ExistPostRequest{
   int64 PostID = 1;
-  uint32 PageNo = 2;
-  uint32 PageSize = 3;
+}
+message ExistPostResponse{
+  bool Exist = 1;
 }
 
-message ListReplyByPageRequest {
-  int64 CommentID = 1;
-  uint32 PageNo = 2;
-  uint32 PageSize = 3;
+message CheckPostAuthRequest{
+  int64 PostID = 1;
+  int64 UserID = 2;
 }
-
-message Comment {
-  int64 ID = 1;
-  int64 PostID = 2;
-  int64 ParentID = 3;
-  int64 ReplyID = 4;
-  int64 UserID = 5;
-  string Content = 6;
-  string CreatedAt = 7;
-}
-
-message CommentsResponse {
-  uint64 Count = 1;
-  repeated Comment Comments = 2;
-}
-
-message CreateCommentRequest {
-  int64 PostID = 2;
-  int64 ParentID = 3;
-  int64 ReplyID = 4;
-  int64 UserID = 5;
-  string Content = 6;
-}
-
-message DeleteCommentRequest {
-  int64 UserID = 1;
-  int64 CommentID = 2;
-}
-
-message CommentBelongRequest {
-  int64 UserID = 1;
-  int64 CommentID = 2;
+message CheckPostAuthResponse{
+  bool Exist = 1;
 }
 
 message HealthCheckRequest {}
@@ -160,6 +135,8 @@ service PostService {
   rpc GetBriefByID(GetBriefByIDRequest) returns (PostBrief);
   // 返回推荐帖子
   rpc Top(PostEmptyRequest) returns (TopResponse);
+  // 根据时间获取帖子 ID
+  rpc GetPostByTime(GetPostByTimeRequest) returns (PostIDs);
   // 更新帖子
   rpc Update(UpdateRequest) returns (PostEmptyResponse);
   // 按页查询帖子
@@ -175,21 +152,8 @@ service PostService {
   // 删除帖子
   rpc Delete(PostCommonRequest) returns (PostEmptyResponse);
 
-  // 点赞帖子
-  rpc Like(PostCommonRequest) returns (PostEmptyResponse);
-  // 取消点赞帖子
-  rpc Unlike(PostCommonRequest) returns (PostEmptyResponse);
-  // 查询用户是否点过赞
-  rpc IfLike(PostCommonRequest) returns (IfLikeResponse);
-
-  rpc CreateComment(CreateCommentRequest) returns (Comment);
-  rpc DeleteComment(DeleteCommentRequest) returns (PostEmptyResponse);
-  // 根据 PostID 按页获取文章主评论
-  rpc ListCommentByPage(ListCommentByPageRequest) returns (CommentsResponse);
-  // 根据 CommentID 按页获取评论的回复
-  rpc ListRepliesByPage(ListReplyByPageRequest) returns (CommentsResponse);
-  // 评论是否属于用户
-  rpc CheckCommentDeleteAuth(CommentBelongRequest) returns (BelongResponse);
+  rpc ExistPost(ExistPostRequest) returns (ExistPostResponse);
+  rpc CheckPostAuth(CheckPostAuthRequest) returns (CheckPostAuthResponse);
   // 健康检查
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }

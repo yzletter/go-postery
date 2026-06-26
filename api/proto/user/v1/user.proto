@@ -4,45 +4,48 @@ package user.v1;
 
 option go_package = "github.com/yzletter/go-postery/api/proto/user/v1;user_grpc";
 
-message UserBrief {
-  int64 ID = 1;
-  string Nickname = 2;
-  string Avatar = 3;
-}
-
-message TopUser {
-  int64 ID = 1;
+message ProfileBrief {
+  int64 UserID = 1;
   string Nickname = 2;
   string Avatar = 3;
   string Bio = 4;
-  float Score = 5;
+}
+
+message ProfileTop {
+  int64 UserID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+  int64 Score = 5;
 }
 
 message GetProfileByIdRequest {
   int64 ID = 1;
 }
 
-message UserDetail {
-  int64 ID = 1;
+message Profile {
+  int64 UserID = 1;
   string Nickname = 2;
   string Avatar = 3;
   string Bio = 4;
-  uint32 Gender = 5;
+  int32 Gender = 5;
   string Birthday = 6;
   string Location = 7;
   string Country = 8;
   string LastLoginIP = 9;
+  string CreatedAt = 10;
+  string LastLoginAt = 11;
 }
 
 message UpdateProfileRequest {
-  int64 ID = 1;
-  string Nickname = 2;
-  string Avatar = 3;
-  string Bio = 4;
-  uint32 Gender = 5;
-  string Birthday = 6;
-  string Location = 7;
-  string Country = 8;
+  int64 UserID = 1;
+  optional string Nickname = 2;
+  optional string Avatar = 3;
+  optional string Bio = 4;
+  optional int32 Gender = 5;
+  optional string Birthday = 6;
+  optional string Location = 7;
+  optional string Country = 8;
 }
 
 message UpdateProfileResponse {}
@@ -50,18 +53,15 @@ message UpdateProfileResponse {}
 message TopRequest {}
 
 message TopResponse {
-  repeated TopUser TopUsers = 1;
+  repeated ProfileTop ProfileTops = 1;
 }
 
-message FollowCommonRequest {
-  int64 FollowerID = 1; // 关注者 ID
-  int64 FolloweeID = 2; // 被关注者 ID
+message GetIDAfterTimeRequest {
+  string TimeAfter = 1;
 }
 
-message FollowEmptyResponse {}
-
-message IfFollowResponse {
-  int32 Result = 1;  // 0 互不关注, 1 a 关注 b, 2 b 关注 a, 3 互相关注
+message UserIDs {
+  repeated int64 IDs = 1;
 }
 
 message ListFollowRequest {
@@ -72,7 +72,7 @@ message ListFollowRequest {
 
 message ListFollowResponse {
   uint64 Count = 1;
-  repeated UserBrief UserBriefs = 2;
+  repeated ProfileBrief ProfileBriefs = 2;
 }
 
 message UploadAvatarSignRequest {
@@ -103,14 +103,13 @@ message HealthCheckResponse {}
 
 service UserService {
   // 根据用户 ID 获取用户资料
-  rpc GetProfileById(GetProfileByIdRequest) returns (UserDetail);
+  rpc GetProfileById(GetProfileByIdRequest) returns (Profile);
   // 更新用户资料
   rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
   // 返回推荐用户
   rpc Top(TopRequest) returns (TopResponse);
-  rpc Follow(FollowCommonRequest) returns (FollowEmptyResponse);
-  rpc UnFollow(FollowCommonRequest) returns (FollowEmptyResponse);
-  rpc IfFollow(FollowCommonRequest) returns (IfFollowResponse);
+  // 根据时间获取用户 IDs
+  rpc GetIDAfterTime(GetIDAfterTimeRequest) returns (UserIDs);
   // 按页查找粉丝
   rpc ListFollowersByPage(ListFollowRequest) returns (ListFollowResponse);
   // 按页查找关注的人
