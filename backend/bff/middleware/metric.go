@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/backend/micro/bff/service"
+	"github.com/yzletter/go-postery/backend/bff/service"
 )
 
 // MetricMiddleware 返回每个接口的调用次数和调用时间

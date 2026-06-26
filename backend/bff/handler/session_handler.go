@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	sessiondto "github.com/yzletter/go-postery/backend/bff/dto/session"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
-	sessiondto "github.com/yzletter/go-postery/backend/micro/bff/dto/session"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
@@ -44,12 +44,12 @@ func (hdl *SessionHandler) List(ctx *gin.Context) {
 	}
 
 	sessions := make([]sessiondto.SessionDTO, 0, len(resp.Sessions))
-	for _, session := range resp.Sessions {
-		user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: session.TargetID})
+	for _, sess := range resp.Sessions {
+		user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: sess.TargetID})
 		if err != nil {
-			user = &user_grpc.UserDetail{}
+			user = &user_grpc.Profile{}
 		}
-		sessions = append(sessions, sessiondto.ToSessionDTO(session, user))
+		sessions = append(sessions, sessiondto.ToSessionDTO(sess, user))
 	}
 
 	// 返回
@@ -72,20 +72,20 @@ func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 	}
 
 	// 获取会话
-	session, err := hdl.sessionSvc.GetSession(ctx, &session_grpc.BothUserID{UserID: uid, TargetID: targetID})
+	sess, err := hdl.sessionSvc.GetSession(ctx, &session_grpc.BothUserID{UserID: uid, TargetID: targetID})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), sessiondto.SessionDTO{})
 		return
 	}
 
 	// 获取用户
-	user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: session.TargetID})
+	user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: sess.TargetID})
 	if err != nil {
-		user = &user_grpc.UserDetail{}
+		user = &user_grpc.Profile{}
 	}
 
 	// 返回
-	response.Success(ctx, "获取会话成功", sessiondto.ToSessionDTO(session, user))
+	response.Success(ctx, "获取会话成功", sessiondto.ToSessionDTO(sess, user))
 }
 
 func (hdl *SessionHandler) Delete(ctx *gin.Context) {
@@ -155,7 +155,7 @@ func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 		return
 	}
 
-	hasMore := (pageNo-1)*pageSize < int(resp.Count)
+	hasMore := pageNo*pageSize < int(resp.Count)
 
 	messages := make([]sessiondto.MessageDTO, 0, len(resp.Messages))
 	for _, message := range resp.Messages {

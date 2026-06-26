@@ -5,26 +5,29 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/bff/dto/post"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
-	post_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
 )
 
 type PostHandler struct {
-	postSvc grpcclient.PostClient
-	userSvc grpcclient.UserClient
+	postSvc  grpcclient.PostClient
+	userSvc  grpcclient.UserClient
+	interSvc grpcclient.InteractiveClient
 }
 
-func NewPostHandler(postSvc grpcclient.PostClient, userSvc grpcclient.UserClient) *PostHandler {
+func NewPostHandler(postSvc grpcclient.PostClient, userSvc grpcclient.UserClient, interSvc grpcclient.InteractiveClient) *PostHandler {
 	return &PostHandler{
-		postSvc: postSvc,
-		userSvc: userSvc,
+		postSvc:  postSvc,
+		userSvc:  userSvc,
+		interSvc: interSvc,
 	}
 }
 
@@ -48,18 +51,18 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"posts":   []post_dto.DetailDTO{},
+			"posts":   []post.DetailDTO{},
 			"total":   0,
 			"hasMore": false,
 		})
 		return
 	}
 
-	userDetails := make([]*user_grpc.UserDetail, len(resp.PostDetails)) // 用户切片
+	userDetails := make([]*user_grpc.Profile, len(resp.PostDetails)) // 用户切片
 	for k := range resp.PostDetails {
 		userDetail, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.PostDetails[k].UserID})
 		if err != nil {
-			userDetail = &user_grpc.UserDetail{}
+			userDetail = &user_grpc.Profile{}
 		}
 		userDetails[k] = userDetail
 	}
@@ -67,9 +70,9 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	posts := make([]post_dto.DetailDTO, 0, len(resp.PostDetails))
+	posts := make([]post.DetailDTO, 0, len(resp.PostDetails))
 	for k := range resp.PostDetails {
-		posts = append(posts, post_dto.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
+		posts = append(posts, post.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
 	}
 
 	// 返回
@@ -100,18 +103,18 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"posts":   []post_dto.DetailDTO{},
+			"posts":   []post.DetailDTO{},
 			"total":   0,
 			"hasMore": false,
 		})
 		return
 	}
 
-	userDetails := make([]*user_grpc.UserDetail, len(resp.PostDetails)) // 用户切片
+	userDetails := make([]*user_grpc.Profile, len(resp.PostDetails)) // 用户切片
 	for k := range resp.PostDetails {
 		userDetail, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.PostDetails[k].UserID})
 		if err != nil {
-			userDetail = &user_grpc.UserDetail{}
+			userDetail = &user_grpc.Profile{}
 		}
 		userDetails[k] = userDetail
 	}
@@ -119,9 +122,9 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	posts := make([]post_dto.DetailDTO, 0, len(resp.PostDetails))
+	posts := make([]post.DetailDTO, 0, len(resp.PostDetails))
 	for k := range resp.PostDetails {
-		posts = append(posts, post_dto.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
+		posts = append(posts, post.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
 	}
 
 	// 返回
@@ -148,7 +151,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal), post_dto.DetailDTO{})
+		}, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
@@ -158,11 +161,11 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal), post_dto.DetailDTO{})
+		}, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
-	response.Success(ctx, "获取帖子详情成功", post_dto.ToDetailDTO(postDetail, userDetail))
+	response.Success(ctx, "获取帖子详情成功", post.ToDetailDTO(postDetail, userDetail))
 }
 
 // CreatePost 创建帖子
@@ -175,7 +178,7 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var createRequest post_dto.CreatePostRequest
+	var createRequest post.CreatePostRequest
 	if err = ctx.ShouldBindJSON(&createRequest); err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -191,7 +194,7 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		Tags:        createRequest.Tags,
 	})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), post_dto.DetailDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
@@ -201,11 +204,11 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal), post_dto.DetailDTO{})
+		}, errno.ErrServerInternal), post.DetailDTO{})
 		return
 	}
 
-	response.Success(ctx, "帖子创建成功", post_dto.ToDetailDTO(postDetail, userDetail))
+	response.Success(ctx, "帖子创建成功", post.ToDetailDTO(postDetail, userDetail))
 }
 
 // DeletePost 删除帖子
@@ -254,7 +257,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var updateRequest post_dto.UpdateRequest
+	var updateRequest post.UpdateRequest
 	err = ctx.ShouldBindJSON(&updateRequest)
 
 	if err != nil {
@@ -339,18 +342,18 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"posts":   []post_dto.BriefDTO{},
+			"posts":   []post.BriefDTO{},
 			"total":   0,
 			"hasMore": false,
 		})
 		return
 	}
 
-	userDetails := make([]*user_grpc.UserDetail, len(resp.PostBriefs)) // 用户切片
+	userDetails := make([]*user_grpc.Profile, len(resp.PostBriefs)) // 用户切片
 	for k := range resp.PostBriefs {
 		userDetail, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.PostBriefs[k].UserID})
 		if err != nil {
-			userDetail = &user_grpc.UserDetail{}
+			userDetail = &user_grpc.Profile{}
 		}
 		userDetails[k] = userDetail
 	}
@@ -358,9 +361,9 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	posts := make([]post_dto.BriefDTO, 0, len(resp.PostBriefs))
+	posts := make([]post.BriefDTO, 0, len(resp.PostBriefs))
 	for k := range resp.PostBriefs {
-		posts = append(posts, post_dto.ToBriefDTO(resp.PostBriefs[k], userDetails[k]))
+		posts = append(posts, post.ToBriefDTO(resp.PostBriefs[k], userDetails[k]))
 	}
 
 	// 返回
@@ -386,7 +389,7 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 		return
 	}
 
-	if _, err = hdl.postSvc.Like(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid}); err != nil {
+	if _, err = hdl.interSvc.Like(ctx, &interactive_grpc.LikeRequest{PostID: pid, UserID: uid}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:      errno.ErrPostNotFound,
 			codes.AlreadyExists: errno.ErrDuplicatedLike,
@@ -412,7 +415,7 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 		return
 	}
 
-	if _, err = hdl.postSvc.Unlike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid}); err != nil {
+	if _, err = hdl.interSvc.Unlike(ctx, &interactive_grpc.LikeRequest{PostID: pid, UserID: uid}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound:      errno.ErrPostNotFound,
 			codes.AlreadyExists: errno.ErrDuplicatedUnLike,
@@ -438,7 +441,7 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 		return
 	}
 
-	ok, err := hdl.postSvc.IfLike(ctx, &post_grpc.PostCommonRequest{PostID: pid, UserID: uid})
+	ok, err := hdl.interSvc.CheckLike(ctx, &interactive_grpc.LikeRequest{PostID: pid, UserID: uid})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), false)
 		return
@@ -450,13 +453,13 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 func (hdl *PostHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.postSvc.Top(ctx, &post_grpc.PostEmptyRequest{})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []post_dto.TopDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []post.TopDTO{})
 		return
 	}
 
-	res := make([]post_dto.TopDTO, 0, len(resp.TopPosts))
+	res := make([]post.TopDTO, 0, len(resp.TopPosts))
 	for _, topPost := range resp.TopPosts {
-		res = append(res, post_dto.ToTopDTO(topPost))
+		res = append(res, post.ToTopDTO(topPost))
 	}
 
 	response.Success(ctx, "获取热门帖子榜单成功", res)
@@ -478,15 +481,15 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	}
 
 	// 获取参数并校验
-	var createReq post_dto.CreateCommentRequest
+	var createReq post.CreateCommentRequest
 	if err := ctx.ShouldBindJSON(&createReq); err != nil || createReq.ParentID < 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
-	// 调用 service 层创建评论
-	commentDTO, err := hdl.postSvc.CreateComment(ctx, &post_grpc.CreateCommentRequest{
+	// 调用 interactive service 创建评论
+	commentDTO, err := hdl.interSvc.Comment(ctx, &interactive_grpc.CreateCommentRequest{
 		PostID:   pid,
 		ParentID: createReq.ParentID,
 		ReplyID:  createReq.ReplyID,
@@ -496,7 +499,7 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal), post_dto.CommentDTO{})
+		}, errno.ErrServerInternal), post.CommentDTO{})
 		return
 	}
 
@@ -526,7 +529,7 @@ func (hdl *PostHandler) DeleteComment(ctx *gin.Context) {
 	}
 
 	// 调用 Service 层
-	_, err = hdl.postSvc.DeleteComment(ctx, &post_grpc.DeleteCommentRequest{
+	_, err = hdl.interSvc.DelComment(ctx, &interactive_grpc.DeleteCommentRequest{
 		UserID:    uid,
 		CommentID: cid,
 	})
@@ -556,7 +559,7 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := hdl.postSvc.ListCommentByPage(ctx, &post_grpc.ListCommentByPageRequest{
+	resp, err := hdl.interSvc.ListCommentByPage(ctx, &interactive_grpc.ListCommentByPageRequest{
 		PostID:   pid,
 		PageNo:   uint32(pageNo),
 		PageSize: uint32(pageSize),
@@ -565,7 +568,7 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"comments": []post_dto.CommentDTO{},
+			"comments": []post.CommentDTO{},
 			"total":    0,
 			"hasMore":  false,
 		})
@@ -574,18 +577,18 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	userDetails := make([]*user_grpc.UserDetail, len(resp.Comments)) // 用户切片
+	userDetails := make([]*user_grpc.Profile, len(resp.Comments)) // 用户切片
 	for k := range resp.Comments {
 		userDetail, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.Comments[k].UserID})
 		if err != nil {
-			userDetail = &user_grpc.UserDetail{}
+			userDetail = &user_grpc.Profile{}
 		}
 		userDetails[k] = userDetail
 	}
 
-	comments := make([]post_dto.CommentDTO, 0, len(resp.Comments))
+	comments := make([]post.CommentDTO, 0, len(resp.Comments))
 	for k := range resp.Comments {
-		comments = append(comments, post_dto.ToCommentDTO(resp.Comments[k], userDetails[k]))
+		comments = append(comments, post.ToInteractiveCommentDTO(resp.Comments[k], userDetails[k]))
 	}
 
 	response.Success(ctx, "获取评论列表成功", gin.H{
@@ -620,7 +623,7 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := hdl.postSvc.ListRepliesByPage(ctx, &post_grpc.ListReplyByPageRequest{
+	resp, err := hdl.interSvc.ListRepliesByPage(ctx, &interactive_grpc.ListReplyByPageRequest{
 		CommentID: cid,
 		PageNo:    uint32(pageNo),
 		PageSize:  uint32(pageSize),
@@ -629,7 +632,7 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"comments": []post_dto.CommentDTO{},
+			"comments": []post.CommentDTO{},
 			"total":    0,
 			"hasMore":  false,
 		})
@@ -638,18 +641,18 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	userDetails := make([]*user_grpc.UserDetail, len(resp.Comments)) // 用户切片
+	userDetails := make([]*user_grpc.Profile, len(resp.Comments)) // 用户切片
 	for k := range resp.Comments {
 		userDetail, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.Comments[k].UserID})
 		if err != nil {
-			userDetail = &user_grpc.UserDetail{}
+			userDetail = &user_grpc.Profile{}
 		}
 		userDetails[k] = userDetail
 	}
 
-	comments := make([]post_dto.CommentDTO, 0, len(resp.Comments))
+	comments := make([]post.CommentDTO, 0, len(resp.Comments))
 	for k := range resp.Comments {
-		comments = append(comments, post_dto.ToCommentDTO(resp.Comments[k], userDetails[k]))
+		comments = append(comments, post.ToInteractiveCommentDTO(resp.Comments[k], userDetails[k]))
 	}
 
 	response.Success(ctx, "获取评论回复列表成功", gin.H{
@@ -675,7 +678,7 @@ func (hdl *PostHandler) CheckCommentDeleteAuth(ctx *gin.Context) {
 	}
 
 	// 查询是否属于
-	resp, err := hdl.postSvc.CheckCommentDeleteAuth(ctx, &post_grpc.CommentBelongRequest{UserID: uid, CommentID: cid})
+	resp, err := hdl.interSvc.CheckCommentDelAuth(ctx, &interactive_grpc.CommentIDUserIDRequest{UserID: uid, CommentID: cid})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,

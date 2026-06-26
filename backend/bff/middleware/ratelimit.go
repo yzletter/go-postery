@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/backend/micro/bff/service"
+	"github.com/yzletter/go-postery/backend/bff/service"
 )
 
 const RateLimitPrefix = "ip:limit"

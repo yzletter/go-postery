@@ -1,9 +1,6 @@
 package user
 
-import (
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	post_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
-)
+import user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 
 type OSSSignDTO struct {
 	Response string `json:"response"`
@@ -14,6 +11,7 @@ type BriefDTO struct {
 	ID       int64  `json:"id,string"` // ID
 	Nickname string `json:"nickname"`  // 昵称
 	Avatar   string `json:"avatar"`    // 头像 URL
+	Bio      string `json:"bio"`       // 个性签名
 }
 
 // DetailDTO 后端返回详细 User 信息
@@ -31,32 +29,34 @@ type DetailDTO struct {
 
 // TopDTO 后端返回排行榜 User 信息
 type TopDTO struct {
-	ID       int64   `json:"id,string"`
-	Nickname string  `json:"nickname"` // 用户名
-	Bio      string  `json:"bio"`      // 个性签名
-	Avatar   string  `json:"avatar"`   // 头像 URL
-	Score    float64 `json:"score"`
+	ID       int64  `json:"id,string"`
+	Nickname string `json:"nickname"` // 用户名
+	Bio      string `json:"bio"`      // 个性签名
+	Avatar   string `json:"avatar"`   // 头像 URL
+	Score    int64  `json:"score"`
 }
 
-// ToBriefDTO user_grpc.UserDetail 转 BriefDTO
-func ToBriefDTO(profile *user_grpc.UserDetail) BriefDTO {
+// ToBriefDTO user_grpc.Profile 转 BriefDTO
+func ToBriefDTO(profile *user_grpc.Profile) BriefDTO {
 	var res = BriefDTO{
-		ID:       profile.ID,
+		ID:       profile.UserID,
 		Nickname: profile.Nickname,
 		Avatar:   profile.Avatar,
+		Bio:      profile.Bio,
 	}
 	return res
 }
 
-// BriefsToDTO []*user_grpc.UserBrief 转 []BriefDTO
-func BriefsToDTO(briefs []*user_grpc.UserBrief) []BriefDTO {
+// BriefsToDTO []*user_grpc.ProfileBrief 转 []BriefDTO
+func BriefsToDTO(briefs []*user_grpc.ProfileBrief) []BriefDTO {
 	res := make([]BriefDTO, 0, len(briefs))
 
 	for _, b := range briefs {
 		briefDTO := BriefDTO{
-			ID:       b.ID,
+			ID:       b.UserID,
 			Nickname: b.Nickname,
 			Avatar:   b.Avatar,
+			Bio:      b.Bio,
 		}
 		res = append(res, briefDTO)
 	}
@@ -64,20 +64,20 @@ func BriefsToDTO(briefs []*user_grpc.UserBrief) []BriefDTO {
 }
 
 // ToTopDTO user_grpc.TopResponse 转 ToTopDTO
-func ToTopDTO(topUser *user_grpc.TopUser) TopDTO {
+func ToTopDTO(topUser *user_grpc.ProfileTop) TopDTO {
 	return TopDTO{
-		ID:       topUser.ID,
+		ID:       topUser.UserID,
 		Nickname: topUser.Nickname,
 		Bio:      topUser.Bio,
 		Avatar:   topUser.Avatar,
-		Score:    float64(topUser.Score),
+		Score:    topUser.Score,
 	}
 }
 
-// ToDetailDTO user_grpc.UserDetail 转 DetailDTO
-func ToDetailDTO(profile *user_grpc.UserDetail) DetailDTO {
+// ToDetailDTO user_grpc.Profile 转 DetailDTO
+func ToDetailDTO(profile *user_grpc.Profile) DetailDTO {
 	return DetailDTO{
-		ID:          profile.ID,
+		ID:          profile.UserID,
 		Nickname:    profile.Nickname,
 		Gender:      int(profile.Gender),
 		Avatar:      profile.Avatar,
@@ -87,11 +87,4 @@ func ToDetailDTO(profile *user_grpc.UserDetail) DetailDTO {
 		Country:     profile.Country,
 		LastLoginIP: profile.LastLoginIP,
 	}
-}
-
-// PostsResponse 用户发表帖子
-type PostsResponse struct {
-	Total   int64               `json:"total"`
-	HasMore bool                `json:"has_more"`
-	Posts   []post_dto.BriefDTO `json:"posts"`
 }

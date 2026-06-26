@@ -6,29 +6,36 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	post_dto "github.com/yzletter/go-postery/backend/bff/dto/post"
+	user_dto "github.com/yzletter/go-postery/backend/bff/dto/user"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
-	post_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
-	user_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
 )
 
 type UserHandler struct {
-	userSvc manager.UserClient
-	postSvc manager.PostClient
+	userSvc  manager.UserClient
+	postSvc  manager.PostClient
+	interSvc manager.InteractiveClient
 }
 
 // NewUserHandler 构造函数
-func NewUserHandler(userSvc manager.UserClient, postSvc manager.PostClient) *UserHandler {
+func NewUserHandler(userSvc manager.UserClient, postSvc manager.PostClient, interSvc manager.InteractiveClient) *UserHandler {
 	return &UserHandler{
-		userSvc: userSvc,
-		postSvc: postSvc,
+		userSvc:  userSvc,
+		postSvc:  postSvc,
+		interSvc: interSvc,
 	}
+}
+
+func userHandlerLogger(handler string) *slog.Logger {
+	return slog.With("component", "user_handler", "handler", handler)
 }
 
 // RegisterPrivateRouter 注册私人路由
@@ -123,28 +130,28 @@ func (hdl *UserHandler) Posts(ctx *gin.Context) {
 			Title:     post.Title,
 			CreatedAt: post.CreatedAt,
 			Author: user_dto.BriefDTO{
-				ID:       profileResp.ID,
+				ID:       profileResp.UserID,
 				Nickname: profileResp.Nickname,
 				Avatar:   profileResp.Avatar,
+				Bio:      profileResp.Bio,
 			},
 		})
 	}
 
-	httpBack := user_dto.PostsResponse{
-		Total:   int64(resp.Count),
-		HasMore: pageNo*pageSize < int(resp.Count),
-		Posts:   postsBack,
-	}
-	response.Success(ctx, "获取用户发表的帖子成功", httpBack)
+	response.Success(ctx, "获取用户发表的帖子成功", gin.H{
+		"total":    int64(resp.Count),
+		"has_more": pageNo*pageSize < int(resp.Count),
+		"posts":    postsBack,
+	})
 }
 
 // ModifyProfile 修改个人资料
 func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
-	var modifyProfileReq user.ModifyProfileRequest
+	var modifyProfileReq user_dto.ModifyProfileRequest
 	// 将请求参数绑定到结构体
 	if err := ctx.ShouldBindJSON(&modifyProfileReq); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		userHandlerLogger("ModifyProfile").Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -156,20 +163,38 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		return
 	}
 
-	_, err = hdl.userSvc.UpdateProfile(ctx, &user_grpc.UpdateProfileRequest{
-		ID:       uid,
-		Nickname: modifyProfileReq.Nickname,
-		Avatar:   modifyProfileReq.Avatar,
-		Bio:      modifyProfileReq.Bio,
-		Gender:   uint32(modifyProfileReq.Gender),
-		Birthday: modifyProfileReq.BirthDay,
-		Location: modifyProfileReq.Location,
-		Country:  modifyProfileReq.Country,
-	})
+	updateReq := &user_grpc.UpdateProfileRequest{
+		UserID: uid,
+	}
+	if modifyProfileReq.Nickname != nil {
+		updateReq.Nickname = modifyProfileReq.Nickname
+	}
+	if modifyProfileReq.Avatar != nil {
+		updateReq.Avatar = modifyProfileReq.Avatar
+	}
+	if modifyProfileReq.Bio != nil {
+		updateReq.Bio = modifyProfileReq.Bio
+	}
+	if modifyProfileReq.Gender != nil {
+		gender := int32(*modifyProfileReq.Gender)
+		updateReq.Gender = &gender
+	}
+	if modifyProfileReq.BirthDay != nil {
+		updateReq.Birthday = modifyProfileReq.BirthDay
+	}
+	if modifyProfileReq.Location != nil {
+		updateReq.Location = modifyProfileReq.Location
+	}
+	if modifyProfileReq.Country != nil {
+		updateReq.Country = modifyProfileReq.Country
+	}
+
+	_, err = hdl.userSvc.UpdateProfile(ctx, updateReq)
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
+			codes.AlreadyExists:   errno.ErrNicknameDuplicated,
 		}, errno.ErrServerInternal), gin.H{})
 		return
 	}
@@ -182,13 +207,13 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 func (hdl *UserHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.userSvc.Top(ctx, &user_grpc.TopRequest{})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []user.TopDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []user_dto.TopDTO{})
 		return
 	}
 
-	res := make([]user.TopDTO, 0, len(resp.TopUsers))
-	for _, u := range resp.TopUsers {
-		top := user.ToTopDTO(u)
+	res := make([]user_dto.TopDTO, 0, len(resp.ProfileTops))
+	for _, u := range resp.ProfileTops {
+		top := user_dto.ToTopDTO(u)
 		res = append(res, top)
 	}
 
@@ -216,7 +241,7 @@ func (hdl *UserHandler) Follow(ctx *gin.Context) {
 	}
 
 	// 关注
-	if _, err = hdl.userSvc.Follow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id}); err != nil {
+	if _, err = hdl.interSvc.Follow(ctx, &interactive_grpc.FollowRequest{FollowerID: uid, FolloweeID: id}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.AlreadyExists: errno.ErrDuplicatedFollow,
 		}, errno.ErrServerInternal), gin.H{})
@@ -247,7 +272,7 @@ func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 	}
 
 	// 取消关注
-	if _, err = hdl.userSvc.UnFollow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id}); err != nil {
+	if _, err = hdl.interSvc.Unfollow(ctx, &interactive_grpc.FollowRequest{FollowerID: uid, FolloweeID: id}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.AlreadyExists: errno.ErrDuplicatedUnFollow,
 		}, errno.ErrServerInternal), gin.H{})
@@ -277,7 +302,7 @@ func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := hdl.userSvc.IfFollow(ctx, &user_grpc.FollowCommonRequest{FollowerID: uid, FolloweeID: id})
+	resp, err := hdl.interSvc.IfFollow(ctx, &interactive_grpc.FollowRequest{FollowerID: uid, FolloweeID: id})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), false)
 		return
@@ -297,15 +322,17 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 
 	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
-	if err1 != nil || err2 != nil || pageNo < 1 || pageSize > 100 {
+	if err1 != nil || err2 != nil || pageNo < 1 || pageSize < 1 || pageSize > 100 {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	resp, err := hdl.userSvc.ListFollowersByPage(ctx, &user_grpc.ListFollowRequest{UserID: uid, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), gin.H{
-			"followers": []user.BriefDTO{},
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+		}, errno.ErrServerInternal), gin.H{
+			"followers": []user_dto.BriefDTO{},
 			"total":     0,
 			"hasMore":   false,
 		})
@@ -316,7 +343,7 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 
 	response.Success(ctx, "获取粉丝列表成功",
 		gin.H{
-			"followers": user.BriefsToDTO(resp.UserBriefs),
+			"followers": user_dto.BriefsToDTO(resp.ProfileBriefs),
 			"total":     resp.Count,
 			"hasMore":   hasMore,
 		})
@@ -333,15 +360,17 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 	pageNo, err1 := strconv.Atoi(ctx.DefaultQuery("pageNo", "1"))
 	pageSize, err2 := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
-	if err1 != nil || err2 != nil || pageNo < 1 || pageSize > 100 {
+	if err1 != nil || err2 != nil || pageNo < 1 || pageSize < 1 || pageSize > 100 {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	resp, err := hdl.userSvc.ListFolloweesByPage(ctx, &user_grpc.ListFollowRequest{UserID: uid, PageNo: uint32(pageNo), PageSize: uint32(pageSize)})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), gin.H{
-			"followers": []user.BriefDTO{},
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+		}, errno.ErrServerInternal), gin.H{
+			"followers": []user_dto.BriefDTO{},
 			"total":     0,
 			"hasMore":   false,
 		})
@@ -352,7 +381,7 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 	response.Success(ctx, "获取关注列表成功",
 		gin.H{
-			"followers": user.BriefsToDTO(resp.UserBriefs),
+			"followers": user_dto.BriefsToDTO(resp.ProfileBriefs),
 			"total":     resp.Count,
 			"hasMore":   hasMore,
 		})
@@ -360,10 +389,10 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 // GetAvatarURL 预签名
 func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
-	var req user.GetAvatarURLRequest
+	var req user_dto.GetAvatarURLRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		userHandlerLogger("GetAvatarURL").Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -375,7 +404,9 @@ func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.GetAvatarURL(ctx, &user_grpc.GetAvatarURLRequest{ObjectName: req.Avatar})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), nil)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+		}, errno.ErrServerInternal), nil)
 		return
 	}
 
@@ -386,25 +417,27 @@ func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
 
 // UploadAvatarCallback 回调
 func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
+	logger := userHandlerLogger("UploadAvatarCallback")
+
 	// 对请求进行验签
 	if ok, err := utils.VerifyOSS(ctx.Request); !ok || err != nil {
-		slog.Error("OSS Callback Invaild Request", "error", err, "request", ctx.Request) // 验签失败
+		logger.Warn("oss callback signature invalid", "error", err, "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "client_ip", ctx.ClientIP()) // 验签失败
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// Body 绑定结构体
-	var uploadCallbackReq user.UploadCallbackRequest
+	var uploadCallbackReq user_dto.UploadCallbackRequest
 	if err := ctx.ShouldBindJSON(&uploadCallbackReq); err != nil {
 		// 参数绑定失败
-		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
+		logger.Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 验证 Bucket
 	if uploadCallbackReq.Bucket != "go-postery" {
-		slog.Error("Invaild Bucket")
+		logger.Warn("invalid oss bucket", "bucket", uploadCallbackReq.Bucket)
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -425,7 +458,10 @@ func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
 
 	_, err = hdl.userSvc.UploadAvatarCallback(ctx, &user_grpc.UploadAvatarCallbackRequest{UserID: uid, ObjectName: uploadCallbackReq.Object})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), nil)
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+			codes.NotFound:        errno.ErrUserNotFound,
+		}, errno.ErrServerInternal), nil)
 		return
 	}
 
@@ -443,14 +479,16 @@ func (hdl *UserHandler) UploadAvatarSign(ctx *gin.Context) {
 
 	resp, err := hdl.userSvc.UploadAvatarSign(ctx, &user_grpc.UploadAvatarSignRequest{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal),
-			user.OSSSignDTO{
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.InvalidArgument: errno.ErrInvalidParam,
+		}, errno.ErrServerInternal),
+			user_dto.OSSSignDTO{
 				Response: "",
 			})
 		return
 	}
 
-	response.Success(ctx, "获取签名成功", user.OSSSignDTO{
+	response.Success(ctx, "获取签名成功", user_dto.OSSSignDTO{
 		Response: resp.Response,
 	})
 }

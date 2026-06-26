@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
+	agent2 "github.com/yzletter/go-postery/backend/bff/dto/agent"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
-	"github.com/yzletter/go-postery/backend/micro/bff/dto/agent"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
@@ -33,7 +33,7 @@ func (hdl *AgentHandler) Chat(ctx *gin.Context) {
 	}
 
 	// 获取参数并校验
-	var req agent.ChatAgentRequest
+	var req agent2.ChatAgentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
@@ -50,11 +50,11 @@ func (hdl *AgentHandler) Chat(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.Internal: errno.ErrServerInternal,
-		}, errno.ErrServerInternal), agent.DTO{Documents: []string{}})
+		}, errno.ErrServerInternal), agent2.DTO{Documents: []string{}})
 		return
 	}
 
 	// 返回响应
-	response.Success(ctx, "success", agent.ToDTO(resp))
+	response.Success(ctx, "success", agent2.ToDTO(resp))
 	return
 }

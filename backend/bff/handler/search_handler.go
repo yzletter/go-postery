@@ -9,11 +9,11 @@ import (
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	postdto "github.com/yzletter/go-postery/backend/bff/dto/post"
+	"github.com/yzletter/go-postery/backend/bff/dto/search"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
-	postdto "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
-	"github.com/yzletter/go-postery/backend/micro/bff/dto/search"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	utils2 "github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 )
@@ -33,7 +33,7 @@ func NewSearchHandler(searchSvc grpcclient.SearchClient, postSvc grpcclient.Post
 }
 
 func (hdl *SearchHandler) Search(ctx *gin.Context) {
-	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
+	// 校验登录态
 	if _, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext); err != nil {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
@@ -47,10 +47,11 @@ func (hdl *SearchHandler) Search(ctx *gin.Context) {
 		return
 	}
 
-	querys := strings.Split(req.Query, " ")
+	// 拆分查询词, 多个查询词默认取交集
+	queries := strings.Split(req.Query, " ")
 
-	// 进行搜索
-	resp, err := hdl.searchSvc.Search(ctx, &search_grpc.SearchRequest{Queries: querys})
+	// 调用 SearchService 获取命中的 PostID
+	resp, err := hdl.searchSvc.Search(ctx, &search_grpc.SearchRequest{Queries: queries})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []postdto.DetailDTO{})
 		return
@@ -58,26 +59,26 @@ func (hdl *SearchHandler) Search(ctx *gin.Context) {
 
 	posts := make([]postdto.DetailDTO, 0, len(resp.DocumentIDs))
 	for _, DocID := range resp.DocumentIDs {
-		// PostID
+		// 解析 PostID
 		postID, err := strconv.ParseInt(DocID.DocID, 10, 64)
 		if err != nil {
 			continue
 		}
 
-		// 查找 Post
-		post, err := hdl.postSvc.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{PostID: postID, AddViewCnt: false})
+		// 查询帖子详情
+		postDetail, err := hdl.postSvc.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{PostID: postID, AddViewCnt: false})
 		if err != nil {
 			continue
 		}
 
-		// 查找 User
-		user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: post.UserID})
+		// 查询作者信息
+		user, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: postDetail.UserID})
 		if err != nil {
-			user = &user_grpc.UserDetail{}
+			user = &user_grpc.Profile{}
 		}
 
 		// 转 DTO
-		posts = append(posts, postdto.ToDetailDTO(post, user))
+		posts = append(posts, postdto.ToDetailDTO(postDetail, user))
 	}
 
 	response.Success(ctx, "搜索成功", posts)

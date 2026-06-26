@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
+	"github.com/yzletter/go-postery/backend/bff/handler"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
-	"github.com/yzletter/go-postery/backend/micro/bff/handler"
 	"github.com/yzletter/go-postery/backend/utils"
 )
 
@@ -20,7 +20,7 @@ func AuthRequiredMiddleware(client grpcclient.AuthClient) gin.HandlerFunc {
 		accessToken := handler.ExtractToken(ctx)
 		refreshToken := utils.GetValueFromCookie(ctx, conf.RefreshTokenInCookie)
 
-		slog.Info("获取当前用户的 Token", "AccessToken", accessToken, "RefreshToken", refreshToken)
+		slog.Info("获取当前用户的 Token", "AccessToken", maskTokenForLog(accessToken), "RefreshToken", maskTokenForLog(refreshToken))
 
 		// 先尝试通过 AccessToken 认证
 		if uid, ok := tryAuthByAccessToken(ctx, client, accessToken); ok {
@@ -131,4 +131,14 @@ func unauthorized(ctx *gin.Context) {
 func accept(ctx *gin.Context, uid int64) {
 	ctx.Set(conf.UserIDInContext, uid)
 	ctx.Next()
+}
+
+func maskTokenForLog(token string) string {
+	if token == "" {
+		return ""
+	}
+	if len(token) <= 12 {
+		return "***"
+	}
+	return token[:6] + "..." + token[len(token)-6:]
 }

@@ -15,9 +15,9 @@ import (
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
+	"github.com/yzletter/go-postery/backend/bff/dto/session"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
-	session2 "github.com/yzletter/go-postery/backend/micro/bff/dto/session"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 )
 
@@ -158,7 +158,7 @@ func (svc *websocketService) Connect(ctx context.Context, w http.ResponseWriter,
 			break
 		}
 
-		var messageReq session2.Request
+		var messageReq session.Request
 		err = json.Unmarshal(messageBody, &messageReq)
 		if err != nil {
 			// BadRequest
@@ -351,7 +351,7 @@ func consumeMQ(ctx context.Context, mqConn *amqp.Connection, id int64, send func
 				continue
 			}
 
-			msgDTO := session2.ToMessageDTO(&message)
+			msgDTO := session.ToMessageDTO(&message)
 			if !send(wsWriteRequest{isJSON: true, jsonPayload: msgDTO}) {
 				return ctx.Err()
 			}

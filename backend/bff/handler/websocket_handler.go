@@ -2,9 +2,9 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/yzletter/go-postery/backend/bff/errno"
+	"github.com/yzletter/go-postery/backend/bff/service"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
-	"github.com/yzletter/go-postery/backend/micro/bff/service"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 )

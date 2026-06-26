@@ -3,7 +3,7 @@ package lottery
 import (
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	userdto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
+	userdto "github.com/yzletter/go-postery/backend/bff/dto/user"
 )
 
 type GiftDTO struct {
@@ -78,7 +78,7 @@ type OrderDTO struct {
 	ExpireAt  string           `json:"expire_at"`  // 过期时间
 }
 
-func ToOrderDTO(order *lottery_grpc.Order, user *user_grpc.UserDetail) OrderDTO {
+func ToOrderDTO(order *lottery_grpc.Order, user *user_grpc.Profile) OrderDTO {
 	return OrderDTO{
 		ID:        order.OrderID,
 		User:      userdto.ToBriefDTO(user),

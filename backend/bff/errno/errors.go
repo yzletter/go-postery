@@ -46,6 +46,7 @@ var (
 	ErrDuplicatedFollow   = &Error{20003, 409, "已经关注过该用户"}
 	ErrDuplicatedUnFollow = &Error{20004, 409, "尚未关注，无法取消"}
 	ErrFollowYourself     = &Error{20005, 409, "无法对自己进行关注操作"}
+	ErrNicknameDuplicated = &Error{20006, 409, "昵称已存在"}
 )
 
 // Post 错误 Code 3000X

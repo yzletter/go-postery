@@ -1,9 +1,10 @@
 package post
 
 import (
+	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	userdto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
+	userdto "github.com/yzletter/go-postery/backend/bff/dto/user"
 )
 
 type DetailDTO struct {
@@ -22,6 +23,7 @@ type DetailDTO struct {
 type BriefDTO struct {
 	ID        int64            `json:"id,string"`
 	Title     string           `json:"title"`
+	Abstract  string           `json:"abstract"`
 	CreatedAt string           `json:"created_at"`
 	Author    userdto.BriefDTO `json:"author"`
 }
@@ -32,7 +34,7 @@ type TopDTO struct {
 	Score float64 `json:"score"`
 }
 
-func ToDetailDTO(post *post_grpc.PostDetail, user *user_grpc.UserDetail) DetailDTO {
+func ToDetailDTO(post *post_grpc.PostDetail, user *user_grpc.Profile) DetailDTO {
 	return DetailDTO{
 		ID:           post.ID,
 		Title:        post.Title,
@@ -47,10 +49,11 @@ func ToDetailDTO(post *post_grpc.PostDetail, user *user_grpc.UserDetail) DetailD
 	}
 }
 
-func ToBriefDTO(post *post_grpc.PostBrief, user *user_grpc.UserDetail) BriefDTO {
+func ToBriefDTO(post *post_grpc.PostBrief, user *user_grpc.Profile) BriefDTO {
 	return BriefDTO{
 		ID:        post.ID,
 		Title:     post.Title,
+		Abstract:  post.Abstract,
 		CreatedAt: post.CreatedAt,
 		Author:    userdto.ToBriefDTO(user),
 	}
@@ -74,14 +77,13 @@ type CommentDTO struct {
 	Author    userdto.BriefDTO `json:"author"`
 }
 
-func ToCommentDTO(comment *post_grpc.Comment, user *user_grpc.UserDetail) CommentDTO {
+func ToInteractiveCommentDTO(comment *interactive_grpc.InteractiveComment, user *user_grpc.Profile) CommentDTO {
 	return CommentDTO{
-		ID:        comment.ID,
-		PostID:    comment.PostID,
-		ParentID:  comment.ParentID,
-		ReplyID:   comment.ReplyID,
-		Content:   comment.Content,
-		CreatedAt: comment.CreatedAt,
-		Author:    userdto.ToBriefDTO(user),
+		ID:       comment.ID,
+		PostID:   comment.PostID,
+		ParentID: comment.ParentID,
+		ReplyID:  comment.ReplyID,
+		Content:  comment.Content,
+		Author:   userdto.ToBriefDTO(user),
 	}
 }

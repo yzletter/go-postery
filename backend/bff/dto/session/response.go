@@ -17,7 +17,7 @@ type SessionDTO struct {
 	UnreadCount     int    `json:"unread_count"`           // 未读消息数
 }
 
-func ToSessionDTO(session *session_grpc.Session, user *user_grpc.UserDetail) SessionDTO {
+func ToSessionDTO(session *session_grpc.Session, user *user_grpc.Profile) SessionDTO {
 	var res = SessionDTO{
 		//ID:              session.ID,
 		SessionID:       session.SessionID,
