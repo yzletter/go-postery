@@ -239,7 +239,7 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 			backoff = time.Second
 
 			// 反序列化消息
-			var e event.UpdateEventPayload
+			var e event.UpdateScoreEventPayload
 			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
 				slog.Warn("unmarshal rank event failed", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				// 脏消息 Commit 掉

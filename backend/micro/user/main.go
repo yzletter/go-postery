@@ -98,9 +98,12 @@ func main() {
 	ETCDServiceHub.LoadEndpoints(ctx, manager.InteractiveService)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.InteractiveService)
 	InteractiveManager := manager.NewInteractiveManager(manager.InteractiveService, ETCDServiceHub) // 注册 InteractiveClient
+	go InteractiveManager.StartHealthCheck(ctx)                                                     // 开启下游服务健康检查
+
 	ETCDServiceHub.LoadEndpoints(ctx, manager.RankService)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.RankService)
 	RankManager := manager.NewRankManager(manager.RankService, ETCDServiceHub) // 注册 RankClient
+	go RankManager.StartHealthCheck(ctx)                                       // 开启下游服务健康检查
 
 	// Service 层
 	UserService := service.NewUserService(UserRepo, InteractiveManager, RankManager, OSSManager, IDGenerator) // 注册 UserService

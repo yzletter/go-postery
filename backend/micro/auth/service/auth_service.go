@@ -128,7 +128,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 			events = append(events, sessionEvent)
 
 			// 初始化用户分数 Event
-			value2, _ := sonic.MarshalString(event.UpdateEventPayload{
+			value2, _ := sonic.MarshalString(event.UpdateScoreEventPayload{
 				ID:    svc.idGen.NextID(),
 				Biz:   event.UpdateUserScore, // 更新用户分数
 				BizID: uid,

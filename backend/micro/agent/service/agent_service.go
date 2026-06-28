@@ -11,16 +11,16 @@ import (
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/recursive"
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/components/document"
 	eino_model "github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 	"github.com/segmentio/kafka-go"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	"github.com/yzletter/go-postery/backend/errs"
+	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
-	model2 "github.com/yzletter/go-postery/backend/micro/agent/model"
+	"github.com/yzletter/go-postery/backend/micro/agent/model"
 	"github.com/yzletter/go-postery/backend/micro/agent/repository"
 	"github.com/yzletter/go-postery/backend/ports"
 )
@@ -65,7 +65,7 @@ func (svc *agentService) Chat(ctx context.Context, userID int64, sessionID int64
 	// RAG 召回
 	knowledge, err := svc.agentRepo.Retrieve(ctx, query, 0.5, 3) // 召回分数 > 0.5 的三条
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("retrieve agent knowledge failed", "error", err)
 		return defaultContent, nil, errs.ErrInternal
 	}
 
@@ -93,7 +93,7 @@ func (svc *agentService) Chat(ctx context.Context, userID int64, sessionID int64
 		CheckPointStore: nil,
 	})
 	if err != nil {
-		slog.Error("Server Internal Error", "error", err)
+		slog.Error("create chat agent failed", "error", err)
 		return defaultContent, nil, errs.ErrInternal
 	}
 
@@ -117,30 +117,35 @@ func (svc *agentService) Chat(ctx context.Context, userID int64, sessionID int64
 		lastMsg = msg
 	}
 
+	if lastMsg == nil {
+		return defaultContent, nil, nil
+	}
+
 	if lastMsg.Role == schema.Assistant && len(lastMsg.Content) > 0 {
 		return lastMsg.Content, knowledge, nil
 	}
-
 	return defaultContent, nil, nil
 }
 
-// 订阅两种消息：1. 文章新建时，进行切分入库 topic 为 index_document，2. 有向量要入 Qdrant upsert_qdrant
+// StartChunkDocConsumer 文章新建时，进行切分入库 topic 为 index_document，
 func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
+	// 退避
 	backoff := time.Second
+
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("关闭 Chunk Doc Consumer 成功 ...")
+			slog.Info("close chunk document consumer success")
 			return
 		default:
 			// Fetch 消息
 			message, err := svc.agentKafkaConsumer.FetchMessage(ctx)
 			if err != nil {
-				if ctx.Err() != nil { // 正常退出
+				// 正常退出
+				if ctx.Err() != nil {
 					return
 				}
-
-				slog.Error("Fetch Message From Kafka Failed", "Kafka", "ChunkKafka", "error", err)
+				slog.Warn("fetch agent chunk event failed", "error", err)
 
 				// 简单退避，避免狂刷日志
 				time.Sleep(backoff)
@@ -153,27 +158,26 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model2.ChunkDocumentEventPayload
-			err = sonic.Unmarshal(message.Value, &payload)
-			if err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
+			var payload event.NewPostEventPayload
+			if err = sonic.Unmarshal(message.Value, &payload); err != nil {
+				slog.Warn("invalid agent chunk event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// 脏消息 Commit 掉
-				_ = svc.agentKafkaConsumer.CommitMessages(ctx, message)
+				if err := svc.agentKafkaConsumer.CommitMessages(ctx, message); err != nil {
+					slog.Error("commit invalid agent chunk event failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
+				}
 				continue
 			}
 
 			// 消费消息
-			err = svc.indexDocument(ctx, payload.ID)
-			if err != nil {
-				slog.Error("Chunk Document Failed", "error", err)
+			if err = svc.indexDocument(ctx, payload.ID); err != nil {
+				slog.Error("chunk document failed", "post_id", payload.ID, "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
 				continue                // 不 commit -> 重试
 			}
 
 			// 消费成功, 把消息 Commit 掉
-			err = svc.agentKafkaConsumer.CommitMessages(ctx, message)
-			if err != nil {
-				slog.Error("Commit Kafka Message Failed", "id", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
+			if err = svc.agentKafkaConsumer.CommitMessages(ctx, message); err != nil {
+				slog.Error("commit agent chunk event failed", "post_id", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}
@@ -181,12 +185,13 @@ func (svc *agentService) StartChunkDocConsumer(ctx context.Context) {
 	}
 }
 
+// StartUpsertQdrantConsumer 新向量入 Qdrant
 func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 	backoff := time.Second
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("关闭 Chunk Doc Consumer 成功 ...")
+			slog.Info("close upsert qdrant consumer success")
 			return
 		default:
 			// Fetch 消息
@@ -196,7 +201,7 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 					return
 				}
 
-				slog.Error("Fetch Message From Kafka Failed", "Kafka", "ChunkKafka", "error", err)
+				slog.Warn("fetch qdrant upsert event failed", "error", err)
 
 				// 简单退避，避免狂刷日志
 				time.Sleep(backoff)
@@ -209,27 +214,24 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload model2.UpsertQdrantEventPayload
-			err = sonic.Unmarshal(message.Value, &payload)
-			if err != nil {
-				slog.Error("invalid message value, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "value", string(message.Value), "errs", err)
+			var payload event.UpsertQdrantEventPayload
+			if err = sonic.Unmarshal(message.Value, &payload); err != nil {
+				slog.Warn("invalid qdrant upsert event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// 脏消息 Commit 掉
 				_ = svc.qdrantKafkaConsumer.CommitMessages(ctx, message)
 				continue
 			}
 
 			// 消费消息
-			err = svc.upsertQdrant(ctx, payload.BatchID)
-			if err != nil {
-				slog.Error("Upsert Vectors Failed", "error", err)
+			if err = svc.upsertQdrant(ctx, payload.BatchID); err != nil {
+				slog.Error("upsert vectors failed", "batch_id", payload.BatchID, "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
 				continue                // 不 commit -> 重试
 			}
 
 			// 消费成功, 把消息 Commit 掉
-			err = svc.qdrantKafkaConsumer.CommitMessages(ctx, message)
-			if err != nil {
-				slog.Error("Commit Kafka Message Failed", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "errs", err)
+			if err = svc.qdrantKafkaConsumer.CommitMessages(ctx, message); err != nil {
+				slog.Error("commit qdrant upsert event failed", "batch_id", payload.BatchID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
 				continue
 			}
@@ -240,12 +242,9 @@ func (svc *agentService) StartUpsertQdrantConsumer(ctx context.Context) {
 // 索引文本
 func (svc *agentService) indexDocument(ctx context.Context, postID int64) error {
 	// 读文本
-	post, err := svc.postClient.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{
-		PostID:     postID,
-		AddViewCnt: false,
-	})
+	post, err := svc.postClient.GetDetailByID(ctx, &post_grpc.GetDetailByIDRequest{PostID: postID, AddViewCnt: false})
 	if err != nil {
-		slog.Error("获取文本失败", "pid", postID, "error", err)
+		slog.Error("get post for agent indexing failed", "post_id", postID, "error", err)
 		return err
 	}
 
@@ -259,11 +258,11 @@ func (svc *agentService) indexDocument(ctx context.Context, postID int64) error 
 	// 切分文本
 	chunks, err := transform(ctx, docs, int(post.ContentType))
 	if err != nil {
-		slog.Error("切分文本失败", "pid", postID, "error", err)
+		slog.Error("split post content failed", "post_id", postID, "error", err)
 		return err
 	}
 
-	chunkModels := make([]*model2.Chunk, 0, len(chunks))
+	chunkModels := make([]*model.Chunk, 0, len(chunks))
 
 	// 指定批次
 	batchID := svc.idGenerator.NextID()
@@ -272,26 +271,27 @@ func (svc *agentService) indexDocument(ctx context.Context, postID int64) error 
 		chunkID := stableChunkID(post.ID, idx) // 根据 PID + idx 生成固定的 ChunkID, 防止重试生成一套新 ID，导致数据库迅速膨胀
 
 		// 用于入 MySQL
-		chunkModels = append(chunkModels, &model2.Chunk{
+		chunkModels = append(chunkModels, &model.Chunk{
 			ID:      chunkID,
 			Content: chunk.Content,
 			BatchID: batchID,
 		})
 	}
 
-	var payload model2.UpsertQdrantEventPayload
+	var payload event.UpsertQdrantEventPayload
 	payload.BatchID = batchID
 	value, _ := sonic.MarshalString(payload)
-	event := &model2.Event{
+
+	e := &event.OutboxEvent{
 		ID:           svc.idGenerator.NextID(),
-		Topic:        "upsert_qdrant",
-		MessageKey:   "upsert_vectors",
+		Topic:        event.KafkaQdrantTopic,
+		MessageKey:   event.KafkaAgentGroup,
 		MessageValue: value,
 	}
 
-	err = svc.agentRepo.CreateChunksWithOutbox(ctx, chunkModels, event) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
+	err = svc.agentRepo.CreateChunksWithOutbox(ctx, chunkModels, e) // 事务写 Chunk 表和 Outbox 表, 异步入 Qdrant 库
 	if err != nil {
-		slog.Error("MySQL Create Chunk Failed", "error", err)
+		slog.Error("create chunks failed", "post_id", postID, "batch_id", batchID, "error", err)
 		return err
 	}
 
@@ -302,11 +302,11 @@ func (svc *agentService) upsertQdrant(ctx context.Context, BatchID int64) error 
 	// 根据 BatchID 查找 Chunks
 	chunks, err := svc.agentRepo.GetChunksByBatchID(ctx, BatchID)
 	if err != nil {
+		slog.Error("get chunks by batch failed", "batch_id", BatchID, "error", err)
 		return err
 	}
 
-	// 计算 Embeddings
-	// 收集文本，一次性 Embedd
+	// 计算 Embeddings 收集文本，一次性 Embedd
 	text := make([]string, 0, len(chunks))
 	for _, chunk := range chunks {
 		text = append(text, chunk.Content)
@@ -315,7 +315,7 @@ func (svc *agentService) upsertQdrant(ctx context.Context, BatchID int64) error 
 	// 计算向量
 	vectors, err := svc.embedder.Embedding(ctx, text)
 	if err != nil {
-		slog.Error("计算向量失败", "error", err)
+		slog.Error("embed vectors failed", "batch_id", BatchID, "error", err)
 		return err
 	}
 
@@ -330,8 +330,7 @@ func (svc *agentService) upsertQdrant(ctx context.Context, BatchID int64) error 
 	}
 
 	// 插入 Qdrant
-	err = svc.agentRepo.UpsertVectorPoints(ctx, points)
-	if err != nil {
+	if err = svc.agentRepo.UpsertVectorPoints(ctx, points); err != nil {
 		return err
 	}
 
@@ -341,22 +340,8 @@ func (svc *agentService) upsertQdrant(ctx context.Context, BatchID int64) error 
 // transform 切分文本
 func transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema.Document, error) {
 	// 解析器
-	var splitter document.Transformer
-	var err error
-
-	if biz == 0 { // 普通文本
-		splitter, err = recursive.NewSplitter(ctx, &recursive.Config{
-			ChunkSize:   500,                                                  // 必需：目标片段大小
-			OverlapSize: 100,                                                  // 可选：片段重叠大小
-			Separators:  []string{"\n\n", "\n", ".", "?", "!", "。", "？", "！"}, // 可选：分隔符列表
-			LenFunc:     nil,                                                  // 可选：自定义长度计算函数
-			KeepType:    recursive.KeepTypeNone,                               // 可选：分隔符保留策略
-		})
-		if err != nil {
-			return []*schema.Document{}, err
-		}
-	} else { // MarkDown 文本
-		// 先切 header
+	if biz != 0 {
+		// MarkDown 文本, 先切 header
 		headerSplitter, err := markdown.NewHeaderSplitter(ctx, &markdown.HeaderConfig{
 			Headers: map[string]string{
 				"#":  "",
@@ -372,18 +357,18 @@ func transform(ctx context.Context, docs []*schema.Document, biz int) ([]*schema
 			return []*schema.Document{}, err
 		}
 		docs = headerTransformedDoc
+	}
 
-		// 再递归切
-		splitter, err = recursive.NewSplitter(ctx, &recursive.Config{
-			ChunkSize:   500,                                                  // 必需：目标片段大小
-			OverlapSize: 100,                                                  // 可选：片段重叠大小
-			Separators:  []string{"\n\n", "\n", ".", "?", "!", "。", "？", "！"}, // 可选：分隔符列表
-			LenFunc:     nil,                                                  // 可选：自定义长度计算函数
-			KeepType:    recursive.KeepTypeNone,                               // 可选：分隔符保留策略
-		})
-		if err != nil {
-			return []*schema.Document{}, err
-		}
+	// 递归切文本
+	splitter, err := recursive.NewSplitter(ctx, &recursive.Config{
+		ChunkSize:   500,                                                  // 必需：目标片段大小
+		OverlapSize: 100,                                                  // 可选：片段重叠大小
+		Separators:  []string{"\n\n", "\n", ".", "?", "!", "。", "？", "！"}, // 可选：分隔符列表
+		LenFunc:     nil,                                                  // 可选：自定义长度计算函数
+		KeepType:    recursive.KeepTypeNone,                               // 可选：分隔符保留策略
+	})
+	if err != nil {
+		return []*schema.Document{}, err
 	}
 
 	// 进行切分
@@ -408,10 +393,7 @@ func toFloat32(vector []float64) []float32 {
 	return rect
 }
 
-// 生成固定 ChunkID
+// 生成固定 ChunkID, 也可以用 sha1/xxhash 做得更短
 func stableChunkID(postID int64, idx int) string {
-	// 你也可以用 sha1/xxhash 做得更短
-	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(
-		fmt.Sprintf("%d:%d", postID, idx),
-	)).String()
+	return uuid.NewSHA1(uuid.NameSpaceOID, []byte(fmt.Sprintf("%d:%d", postID, idx))).String()
 }

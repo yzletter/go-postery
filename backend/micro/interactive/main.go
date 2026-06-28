@@ -107,6 +107,7 @@ func main() {
 	ETCDServiceHub.LoadEndpoints(ctx, manager.PostService)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.PostService)
 	PostManager := manager.NewPostManager(manager.PostService, ETCDServiceHub)
+	go PostManager.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	// Service 层
 	InteractiveService := service.NewInteractiveService(InteractiveRepo, PostManager, IDGenerator, KafkaConsumer)

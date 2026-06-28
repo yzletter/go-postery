@@ -96,14 +96,17 @@ func main() {
 	ETCDServiceHub.LoadEndpoints(ctx, manager.UserService)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.UserService)
 	UserManager := manager.NewUserManager(manager.UserService, ETCDServiceHub)
+	go UserManager.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	ETCDServiceHub.LoadEndpoints(ctx, manager.PostService)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.PostService)
 	PostManager := manager.NewPostManager(manager.PostService, ETCDServiceHub)
+	go PostManager.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	ETCDServiceHub.LoadEndpoints(ctx, manager.InteractiveService)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.InteractiveService)
 	InteractiveManager := manager.NewInteractiveManager(manager.InteractiveService, ETCDServiceHub)
+	go InteractiveManager.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	// Service 层
 	RankService := service.NewRankService(RankRepo, UserManager, PostManager, InteractiveManager, KafkaConsumer) // 注册 RankService

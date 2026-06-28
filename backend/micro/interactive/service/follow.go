@@ -13,6 +13,7 @@ import (
 )
 
 // Follow 关注用户
+// todo 查询用户存在性
 func (svc *interactiveService) Follow(ctx context.Context, follower int64, followee int64) error {
 	res, err := svc.interRepo.GetFollow(ctx, follower, followee)
 	if err != nil {
