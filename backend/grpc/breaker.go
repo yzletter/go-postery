@@ -8,7 +8,7 @@ import (
 	"time"
 
 	gobreaker "github.com/sony/gobreaker/v2"
-	"github.com/yzletter/go-postery/backend/errs"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
 	_grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

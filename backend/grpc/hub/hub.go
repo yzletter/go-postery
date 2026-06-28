@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+	"time"
 
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	etcdv3 "go.etcd.io/etcd/client/v3"
@@ -54,8 +55,8 @@ func (hub *ETCDServiceHub) GetEndpoints(ctx context.Context, service string) []*
 	addrs := hub.getEndpoints(ctx, service)
 	endpoints := make([]*Endpoint, 0, len(addrs))
 	for _, addr := range addrs {
-		if _, ok := hub.pool[addr]; ok {
-			endpoints = append(endpoints, hub.pool[addr])
+		if endpoint := hub.pool[addr]; endpoint != nil {
+			endpoints = append(endpoints, endpoint)
 		}
 	}
 	return endpoints
@@ -75,6 +76,10 @@ func (hub *ETCDServiceHub) AddEndpoint(ctx context.Context, service string, addr
 
 	// 新建
 	endpoint := NewEndpoint(addr)
+	if endpoint == nil {
+		slog.Warn("skip unavailable endpoint", "service", service, "addr", addr)
+		return
+	}
 
 	if hub.addrs[service] == nil {
 		hub.addrs[service] = []string{addr}
@@ -96,8 +101,8 @@ func (hub *ETCDServiceHub) RemoveEndpoint(ctx context.Context, service string, a
 		if err := endpoint.Close(); err != nil {
 			slog.Error("Close Endpoint Failed", "addr", addr, "error", err)
 		}
-		delete(hub.pool, addr)
 	}
+	delete(hub.pool, addr)
 
 	oldAddrs := hub.addrs[service]
 	newAddrs := make([]string, 0, len(oldAddrs))
@@ -122,7 +127,7 @@ func (hub *ETCDServiceHub) Take(ctx context.Context, service string) *Endpoint {
 		if endpoint == nil {
 			continue
 		}
-		if endpoint.healthy {
+		if endpoint.IsHealthy() {
 			return endpoint
 		}
 	}
@@ -137,28 +142,46 @@ func (hub *ETCDServiceHub) WatchEndpointsFromServiceHub(ctx context.Context, ser
 	}
 
 	// 未监听过
-	keyPrefix := hub.newPrefix(service)
-	ch := hub.client.Watch(ctx, keyPrefix, etcdv3.WithPrefix())
-
 	go func() {
-		// 遍历监听管道
-		for resp := range ch {
-			for _, event := range resp.Events {
-				segments := strings.Split(string(event.Kv.Key), "/")
-				if len(segments) < 2 {
-					// 非法
-					continue
+		defer hub.watched.Delete(service)
+
+		keyPrefix := hub.newPrefix(service)
+		for {
+			ch := hub.client.Watch(ctx, keyPrefix, etcdv3.WithPrefix())
+
+			// 遍历监听管道, watch 异常退出后重建监听
+			for resp := range ch {
+				if err := resp.Err(); err != nil {
+					if ctx.Err() != nil {
+						return
+					}
+					slog.Error("watch service endpoints failed", "service", service, "error", err)
+					break
 				}
-				service := segments[len(segments)-2] // 服务名
-				addr := segments[len(segments)-1]    // addr
-				// 判断是什么操作
-				switch event.Type {
-				case etcdv3.EventTypePut: // 添加
-					hub.AddEndpoint(ctx, service, addr)
-				case etcdv3.EventTypeDelete: // 删除
-					hub.RemoveEndpoint(ctx, service, addr)
+
+				for _, event := range resp.Events {
+					segments := strings.Split(string(event.Kv.Key), "/")
+					if len(segments) < 2 {
+						// 非法
+						continue
+					}
+					eventService := segments[len(segments)-2] // 服务名
+					addr := segments[len(segments)-1]         // addr
+					// 判断是什么操作
+					switch event.Type {
+					case etcdv3.EventTypePut: // 添加
+						hub.AddEndpoint(ctx, eventService, addr)
+					case etcdv3.EventTypeDelete: // 删除
+						hub.RemoveEndpoint(ctx, eventService, addr)
+					}
 				}
 			}
+
+			if ctx.Err() != nil {
+				return
+			}
+			slog.Warn("service endpoints watch closed, retry later", "service", service)
+			time.Sleep(time.Second)
 		}
 	}()
 }

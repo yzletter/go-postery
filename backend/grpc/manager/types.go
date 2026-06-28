@@ -6,12 +6,28 @@ import (
 	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	inter_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
+	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
+	"google.golang.org/grpc"
+)
+
+const (
+	AgentService       = "agent_service"
+	AuthService        = "auth_service"
+	CodeService        = "code_service"
+	InteractiveService = "interactive_service"
+	LotteryService     = "lottery_service"
+	PostService        = "post_service"
+	RankService        = "rank_service"
+	SearchService      = "search_service"
+	SessionService     = "session_service"
+	UserService        = "user_service"
 )
 
 type ServiceHub interface {
@@ -57,20 +73,15 @@ type PostClient interface {
 	GetDetailByID(ctx context.Context, req *post_grpc.GetDetailByIDRequest) (*post_grpc.PostDetail, error)
 	GetBriefByID(ctx context.Context, req *post_grpc.GetBriefByIDRequest) (*post_grpc.PostBrief, error)
 	Top(ctx context.Context, req *post_grpc.PostEmptyRequest) (*post_grpc.TopResponse, error)
+	GetPostByTime(ctx context.Context, req *post_grpc.GetPostByTimeRequest) (*post_grpc.PostIDs, error)
 	Update(ctx context.Context, req *post_grpc.UpdateRequest) (*post_grpc.PostEmptyResponse, error)
 	ListByPage(ctx context.Context, req *post_grpc.ListByPageRequest) (*post_grpc.PostDetailsResponse, error)
 	ListByPageAndUid(ctx context.Context, req *post_grpc.ListByPageAndUidRequest) (*post_grpc.PostBriefsResponse, error)
 	ListByPageAndTag(ctx context.Context, req *post_grpc.ListByPageAndTagRequest) (*post_grpc.PostDetailsResponse, error)
 	Belong(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.BelongResponse, error)
 	Delete(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error)
-	Like(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error)
-	Unlike(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error)
-	IfLike(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.IfLikeResponse, error)
-	CreateComment(ctx context.Context, req *post_grpc.CreateCommentRequest) (*post_grpc.Comment, error)
-	DeleteComment(ctx context.Context, req *post_grpc.DeleteCommentRequest) (*post_grpc.PostEmptyResponse, error)
-	ListCommentByPage(ctx context.Context, req *post_grpc.ListCommentByPageRequest) (*post_grpc.CommentsResponse, error)
-	ListRepliesByPage(ctx context.Context, req *post_grpc.ListReplyByPageRequest) (*post_grpc.CommentsResponse, error)
-	CheckCommentDeleteAuth(ctx context.Context, req *post_grpc.CommentBelongRequest) (*post_grpc.BelongResponse, error)
+	ExistPost(ctx context.Context, in *post_grpc.ExistPostRequest, opts ...grpc.CallOption) (*post_grpc.ExistPostResponse, error)
+	CheckPostAuth(ctx context.Context, in *post_grpc.CheckPostAuthRequest, opts ...grpc.CallOption) (*post_grpc.CheckPostAuthResponse, error)
 }
 
 type SearchClient interface {
@@ -85,12 +96,10 @@ type AgentClient interface {
 }
 
 type UserClient interface {
-	GetProfileById(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.UserDetail, error)
+	GetProfile(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.Profile, error)
 	UpdateProfile(ctx context.Context, req *user_grpc.UpdateProfileRequest) (*user_grpc.UpdateProfileResponse, error)
 	Top(ctx context.Context, req *user_grpc.TopRequest) (*user_grpc.TopResponse, error)
-	Follow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error)
-	UnFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.FollowEmptyResponse, error)
-	IfFollow(ctx context.Context, req *user_grpc.FollowCommonRequest) (*user_grpc.IfFollowResponse, error)
+	GetIDAfterTime(ctx context.Context, req *user_grpc.GetIDAfterTimeRequest) (*user_grpc.UserIDs, error)
 	ListFollowersByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error)
 	ListFolloweesByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error)
 	UploadAvatarSign(ctx context.Context, req *user_grpc.UploadAvatarSignRequest) (*user_grpc.UploadAvatarSignResponse, error)
@@ -106,4 +115,31 @@ type SessionClient interface {
 	UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
 	ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
 	CreateMessage(ctx context.Context, req *session_grpc.Message) (*session_grpc.Message, error)
+}
+
+type InteractiveClient interface {
+	GetPostInteractive(context.Context, *inter_grpc.PostIDRequest) (*inter_grpc.PostInteractive, error)
+	GetUserInteractive(context.Context, *inter_grpc.UserIDRequest) (*inter_grpc.UserInteractive, error)
+	Like(context.Context, *inter_grpc.LikeRequest) (*inter_grpc.InteractiveEmptyResponse, error)
+	Unlike(context.Context, *inter_grpc.LikeRequest) (*inter_grpc.InteractiveEmptyResponse, error)
+	CheckLike(context.Context, *inter_grpc.LikeRequest) (*inter_grpc.CheckLikeResponse, error)
+	Follow(context.Context, *inter_grpc.FollowRequest) (*inter_grpc.InteractiveEmptyResponse, error)
+	Unfollow(context.Context, *inter_grpc.FollowRequest) (*inter_grpc.InteractiveEmptyResponse, error)
+	IfFollow(context.Context, *inter_grpc.FollowRequest) (*inter_grpc.IfFollowResponse, error)
+	Comment(context.Context, *inter_grpc.CreateCommentRequest) (*inter_grpc.InteractiveComment, error)
+	DelComment(context.Context, *inter_grpc.DeleteCommentRequest) (*inter_grpc.InteractiveEmptyResponse, error)
+	ListCommentByPage(context.Context, *inter_grpc.ListCommentByPageRequest) (*inter_grpc.CommentsResponse, error)
+	ListRepliesByPage(context.Context, *inter_grpc.ListReplyByPageRequest) (*inter_grpc.CommentsResponse, error)
+	CheckCommentDelAuth(context.Context, *inter_grpc.CommentIDUserIDRequest) (*inter_grpc.CheckCommentDelAuthResponse, error)
+	GetFollowers(context.Context, *inter_grpc.ListFollowRequest) (*inter_grpc.ListFollowResponse, error)
+	GetFollowees(context.Context, *inter_grpc.ListFollowRequest) (*inter_grpc.ListFollowResponse, error)
+}
+
+type RankClient interface {
+	RankUser(context.Context, *rank_grpc.RankIDRequest) (*rank_grpc.RankEmptyResponse, error)
+	RankPost(context.Context, *rank_grpc.RankIDRequest) (*rank_grpc.RankEmptyResponse, error)
+	RankTopKUser(context.Context, *rank_grpc.RankEmptyRequest) (*rank_grpc.RankEmptyResponse, error)
+	RankTopKPost(context.Context, *rank_grpc.RankEmptyRequest) (*rank_grpc.RankEmptyResponse, error)
+	TopKUser(context.Context, *rank_grpc.RankEmptyRequest) (*rank_grpc.TopKUserResponse, error)
+	TopKPost(context.Context, *rank_grpc.RankEmptyRequest) (*rank_grpc.TopKPostResponse, error)
 }

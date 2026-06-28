@@ -69,6 +69,13 @@ func (endpoint *Endpoint) IsHealthy() bool {
 	return endpoint.healthy
 }
 
+// ClientConn 安全读取连接, 避免调用方和 Close 并发读写 Conn
+func (endpoint *Endpoint) ClientConn() *grpc.ClientConn {
+	endpoint.mu.RLock()
+	defer endpoint.mu.RUnlock()
+	return endpoint.Conn
+}
+
 func (endpoint *Endpoint) Close() error {
 	endpoint.mu.Lock()
 	defer endpoint.mu.Unlock()

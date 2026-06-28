@@ -6,9 +6,7 @@ import (
 	"time"
 
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
-	"github.com/yzletter/go-postery/backend/errs"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
 type CodeServiceManager struct {
@@ -28,10 +26,14 @@ func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.Send
 	var tryCnt = 1                // Send 只适合一次
 	for try := 0; try < tryCnt; try++ {
 		endpoint := manager.hub.Take(ctx, manager.service)
-		if endpoint == nil || endpoint.Conn == nil {
+		if endpoint == nil {
 			continue
 		}
-		client := code_grpc.NewCodeServiceClient(endpoint.Conn) // 建立 Client
+		conn := endpoint.ClientConn()
+		if conn == nil {
+			continue
+		}
+		client := code_grpc.NewCodeServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
@@ -39,7 +41,7 @@ func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.Send
 		resp, err = client.Send(ctx, req) // 微服务调用
 		cancel()
 
-		if err != nil && status.Code(err) == codes.Internal {
+		if isEndpointFailure(err) {
 			endpoint.MarkFailed()
 			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
 			continue
@@ -57,10 +59,14 @@ func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.Ch
 	var tryCnt = 1                // Verify 只适合一次
 	for try := 0; try < tryCnt; try++ {
 		endpoint := manager.hub.Take(ctx, manager.service)
-		if endpoint == nil || endpoint.Conn == nil {
+		if endpoint == nil {
 			continue
 		}
-		client := code_grpc.NewCodeServiceClient(endpoint.Conn) // 建立 Client
+		conn := endpoint.ClientConn()
+		if conn == nil {
+			continue
+		}
+		client := code_grpc.NewCodeServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
@@ -68,7 +74,7 @@ func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.Ch
 		resp, err = client.Verify(ctx, req) // 微服务调用
 		cancel()
 
-		if err != nil && status.Code(err) == codes.Internal {
+		if isEndpointFailure(err) {
 			endpoint.MarkFailed()
 			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
 			continue
@@ -98,11 +104,15 @@ func (manager *CodeServiceManager) StartHealthCheck(ctx context.Context) {
 func (manager *CodeServiceManager) checkOnce(ctx context.Context) {
 	endpoints := manager.hub.GetEndpoints(ctx, manager.service)
 	for _, endpoint := range endpoints {
-		if endpoint == nil || endpoint.Conn == nil {
+		if endpoint == nil {
+			continue
+		}
+		conn := endpoint.ClientConn()
+		if conn == nil {
 			continue
 		}
 
-		client := code_grpc.NewCodeServiceClient(endpoint.Conn) // 建立 Client
+		client := code_grpc.NewCodeServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
