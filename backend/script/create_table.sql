@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS posts
     id            BIGINT       NOT NULL COMMENT '帖子 ID',
     user_id       BIGINT       NOT NULL COMMENT '发布者 ID',
     title         varchar(255) NOT NULL COMMENT '标题',
-    content       TEXT COMMENT '正文',
+    content       TEXT         NOT NULL COMMENT '正文',
     content_type  TINYINT      NOT NULL DEFAULT 0 COMMENT '文本类型 0 普通文本 1 Markdown',
     status        TINYINT      NOT NULL DEFAULT 1 COMMENT '状态 1 正常, 2 封禁',
     view_count    INT          NOT NULL DEFAULT 0 COMMENT '浏览量',
@@ -135,6 +135,40 @@ CREATE TABLE IF NOT EXISTS posts
     KEY idx_created (created_at DESC),
     KEY idx_status_deleted_created (status, deleted_at, created_at DESC)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '帖子信息表';
+
+# PostInteractive 表
+CREATE TABLE IF NOT EXISTS post_interactive
+(
+    id            BIGINT   NOT NULL COMMENT 'ID',
+    post_id       BIGINT   NOT NULL COMMENT '帖子 ID',
+    read_count    BIGINT   NOT NULL DEFAULT 0 COMMENT '阅读数',
+    like_count    BIGINT   NOT NULL DEFAULT 0 COMMENT '点赞数',
+    comment_count BIGINT   NOT NULL DEFAULT 0 COMMENT '评论数',
+    calculate_at  DATETIME          DEFAULT NULL COMMENT '上次扫表计算时间',
+
+    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at    DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY (post_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '帖子互动表';
+
+# UserInteractive 表
+CREATE TABLE IF NOT EXISTS user_interactive
+(
+    id           BIGINT   NOT NULL COMMENT 'ID',
+    user_id      BIGINT   NOT NULL COMMENT '用户 ID',
+    follow_count BIGINT   NOT NULL DEFAULT 0 COMMENT '关注数',
+    calculate_at DATETIME          DEFAULT NULL COMMENT '上次扫表计算时间',
+
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at   DATETIME          DEFAULT NULL COMMENT '逻辑删除时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY (user_id)
+) DEFAULT CHARSET = utf8mb4 COMMENT '用户互动表';
 
 # 创建 follow 表
 CREATE TABLE IF NOT EXISTS follows
@@ -196,13 +230,16 @@ CREATE TABLE IF NOT EXISTS likes
 CREATE TABLE IF NOT EXISTS tags
 (
     id         BIGINT      NOT NULL COMMENT '标签 id',
-    slug       varchar(32) NOT NULL COMMENT '标签名',
+    name       VARCHAR(64) NOT NULL COMMENT '标签名',
+    slug       VARCHAR(128) NOT NULL COMMENT '标签唯一标识',
     created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted_at DATETIME             DEFAULT NULL COMMENT '逻辑删除时间',
 
     PRIMARY KEY (id),
-    UNIQUE KEY uq_slug (slug)
+    UNIQUE KEY uq_name (name),
+    UNIQUE KEY uq_slug (slug),
+    KEY idx_tags_deleted_at (deleted_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '标签信息表';
 
 # Post_Tag 表
@@ -241,7 +278,7 @@ CREATE TABLE IF NOT EXISTS messages
 ) DEFAULT CHARSET = utf8mb4 COMMENT '消息记录表';
 
 # Session 表
-CREATE TABLE IF NOT EXISTS session
+CREATE TABLE IF NOT EXISTS sessions
 (
     id              BIGINT   NOT NULL COMMENT 'ID',
     session_id      BIGINT   NOT NULL COMMENT '会话 ID',
@@ -373,3 +410,18 @@ CREATE TABLE IF NOT EXISTS verification_codes
     CHECK (biz IN (1, 2)),
     CHECK (status IN (0, 1))
 ) DEFAULT CHARSET = utf8mb4 COMMENT '验证码发送记录表';
+
+
+# 消费消息幂等表
+CREATE TABLE IF NOT EXISTS processed_events
+(
+    id         BIGINT       NOT NULL COMMENT 'ID',
+    consumer   VARCHAR(64)  NOT NULL COMMENT '消费者',
+    event_id   BIGINT       NOT NULL COMMENT '事件 ID',
+    topic      VARCHAR(128) NOT NULL COMMENT 'Kafka Topic',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_consumer_event (consumer, event_id),
+    KEY idx_topic_created (topic, created_at)
+) DEFAULT CHARSET = utf8mb4 COMMENT '已消费消息表';

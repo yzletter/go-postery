@@ -21,7 +21,42 @@ scrape_configs:
       - targets: ["172.16.150.246:9101","172.16.57.13:9101","172.16.52.125:9101"]
     metrics_path: "/metrics"
 
+  - job_name: "auth_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9102","172.16.57.13:9102","172.16.52.125:9102" ]
+    metrics_path: "/metrics"
+
   - job_name: "lottery_service"
     static_configs:
       - targets: [ "172.16.150.246:9103","172.16.52.125:9103"]
+    metrics_path: "/metrics"
+
+  - job_name: "post_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9104","172.16.57.13:9104","172.16.52.125:9104" ]
+    metrics_path: "/metrics"
+
+  - job_name: "search_service"
+    static_configs:
+      - targets: [ "172.16.52.125:9105" ]
+    metrics_path: "/metrics"
+
+  - job_name: "user_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9107","172.16.57.13:9107","172.16.52.125:9107" ]
+    metrics_path: "/metrics"
+
+  - job_name: "session_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9108","172.16.57.13:9108","172.16.52.125:9108" ]
+    metrics_path: "/metrics"
+
+  - job_name: "rank_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9109","172.16.57.13:9109"]
+    metrics_path: "/metrics"
+
+  - job_name: "interactive_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9110","172.16.57.13:9110","172.16.52.125:9110" ]
     metrics_path: "/metrics"

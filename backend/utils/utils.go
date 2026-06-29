@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/backend/micro/bff/errno"
+	"github.com/yzletter/go-postery/backend/bff/errno"
 )
 
 func GetUidFromCTX(ctx *gin.Context, key string) (int64, error) {

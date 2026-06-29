@@ -29,14 +29,20 @@ func InitProducer(brokers []string) *kafka.Writer {
 	return producer
 }
 
-func InitConsumer(config conf.KafkaConfig, topic string, groupID string) *kafka.Reader {
-	consumer := kafka.NewReader(kafka.ReaderConfig{
+func InitConsumer(config conf.KafkaConfig, topic string, group string, topics ...string) *kafka.Reader {
+	readerConfig := kafka.ReaderConfig{
 		Brokers:        []string{config.Addr},
-		Topic:          topic,
-		GroupID:        groupID,
+		GroupID:        group,
 		CommitInterval: 0,
 		StartOffset:    kafka.FirstOffset,
-	})
+	}
+	if len(topics) == 0 {
+		readerConfig.Topic = topic
+	} else {
+		readerConfig.GroupTopics = append([]string{topic}, topics...)
+	}
+
+	consumer := kafka.NewReader(readerConfig)
 	consumers = append(consumers, consumer)
 	return consumer
 }

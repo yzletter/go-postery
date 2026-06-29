@@ -71,46 +71,55 @@ func main() {
 	ETCDServiceHub.LoadEndpoints(ctx, AuthServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, AuthServiceName)
 	AuthServiceClient := manager.NewAuthManager(AuthServiceName, ETCDServiceHub)
+	go AuthServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	CodeServiceName := "code_service"
 	ETCDServiceHub.LoadEndpoints(ctx, CodeServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, CodeServiceName)
 	CodeServiceClient := manager.NewCodeManager(CodeServiceName, ETCDServiceHub)
+	go CodeServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	UserServiceName := "user_service"
 	ETCDServiceHub.LoadEndpoints(ctx, UserServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, UserServiceName)
 	UserServiceClient := manager.NewUserManager(UserServiceName, ETCDServiceHub)
+	go UserServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	InteractiveServiceName := "interactive_service"
 	ETCDServiceHub.LoadEndpoints(ctx, InteractiveServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, InteractiveServiceName)
 	InteractiveServiceClient := manager.NewInteractiveManager(InteractiveServiceName, ETCDServiceHub)
+	go InteractiveServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	PostServiceName := "post_service"
 	ETCDServiceHub.LoadEndpoints(ctx, PostServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, PostServiceName)
 	PostServiceClient := manager.NewPostManager(PostServiceName, ETCDServiceHub)
+	go PostServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	SearchServiceName := "search_service"
 	ETCDServiceHub.LoadEndpoints(ctx, SearchServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, SearchServiceName)
 	SearchServiceClient := manager.NewSearchManager(SearchServiceName, ETCDServiceHub)
+	go SearchServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	AgentServiceName := "agent_service"
 	ETCDServiceHub.LoadEndpoints(ctx, AgentServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, AgentServiceName)
 	AgentServiceClient := manager.NewAgentManager(AgentServiceName, ETCDServiceHub)
+	go AgentServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	LotteryServiceName := "lottery_service"
 	ETCDServiceHub.LoadEndpoints(ctx, LotteryServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, LotteryServiceName)
 	LotteryServiceClient := manager.NewLotteryManager(LotteryServiceName, ETCDServiceHub)
+	go LotteryServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	SessionServiceName := "session_service"
 	ETCDServiceHub.LoadEndpoints(ctx, SessionServiceName)
 	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, SessionServiceName)
 	SessionServiceClient := manager.NewSessionManager(SessionServiceName, ETCDServiceHub)
+	go SessionServiceClient.StartHealthCheck(ctx) // 开启下游服务健康检查
 
 	// Service 层
 	MetricSvc := service.NewMetricService()                                                              // 注册 MetricService
