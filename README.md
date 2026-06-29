@@ -6,41 +6,35 @@
 </p>
 
 <p align="center">
-  <b>📖 Go-Postery —— 现代化论坛 Web 项目</b>
+  <b>📖 Go-Postery —— 现代化微服务论坛社区 Web 项目</b>
 </p>
 
 ## 简介
 
 - 用 Go 实现一个现代化论坛
-- 后端纯代码量：26000 + 行
+- 后端纯代码量：30000 + 行
 - 当前分支为微服务应用
 
 ## 项目介绍
 
-
-**Gin + Eino + Gorm + Mysql + Redis + ETCD + Kafka + RabbitMQ + RocketMQ + gRPC + Prometheus + Grafana + Slog + Crontab + Jaeger**
-- 功能：通过 **SnowFlake** 生成分布式ID，实现用户注册登录、帖子发布更新、评论关注私信、热门榜单、抽奖及 AI 助手等功能；
-- 配置：使用 **ETCD** 远程配置中心读取配置，并监测配置变化，使用 **Slog** 日志库进行滚动存储日志；
-- 限流：通过 **Redis + Lua 脚本** 实现滑动窗口限流；
-- 登录：通过阿里云 **SMS** 和邮箱 **SMTP** 服务，支持通过短信 / 邮箱验证码进行登录；
-- 运行：通过 **Crontab** 执行定时任务，利用信号机制实现优雅关机；
-- 鉴权：结合 **JWT** 使用长短双 Token 机制；
-- 榜单：采用简化的 **Reddit** 算法，通过 **Redis** 实现热榜功能；
-- 点赞：通过 **Kafka** 实现点赞功能；
-- 搜索：集成 **[Go-Searchery](https://github.com/yzletter/go-searchery)** 手写类 **ElasticSearch** 分布式搜索引擎，实现论坛帖子搜索功能；
-- IM 即时通讯：集成 **[Go-Chatery](https://github.com/yzletter/go-chatery)** 即时通讯系统，利用 **RabbitMQ** 实现论坛用户实时私信功能；
-- 高并发：集成 **[Go-Lottery](https://github.com/yzletter/go-lottery)** 高并发秒杀系统，利用 **RocketMQ** 实现论坛抽奖功能，本地单机测试 **QPS 2850**， 平均接口耗时 **79ms**；
-- AI Agent：集成 **[Go-Agentery](https://github.com/yzletter/go-agentery)** AI Agent 应用，构建 **RAG** 智能体，具备多工具能力 (时间、定位、天气查询(基于高德地图 API )) 和对话记忆功能；
-- 监控：通过 **Prometheus + Grafana** 统计接口 QPS 和平均耗时，并进行可视化；
-- grpc 微服务：拆分微服务，对微服务进行限流、熔断、降级治理；
-- 链路追踪：**OpenTelemetry + Jaeger** 分布式链路追踪；
-- 性能：pprof 定位 GC 频繁问题；
-- 部署上线：使用 **NGINX** 代理前后端分离部署上线，网址：[gopostery.top](http://gopostery.top)；
+**Gin + Eino + Gorm + MySQL + Redis + Qdrant + etcd + Kafka + RabbitMQ + RocketMQ + gRPC + Prometheus + Grafana + Jaeger + Crontab**
+- 基本功能：短信 / 邮箱验证码注册登录、修改资料、上传头像、帖子发布修改、标签、搜索、评论关注、私信、榜单、抽奖及 AI 助手等功能；
+- 配置读取：使用 etcd 建立远程配置中心读取配置并监听配置变化，并通过 Crontab 定时保持数据库连接活跃，利用信号机制的监听实现优雅关机；
+- OSS 存储：通过阿里云 OSS 实现头像功能，服务端签名在前端直传，需要时返回预签名 URL 进行前端显示，避免公开访问 Bucket；
+- 热门榜单：设计简化版的 Reddit 论坛算法，通过 Redis ZSet 实现用户和帖子热榜功能，并定时扫表进行榜单计算；
+- 点赞评论：实现用户点赞功能，通过 Kafka + Outbox 扫表进行削峰；设计评论树结构，实现二级子评论回复功能；
+- 帖子搜索：利用 sego 对搜索内容进行分词，结合自研手写的 Go-Searchery 分布式类 ElasticSearch 搜索引擎实现论坛帖子搜索功能；
+- 即时通讯：基于 WebSocket 实现心跳机制维持长连接，持久化消息后利用 RabbitMQ 的 Fan-Out 模式进行双向投递推送到目标窗口，同时加载历史消息，并设计简单实现已读消息和未读消息数功能；
+- 运维监控：通过 Prometheus + Grafana 统计接口 QPS 和平均耗时，并进行可视化，通过 OpenTelemetry + Jaeger 进行微服务间的分布式链路追踪；
+- gRPC 微服务：基于 etcd 设计并实现服务发现和注册中心，对分布式部署的微服务进行注册、节点选择、限流、熔断、降级治理；
+- 在 BFF 层设计滑动窗口限流算法，通过 Redis + Lua 脚本对 IP 实现限流；使用 NGINX 代理前后端分离部署上线，网址：[gopostery.top](http://gopostery.top)；
+- 鉴权：通过中间件对长短双 Token 进行鉴权，其中 AccessToken 为 JWT 放在请求头中，RefreshToken 为随机生成字符串放在 HTTP-Only Cookie 中，并在 Redis 中以 RefreshToken 为关键字保存相关信息用于刷新 AccessToken，同时依靠 Redis 实现黑名单机制；
+- 高并发：预热库存，验证用户抽奖资格，设计了根据实时库存计算概率的抽奖算法并通过 Redis + Lua 实现库存原子扣减和临时订单控制，结合 RocketMQ 的延迟消息完成订单超时回收和库存回补，本地单机测试抽奖接口 QPS 2800+，平均接口耗时 70+ms;
 
 ## 待开发
 
+- Agent 重构
 - **用户头像**
-- mysql 表的抢占设计
 - agent 流式传输
 - agent 历史消息拉取
 - 抽象出 Kafka Consumer
@@ -55,10 +49,6 @@
   8. **hash**：chunk 内容 hash（去重、幂等、更新对比非常好用）
 - 对每个 email、phone 设置单日验证码上限防刷
 - 注册 Session 前进行 DB 唯一约束避免打爆 RabbitMQ
-- Outbox 对消息抢占避免（或乐观）多实例部署重复发送消息
-  - next_retry_at 指数退避
-  - 批量发送 Kafka：减少网络调用，提高吞吐
-  - 运行控制：支持 ctx cancel + ticker.Stop()
 - 密码校验 identifier
 - 找回密码功能
 - **关注用户发表的文章**
@@ -68,7 +58,6 @@
 - **抽奖：** 中间状态保持
 - **微服务部署与上线**
 - **管理员后台**
-- **拉黑功能**
 
 ## 项目演示
 
