@@ -1,4 +1,4 @@
-package ws_gateway
+package service
 
 import (
 	"context"
@@ -18,7 +18,7 @@ const (
 
 // writeReq 表示一次 WebSocket 写请求
 type writeReq struct {
-	messageType int
+	messageType int // PingMessage TextMessage 等
 	data        []byte
 }
 
@@ -66,7 +66,7 @@ func (conn *MyWebsocketConn) Reader() {
 	}()
 
 	_ = conn.conn.SetReadDeadline(time.Now().Add(pongWait))
-
+	conn.conn.SetReadLimit(1000000) // 设置上限, 防止大消息 OOM
 	conn.conn.SetPongHandler(func(appData string) error {
 		return conn.conn.SetReadDeadline(time.Now().Add(pongWait))
 	})
@@ -87,33 +87,13 @@ func (conn *MyWebsocketConn) Reader() {
 			continue
 		}
 
-		// 兼容聊天模块原有的扁平消息：{type:"message", ...}。
-		if message.BizType == "" {
-			var legacy map[string]interface{}
-			if err := sonic.Unmarshal(messageBody, &legacy); err != nil {
-				slog.Warn("Invalid legacy websocket message", "userID", conn.userID, "error", err)
-				continue
-			}
-			messageType, _ := legacy["type"].(string)
-			switch messageType {
-			case "message", "read_ack":
-				message.BizType = WSBizTypeSession
-			case "start_interview", "answer", "cancel_interview":
-				message.BizType = WSBizTypeInterview
-			default:
-				slog.Warn("Unknown websocket message type", "userID", conn.userID, "type", messageType)
-				continue
-			}
-			message.BizData = legacy
-		}
-
 		// 如果没有配置 handler，就只读取，不做业务处理
 		if conn.gate.handler == nil {
 			continue
 		}
 
 		// 把消息交给业务 handler, 这里使用 c.connCtx，表示只要连接关闭，业务处理也应该感知到取消。
-		if err := conn.gate.handler.HandleWSMessage(conn.connCtx, conn.userID, message); err != nil {
+		if err := conn.gate.handler.HandleWSMessage(conn.connCtx, conn.userID, conn.biz, message); err != nil {
 			slog.Error("Handle websocket message failed", "userID", conn.userID, "bizType", message.BizType, "error", err)
 			continue
 		}

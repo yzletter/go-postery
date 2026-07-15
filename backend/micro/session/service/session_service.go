@@ -91,6 +91,7 @@ func (svc *sessionService) consumeMQ(ctx context.Context, mqConn *amqp.Connectio
 			}
 			if _, err := svc.wsGateway.Push(ctx, &ws_gateway_grpc.PushRequest{
 				UserID:  id,
+				ConnBiz: ws_gateway_grpc.ConnBiz_CONNCECTION_Biz_Session,
 				BizType: "session",
 				BizData: data,
 			}); err != nil {

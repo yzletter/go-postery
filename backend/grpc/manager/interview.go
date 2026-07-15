@@ -9,7 +9,7 @@ import (
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
-const interviewRPCTimeout = 600000 * time.Second
+const interviewRPCTimeout = 30 * time.Minute
 
 type InterviewServiceManager struct {
 	service string

@@ -10,7 +10,8 @@ import (
 	interview_grpc "github.com/yzletter/go-postery/api/proto/interview/v1"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	session_dto "github.com/yzletter/go-postery/backend/bff/dto/session"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway"
+	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
+	"github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 )
@@ -35,17 +36,16 @@ func (hdl *Handler) NewSessionConnection(ctx context.Context, userID int64) erro
 	if hdl.sessionClient == nil {
 		return errs.ErrUnavailable
 	}
-
 	_, err := hdl.sessionClient.NewConnection(ctx, &session_grpc.UserID{UserID: userID})
 	return err
 }
 
 // HandleWSMessage 根据 biz_type 将消息分发到对应模块。
-func (hdl *Handler) HandleWSMessage(ctx context.Context, userID int64, msg ws_gateway.WSMessage) error {
-	switch msg.BizType {
-	case ws_gateway.WSBizTypeSession, "message", "read_ack":
+func (hdl *Handler) HandleWSMessage(ctx context.Context, userID int64, biz domain.ConnType, msg service.WSMessage) error {
+	switch biz {
+	case domain.BizSession:
 		return hdl.handleSessionMessage(ctx, userID, msg)
-	case ws_gateway.WSBizTypeInterview, "start_interview", "answer", "cancel_interview":
+	case domain.BizInterview:
 		return hdl.handleInterviewMessage(ctx, userID, msg)
 	default:
 		slog.Warn("unknown websocket biz type", "userID", userID, "bizType", msg.BizType)
@@ -54,7 +54,7 @@ func (hdl *Handler) HandleWSMessage(ctx context.Context, userID int64, msg ws_ga
 }
 
 // handleSessionMessage 处理聊天消息和已读回执。
-func (hdl *Handler) handleSessionMessage(ctx context.Context, userID int64, msg ws_gateway.WSMessage) error {
+func (hdl *Handler) handleSessionMessage(ctx context.Context, userID int64, msg service.WSMessage) error {
 	if hdl.sessionClient == nil {
 		return errs.ErrUnavailable
 	}
@@ -120,7 +120,7 @@ type interviewRequest struct {
 }
 
 // handleInterviewMessage 处理开始面试、回答和取消面试。
-func (hdl *Handler) handleInterviewMessage(ctx context.Context, userID int64, msg ws_gateway.WSMessage) error {
+func (hdl *Handler) handleInterviewMessage(ctx context.Context, userID int64, msg service.WSMessage) error {
 	if hdl.interviewClient == nil {
 		return errs.ErrUnavailable
 	}

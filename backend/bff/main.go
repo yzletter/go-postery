@@ -18,9 +18,9 @@ import (
 	"github.com/yzletter/go-postery/backend/bff/handler"
 	"github.com/yzletter/go-postery/backend/bff/middleware"
 	"github.com/yzletter/go-postery/backend/bff/service"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway"
 	ws_gateway_grpc_server "github.com/yzletter/go-postery/backend/bff/ws_gateway/grpc"
 	ws_gateway_handler "github.com/yzletter/go-postery/backend/bff/ws_gateway/handler"
+	service2 "github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -125,7 +125,7 @@ func main() {
 
 	// Websocket 网关
 	WSGatewayHandler := ws_gateway_handler.NewHandler(InterviewServiceClient, SessionServiceClient)
-	WSGateway := ws_gateway.NewWebsocketGateway(WSGatewayHandler)
+	WSGateway := service2.NewWebsocketGateway(WSGatewayHandler)
 	WSGatewayMetricSvc := pkg.NewMetricService(manager.WSGatewayService + suffix)
 	WSGatewayServiceServer := ws_gateway_grpc_server.NewWSGatewayServiceServer(WSGateway)
 	WSGatewayServiceRegistrar := grpc.NewServer(
@@ -184,7 +184,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(TracerShutdown).AddFunc(cancel).
 		AddFunc(func() {
 			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer shutdownCancel()
