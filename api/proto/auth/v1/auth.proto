@@ -6,19 +6,37 @@ option go_package = "github.com/yzletter/go-postery/api/proto/auth/v1;auth_grpc"
 
 import "google/protobuf/timestamp.proto";
 
+enum LoginBiz {
+  EMPTY = 0;  // 占位
+  LOGIN_BIZ_Phone = 1;
+  LOGIN_BIZ_Password = 2;
+}
+
+// Login 调用请求
+message LoginRequest {
+  LoginBiz Biz = 1;
+  string Identifier = 2;
+  string Verification = 3;
+}
+
+// Login 调用请求
+message LoginResponse {
+  int64 UserID = 1;
+}
+
 message UserID {
   int64 UserID = 1;
 }
 
-message LoginByPasswordRequest {
-  string Identifier = 1;
-  string Password = 2;
-}
-
-message LoginByPhoneRequest {
-  string Phone = 1;
-  string Code = 2;
-}
+//message LoginByPasswordRequest {
+//  string Identifier = 1;
+//  string Password = 2;
+//}
+//
+//message LoginByPhoneRequest {
+//  string Phone = 1;
+//  string Code = 2;
+//}
 
 message UpdatePasswordRequest {
   int64 UserID = 1;
@@ -97,8 +115,9 @@ message HealthCheckRequest {}
 message HealthCheckResponse {}
 
 service AuthService {
-  rpc LoginByPassword(LoginByPasswordRequest) returns (UserID);
-  rpc LoginByPhone(LoginByPhoneRequest) returns (UserID);
+//  rpc LoginByPassword(LoginByPasswordRequest) returns (UserID);
+//  rpc LoginByPhone(LoginByPhoneRequest) returns (UserID);
+  rpc Login(LoginRequest) returns (LoginResponse);
   rpc HasPassword(UserID) returns (HasPasswordResponse);
   rpc SetPassword(SetPasswordRequest) returns (AuthEmptyResponse);
   rpc UpdatePassword(UpdatePasswordRequest) returns (AuthEmptyResponse);

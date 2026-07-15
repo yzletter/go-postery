@@ -59,6 +59,12 @@ message Message {
   google.protobuf.Timestamp DeletedAt = 10;
 }
 
+// ChatRequest 携带鉴权用户和客户端发来的聊天消息。
+message ChatRequest {
+  int64 UserID = 1;
+  Message Message = 2;
+}
+
 message UpdateUnreadRequest {
   int64 UserID = 1;
   int64 SessionID = 2;
@@ -77,6 +83,10 @@ message HealthCheckRequest {}
 message HealthCheckResponse {}
 
 service SessionService {
+  // NewConnection 在 WebSocket 连接存活期间持续消费该用户的消息队列。
+  rpc NewConnection(UserID) returns (SessionEmptyResponse);
+  // Chat 处理一条由 WebSocket 网关转发的聊天消息。
+  rpc Chat(ChatRequest) returns (SessionEmptyResponse);
   rpc ListByUID(UserID) returns (Sessions);
   rpc GetSession(BothUserID) returns (Session);
   rpc GetHistoryMessagesByPage(GetHistoryMessagesByPageRequest) returns (GetHistoryMessagesByPageResponse);

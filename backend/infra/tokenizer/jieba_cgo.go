@@ -11,7 +11,7 @@ func NewJiebaTokenizer() *JiebaTokenizer {
 	return &JiebaTokenizer{}
 }
 
-func (tokenizer *JiebaTokenizer) Cut(text string) []string {
+func (tokenizer *JiebaTokenizer) CutSearch(text string) []string {
 	x := gojieba.NewJieba()
 	defer x.Free()
 	return x.CutForSearch(text, true)

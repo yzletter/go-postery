@@ -14,11 +14,14 @@ type RankServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewRankManager(service string, hub ServiceHub) *RankServiceManager {
-	return &RankServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewRankManager(ctx context.Context, service string, hub ServiceHub) *RankServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &RankServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *RankServiceManager) RankUser(ctx context.Context, req *rank_grpc.RankIDRequest) (*rank_grpc.RankEmptyResponse, error) {
@@ -219,7 +222,7 @@ func (manager *RankServiceManager) TopKPost(ctx context.Context, req *rank_grpc.
 	return nil, err
 }
 
-func (manager *RankServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *RankServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

@@ -27,6 +27,24 @@ func NewSessionHandler(sessionSvc grpcclient.SessionClient, userSvc grpcclient.U
 	}
 }
 
+func (hdl *SessionHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	// 私信模块
+	sessions := engine.Group("/sessions")
+	sessions.Use(authMiddleware)
+	{
+		sessions.GET("", hdl.List)               // GET /api/v1/sessions													获取当前登录用户会话列表
+		sessions.POST("/:id/delete", hdl.Delete) // POST /api/v1/sessions/:id/delete										删除当前会话
+	}
+
+	chat := sessions.Group("/target")
+	chat.Use(authMiddleware)
+	{
+		chat.GET("", hdl.GetSession)                 // GET /api/v1/sessions/target/:id/									获取与对方的会话
+		chat.GET("/messages", hdl.GetHistoryMessage) // GET /api/v1/sessions/target/:id/messages?pageNo=1&pageSize=5		获取与对方会话的聊天记录
+	}
+
+}
+
 // List 列出会话列表
 func (hdl *SessionHandler) List(ctx *gin.Context) {
 	// 取当前登录用户 uid

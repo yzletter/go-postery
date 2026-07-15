@@ -5,7 +5,7 @@ export const normalizeId = (value: unknown): string => {
   return typeof value === 'bigint' ? value.toString() : String(value)
 }
 
-// Build a small numeric seed for UI-only randomness (e.g. tag picking) without precision loss.
+// Build a.json small numeric seed for UI-only randomness (e.g. tag picking) without precision loss.
 export const buildIdSeed = (value: unknown, fallback: number = 0): number => {
   const digits = normalizeId(value).replace(/\D/g, '')
   if (!digits) return fallback

@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package interview.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/interview/v1;interview_grpc";
+
+message ChatRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+  string Input = 3;
+}
+
+message ChatResponse {
+  int64 SessionID = 1;
+  string Content = 2;
+}
+
+message StartInterviewRequest {
+  int64 UserID = 1;
+  string JD = 2;
+  string Resume = 3;
+  string CandidateName = 4;
+}
+
+message StartInterviewResponse {
+  int64 SessionID = 1;
+}
+
+message AnswerRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+  string Answer = 3;
+}
+
+message AnswerResponse {}
+
+message UploadQuestionsRequest {
+  int64 UserID = 1;
+  string SourceFile = 2;
+  bytes Data = 3;
+}
+
+message UploadQuestionsResponse {}
+
+message UploadQuestionsSignRequest {
+  int64 UserID = 1;
+}
+
+message UploadQuestionsSignResponse {
+  string Response = 1;
+}
+
+message UploadQuestionsCallbackRequest {
+  int64 UserID = 1;
+  string ObjectName = 2;
+}
+
+message UploadQuestionsCallbackResponse {}
+
+message QuitInterviewRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+}
+
+message QuitInterviewResponse {}
+
+message EvaluationRequest {
+  int64 UserID = 1;
+  int64 SessionID = 2;
+}
+
+message EvaluationResponse {}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service InterviewService {
+  rpc Chat(ChatRequest) returns (ChatResponse);
+  rpc StartInterview(StartInterviewRequest) returns (StartInterviewResponse);
+  rpc Answer(AnswerRequest) returns (AnswerResponse);
+  rpc UploadQuestionsSign(UploadQuestionsSignRequest) returns (UploadQuestionsSignResponse);
+  rpc UploadQuestionsCallback(UploadQuestionsCallbackRequest) returns (UploadQuestionsCallbackResponse);
+  rpc UploadQuestions(UploadQuestionsRequest) returns (UploadQuestionsResponse);
+  rpc QuitInterview(QuitInterviewRequest) returns (QuitInterviewResponse);
+  rpc Evaluation(EvaluationRequest) returns (EvaluationResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/interview/v1/interview.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+*/

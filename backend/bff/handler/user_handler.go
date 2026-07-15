@@ -34,35 +34,31 @@ func NewUserHandler(userSvc manager.UserClient, postSvc manager.PostClient, inte
 	}
 }
 
-func userHandlerLogger(handler string) *slog.Logger {
-	return slog.With("component", "user_handler", "handler", handler)
-}
+func (hdl *UserHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	users := engine.Group("/users")
+	users.GET("/:id", hdl.Profile)                    // GET /users/:id									获取个人资料
+	users.GET("/:id/posts", hdl.Posts)                // GET /users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
+	users.GET("/top", hdl.Top)                        // GET /users/top 								获取用户榜单
+	users.POST("/presign", hdl.GetAvatarURL)          // POST /users/presign 							获取下载头像预签名
+	users.POST("/callback", hdl.UploadAvatarCallback) // POST /users/callback 							回调
 
-// RegisterPrivateRouter 注册私人路由
-func (hdl *UserHandler) RegisterPrivateRouter(engine gin.IRouter) {
+	authedUsers := users.Group("")
+	authedUsers.Use(authMiddleware)
+
 	// 个人模块
-	me := engine.Group("/me")
-	me.POST("", hdl.ModifyProfile)          // POST 	/users/authed/me										修改个人资料
-	me.GET("/upload", hdl.UploadAvatarSign) // GET 	/users/authed/me/upload									获取上传头像签名
-	me.GET("/followers", hdl.ListFollowers) // GET 	/users/authed/me/followers?pageNo=1&pageSize=10			按页获取用户粉丝
-	me.GET("/followees", hdl.ListFollowees) // GET 	/users/authed/me/followees?pageNo=1&pageSize=10 		按页获取用户关注的人
+	me := authedUsers.Group("/me")
+	me.POST("", hdl.ModifyProfile)          // POST 	/users/me										修改个人资料
+	me.GET("/upload", hdl.UploadAvatarSign) // GET 	/users/me/upload								获取上传头像签名
+	me.GET("/followers", hdl.ListFollowers) // GET 	/users/me/followers?pageNo=1&pageSize=10		按页获取用户粉丝
+	me.GET("/followees", hdl.ListFollowees) // GET 	/users/me/followees?pageNo=1&pageSize=10 		按页获取用户关注的人
 
 	// 关注模块
-	follow := engine.Group("/:id")
+	follow := authedUsers.Group("/:id")
 	{
-		follow.POST("/follow", hdl.Follow)     // POST 	/users/authed/:id/follow 		关注
-		follow.POST("/unfollow", hdl.UnFollow) // Post 	/users/authed/:id/unfollow 		取关
-		follow.GET("/follow", hdl.IfFollow)    // GET 	/users/authed/:id/follow 		是否关注
+		follow.POST("/follow", hdl.Follow)     // POST 	/users/:id/follow 		关注
+		follow.POST("/unfollow", hdl.UnFollow) // Post 	/users/:id/unfollow 	取关
+		follow.GET("/follow", hdl.IfFollow)    // GET 	/users/:id/follow 		是否关注
 	}
-}
-
-// RegisterPublicRouter 注册公共路由
-func (hdl *UserHandler) RegisterPublicRouter(engine gin.IRouter) {
-	engine.GET("/:id", hdl.Profile)                    // GET /users/:id								获取个人资料
-	engine.GET("/:id/posts", hdl.Posts)                // GET /users/:id/posts?pageNo=1&pageSize=10		按页获取用户所发帖子
-	engine.GET("/top", hdl.Top)                        // GET /users/top 								获取用户榜单
-	engine.POST("/presign", hdl.GetAvatarURL)          // POST /users/presign 							获取下载头像预签名
-	engine.POST("/callback", hdl.UploadAvatarCallback) // POST /users/callback 							回调
 }
 
 // Profile 获取用户资料
@@ -151,7 +147,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	// 将请求参数绑定到结构体
 	if err := ctx.ShouldBindJSON(&modifyProfileReq); err != nil {
 		// 参数绑定失败
-		userHandlerLogger("ModifyProfile").Warn("bind request failed", "error", utils.BindErrMsg(err))
+		slog.Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -392,7 +388,7 @@ func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
 	var req user_dto.GetAvatarURLRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
-		userHandlerLogger("GetAvatarURL").Warn("bind request failed", "error", utils.BindErrMsg(err))
+		slog.Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -417,11 +413,9 @@ func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
 
 // UploadAvatarCallback 回调
 func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
-	logger := userHandlerLogger("UploadAvatarCallback")
-
 	// 对请求进行验签
 	if ok, err := utils.VerifyOSS(ctx.Request); !ok || err != nil {
-		logger.Warn("oss callback signature invalid", "error", err, "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "client_ip", ctx.ClientIP()) // 验签失败
+		slog.Warn("oss callback signature invalid", "error", err, "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "client_ip", ctx.ClientIP()) // 验签失败
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
@@ -430,14 +424,14 @@ func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
 	var uploadCallbackReq user_dto.UploadCallbackRequest
 	if err := ctx.ShouldBindJSON(&uploadCallbackReq); err != nil {
 		// 参数绑定失败
-		logger.Warn("bind request failed", "error", utils.BindErrMsg(err))
+		slog.Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}
 
 	// 验证 Bucket
 	if uploadCallbackReq.Bucket != "go-postery" {
-		logger.Warn("invalid oss bucket", "bucket", uploadCallbackReq.Bucket)
+		slog.Warn("invalid oss bucket", "bucket", uploadCallbackReq.Bucket)
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
 	}

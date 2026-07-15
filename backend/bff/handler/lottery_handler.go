@@ -27,6 +27,19 @@ func NewLotteryHandler(lotterySvc grpcclient.LotteryClient, userSvc grpcclient.U
 	}
 }
 
+func (hdl *LotteryHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	// 抽奖模块
+	lottery := engine.Group("/lottery")
+	lottery.GET("/gifts", hdl.GetAllGifts) // GET /api/v1/lottery/gifts 获取所有奖品信息
+	lottery.Use(authMiddleware)
+	{
+		lottery.GET("/lucky", hdl.Lottery)  // GET /api/v1/lottery/lucky 抽奖
+		lottery.POST("/giveup", hdl.GiveUp) // POST /api/v1/lottery/giveup 放弃
+		lottery.POST("/pay", hdl.Pay)       // POST /api/v1/lottery/pay 支付
+		lottery.GET("/result", hdl.Result)  // GET /api/v1/lottery/result 查询结果
+	}
+}
+
 func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 	resp, err := hdl.lotterySvc.GetAllGifts(ctx, &lottery_grpc.EmptyRequest{})
 	if err != nil {

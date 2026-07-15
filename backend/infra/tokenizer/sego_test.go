@@ -6,7 +6,7 @@ func TestSegoTokenizerCutLoadsDictionary(t *testing.T) {
 	tokenizer := NewSegoTokenizer()
 	defer tokenizer.Close()
 
-	segments := tokenizer.Cut("中华人民共和国中央人民政府")
+	segments := tokenizer.CutSearch("中华人民共和国中央人民政府")
 	if len(segments) == 0 {
 		t.Fatal("expected non-empty segments")
 	}
@@ -20,5 +20,5 @@ func TestSegoTokenizerZeroValuePanics(t *testing.T) {
 	}()
 
 	var tokenizer SegoTokenizer
-	_ = tokenizer.Cut("搜索")
+	_ = tokenizer.CutSearch("搜索")
 }

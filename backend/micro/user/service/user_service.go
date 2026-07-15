@@ -9,6 +9,7 @@ import (
 	"time"
 
 	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
+	oss_grpc "github.com/yzletter/go-postery/api/proto/oss/v1"
 	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -21,17 +22,17 @@ type userService struct {
 	userRepo    repository.UserRepository
 	interClient manager.InteractiveClient
 	rankClient  manager.RankClient
-	ossManager  ports.OSSManager
+	ossClient   manager.OSSClient
 	idGen       ports.IDGenerator
 }
 
 // NewUserService 构造函数
-func NewUserService(userRepository repository.UserRepository, interClient manager.InteractiveClient, rankClient manager.RankClient, ossManager ports.OSSManager, idGen ports.IDGenerator) UserService {
+func NewUserService(userRepository repository.UserRepository, interClient manager.InteractiveClient, rankClient manager.RankClient, ossClient manager.OSSClient, idGen ports.IDGenerator) UserService {
 	return &userService{
 		userRepo:    userRepository,
 		interClient: interClient,
 		rankClient:  rankClient,
-		ossManager:  ossManager,
+		ossClient:   ossClient,
 		idGen:       idGen,
 	}
 }
@@ -71,14 +72,16 @@ func (svc *userService) UploadAvatarSign(ctx context.Context, id int64) (string,
 		return "", errs.ErrInvalidArgument
 	}
 
-	// 用户头像只能上传到 users/avatar/{id}/ 目录下
-	dir := "users/avatar/" + strconv.FormatInt(id, 64) + "/"
-	resp, err := svc.ossManager.Sign(dir)
+	resp, err := svc.ossClient.SignUpload(ctx, &oss_grpc.SignUploadRequest{
+		Biz:      1,
+		UserID:   id,
+		FileName: "",
+	})
 	if err != nil {
-		logger.Error("sign avatar upload failed", "error", err, "dir", dir)
+		logger.Error("sign avatar upload failed", "error", err)
 		return "", errs.ErrInternal
 	}
-	return resp, err
+	return resp.Response, err
 }
 
 // UploadAvatarCallback 处理头像上传回调
@@ -88,7 +91,9 @@ func (svc *userService) UploadAvatarCallback(ctx context.Context, id int64, obje
 		logger.Debug("avatar callback rejected: invalid user id")
 		return errs.ErrInvalidArgument
 	}
-	prefix := "users/avatar/" + strconv.FormatInt(id, 64) + "/"
+
+	// 校验前缀
+	prefix := "users/avatar/" + strconv.FormatInt(id, 10) + "/"
 	if object == "" || !strings.HasPrefix(object, prefix) {
 		logger.Debug("avatar callback rejected: invalid object")
 		return errs.ErrInvalidArgument
@@ -114,12 +119,12 @@ func (svc *userService) GetAvatarURL(ctx context.Context, object string) (string
 		return "", errs.ErrInvalidArgument
 	}
 
-	url, err := svc.ossManager.Resign(object)
+	resp, err := svc.ossClient.GetObjectURL(ctx, &oss_grpc.GetObjectURLRequest{ObjectName: object})
 	if err != nil {
 		logger.Error("resign avatar url failed", "error", err)
 		return "", errs.ErrInternal
 	}
-	return url, nil
+	return resp.URL, nil
 }
 
 // GetIDAfterTime 根据时间获取之后创建的用户 ID

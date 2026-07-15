@@ -19,8 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_LoginByPassword_FullMethodName       = "/auth.v1.AuthService/LoginByPassword"
-	AuthService_LoginByPhone_FullMethodName          = "/auth.v1.AuthService/LoginByPhone"
+	AuthService_Login_FullMethodName                 = "/auth.v1.AuthService/Login"
 	AuthService_HasPassword_FullMethodName           = "/auth.v1.AuthService/HasPassword"
 	AuthService_SetPassword_FullMethodName           = "/auth.v1.AuthService/SetPassword"
 	AuthService_UpdatePassword_FullMethodName        = "/auth.v1.AuthService/UpdatePassword"
@@ -37,8 +36,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
-	LoginByPassword(ctx context.Context, in *LoginByPasswordRequest, opts ...grpc.CallOption) (*UserID, error)
-	LoginByPhone(ctx context.Context, in *LoginByPhoneRequest, opts ...grpc.CallOption) (*UserID, error)
+	// rpc LoginByPassword(LoginByPasswordRequest) returns (UserID);
+	// rpc LoginByPhone(LoginByPhoneRequest) returns (UserID);
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	HasPassword(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*HasPasswordResponse, error)
 	SetPassword(ctx context.Context, in *SetPasswordRequest, opts ...grpc.CallOption) (*AuthEmptyResponse, error)
 	UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*AuthEmptyResponse, error)
@@ -59,20 +59,10 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) LoginByPassword(ctx context.Context, in *LoginByPasswordRequest, opts ...grpc.CallOption) (*UserID, error) {
+func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserID)
-	err := c.cc.Invoke(ctx, AuthService_LoginByPassword_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) LoginByPhone(ctx context.Context, in *LoginByPhoneRequest, opts ...grpc.CallOption) (*UserID, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserID)
-	err := c.cc.Invoke(ctx, AuthService_LoginByPhone_FullMethodName, in, out, cOpts...)
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, AuthService_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +173,9 @@ func (c *authServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequ
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
-	LoginByPassword(context.Context, *LoginByPasswordRequest) (*UserID, error)
-	LoginByPhone(context.Context, *LoginByPhoneRequest) (*UserID, error)
+	// rpc LoginByPassword(LoginByPasswordRequest) returns (UserID);
+	// rpc LoginByPhone(LoginByPhoneRequest) returns (UserID);
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	HasPassword(context.Context, *UserID) (*HasPasswordResponse, error)
 	SetPassword(context.Context, *SetPasswordRequest) (*AuthEmptyResponse, error)
 	UpdatePassword(context.Context, *UpdatePasswordRequest) (*AuthEmptyResponse, error)
@@ -205,11 +196,8 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) LoginByPassword(context.Context, *LoginByPasswordRequest) (*UserID, error) {
-	return nil, status.Error(codes.Unimplemented, "method LoginByPassword not implemented")
-}
-func (UnimplementedAuthServiceServer) LoginByPhone(context.Context, *LoginByPhoneRequest) (*UserID, error) {
-	return nil, status.Error(codes.Unimplemented, "method LoginByPhone not implemented")
+func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedAuthServiceServer) HasPassword(context.Context, *UserID) (*HasPasswordResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HasPassword not implemented")
@@ -262,38 +250,20 @@ func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
 	s.RegisterService(&AuthService_ServiceDesc, srv)
 }
 
-func _AuthService_LoginByPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginByPasswordRequest)
+func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).LoginByPassword(ctx, in)
+		return srv.(AuthServiceServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_LoginByPassword_FullMethodName,
+		FullMethod: AuthService_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).LoginByPassword(ctx, req.(*LoginByPasswordRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_LoginByPhone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginByPhoneRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).LoginByPhone(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_LoginByPhone_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).LoginByPhone(ctx, req.(*LoginByPhoneRequest))
+		return srv.(AuthServiceServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -486,12 +456,8 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "LoginByPassword",
-			Handler:    _AuthService_LoginByPassword_Handler,
-		},
-		{
-			MethodName: "LoginByPhone",
-			Handler:    _AuthService_LoginByPhone_Handler,
+			MethodName: "Login",
+			Handler:    _AuthService_Login_Handler,
 		},
 		{
 			MethodName: "HasPassword",

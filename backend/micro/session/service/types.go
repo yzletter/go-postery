@@ -7,6 +7,12 @@ import (
 )
 
 type SessionService interface {
+	// NewConnection 为用户连接启动消息队列消费，直到 ctx 被取消。
+	NewConnection(ctx context.Context, userID int64) error
+
+	// Chat 处理一条来自已认证用户的聊天消息。
+	Chat(ctx context.Context, userID int64, message domain.Message) error
+
 	// ListByUID 根据用户 ID 获取会话列表
 	//
 	// Parameter:

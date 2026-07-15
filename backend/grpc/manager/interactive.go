@@ -14,11 +14,14 @@ type InteractiveServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewInteractiveManager(service string, hub ServiceHub) *InteractiveServiceManager {
-	return &InteractiveServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewInteractiveManager(ctx context.Context, service string, hub ServiceHub) *InteractiveServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &InteractiveServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *InteractiveServiceManager) GetPostInteractive(ctx context.Context, req *interactive_grpc.PostIDRequest) (*interactive_grpc.PostInteractive, error) {
@@ -516,7 +519,7 @@ func (manager *InteractiveServiceManager) GetFollowees(ctx context.Context, req 
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *InteractiveServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

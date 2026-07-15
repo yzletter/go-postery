@@ -65,7 +65,7 @@ func (svc *agentService) Chat(ctx context.Context, userID int64, sessionID int64
 	// RAG 召回
 	knowledge, err := svc.agentRepo.Retrieve(ctx, query, 0.5, 3) // 召回分数 > 0.5 的三条
 	if err != nil {
-		slog.Error("retrieve agent knowledge failed", "error", err)
+		slog.Error("retriever agent knowledge failed", "error", err)
 		return defaultContent, nil, errs.ErrInternal
 	}
 

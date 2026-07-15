@@ -19,6 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	SessionService_NewConnection_FullMethodName            = "/session.v1.SessionService/NewConnection"
+	SessionService_Chat_FullMethodName                     = "/session.v1.SessionService/Chat"
 	SessionService_ListByUID_FullMethodName                = "/session.v1.SessionService/ListByUID"
 	SessionService_GetSession_FullMethodName               = "/session.v1.SessionService/GetSession"
 	SessionService_GetHistoryMessagesByPage_FullMethodName = "/session.v1.SessionService/GetHistoryMessagesByPage"
@@ -33,6 +35,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SessionServiceClient interface {
+	// NewConnection 在 WebSocket 连接存活期间持续消费该用户的消息队列。
+	NewConnection(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
+	// Chat 处理一条由 WebSocket 网关转发的聊天消息。
+	Chat(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
 	ListByUID(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Sessions, error)
 	GetSession(ctx context.Context, in *BothUserID, opts ...grpc.CallOption) (*Session, error)
 	GetHistoryMessagesByPage(ctx context.Context, in *GetHistoryMessagesByPageRequest, opts ...grpc.CallOption) (*GetHistoryMessagesByPageResponse, error)
@@ -49,6 +55,26 @@ type sessionServiceClient struct {
 
 func NewSessionServiceClient(cc grpc.ClientConnInterface) SessionServiceClient {
 	return &sessionServiceClient{cc}
+}
+
+func (c *sessionServiceClient) NewConnection(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*SessionEmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SessionEmptyResponse)
+	err := c.cc.Invoke(ctx, SessionService_NewConnection_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sessionServiceClient) Chat(ctx context.Context, in *ChatRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SessionEmptyResponse)
+	err := c.cc.Invoke(ctx, SessionService_Chat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *sessionServiceClient) ListByUID(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*Sessions, error) {
@@ -135,6 +161,10 @@ func (c *sessionServiceClient) HealthCheck(ctx context.Context, in *HealthCheckR
 // All implementations must embed UnimplementedSessionServiceServer
 // for forward compatibility.
 type SessionServiceServer interface {
+	// NewConnection 在 WebSocket 连接存活期间持续消费该用户的消息队列。
+	NewConnection(context.Context, *UserID) (*SessionEmptyResponse, error)
+	// Chat 处理一条由 WebSocket 网关转发的聊天消息。
+	Chat(context.Context, *ChatRequest) (*SessionEmptyResponse, error)
 	ListByUID(context.Context, *UserID) (*Sessions, error)
 	GetSession(context.Context, *BothUserID) (*Session, error)
 	GetHistoryMessagesByPage(context.Context, *GetHistoryMessagesByPageRequest) (*GetHistoryMessagesByPageResponse, error)
@@ -153,6 +183,12 @@ type SessionServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSessionServiceServer struct{}
 
+func (UnimplementedSessionServiceServer) NewConnection(context.Context, *UserID) (*SessionEmptyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method NewConnection not implemented")
+}
+func (UnimplementedSessionServiceServer) Chat(context.Context, *ChatRequest) (*SessionEmptyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Chat not implemented")
+}
 func (UnimplementedSessionServiceServer) ListByUID(context.Context, *UserID) (*Sessions, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListByUID not implemented")
 }
@@ -196,6 +232,42 @@ func RegisterSessionServiceServer(s grpc.ServiceRegistrar, srv SessionServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&SessionService_ServiceDesc, srv)
+}
+
+func _SessionService_NewConnection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).NewConnection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_NewConnection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).NewConnection(ctx, req.(*UserID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SessionService_Chat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SessionServiceServer).Chat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SessionService_Chat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SessionServiceServer).Chat(ctx, req.(*ChatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SessionService_ListByUID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -349,6 +421,14 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "session.v1.SessionService",
 	HandlerType: (*SessionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "NewConnection",
+			Handler:    _SessionService_NewConnection_Handler,
+		},
+		{
+			MethodName: "Chat",
+			Handler:    _SessionService_Chat_Handler,
+		},
 		{
 			MethodName: "ListByUID",
 			Handler:    _SessionService_ListByUID_Handler,

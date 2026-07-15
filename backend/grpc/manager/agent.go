@@ -14,11 +14,14 @@ type AgentServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewAgentManager(service string, hub ServiceHub) *AgentServiceManager {
-	return &AgentServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewAgentManager(ctx context.Context, service string, hub ServiceHub) *AgentServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &AgentServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *AgentServiceManager) Chat(ctx context.Context, req *agent_grpc.ChatRequest) (*agent_grpc.ChatResponse, error) {
@@ -54,7 +57,7 @@ func (manager *AgentServiceManager) Chat(ctx context.Context, req *agent_grpc.Ch
 	return nil, err
 }
 
-func (manager *AgentServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *AgentServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

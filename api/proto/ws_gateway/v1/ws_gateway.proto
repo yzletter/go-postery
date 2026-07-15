@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package ws_gateway.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/ws_gateway/v1;ws_gateway_grpc";
+
+enum ConnBiz {
+  EMPTY = 0;
+  CONNCECTION_Biz_Session = 1;
+  CONNCECTION_Biz_Interview = 2;
+}
+
+message PushRequest {
+  int64 UserID = 1;
+  ConnBiz ConnBiz = 2;
+  string BizType = 3;
+  bytes BizData = 4;
+}
+
+message PushResponse {}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service WSGatewayService {
+  rpc Push(PushRequest) returns (PushResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/ws_gateway/v1/ws_gateway.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+*/

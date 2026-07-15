@@ -13,7 +13,7 @@ import (
 	status "google.golang.org/grpc/status"
 )
 
-// This is a compile-time assertion to ensure that this generated file
+// This is a.json compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
@@ -195,7 +195,7 @@ type UserServiceServer interface {
 // UnimplementedUserServiceServer must be embedded to have
 // forward compatible implementations.
 //
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// NOTE: this should be embedded by value instead of pointer to avoid a.json nil
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
@@ -432,7 +432,7 @@ func _UserService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec 
 
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
+// and not to be introspected or modified (even as a.json copy)
 var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "user.v1.UserService",
 	HandlerType: (*UserServiceServer)(nil),

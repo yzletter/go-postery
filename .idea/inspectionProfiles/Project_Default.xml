@@ -1,0 +1,16 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="DuplicatedCode" enabled="false" level="WEAK WARNING" enabled_by_default="false">
+      <Languages>
+        <language minSize="47" name="Go" />
+      </Languages>
+    </inspection_tool>
+    <inspection_tool class="GoResourceLeak" enabled="true" level="WARNING" enabled_by_default="true">
+      <functions>
+        <function importPath="github.com/rabbitmq/amqp091-go" name="Dial" />
+        <function importPath="github.com/yzletter/go-postery/infra/kafka" name="InitProducer" />
+      </functions>
+    </inspection_tool>
+  </profile>
+</component>

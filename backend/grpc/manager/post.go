@@ -15,11 +15,14 @@ type PostServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewPostManager(service string, hub ServiceHub) *PostServiceManager {
-	return &PostServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewPostManager(ctx context.Context, service string, hub ServiceHub) *PostServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &PostServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *PostServiceManager) Create(ctx context.Context, req *post_grpc.CreatePostRequest) (*post_grpc.PostDetail, error) {
@@ -451,7 +454,7 @@ func (manager *PostServiceManager) CheckPostAuth(ctx context.Context, req *post_
 	return nil, err
 }
 
-func (manager *PostServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *PostServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

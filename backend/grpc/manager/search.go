@@ -14,11 +14,14 @@ type SearchServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewSearchManager(service string, hub ServiceHub) *SearchServiceManager {
-	return &SearchServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewSearchManager(ctx context.Context, service string, hub ServiceHub) *SearchServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &SearchServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *SearchServiceManager) Search(ctx context.Context, req *search_grpc.SearchRequest) (*search_grpc.SearchResult, error) {
@@ -153,7 +156,7 @@ func (manager *SearchServiceManager) Count(ctx context.Context, req *search_grpc
 	return nil, err
 }
 
-func (manager *SearchServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *SearchServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

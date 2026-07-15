@@ -1,5 +1,6 @@
 package ports
 
 type Tokenizer interface {
-	Cut(string) []string
+	CutSearch(string) []string
+	Cut(string string) []string
 }

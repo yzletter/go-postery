@@ -20,7 +20,6 @@ import (
 	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
-	infraOSS "github.com/yzletter/go-postery/backend/infra/oss"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	server "github.com/yzletter/go-postery/backend/micro/user/grpc"
@@ -82,7 +81,6 @@ func main() {
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // 初始化 Redis
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL) // 初始化 MySQL
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)   // 初始化雪花算法
-	OSSManager := infraOSS.Init(UserServiceConf.OSS)      // 初始化 OSS
 
 	// Cache 层
 	UserCache := cache.NewUserCache(RedisClient)
@@ -95,15 +93,9 @@ func main() {
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Client 层
-	ETCDServiceHub.LoadEndpoints(ctx, manager.InteractiveService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.InteractiveService)
-	InteractiveManager := manager.NewInteractiveManager(manager.InteractiveService, ETCDServiceHub) // 注册 InteractiveClient
-	go InteractiveManager.StartHealthCheck(ctx)                                                     // 开启下游服务健康检查
-
-	ETCDServiceHub.LoadEndpoints(ctx, manager.RankService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.RankService)
-	RankManager := manager.NewRankManager(manager.RankService, ETCDServiceHub) // 注册 RankClient
-	go RankManager.StartHealthCheck(ctx)                                       // 开启下游服务健康检查
+	InteractiveManager := manager.NewInteractiveManager(ctx, manager.InteractiveService, ETCDServiceHub) // 注册 InteractiveClient
+	RankManager := manager.NewRankManager(ctx, manager.RankService, ETCDServiceHub)                      // 注册 RankClient
+	OSSManager := manager.NewOSSManager(ctx, manager.OSSService, ETCDServiceHub)                         // 注册 OSSManager
 
 	// Service 层
 	UserService := service.NewUserService(UserRepo, InteractiveManager, RankManager, OSSManager, IDGenerator) // 注册 UserService

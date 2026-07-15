@@ -31,6 +31,31 @@ func NewPostHandler(postSvc grpcclient.PostClient, userSvc grpcclient.UserClient
 	}
 }
 
+func (hdl *PostHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	// 帖子模块
+	posts := engine.Group("/posts")
+	{
+		posts.GET("", hdl.List)                           // POST /api/v1/posts?pageNo=1&pageSize=10					按页获取帖子列表
+		posts.GET("/top", hdl.Top)                        // GET /api/v1/posts/top										获取热门帖子榜单
+		posts.GET("/tags", hdl.ListByTagAndPage)          // POST /api/v1/posts/tags?pageNo=1&pageSize=10&tag=go 	根据标签按页获取帖子列表
+		posts.GET("/:id", hdl.Detail)                     // GET /api/v1/posts/:id									获取帖子详情
+		posts.GET("/:id/comments", hdl.ListCommentByPage) // GET /api/v1/posts/:id/comments?pageNo=1&pageSize=10		按页获取帖子评论
+		posts.GET("/:id/comments/:cid", hdl.ListReplies)  // GET /api/v1/posts/:pid/comments/:cid?pageNo=1&pageSize=10	按页获取主评论回复
+
+		authedPosts := posts.Group("")
+		authedPosts.Use(authMiddleware)
+		authedPosts.POST("", hdl.CreatePost)            // POST /api/v1/posts 				创建帖子
+		authedPosts.POST("/:id", hdl.Update)            // POST /api/v1/posts/:id 			更新帖子
+		authedPosts.POST("/:id/delete", hdl.DeletePost) // POST /api/v1/posts/:id/delete	删除帖子
+
+		authedPosts.POST("/:id/comments", hdl.CreateComment)             // POST /api/v1/posts/:id/comments 				创建评论
+		authedPosts.POST("/:id/comments/:cid/delete", hdl.DeleteComment) // POST /api/v1/posts/:id/comments/:cid/delete 	删除评论
+		authedPosts.GET("/:id/like", hdl.IfLike)                         // GET /api/v1/posts/:id/like					查询是否点赞了帖子
+		authedPosts.POST("/:id/like", hdl.Like)                          // POST /api/v1/posts/:id/like					点赞帖子
+		authedPosts.POST("/:id/unlike", hdl.Unlike)                      // POST /api/v1/posts/:id/unlike 				取消点赞帖子
+	}
+}
+
 // List 获取帖子列表
 func (hdl *PostHandler) List(ctx *gin.Context) {
 	// 从 /posts?pageNo=1&pageSize=2 路由中拿出 pageNo 和 pageSize

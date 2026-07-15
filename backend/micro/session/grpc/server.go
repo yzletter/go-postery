@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"strings"
 
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
@@ -20,6 +21,43 @@ func NewSessionServiceServer(svc service.SessionService) *SessionServiceServer {
 	return &SessionServiceServer{
 		svc: svc,
 	}
+}
+
+// NewConnection 使用 gRPC ctx 维持用户消息队列消费，直到上游 WebSocket 断开。
+func (server *SessionServiceServer) NewConnection(ctx context.Context, req *session_grpc.UserID) (*session_grpc.SessionEmptyResponse, error) {
+	if req == nil || req.UserID <= 0 {
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInvalidArgument
+	}
+	if err := server.svc.NewConnection(ctx, req.UserID); err != nil {
+		return &session_grpc.SessionEmptyResponse{}, err
+	}
+	return &session_grpc.SessionEmptyResponse{}, nil
+}
+
+// Chat 校验鉴权用户和消息参数后交给 Session Service 处理。
+func (server *SessionServiceServer) Chat(ctx context.Context, req *session_grpc.ChatRequest) (*session_grpc.SessionEmptyResponse, error) {
+	if req == nil || req.UserID <= 0 || req.Message == nil {
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInvalidArgument
+	}
+	message := req.Message
+	if message.SessionID <= 0 || message.MessageTo <= 0 || strings.TrimSpace(message.Content) == "" {
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrInvalidArgument
+	}
+	if message.MessageFrom != 0 && message.MessageFrom != req.UserID {
+		return &session_grpc.SessionEmptyResponse{}, errs.ErrUnauthenticated
+	}
+
+	messageDomain := domain.Message{
+		SessionID:   message.SessionID,
+		SessionType: int(message.SessionType),
+		MessageFrom: req.UserID,
+		MessageTo:   message.MessageTo,
+		Content:     message.Content,
+	}
+	if err := server.svc.Chat(ctx, req.UserID, messageDomain); err != nil {
+		return &session_grpc.SessionEmptyResponse{}, err
+	}
+	return &session_grpc.SessionEmptyResponse{}, nil
 }
 
 func (server *SessionServiceServer) ListByUID(ctx context.Context, id *session_grpc.UserID) (*session_grpc.Sessions, error) {

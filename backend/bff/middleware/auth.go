@@ -114,14 +114,14 @@ func isBlacklisted(ctx context.Context, client grpcclient.AuthClient, ssid strin
 // 将 AccessToken 放进 Header, RefreshToken 放进 Cookie
 func setTokens(ctx *gin.Context, accessToken, refreshToken string) {
 	ctx.Header("Authorization", "Bearer "+accessToken)
-	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, refreshToken, conf.RefreshTokenMaxAgeSecs, "/", "", false, true)
 }
 
 // 返回没有权限的响应
 func unauthorized(ctx *gin.Context) {
 	// 清除 token
 	ctx.Header("Authorization", "")
-	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "localhost", false, true)
+	ctx.SetCookie(conf.RefreshTokenInCookie, "", -1, "/", "", false, true)
 
 	// 退出
 	ctx.AbortWithStatus(http.StatusUnauthorized)

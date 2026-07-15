@@ -14,11 +14,14 @@ type CodeServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewCodeManager(service string, hub ServiceHub) *CodeServiceManager {
-	return &CodeServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewCodeManager(ctx context.Context, service string, hub ServiceHub) *CodeServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &CodeServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
@@ -87,7 +90,7 @@ func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.Ch
 	return nil, err
 }
 
-func (manager *CodeServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *CodeServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

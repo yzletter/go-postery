@@ -1,18 +1,11 @@
-# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
 # - "first_rules.yml"
 # - "second_rules.yml"
 
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this conf.
   - job_name: "prometheus"
-    # metrics_path defaults to '/metrics'
-    # scheme defaults to 'http'.
     static_configs:
       - targets: ["localhost:9090"]
-        # The label name is added as a label `label_name=<label_value>` to any timeseries scraped from this conf.
         labels:
           app: "prometheus"
 
@@ -28,7 +21,7 @@ scrape_configs:
 
   - job_name: "lottery_service"
     static_configs:
-      - targets: [ "172.16.150.246:9103","172.16.52.125:9103"]
+      - targets: [ "172.16.150.246:9104","172.16.57.13:9104","172.16.52.125:9104" ]
     metrics_path: "/metrics"
 
   - job_name: "post_service"
@@ -40,6 +33,11 @@ scrape_configs:
     static_configs:
       - targets: [ "172.16.52.125:9105" ]
     metrics_path: "/metrics"
+
+#  - job_name: "agent_service"
+#    static_configs:
+#      - targets: [ "172.16.150.246:9106","172.16.57.13:9106","172.16.52.125:9106" ]
+#    metrics_path: "/metrics"
 
   - job_name: "user_service"
     static_configs:
@@ -53,10 +51,30 @@ scrape_configs:
 
   - job_name: "rank_service"
     static_configs:
-      - targets: [ "172.16.150.246:9109","172.16.57.13:9109"]
+      - targets: [ "172.16.150.246:9109","172.16.57.13:9109","172.16.52.125:9109" ]
     metrics_path: "/metrics"
 
   - job_name: "interactive_service"
     static_configs:
       - targets: [ "172.16.150.246:9110","172.16.57.13:9110","172.16.52.125:9110" ]
+    metrics_path: "/metrics"
+
+  - job_name: "interview_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9111","172.16.57.13:9111","172.16.52.125:9111" ]
+    metrics_path: "/metrics"
+
+  - job_name: "ws_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9112","172.16.57.13:9112","172.16.52.125:9112" ]
+    metrics_path: "/metrics"
+
+  - job_name: "oss_service"
+    static_configs:
+      - targets: [ "172.16.150.246:9113","172.16.57.13:9113","172.16.52.125:9113" ]
+    metrics_path: "/metrics"
+
+  - job_name: "bff_service"
+    static_configs:
+      - targets: [ "172.16.150.246:8080"]
     metrics_path: "/metrics"

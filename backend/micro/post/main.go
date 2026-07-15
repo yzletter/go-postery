@@ -97,15 +97,8 @@ func main() {
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Client 层
-	ETCDServiceHub.LoadEndpoints(ctx, manager.InteractiveService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.InteractiveService)
-	InteractiveManager := manager.NewInteractiveManager(manager.InteractiveService, ETCDServiceHub)
-	go InteractiveManager.StartHealthCheck(ctx) // 开启下游服务健康检查
-
-	ETCDServiceHub.LoadEndpoints(ctx, manager.RankService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.RankService)
-	RankManager := manager.NewRankManager(manager.RankService, ETCDServiceHub)
-	go RankManager.StartHealthCheck(ctx) // 开启下游服务健康检查
+	InteractiveManager := manager.NewInteractiveManager(ctx, manager.InteractiveService, ETCDServiceHub)
+	RankManager := manager.NewRankManager(ctx, manager.RankService, ETCDServiceHub)
 
 	// Service 层
 	PostService := service.NewPostService(PostRepo, TagRepo, IDGenerator, InteractiveManager, RankManager) // 注册 PostService

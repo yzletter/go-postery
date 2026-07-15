@@ -32,6 +32,24 @@ func NewAuthHandler(authSvc grpcclient.AuthClient, codeSvc grpcclient.CodeClient
 	}
 }
 
+func (hdl *AuthHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	// 身份认证模块
+	auth := engine.Group("/auth")
+	auth.POST("/sms", hdl.SendSMSCode)                // POST /api/v1/auth/sms				发送短信验证码
+	auth.POST("/email", hdl.SendEmailCode)            // POST /api/v1/auth/email				发送邮箱验证码
+	auth.POST("/login/password", hdl.LoginByPassword) // POST /api/v1/auth/login/password 	手机号码/邮箱 + 密码登录
+	auth.POST("/login/phone", hdl.LoginByPhone)       // POST /api/v1/auth/login/phone 		手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
+
+	authedAuth := auth.Group("")
+	authedAuth.Use(authMiddleware)
+	authedAuth.POST("/logout", hdl.Logout)                  // POST /api/v1/auth/logout			退出登录
+	authedAuth.GET("/status", hdl.Status)                   // GET /api/v1/auth/status			检查登录状态
+	authedAuth.POST("/password/update", hdl.UpdatePassword) // POST /api/v1/auth/password/update	修改密码
+	authedAuth.POST("/password/set", hdl.SetPassword)       // POST /api/v1/auth/password/set	初始化密码
+	authedAuth.GET("/password/status", hdl.HasPassword)     // GET /api/v1/auth/password/status	查询密码状态
+	authedAuth.GET("/auth_identity", hdl.GetAuthIdentity)   // GET /api/v1/auth/auth_identity	获取用户的身份认证
+}
+
 // LoginByPassword 手机号码/邮箱 + 密码登录
 func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	// 获取参数并校验
@@ -44,9 +62,10 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	userID, err := hdl.authSvc.LoginByPassword(ctx, &auth_grpc.LoginByPasswordRequest{
-		Identifier: req.Identifier,
-		Password:   req.Password,
+	resp, err := hdl.authSvc.Login(ctx, &auth_grpc.LoginRequest{
+		Biz:          auth_grpc.LoginBiz_LOGIN_BIZ_Password,
+		Identifier:   req.Identifier,
+		Verification: req.Password,
 	})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
@@ -57,7 +76,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 
 	// 根据 UserID 签发双 Token
 	tokens, err := hdl.authSvc.IssueTokens(ctx, &auth_grpc.IssueTokenRequest{
-		UserID:    userID.UserID,
+		UserID:    resp.UserID,
 		Role:      0,
 		UserAgent: ctx.Request.UserAgent(),
 	})
@@ -70,7 +89,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	setTokens(ctx, tokens.AccessToken, tokens.RefreshToken)
 
 	// 获取用户
-	profile, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
+	profile, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.UserID})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -96,7 +115,11 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	}
 
 	// 进行登录
-	userID, err := hdl.authSvc.LoginByPhone(ctx, &auth_grpc.LoginByPhoneRequest{Phone: req.Phone, Code: req.Code})
+	resp, err := hdl.authSvc.Login(ctx, &auth_grpc.LoginRequest{
+		Biz:          auth_grpc.LoginBiz_LOGIN_BIZ_Phone,
+		Identifier:   req.Phone,
+		Verification: req.Code,
+	})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrPhoneCodeInvalid,
@@ -106,7 +129,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 
 	// 根据 UserID 签发双 Token
 	tokens, err := hdl.authSvc.IssueTokens(ctx, &auth_grpc.IssueTokenRequest{
-		UserID:    userID.UserID,
+		UserID:    resp.UserID,
 		Role:      0,
 		UserAgent: ctx.Request.UserAgent(),
 	})
@@ -119,7 +142,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	setTokens(ctx, tokens.AccessToken, tokens.RefreshToken)
 
 	// 获取用户
-	profile, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: userID.UserID})
+	profile, err := hdl.userSvc.GetProfile(ctx, &user_grpc.GetProfileByIdRequest{ID: resp.UserID})
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -145,7 +168,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	}
 
 	// 发送邮件
-	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf.CodeBizEmail), Identifier: req.Email}); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: code_grpc.CodeBiz_CODE_BIZ_Email, Identifier: req.Email}); err != nil {
 		slog.Error("发送邮箱验证码失败", "error", err)
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -169,7 +192,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	}
 
 	// 发送短信
-	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: int64(conf.CodeBizSMS), Identifier: req.Phone}); err != nil {
+	if _, err := hdl.codeSvc.Send(ctx, &code_grpc.SendCodeRequest{Biz: code_grpc.CodeBiz_CODE_BIZ_SMS, Identifier: req.Phone}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.AlreadyExists:   errno.ErrSendToFrequent,

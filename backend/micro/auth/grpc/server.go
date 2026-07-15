@@ -19,25 +19,23 @@ func NewAuthServiceServer(svc service.AuthService) *AuthServiceServer {
 	}
 }
 
-func (server *AuthServiceServer) LoginByPassword(ctx context.Context, req *auth_grpc.LoginByPasswordRequest) (*auth_grpc.UserID, error) {
+func (server *AuthServiceServer) Login(ctx context.Context, req *auth_grpc.LoginRequest) (*auth_grpc.LoginResponse, error) {
+	var uid int64
+	var err error
+
 	// 调用 Service
-	uid, err := server.svc.LoginByPassword(ctx, req.Identifier, req.Password)
+	switch req.Biz {
+	case auth_grpc.LoginBiz_LOGIN_BIZ_Phone:
+		uid, err = server.svc.LoginByPhone(ctx, req.Identifier, req.Verification)
+	case auth_grpc.LoginBiz_LOGIN_BIZ_Password:
+		uid, err = server.svc.LoginByPassword(ctx, req.Identifier, req.Verification)
+	}
 	if err != nil {
-		return &auth_grpc.UserID{}, err
+		return &auth_grpc.LoginResponse{}, err
 	}
 
 	// 返回 Response
-	return &auth_grpc.UserID{UserID: uid}, nil
-}
-
-func (server *AuthServiceServer) LoginByPhone(ctx context.Context, req *auth_grpc.LoginByPhoneRequest) (*auth_grpc.UserID, error) {
-	// 调用 Service
-	uid, err := server.svc.LoginByPhone(ctx, req.Phone, req.Code)
-	if err != nil {
-		return &auth_grpc.UserID{}, err
-	}
-	// 返回 Response
-	return &auth_grpc.UserID{UserID: uid}, nil
+	return &auth_grpc.LoginResponse{UserID: uid}, nil
 }
 
 func (server *AuthServiceServer) HasPassword(ctx context.Context, id *auth_grpc.UserID) (*auth_grpc.HasPasswordResponse, error) {

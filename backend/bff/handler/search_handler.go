@@ -32,6 +32,15 @@ func NewSearchHandler(searchSvc grpcclient.SearchClient, postSvc grpcclient.Post
 	}
 }
 
+func (hdl *SearchHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	// 搜索模块
+	search := engine.Group("/search")
+	search.Use(authMiddleware)
+	{
+		search.POST("", hdl.Search)
+	}
+}
+
 func (hdl *SearchHandler) Search(ctx *gin.Context) {
 	// 校验登录态
 	if _, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext); err != nil {

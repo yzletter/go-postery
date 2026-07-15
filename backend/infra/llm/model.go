@@ -6,16 +6,19 @@ import (
 	"sync"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino-ext/components/model/qwen"
 	"github.com/yzletter/go-postery/backend/conf"
 )
 
 var (
-	arkModel *ark.ChatModel
-	once     sync.Once
+	arkModel  *ark.ChatModel
+	qwenModel *qwen.ChatModel
+	arkOnce   sync.Once
+	qwenOnce  sync.Once
 )
 
 func NewArkLLMModel(ctx context.Context, config conf.ArkConfig) *ark.ChatModel {
-	once.Do(func() {
+	arkOnce.Do(func() {
 		var err error
 		arkModel, err = ark.NewChatModel(ctx, &ark.ChatModelConfig{
 			APIKey: config.APIKey,
@@ -28,4 +31,22 @@ func NewArkLLMModel(ctx context.Context, config conf.ArkConfig) *ark.ChatModel {
 	})
 
 	return arkModel
+}
+
+// NewQwenLLMModel 千问 LLM 构造函数
+func NewQwenLLMModel(ctx context.Context, config conf.QwenConfig) *qwen.ChatModel {
+	temperature := float32(0.7)
+	qwenOnce.Do(func() {
+		var err error
+		qwenModel, err = qwen.NewChatModel(ctx, &qwen.ChatModelConfig{
+			APIKey:      config.APIKey,
+			BaseURL:     config.BaseURL,
+			Model:       config.LLMModel,
+			Temperature: &temperature, // 模型温度
+		})
+		if err != nil {
+			return
+		}
+	})
+	return qwenModel
 }

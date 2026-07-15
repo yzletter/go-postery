@@ -55,7 +55,7 @@ func (svc *searchService) Search(ctx context.Context, queries []string) ([]strin
 	for _, query := range queries {
 		contentQ := new(model2.TermQuery)
 		titleQ := new(model2.TermQuery)
-		querySegments := svc.tokenizer.Cut(query)
+		querySegments := svc.tokenizer.CutSearch(query)
 
 		for _, segment := range querySegments {
 			contentQ = contentQ.And(model2.NewTermQuery("Content", strings.ToLower(segment)))
@@ -172,11 +172,11 @@ func (svc *searchService) Index(ctx context.Context, postID int64) error {
 	}
 
 	// 对标题分词
-	titleSegments := svc.tokenizer.Cut(post.Title)
+	titleSegments := svc.tokenizer.CutSearch(post.Title)
 	titleKeywords := toKeywords("Title", titleSegments)
 
 	// 对文本分词转为关键词
-	contentSegments := svc.tokenizer.Cut(post.Content)
+	contentSegments := svc.tokenizer.CutSearch(post.Content)
 	contentKeywords := toKeywords("Content", contentSegments)
 
 	keywords := make([]*model2.Keyword, 0, len(contentSegments)+len(titleSegments))

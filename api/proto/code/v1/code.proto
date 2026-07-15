@@ -4,9 +4,15 @@ package code.v1;
 
 option go_package = "github.com/yzletter/go-postery/api/proto/code/v1;code_grpc";
 
+enum CodeBiz {
+  EMPTY = 0;  // 占位
+  CODE_BIZ_SMS = 1;
+  CODE_BIZ_Email = 2;
+}
+
 // 发送验证码请求体
 message SendCodeRequest{
-  int64 biz = 1;
+  CodeBiz biz = 1;
   string identifier = 2;
 }
 
@@ -15,7 +21,7 @@ message SendCodeResponse{}
 
 // 校验验证码请求体
 message CheckCodeRequest{
-  int64 biz = 1;
+  CodeBiz biz = 1;
   string identifier = 2;
   string code = 3;
 }

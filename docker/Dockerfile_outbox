@@ -1,0 +1,29 @@
+# ==================== 构建阶段 ====================
+FROM golang:1.25.5-alpine AS builder
+
+LABEL authors="yzletter"
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/outbox-service ./backend/event/outbox
+
+# ==================== 运行阶段 ====================
+FROM alpine:3.22
+
+RUN apk add --no-cache ca-certificates tzdata
+
+ENV TZ=Asia/Shanghai
+
+WORKDIR /app
+
+COPY --from=builder /out/outbox-service /app/outbox-service
+
+# outbox 是后台扫表任务，不监听对外服务端口。
+ENTRYPOINT ["/app/outbox-service"]
+
+CMD ["-env=production"]

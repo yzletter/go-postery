@@ -2,17 +2,8 @@ package conf
 
 import (
 	"context"
-	"time"
 
 	etcdv3 "go.etcd.io/etcd/client/v3"
-)
-
-const (
-	RocketLotteryTopic             = "GO_POSTERY_CANCEL_ORDER"
-	RocketLotteryConsumerGroup     = "go_postery"
-	RocketAwaitDuration            = 5 * time.Second
-	RocketLotteryPayDelay          = 600
-	RocketLotteryInvisibleDuration = 10 * time.Second
 )
 
 type LotteryServiceConfig struct {

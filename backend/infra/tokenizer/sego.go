@@ -40,13 +40,23 @@ func NewSegoTokenizer() *SegoTokenizer {
 	return tokenizer
 }
 
-func (tokenizer *SegoTokenizer) Cut(text string) []string {
+func (tokenizer *SegoTokenizer) CutSearch(text string) []string {
 	if tokenizer == nil || tokenizer.segmenter.Dictionary() == nil {
 		panic("sego tokenizer is not initialized; use NewSegoTokenizer")
 	}
 
 	segments := tokenizer.segmenter.Segment([]byte(text))
 	res := sego.SegmentsToSlice(segments, true)
+	return res
+}
+
+func (tokenizer *SegoTokenizer) Cut(text string) []string {
+	if tokenizer == nil || tokenizer.segmenter.Dictionary() == nil {
+		panic("sego tokenizer is not initialized; use NewSegoTokenizer")
+	}
+
+	segments := tokenizer.segmenter.Segment([]byte(text))
+	res := sego.SegmentsToSlice(segments, false)
 	return res
 }
 

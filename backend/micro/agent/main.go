@@ -98,10 +98,7 @@ func main() {
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Client
-	ETCDServiceHub.LoadEndpoints(ctx, manager.PostService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.PostService)
-	PostManager := manager.NewPostManager(manager.PostService, ETCDServiceHub)
-	go PostManager.StartHealthCheck(ctx) // 开启下游服务健康检查
+	PostManager := manager.NewPostManager(ctx, manager.PostService, ETCDServiceHub)
 
 	// Service 层
 	AgentService := service.NewAgentService(AgentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator, PostManager)

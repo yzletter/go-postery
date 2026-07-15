@@ -123,8 +123,10 @@ func (dao *gormInteractiveDAO) ChangeInteractiveCnt(ctx context.Context, biz dom
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
+			// 写过了
 			return nil
 		}
+
 		switch biz {
 		// 阅读、点赞、评论都归属帖子 Inter
 		case domain.BizRead:

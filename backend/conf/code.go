@@ -6,20 +6,6 @@ import (
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
-// 短信验证码
-const (
-	SendSMSInterval = 60            // 发送间隔
-	SMSValidTime    = 300           // 有效时间
-	PhoneCodePrefix = "phone:code:" // 前缀
-)
-
-// 邮箱验证码
-const (
-	SendEmailInterval = 60            // 发送间隔
-	EmailValidTime    = 600           // 有效时间
-	EmailCodePrefix   = "email:code:" // 前缀
-)
-
 type CodeServiceConfig struct {
 	Metric MetricConfig
 	GRPC   GrpcConfig

@@ -7,28 +7,54 @@ import (
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	inter_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
+	interview_grpc "github.com/yzletter/go-postery/api/proto/interview/v1"
 	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
+	oss_grpc "github.com/yzletter/go-postery/api/proto/oss/v1"
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
+	InterviewService   = "interview_service"
 	AgentService       = "agent_service"
 	AuthService        = "auth_service"
 	CodeService        = "code_service"
 	InteractiveService = "interactive_service"
 	LotteryService     = "lottery_service"
+	OSSService         = "oss_service"
 	PostService        = "post_service"
 	RankService        = "rank_service"
 	SearchService      = "search_service"
 	SessionService     = "session_service"
 	UserService        = "user_service"
+	WSGatewayService   = "ws_gateway_service"
 )
+
+// isEndpointFailure 判断错误是否代表当前节点不可用, 业务错误不应该降低节点健康度
+func isEndpointFailure(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	switch status.Code(err) {
+	case codes.Unavailable,
+		codes.DeadlineExceeded,
+		codes.ResourceExhausted,
+		codes.Unknown,
+		codes.Internal:
+		return true
+	default:
+		return false
+	}
+}
 
 type ServiceHub interface {
 	LoadEndpoints(ctx context.Context, service string)                                           // 从服务注册中心初始化所有可用连接
@@ -47,8 +73,7 @@ type CodeClient interface {
 }
 
 type AuthClient interface {
-	LoginByPassword(ctx context.Context, req *auth_grpc.LoginByPasswordRequest) (*auth_grpc.UserID, error)
-	LoginByPhone(ctx context.Context, req *auth_grpc.LoginByPhoneRequest) (*auth_grpc.UserID, error)
+	Login(ctx context.Context, req *auth_grpc.LoginRequest) (*auth_grpc.LoginResponse, error)
 	HasPassword(ctx context.Context, req *auth_grpc.UserID) (*auth_grpc.HasPasswordResponse, error)
 	SetPassword(ctx context.Context, req *auth_grpc.SetPasswordRequest) (*auth_grpc.AuthEmptyResponse, error)
 	UpdatePassword(ctx context.Context, req *auth_grpc.UpdatePasswordRequest) (*auth_grpc.AuthEmptyResponse, error)
@@ -95,6 +120,17 @@ type AgentClient interface {
 	Chat(ctx context.Context, req *agent_grpc.ChatRequest) (*agent_grpc.ChatResponse, error)
 }
 
+type InterviewClient interface {
+	Chat(ctx context.Context, req *interview_grpc.ChatRequest) (*interview_grpc.ChatResponse, error)
+	StartInterview(ctx context.Context, req *interview_grpc.StartInterviewRequest) (*interview_grpc.StartInterviewResponse, error)
+	Answer(ctx context.Context, req *interview_grpc.AnswerRequest) (*interview_grpc.AnswerResponse, error)
+	UploadQuestionsSign(ctx context.Context, req *interview_grpc.UploadQuestionsSignRequest) (*interview_grpc.UploadQuestionsSignResponse, error)
+	UploadQuestionsCallback(ctx context.Context, req *interview_grpc.UploadQuestionsCallbackRequest) (*interview_grpc.UploadQuestionsCallbackResponse, error)
+	UploadQuestions(ctx context.Context, req *interview_grpc.UploadQuestionsRequest) (*interview_grpc.UploadQuestionsResponse, error)
+	QuitInterview(ctx context.Context, req *interview_grpc.QuitInterviewRequest) (*interview_grpc.QuitInterviewResponse, error)
+	Evaluation(ctx context.Context, req *interview_grpc.EvaluationRequest) (*interview_grpc.EvaluationResponse, error)
+}
+
 type UserClient interface {
 	GetProfile(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.Profile, error)
 	UpdateProfile(ctx context.Context, req *user_grpc.UpdateProfileRequest) (*user_grpc.UpdateProfileResponse, error)
@@ -107,7 +143,19 @@ type UserClient interface {
 	GetAvatarURL(ctx context.Context, req *user_grpc.GetAvatarURLRequest) (*user_grpc.GetAvatarURLResponse, error)
 }
 
+type OSSClient interface {
+	SignUpload(ctx context.Context, req *oss_grpc.SignUploadRequest) (*oss_grpc.SignUploadResponse, error)
+	UploadCallback(ctx context.Context, req *oss_grpc.UploadCallbackRequest) (*oss_grpc.UploadCallbackResponse, error)
+	GetObjectURL(ctx context.Context, req *oss_grpc.GetObjectURLRequest) (*oss_grpc.GetObjectURLResponse, error)
+}
+
+type WSGatewayClient interface {
+	Push(ctx context.Context, req *ws_gateway_grpc.PushRequest) (*ws_gateway_grpc.PushResponse, error)
+}
+
 type SessionClient interface {
+	NewConnection(ctx context.Context, req *session_grpc.UserID) (*session_grpc.SessionEmptyResponse, error)
+	Chat(ctx context.Context, req *session_grpc.ChatRequest) (*session_grpc.SessionEmptyResponse, error)
 	ListByUID(ctx context.Context, req *session_grpc.UserID) (*session_grpc.Sessions, error)
 	GetSession(ctx context.Context, req *session_grpc.BothUserID) (*session_grpc.Session, error)
 	GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error)

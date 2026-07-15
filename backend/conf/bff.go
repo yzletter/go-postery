@@ -6,11 +6,6 @@ import (
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
-type AppConfig struct {
-	FrontendAddr string
-	BackendAddr  string
-}
-
 type BFFServiceConfig struct {
 	App AppConfig
 	Log LogConfig

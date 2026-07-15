@@ -1,2 +1,14 @@
-.idea/
-.logs/
+.git
+.gitignore
+.codex
+.agents
+
+app/
+logs/
+
+frontend/node_modules/
+frontend/dist/
+
+*.log
+*.tmp
+.DS_Store

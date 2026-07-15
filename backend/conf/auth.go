@@ -3,19 +3,7 @@ package conf
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/backend/micro/code/domain"
 	etcdv3 "go.etcd.io/etcd/client/v3"
-)
-
-const (
-	UserIDInContext = "user_id" // uid 在上下文中的 Name
-)
-
-type CodeBiz = domain.BizType
-
-const (
-	CodeBizSMS   CodeBiz = domain.BizSMS
-	CodeBizEmail CodeBiz = domain.BizEmail
 )
 
 type AuthServiceConfig struct {

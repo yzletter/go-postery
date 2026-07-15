@@ -12,43 +12,18 @@ var (
 	watchKeys = make(map[string]struct{})
 )
 
-//// LoadGlobalConfig 加载远程配置
-////
-//// client 依赖注入 etcd Client
-////
-//// prefix 业务配置 Key 的前缀
-//func LoadGlobalConfig(ctx context.Context, client *etcdv3.Client, prefix string, commonPrefix string) Config {
-//	conce.Do(func() {
-//		config.c = LoadCommonMicroConf(ctx, client, commonPrefix)
-//		// 加载 Metric 配置
-//		config.Metric = loadPrometheusConfig(ctx, client, prefix)
-//		// 加载 gRPC 配置
-//		config.GRPC = loadGRPCConfig(ctx, client, prefix)
-//		// 加载 Email 配置
-//		config.Email = loadEmailConfig(ctx, client, prefix)
-//		// 加载 SMS 配置
-//		config.SMS = loadSMSConfig(ctx, client, prefix)
-//		// 加载 Log 配置
-//		config.Log = loadLogConfig(ctx, client, prefix)
-//
-//		go watch(ctx, client, commonPrefix, watchKeys)
-//		go watch(ctx, client, prefix, watchKeys)
-//	})
-//
-//	return config
-//}
-
 func LoadCommonMicroConf(ctx context.Context, client *etcdv3.Client, prefix string) CommonMicroConf {
 	conf := CommonMicroConf{
 		// 数据库
-		MySQL:  loadMySQLConfig(ctx, client, prefix),
-		Qdrant: loadQdrantConfig(ctx, client, prefix),
+		MySQL: loadMySQLConfig(ctx, client, prefix),
 		// 缓存
 		Redis: loadRedisConfig(ctx, client, prefix),
 		// 消息队列
 		Kafka:    loadKafkaConfig(ctx, client, prefix),
 		RabbitMQ: loadRabbitMQConfig(ctx, client, prefix),
 		RocketMQ: loadRocketMQConfig(ctx, client, prefix),
+		Qdrant:   loadQdrantConfig(ctx, client, prefix),
+		Milvus:   loadMilvusConfig(ctx, client, prefix),
 		// 链路追踪
 		Jaeger: loadJaegerConfig(ctx, client, prefix),
 		// 服务发现
@@ -84,6 +59,27 @@ func loadOSSConfig(ctx context.Context, client *etcdv3.Client, prefix string) OS
 		}
 	}
 
+	if resp, err := client.Get(ctx, prefix+"oss_region"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Region = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"oss_region"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"oss_bucket"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Bucket = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"oss_bucket"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"oss_callback_url"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.CallbackURL = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"oss_callback_url"] = struct{}{}
+		}
+	}
+
 	return config
 }
 
@@ -108,6 +104,40 @@ func loadArkConfig(ctx context.Context, client *etcdv3.Client, prefix string) Ar
 		if len(resp.Kvs) > 0 {
 			config.APIKey = string(resp.Kvs[0].Value)
 			watchKeys[prefix+"ark_api_key"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadQwenConfig(ctx context.Context, client *etcdv3.Client, prefix string) QwenConfig {
+	var config QwenConfig
+
+	if resp, err := client.Get(ctx, prefix+"qwen_embedder_model"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.EmbedderModel = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"ark_embedder_model"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"qwen_base_url"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.BaseURL = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qwen_base_url"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"qwen_llm_model"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.LLMModel = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"ark_llm_model"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"qwen_api_key"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.APIKey = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qwen_api_key"] = struct{}{}
 		}
 	}
 
@@ -147,6 +177,34 @@ func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 		if len(resp.Kvs) > 0 {
 			config.DB, _ = strconv.Atoi(string(resp.Kvs[0].Value))
 			watchKeys[prefix+"redis_db"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadGithubConfig(ctx context.Context, client *etcdv3.Client, prefix string) GithubConfig {
+	var config GithubConfig
+
+	// 获取地址
+	if resp, err := client.Get(ctx, prefix+"github_token"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Token = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"github_token"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+func loadMilvusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MilvusConfig {
+	var config MilvusConfig
+
+	// 获取地址
+	if resp, err := client.Get(ctx, prefix+"milvus_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Addr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"milvus_addr"] = struct{}{}
 		}
 	}
 

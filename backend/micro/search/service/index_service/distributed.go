@@ -9,7 +9,6 @@ import (
 
 	"log/slog"
 
-	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	model2 "github.com/yzletter/go-postery/backend/micro/search/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
@@ -239,7 +238,6 @@ func (sentinel *Sentinel) getConn(endpoint string) *grpc.ClientConn {
 
 	conn, err := grpc.NewClient(endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // Credential 即使为空也必须设置
-		my_grpc.CircuitBreakerDialOption(),
 		grpc.WithKeepaliveParams(ka),
 		// grpc.WithBlock(),
 		// grpc.Dial 是异步连接的, 未设置 grpc.WithBlock 时 ctx 超时控制不会生效

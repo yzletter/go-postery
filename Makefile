@@ -1,4 +1,100 @@
-.PHONY: build build-macos
+.PHONY: build-docker build build-macos
+
+build-docker:
+	@go mod tidy
+	@docker build --platform=linux/amd64  -t go-postery-code:v0.0.1 -f ./docker/Dockerfile_code .
+	@docker tag go-postery-code:v0.0.1 yzletter666/go-postery-code:v0.0.1
+	@docker push yzletter666/go-postery-code:v0.0.1
+	# docker pull yzletter666/go-postery-code:v0.0.1
+	# docker rm -f go-postery-code 2>/dev/null || true
+	# docker run -d --name go-postery-code --restart unless-stopped --network host -v /var/log/go-postery-code:/app/logs docker.io/yzletter666/go-postery-code:v0.0.1
+
+	@docker build --platform=linux/amd64  -t go-postery-auth:v0.0.1 -f ./docker/Dockerfile_auth .
+	@docker tag go-postery-auth:v0.0.1 yzletter666/go-postery-auth:v0.0.1
+	@docker push yzletter666/go-postery-auth:v0.0.1
+	# docker pull yzletter666/go-postery-auth:v0.0.1
+	# docker rm -f go-postery-auth 2>/dev/null || true
+	# docker run -d --name go-postery-auth --restart unless-stopped --network host -v /var/log/go-postery-auth:/app/logs docker.io/yzletter666/go-postery-auth:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-lottery:v0.0.1 -f ./docker/Dockerfile_lottery .
+	@docker tag go-postery-lottery:v0.0.1 yzletter666/go-postery-lottery:v0.0.1
+	@docker push yzletter666/go-postery-lottery:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-lottery:v0.0.1
+	# docker rm -f go-postery-lottery 2>/dev/null || true
+	# docker run -d --name go-postery-lottery --restart unless-stopped --network host -v /var/log/go-postery-lottery:/app/logs docker.io/yzletter666/go-postery-lottery:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-interactive:v0.0.1 -f ./docker/Dockerfile_interactive .
+	@docker tag go-postery-interactive:v0.0.1 yzletter666/go-postery-interactive:v0.0.1
+	@docker push yzletter666/go-postery-interactive:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-interactive:v0.0.1
+	# docker rm -f go-postery-interactive 2>/dev/null || true
+	# docker run -d --name go-postery-interactive --restart unless-stopped --network host -v /var/log/go-postery-interactive:/app/logs docker.io/yzletter666/go-postery-interactive:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-post:v0.0.1 -f ./docker/Dockerfile_post .
+	@docker tag go-postery-post:v0.0.1 yzletter666/go-postery-post:v0.0.1
+	@docker push yzletter666/go-postery-post:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-post:v0.0.1
+	# docker rm -f go-postery-post 2>/dev/null || true
+	# docker run -d --name go-postery-post --restart unless-stopped --network host -v /var/log/go-postery-post:/app/logs docker.io/yzletter666/go-postery-post:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-user:v0.0.1 -f ./docker/Dockerfile_user .
+	@docker tag go-postery-user:v0.0.1 yzletter666/go-postery-user:v0.0.1
+	@docker push yzletter666/go-postery-user:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-user:v0.0.1
+	# docker rm -f go-postery-user 2>/dev/null || true
+	# docker run -d --name go-postery-user --restart unless-stopped --network host -v /var/log/go-postery-user:/app/logs docker.io/yzletter666/go-postery-user:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-rank:v0.0.1 -f ./docker/Dockerfile_rank .
+	@docker tag go-postery-rank:v0.0.1 yzletter666/go-postery-rank:v0.0.1
+	@docker push yzletter666/go-postery-rank:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-rank:v0.0.1
+	# docker rm -f go-postery-rank 2>/dev/null || true
+	# docker run -d --name go-postery-rank --restart unless-stopped --network host -v /var/log/go-postery-rank:/app/logs docker.io/yzletter666/go-postery-rank:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-outbox:v0.0.1 -f ./docker/Dockerfile_outbox .
+	@docker tag go-postery-outbox:v0.0.1 yzletter666/go-postery-outbox:v0.0.1
+	@docker push yzletter666/go-postery-outbox:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-outbox:v0.0.1
+	# docker rm -f go-postery-outbox 2>/dev/null || true
+	# docker run -d --name go-postery-outbox --restart unless-stopped --network host -v /var/log/go-postery-outbox:/app/logs docker.io/yzletter666/go-postery-outbox:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-search:v0.0.1 -f ./docker/Dockerfile_search .
+	@docker tag go-postery-search:v0.0.1 yzletter666/go-postery-search:v0.0.1
+	@docker push yzletter666/go-postery-search:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-search:v0.0.1
+	# docker rm -f go-postery-search 2>/dev/null || true
+	# docker run -d --name go-postery-search --restart unless-stopped --network host -v /var/log/go-postery-search:/app/logs docker.io/yzletter666/go-postery-search:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-session:v0.0.1 -f ./docker/Dockerfile_session .
+	@docker tag go-postery-session:v0.0.1 yzletter666/go-postery-session:v0.0.1
+	@docker push yzletter666/go-postery-session:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-session:v0.0.1
+	# docker rm -f go-postery-session 2>/dev/null || true
+	# docker run -d --name go-postery-session --restart unless-stopped --network host -v /var/log/go-postery-session:/app/logs docker.io/yzletter666/go-postery-session:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-oss:v0.0.1 -f ./docker/Dockerfile_oss .
+	@docker tag go-postery-oss:v0.0.1 yzletter666/go-postery-oss:v0.0.1
+	@docker push yzletter666/go-postery-oss:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-oss:v0.0.1
+	# docker rm -f go-postery-oss 2>/dev/null || true
+	# docker run -d --name go-postery-oss --restart unless-stopped --network host -v /var/log/go-postery-oss:/app/logs docker.io/yzletter666/go-postery-oss:v0.0.1
+
+	@docker build --platform=linux/amd64 -t go-postery-interview:v0.0.1 -f ./docker/Dockerfile_interview .
+	@docker tag go-postery-interview:v0.0.1 yzletter666/go-postery-interview:v0.0.1
+	@docker push yzletter666/go-postery-interview:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-interview:v0.0.1
+	# docker rm -f go-postery-interview 2>/dev/null || true
+	# docker run -d --name go-postery-interview --restart unless-stopped --network host -v /var/log/go-postery-interview:/app/logs docker.io/yzletter666/go-postery-interview:v0.0.1
 
 build:
 	@rm -rf ./app/linux || true

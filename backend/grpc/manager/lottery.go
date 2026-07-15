@@ -14,11 +14,14 @@ type LotteryServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewLotteryManager(service string, hub ServiceHub) *LotteryServiceManager {
-	return &LotteryServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewLotteryManager(ctx context.Context, service string, hub ServiceHub) *LotteryServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &LotteryServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *LotteryServiceManager) GetAllGifts(ctx context.Context, req *lottery_grpc.EmptyRequest) (*lottery_grpc.Gifts, error) {
@@ -186,7 +189,7 @@ func (manager *LotteryServiceManager) Result(ctx context.Context, req *lottery_g
 	return nil, err
 }
 
-func (manager *LotteryServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *LotteryServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

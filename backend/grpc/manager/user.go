@@ -14,11 +14,14 @@ type UserServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewUserManager(service string, hub ServiceHub) *UserServiceManager {
-	return &UserServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewUserManager(ctx context.Context, service string, hub ServiceHub) *UserServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &UserServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
 func (manager *UserServiceManager) GetProfile(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.Profile, error) {
@@ -318,7 +321,7 @@ func (manager *UserServiceManager) GetAvatarURL(ctx context.Context, req *user_g
 	return nil, err
 }
 
-func (manager *UserServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *UserServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

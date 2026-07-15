@@ -10,7 +10,7 @@ import (
 	"github.com/mozillazg/go-pinyin"
 )
 
-var nonWord = regexp.MustCompile(`[^a-z0-9\-]`)
+var nonWord = regexp.MustCompile(`[^a.json-z0-9\-]`)
 
 // Slugify 将标签转为唯一标识 + 短 Hash
 func Slugify(name string) string {

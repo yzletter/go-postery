@@ -14,11 +14,77 @@ type SessionServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewSessionManager(service string, hub ServiceHub) *SessionServiceManager {
-	return &SessionServiceManager{
-		service: service,
-		hub:     hub,
+func NewSessionManager(ctx context.Context, service string, hub ServiceHub) *SessionServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &SessionServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
+}
+
+// NewConnection 建立与 WebSocket 同生命周期的消息消费 RPC。
+// 该调用不能设置固定超时；上游 WebSocket 断开时通过 ctx 取消。
+func (manager *SessionServiceManager) NewConnection(ctx context.Context, req *session_grpc.UserID) (*session_grpc.SessionEmptyResponse, error) {
+	var err = errs.ErrUnavailable
+	var tryCnt = 1
+	for try := 0; try < tryCnt; try++ {
+		endpoint := manager.hub.Take(ctx, manager.service)
+		if endpoint == nil {
+			continue
+		}
+		conn := endpoint.ClientConn()
+		if conn == nil {
+			continue
+		}
+		client := session_grpc.NewSessionServiceClient(conn)
+
+		// 该 RPC 与 WebSocket 同生命周期，不能设置固定超时时间。
+		var resp *session_grpc.SessionEmptyResponse
+		resp, err = client.NewConnection(ctx, req)
+		if isEndpointFailure(err) {
+			endpoint.MarkFailed()
+			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
+			continue
+		}
+		endpoint.MarkSuccess()
+		return resp, err
 	}
+
+	return nil, err
+}
+
+// Chat 将 WebSocket 收到的聊天消息转发给 Session 微服务。
+func (manager *SessionServiceManager) Chat(ctx context.Context, req *session_grpc.ChatRequest) (*session_grpc.SessionEmptyResponse, error) {
+	var err = errs.ErrUnavailable
+	var tryCnt = 1 // 写入类调用只适合一次
+	for try := 0; try < tryCnt; try++ {
+		endpoint := manager.hub.Take(ctx, manager.service)
+		if endpoint == nil {
+			continue
+		}
+		conn := endpoint.ClientConn()
+		if conn == nil {
+			continue
+		}
+		client := session_grpc.NewSessionServiceClient(conn)
+
+		callCtx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
+		var resp *session_grpc.SessionEmptyResponse
+		resp, err = client.Chat(callCtx, req)
+		cancel()
+
+		if isEndpointFailure(err) {
+			endpoint.MarkFailed()
+			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
+			continue
+		}
+		endpoint.MarkSuccess()
+		return resp, err
+	}
+
+	return nil, err
 }
 
 func (manager *SessionServiceManager) ListByUID(ctx context.Context, req *session_grpc.UserID) (*session_grpc.Sessions, error) {
@@ -252,7 +318,7 @@ func (manager *SessionServiceManager) CreateMessage(ctx context.Context, req *se
 	return nil, err
 }
 
-func (manager *SessionServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *SessionServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

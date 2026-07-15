@@ -24,6 +24,15 @@ func NewAgentHandler(agentSvc grpcclient.AgentClient) *AgentHandler {
 	}
 }
 
+func (hdl *AgentHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	// 智能体模块
+	agent := engine.Group("/agent")
+	agent.Use(authMiddleware)
+	{
+		agent.POST("/chat", hdl.Chat) // POST /api/v1/agent/chat
+	}
+}
+
 func (hdl *AgentHandler) Chat(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
 	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)

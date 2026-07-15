@@ -21,10 +21,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type CodeBiz int32
+
+const (
+	CodeBiz_EMPTY          CodeBiz = 0 // 占位
+	CodeBiz_CODE_BIZ_SMS   CodeBiz = 1
+	CodeBiz_CODE_BIZ_Email CodeBiz = 2
+)
+
+// Enum value maps for CodeBiz.
+var (
+	CodeBiz_name = map[int32]string{
+		0: "EMPTY",
+		1: "CODE_BIZ_SMS",
+		2: "CODE_BIZ_Email",
+	}
+	CodeBiz_value = map[string]int32{
+		"EMPTY":          0,
+		"CODE_BIZ_SMS":   1,
+		"CODE_BIZ_Email": 2,
+	}
+)
+
+func (x CodeBiz) Enum() *CodeBiz {
+	p := new(CodeBiz)
+	*p = x
+	return p
+}
+
+func (x CodeBiz) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CodeBiz) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_proto_code_v1_code_proto_enumTypes[0].Descriptor()
+}
+
+func (CodeBiz) Type() protoreflect.EnumType {
+	return &file_api_proto_code_v1_code_proto_enumTypes[0]
+}
+
+func (x CodeBiz) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CodeBiz.Descriptor instead.
+func (CodeBiz) EnumDescriptor() ([]byte, []int) {
+	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{0}
+}
+
 // 发送验证码请求体
 type SendCodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Biz           int64                  `protobuf:"varint,1,opt,name=biz,proto3" json:"biz,omitempty"`
+	Biz           CodeBiz                `protobuf:"varint,1,opt,name=biz,proto3,enum=code.v1.CodeBiz" json:"biz,omitempty"`
 	Identifier    string                 `protobuf:"bytes,2,opt,name=identifier,proto3" json:"identifier,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -60,11 +109,11 @@ func (*SendCodeRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SendCodeRequest) GetBiz() int64 {
+func (x *SendCodeRequest) GetBiz() CodeBiz {
 	if x != nil {
 		return x.Biz
 	}
-	return 0
+	return CodeBiz_EMPTY
 }
 
 func (x *SendCodeRequest) GetIdentifier() string {
@@ -114,7 +163,7 @@ func (*SendCodeResponse) Descriptor() ([]byte, []int) {
 // 校验验证码请求体
 type CheckCodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Biz           int64                  `protobuf:"varint,1,opt,name=biz,proto3" json:"biz,omitempty"`
+	Biz           CodeBiz                `protobuf:"varint,1,opt,name=biz,proto3,enum=code.v1.CodeBiz" json:"biz,omitempty"`
 	Identifier    string                 `protobuf:"bytes,2,opt,name=identifier,proto3" json:"identifier,omitempty"`
 	Code          string                 `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -151,11 +200,11 @@ func (*CheckCodeRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *CheckCodeRequest) GetBiz() int64 {
+func (x *CheckCodeRequest) GetBiz() CodeBiz {
 	if x != nil {
 		return x.Biz
 	}
-	return 0
+	return CodeBiz_EMPTY
 }
 
 func (x *CheckCodeRequest) GetIdentifier() string {
@@ -293,15 +342,15 @@ var File_api_proto_code_v1_code_proto protoreflect.FileDescriptor
 
 const file_api_proto_code_v1_code_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/proto/code/v1/code.proto\x12\acode.v1\"C\n" +
-	"\x0fSendCodeRequest\x12\x10\n" +
-	"\x03biz\x18\x01 \x01(\x03R\x03biz\x12\x1e\n" +
+	"\x1capi/proto/code/v1/code.proto\x12\acode.v1\"U\n" +
+	"\x0fSendCodeRequest\x12\"\n" +
+	"\x03biz\x18\x01 \x01(\x0e2\x10.code.v1.CodeBizR\x03biz\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x02 \x01(\tR\n" +
 	"identifier\"\x12\n" +
-	"\x10SendCodeResponse\"X\n" +
-	"\x10CheckCodeRequest\x12\x10\n" +
-	"\x03biz\x18\x01 \x01(\x03R\x03biz\x12\x1e\n" +
+	"\x10SendCodeResponse\"j\n" +
+	"\x10CheckCodeRequest\x12\"\n" +
+	"\x03biz\x18\x01 \x01(\x0e2\x10.code.v1.CodeBizR\x03biz\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x02 \x01(\tR\n" +
 	"identifier\x12\x12\n" +
@@ -309,7 +358,11 @@ const file_api_proto_code_v1_code_proto_rawDesc = "" +
 	"\x11CheckCodeResponse\x12\x16\n" +
 	"\x06result\x18\x01 \x01(\bR\x06result\"\x14\n" +
 	"\x12HealthCheckRequest\"\x15\n" +
-	"\x13HealthCheckResponse2\xd5\x01\n" +
+	"\x13HealthCheckResponse*:\n" +
+	"\aCodeBiz\x12\t\n" +
+	"\x05EMPTY\x10\x00\x12\x10\n" +
+	"\fCODE_BIZ_SMS\x10\x01\x12\x12\n" +
+	"\x0eCODE_BIZ_Email\x10\x022\xd5\x01\n" +
 	"\vCodeService\x12;\n" +
 	"\x04Send\x12\x18.code.v1.SendCodeRequest\x1a\x19.code.v1.SendCodeResponse\x12?\n" +
 	"\x06Verify\x12\x19.code.v1.CheckCodeRequest\x1a\x1a.code.v1.CheckCodeResponse\x12H\n" +
@@ -327,27 +380,31 @@ func file_api_proto_code_v1_code_proto_rawDescGZIP() []byte {
 	return file_api_proto_code_v1_code_proto_rawDescData
 }
 
+var file_api_proto_code_v1_code_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_proto_code_v1_code_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_proto_code_v1_code_proto_goTypes = []any{
-	(*SendCodeRequest)(nil),     // 0: code.v1.SendCodeRequest
-	(*SendCodeResponse)(nil),    // 1: code.v1.SendCodeResponse
-	(*CheckCodeRequest)(nil),    // 2: code.v1.CheckCodeRequest
-	(*CheckCodeResponse)(nil),   // 3: code.v1.CheckCodeResponse
-	(*HealthCheckRequest)(nil),  // 4: code.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil), // 5: code.v1.HealthCheckResponse
+	(CodeBiz)(0),                // 0: code.v1.CodeBiz
+	(*SendCodeRequest)(nil),     // 1: code.v1.SendCodeRequest
+	(*SendCodeResponse)(nil),    // 2: code.v1.SendCodeResponse
+	(*CheckCodeRequest)(nil),    // 3: code.v1.CheckCodeRequest
+	(*CheckCodeResponse)(nil),   // 4: code.v1.CheckCodeResponse
+	(*HealthCheckRequest)(nil),  // 5: code.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil), // 6: code.v1.HealthCheckResponse
 }
 var file_api_proto_code_v1_code_proto_depIdxs = []int32{
-	0, // 0: code.v1.CodeService.Send:input_type -> code.v1.SendCodeRequest
-	2, // 1: code.v1.CodeService.Verify:input_type -> code.v1.CheckCodeRequest
-	4, // 2: code.v1.CodeService.HealthCheck:input_type -> code.v1.HealthCheckRequest
-	1, // 3: code.v1.CodeService.Send:output_type -> code.v1.SendCodeResponse
-	3, // 4: code.v1.CodeService.Verify:output_type -> code.v1.CheckCodeResponse
-	5, // 5: code.v1.CodeService.HealthCheck:output_type -> code.v1.HealthCheckResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: code.v1.SendCodeRequest.biz:type_name -> code.v1.CodeBiz
+	0, // 1: code.v1.CheckCodeRequest.biz:type_name -> code.v1.CodeBiz
+	1, // 2: code.v1.CodeService.Send:input_type -> code.v1.SendCodeRequest
+	3, // 3: code.v1.CodeService.Verify:input_type -> code.v1.CheckCodeRequest
+	5, // 4: code.v1.CodeService.HealthCheck:input_type -> code.v1.HealthCheckRequest
+	2, // 5: code.v1.CodeService.Send:output_type -> code.v1.SendCodeResponse
+	4, // 6: code.v1.CodeService.Verify:output_type -> code.v1.CheckCodeResponse
+	6, // 7: code.v1.CodeService.HealthCheck:output_type -> code.v1.HealthCheckResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_code_v1_code_proto_init() }
@@ -360,13 +417,14 @@ func file_api_proto_code_v1_code_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_code_v1_code_proto_rawDesc), len(file_api_proto_code_v1_code_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_api_proto_code_v1_code_proto_goTypes,
 		DependencyIndexes: file_api_proto_code_v1_code_proto_depIdxs,
+		EnumInfos:         file_api_proto_code_v1_code_proto_enumTypes,
 		MessageInfos:      file_api_proto_code_v1_code_proto_msgTypes,
 	}.Build()
 	File_api_proto_code_v1_code_proto = out.File

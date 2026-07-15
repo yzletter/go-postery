@@ -1,0 +1,27 @@
+# Version control and local tooling
+.git/
+.gitattributes
+.gitignore
+.idea/
+.vscode/
+.codex/
+.agents/
+
+# Local build artifacts and runtime data
+app/
+logs/
+frontend/node_modules/
+frontend/dist/
+imgs/
+docs/
+
+# Local or sensitive files; inject these at runtime instead
+.env
+.env.*
+*.log
+*.tmp
+*.pem
+*.key
+.DS_Store
+**/.DS_Store
+

@@ -83,7 +83,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 // LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (svc *authService) LoginByPhone(ctx context.Context, phone string, code string) (int64, error) {
 	// 校验验证码并消费
-	verifyReq := code_grpc.CheckCodeRequest{Biz: int64(conf.CodeBizSMS), Identifier: phone, Code: code}
+	verifyReq := code_grpc.CheckCodeRequest{Biz: code_grpc.CodeBiz_CODE_BIZ_SMS, Identifier: phone, Code: code}
 	if resp, err := svc.codeClient.Verify(ctx, &verifyReq); err != nil {
 		// 下游挂了
 		slog.Error("verify login code failed", "error", err)
@@ -94,14 +94,14 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 	}
 
 	// 获取登录认证
-	authType := model.AuthTypeFromBiz(conf.CodeBizSMS) // 认证类型
+	authType := int(code_grpc.CodeBiz_CODE_BIZ_SMS) // 认证类型
 	authIdentity, err := svc.authRepo.GetAuthIdentity(ctx, authType, phone)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 用户不存在, 创建用户（包括用户最小项、用户登录认证、无密码、用户资料、注册扩展功能）
 			uid := svc.idGen.NextID()
 			verifiedAt := time.Now()
-			authType := model.AuthTypeFromBiz(conf.CodeBizSMS)
+			authType := int(code_grpc.CodeBiz_CODE_BIZ_SMS)
 
 			nickname := newNickname()
 			user := model.User{ID: uid}
@@ -187,7 +187,7 @@ func (svc *authService) HasPassword(ctx context.Context, id int64) (bool, error)
 // SetPassword 初始化密码
 func (svc *authService) SetPassword(ctx context.Context, uid int64, code string, password string) error {
 	// 获取当前用户认证的手机号
-	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, model.AuthTypeFromBiz(conf.CodeBizSMS))
+	authIdentity, err := svc.authRepo.GetAuthIdentityByAuthType(ctx, uid, int(code_grpc.CodeBiz_CODE_BIZ_SMS))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// 不应该出现的错误
@@ -199,8 +199,9 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 	}
 
 	// 校验验证码并消费
+
 	verifyReq := code_grpc.CheckCodeRequest{
-		Biz:        int64(conf.CodeBizSMS),
+		Biz:        code_grpc.CodeBiz_CODE_BIZ_SMS,
 		Identifier: authIdentity.Identifier,
 		Code:       code,
 	}

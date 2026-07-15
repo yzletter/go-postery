@@ -22,6 +22,161 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type LoginBiz int32
+
+const (
+	LoginBiz_EMPTY              LoginBiz = 0 // 占位
+	LoginBiz_LOGIN_BIZ_Phone    LoginBiz = 1
+	LoginBiz_LOGIN_BIZ_Password LoginBiz = 2
+)
+
+// Enum value maps for LoginBiz.
+var (
+	LoginBiz_name = map[int32]string{
+		0: "EMPTY",
+		1: "LOGIN_BIZ_Phone",
+		2: "LOGIN_BIZ_Password",
+	}
+	LoginBiz_value = map[string]int32{
+		"EMPTY":              0,
+		"LOGIN_BIZ_Phone":    1,
+		"LOGIN_BIZ_Password": 2,
+	}
+)
+
+func (x LoginBiz) Enum() *LoginBiz {
+	p := new(LoginBiz)
+	*p = x
+	return p
+}
+
+func (x LoginBiz) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LoginBiz) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_proto_auth_v1_auth_proto_enumTypes[0].Descriptor()
+}
+
+func (LoginBiz) Type() protoreflect.EnumType {
+	return &file_api_proto_auth_v1_auth_proto_enumTypes[0]
+}
+
+func (x LoginBiz) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LoginBiz.Descriptor instead.
+func (LoginBiz) EnumDescriptor() ([]byte, []int) {
+	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{0}
+}
+
+// Login 调用请求
+type LoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Biz           LoginBiz               `protobuf:"varint,1,opt,name=Biz,proto3,enum=auth.v1.LoginBiz" json:"Biz,omitempty"`
+	Identifier    string                 `protobuf:"bytes,2,opt,name=Identifier,proto3" json:"Identifier,omitempty"`
+	Verification  string                 `protobuf:"bytes,3,opt,name=Verification,proto3" json:"Verification,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginRequest) Reset() {
+	*x = LoginRequest{}
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginRequest) ProtoMessage() {}
+
+func (x *LoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
+func (*LoginRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *LoginRequest) GetBiz() LoginBiz {
+	if x != nil {
+		return x.Biz
+	}
+	return LoginBiz_EMPTY
+}
+
+func (x *LoginRequest) GetIdentifier() string {
+	if x != nil {
+		return x.Identifier
+	}
+	return ""
+}
+
+func (x *LoginRequest) GetVerification() string {
+	if x != nil {
+		return x.Verification
+	}
+	return ""
+}
+
+// Login 调用请求
+type LoginResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginResponse) Reset() {
+	*x = LoginResponse{}
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginResponse) ProtoMessage() {}
+
+func (x *LoginResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
+func (*LoginResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *LoginResponse) GetUserID() int64 {
+	if x != nil {
+		return x.UserID
+	}
+	return 0
+}
+
 type UserID struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserID        int64                  `protobuf:"varint,1,opt,name=UserID,proto3" json:"UserID,omitempty"`
@@ -31,7 +186,7 @@ type UserID struct {
 
 func (x *UserID) Reset() {
 	*x = UserID{}
-	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[0]
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +198,7 @@ func (x *UserID) String() string {
 func (*UserID) ProtoMessage() {}
 
 func (x *UserID) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[0]
+	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +211,7 @@ func (x *UserID) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserID.ProtoReflect.Descriptor instead.
 func (*UserID) Descriptor() ([]byte, []int) {
-	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *UserID) GetUserID() int64 {
@@ -64,110 +219,6 @@ func (x *UserID) GetUserID() int64 {
 		return x.UserID
 	}
 	return 0
-}
-
-type LoginByPasswordRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Identifier    string                 `protobuf:"bytes,1,opt,name=Identifier,proto3" json:"Identifier,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=Password,proto3" json:"Password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LoginByPasswordRequest) Reset() {
-	*x = LoginByPasswordRequest{}
-	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LoginByPasswordRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LoginByPasswordRequest) ProtoMessage() {}
-
-func (x *LoginByPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LoginByPasswordRequest.ProtoReflect.Descriptor instead.
-func (*LoginByPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *LoginByPasswordRequest) GetIdentifier() string {
-	if x != nil {
-		return x.Identifier
-	}
-	return ""
-}
-
-func (x *LoginByPasswordRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-type LoginByPhoneRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Phone         string                 `protobuf:"bytes,1,opt,name=Phone,proto3" json:"Phone,omitempty"`
-	Code          string                 `protobuf:"bytes,2,opt,name=Code,proto3" json:"Code,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LoginByPhoneRequest) Reset() {
-	*x = LoginByPhoneRequest{}
-	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LoginByPhoneRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LoginByPhoneRequest) ProtoMessage() {}
-
-func (x *LoginByPhoneRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_auth_v1_auth_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LoginByPhoneRequest.ProtoReflect.Descriptor instead.
-func (*LoginByPhoneRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_auth_v1_auth_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *LoginByPhoneRequest) GetPhone() string {
-	if x != nil {
-		return x.Phone
-	}
-	return ""
-}
-
-func (x *LoginByPhoneRequest) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
 }
 
 type UpdatePasswordRequest struct {
@@ -972,17 +1023,17 @@ var File_api_proto_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_api_proto_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/proto/auth/v1/auth.proto\x12\aauth.v1\x1a\x1fgoogle/protobuf/timestamp.proto\" \n" +
-	"\x06UserID\x12\x16\n" +
-	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\"T\n" +
-	"\x16LoginByPasswordRequest\x12\x1e\n" +
+	"\x1capi/proto/auth/v1/auth.proto\x12\aauth.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"w\n" +
+	"\fLoginRequest\x12#\n" +
+	"\x03Biz\x18\x01 \x01(\x0e2\x11.auth.v1.LoginBizR\x03Biz\x12\x1e\n" +
 	"\n" +
-	"Identifier\x18\x01 \x01(\tR\n" +
-	"Identifier\x12\x1a\n" +
-	"\bPassword\x18\x02 \x01(\tR\bPassword\"?\n" +
-	"\x13LoginByPhoneRequest\x12\x14\n" +
-	"\x05Phone\x18\x01 \x01(\tR\x05Phone\x12\x12\n" +
-	"\x04Code\x18\x02 \x01(\tR\x04Code\"s\n" +
+	"Identifier\x18\x02 \x01(\tR\n" +
+	"Identifier\x12\"\n" +
+	"\fVerification\x18\x03 \x01(\tR\fVerification\"'\n" +
+	"\rLoginResponse\x12\x16\n" +
+	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\" \n" +
+	"\x06UserID\x12\x16\n" +
+	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\"s\n" +
 	"\x15UpdatePasswordRequest\x12\x16\n" +
 	"\x06UserID\x18\x01 \x01(\x03R\x06UserID\x12 \n" +
 	"\vOldPassword\x18\x02 \x01(\tR\vOldPassword\x12 \n" +
@@ -1031,10 +1082,13 @@ const file_api_proto_auth_v1_auth_proto_rawDesc = "" +
 	"\x16CheckBlackListResponse\x12\x16\n" +
 	"\x06Result\x18\x01 \x01(\bR\x06Result\"\x14\n" +
 	"\x12HealthCheckRequest\"\x15\n" +
-	"\x13HealthCheckResponse2\xde\x06\n" +
-	"\vAuthService\x12C\n" +
-	"\x0fLoginByPassword\x12\x1f.auth.v1.LoginByPasswordRequest\x1a\x0f.auth.v1.UserID\x12=\n" +
-	"\fLoginByPhone\x12\x1c.auth.v1.LoginByPhoneRequest\x1a\x0f.auth.v1.UserID\x12<\n" +
+	"\x13HealthCheckResponse*B\n" +
+	"\bLoginBiz\x12\t\n" +
+	"\x05EMPTY\x10\x00\x12\x13\n" +
+	"\x0fLOGIN_BIZ_Phone\x10\x01\x12\x16\n" +
+	"\x12LOGIN_BIZ_Password\x10\x022\x92\x06\n" +
+	"\vAuthService\x126\n" +
+	"\x05Login\x12\x15.auth.v1.LoginRequest\x1a\x16.auth.v1.LoginResponse\x12<\n" +
 	"\vHasPassword\x12\x0f.auth.v1.UserID\x1a\x1c.auth.v1.HasPasswordResponse\x12F\n" +
 	"\vSetPassword\x12\x1b.auth.v1.SetPasswordRequest\x1a\x1a.auth.v1.AuthEmptyResponse\x12L\n" +
 	"\x0eUpdatePassword\x12\x1e.auth.v1.UpdatePasswordRequest\x1a\x1a.auth.v1.AuthEmptyResponse\x12>\n" +
@@ -1058,61 +1112,62 @@ func file_api_proto_auth_v1_auth_proto_rawDescGZIP() []byte {
 	return file_api_proto_auth_v1_auth_proto_rawDescData
 }
 
+var file_api_proto_auth_v1_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_proto_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_proto_auth_v1_auth_proto_goTypes = []any{
-	(*UserID)(nil),                        // 0: auth.v1.UserID
-	(*LoginByPasswordRequest)(nil),        // 1: auth.v1.LoginByPasswordRequest
-	(*LoginByPhoneRequest)(nil),           // 2: auth.v1.LoginByPhoneRequest
-	(*UpdatePasswordRequest)(nil),         // 3: auth.v1.UpdatePasswordRequest
-	(*SetPasswordRequest)(nil),            // 4: auth.v1.SetPasswordRequest
-	(*HasPasswordResponse)(nil),           // 5: auth.v1.HasPasswordResponse
-	(*AuthEmptyResponse)(nil),             // 6: auth.v1.AuthEmptyResponse
-	(*AuthIdentity)(nil),                  // 7: auth.v1.AuthIdentity
-	(*IssueTokenRequest)(nil),             // 8: auth.v1.IssueTokenRequest
-	(*DualTokens)(nil),                    // 9: auth.v1.DualTokens
-	(*AccessToken)(nil),                   // 10: auth.v1.AccessToken
-	(*RefreshToken)(nil),                  // 11: auth.v1.RefreshToken
-	(*JWTTokenClaims)(nil),                // 12: auth.v1.JWTTokenClaims
-	(*GetInfoByRefreshTokenResponse)(nil), // 13: auth.v1.GetInfoByRefreshTokenResponse
-	(*CheckBlackListRequest)(nil),         // 14: auth.v1.CheckBlackListRequest
-	(*CheckBlackListResponse)(nil),        // 15: auth.v1.CheckBlackListResponse
-	(*HealthCheckRequest)(nil),            // 16: auth.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil),           // 17: auth.v1.HealthCheckResponse
-	(*timestamppb.Timestamp)(nil),         // 18: google.protobuf.Timestamp
+	(LoginBiz)(0),                         // 0: auth.v1.LoginBiz
+	(*LoginRequest)(nil),                  // 1: auth.v1.LoginRequest
+	(*LoginResponse)(nil),                 // 2: auth.v1.LoginResponse
+	(*UserID)(nil),                        // 3: auth.v1.UserID
+	(*UpdatePasswordRequest)(nil),         // 4: auth.v1.UpdatePasswordRequest
+	(*SetPasswordRequest)(nil),            // 5: auth.v1.SetPasswordRequest
+	(*HasPasswordResponse)(nil),           // 6: auth.v1.HasPasswordResponse
+	(*AuthEmptyResponse)(nil),             // 7: auth.v1.AuthEmptyResponse
+	(*AuthIdentity)(nil),                  // 8: auth.v1.AuthIdentity
+	(*IssueTokenRequest)(nil),             // 9: auth.v1.IssueTokenRequest
+	(*DualTokens)(nil),                    // 10: auth.v1.DualTokens
+	(*AccessToken)(nil),                   // 11: auth.v1.AccessToken
+	(*RefreshToken)(nil),                  // 12: auth.v1.RefreshToken
+	(*JWTTokenClaims)(nil),                // 13: auth.v1.JWTTokenClaims
+	(*GetInfoByRefreshTokenResponse)(nil), // 14: auth.v1.GetInfoByRefreshTokenResponse
+	(*CheckBlackListRequest)(nil),         // 15: auth.v1.CheckBlackListRequest
+	(*CheckBlackListResponse)(nil),        // 16: auth.v1.CheckBlackListResponse
+	(*HealthCheckRequest)(nil),            // 17: auth.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),           // 18: auth.v1.HealthCheckResponse
+	(*timestamppb.Timestamp)(nil),         // 19: google.protobuf.Timestamp
 }
 var file_api_proto_auth_v1_auth_proto_depIdxs = []int32{
-	18, // 0: auth.v1.JWTTokenClaims.ExpiresAt:type_name -> google.protobuf.Timestamp
-	18, // 1: auth.v1.JWTTokenClaims.NotBefore:type_name -> google.protobuf.Timestamp
-	18, // 2: auth.v1.JWTTokenClaims.IssuedAt:type_name -> google.protobuf.Timestamp
-	1,  // 3: auth.v1.AuthService.LoginByPassword:input_type -> auth.v1.LoginByPasswordRequest
-	2,  // 4: auth.v1.AuthService.LoginByPhone:input_type -> auth.v1.LoginByPhoneRequest
-	0,  // 5: auth.v1.AuthService.HasPassword:input_type -> auth.v1.UserID
-	4,  // 6: auth.v1.AuthService.SetPassword:input_type -> auth.v1.SetPasswordRequest
-	3,  // 7: auth.v1.AuthService.UpdatePassword:input_type -> auth.v1.UpdatePasswordRequest
-	0,  // 8: auth.v1.AuthService.GetAuthIdentityByUID:input_type -> auth.v1.UserID
-	8,  // 9: auth.v1.AuthService.IssueTokens:input_type -> auth.v1.IssueTokenRequest
-	9,  // 10: auth.v1.AuthService.ClearTokens:input_type -> auth.v1.DualTokens
-	10, // 11: auth.v1.AuthService.VerifyAccessToken:input_type -> auth.v1.AccessToken
-	11, // 12: auth.v1.AuthService.GetInfoByRefreshToken:input_type -> auth.v1.RefreshToken
-	14, // 13: auth.v1.AuthService.CheckBlackList:input_type -> auth.v1.CheckBlackListRequest
-	16, // 14: auth.v1.AuthService.HealthCheck:input_type -> auth.v1.HealthCheckRequest
-	0,  // 15: auth.v1.AuthService.LoginByPassword:output_type -> auth.v1.UserID
-	0,  // 16: auth.v1.AuthService.LoginByPhone:output_type -> auth.v1.UserID
-	5,  // 17: auth.v1.AuthService.HasPassword:output_type -> auth.v1.HasPasswordResponse
-	6,  // 18: auth.v1.AuthService.SetPassword:output_type -> auth.v1.AuthEmptyResponse
-	6,  // 19: auth.v1.AuthService.UpdatePassword:output_type -> auth.v1.AuthEmptyResponse
-	7,  // 20: auth.v1.AuthService.GetAuthIdentityByUID:output_type -> auth.v1.AuthIdentity
-	9,  // 21: auth.v1.AuthService.IssueTokens:output_type -> auth.v1.DualTokens
-	6,  // 22: auth.v1.AuthService.ClearTokens:output_type -> auth.v1.AuthEmptyResponse
-	12, // 23: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.JWTTokenClaims
-	13, // 24: auth.v1.AuthService.GetInfoByRefreshToken:output_type -> auth.v1.GetInfoByRefreshTokenResponse
-	15, // 25: auth.v1.AuthService.CheckBlackList:output_type -> auth.v1.CheckBlackListResponse
-	17, // 26: auth.v1.AuthService.HealthCheck:output_type -> auth.v1.HealthCheckResponse
-	15, // [15:27] is the sub-list for method output_type
-	3,  // [3:15] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	0,  // 0: auth.v1.LoginRequest.Biz:type_name -> auth.v1.LoginBiz
+	19, // 1: auth.v1.JWTTokenClaims.ExpiresAt:type_name -> google.protobuf.Timestamp
+	19, // 2: auth.v1.JWTTokenClaims.NotBefore:type_name -> google.protobuf.Timestamp
+	19, // 3: auth.v1.JWTTokenClaims.IssuedAt:type_name -> google.protobuf.Timestamp
+	1,  // 4: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	3,  // 5: auth.v1.AuthService.HasPassword:input_type -> auth.v1.UserID
+	5,  // 6: auth.v1.AuthService.SetPassword:input_type -> auth.v1.SetPasswordRequest
+	4,  // 7: auth.v1.AuthService.UpdatePassword:input_type -> auth.v1.UpdatePasswordRequest
+	3,  // 8: auth.v1.AuthService.GetAuthIdentityByUID:input_type -> auth.v1.UserID
+	9,  // 9: auth.v1.AuthService.IssueTokens:input_type -> auth.v1.IssueTokenRequest
+	10, // 10: auth.v1.AuthService.ClearTokens:input_type -> auth.v1.DualTokens
+	11, // 11: auth.v1.AuthService.VerifyAccessToken:input_type -> auth.v1.AccessToken
+	12, // 12: auth.v1.AuthService.GetInfoByRefreshToken:input_type -> auth.v1.RefreshToken
+	15, // 13: auth.v1.AuthService.CheckBlackList:input_type -> auth.v1.CheckBlackListRequest
+	17, // 14: auth.v1.AuthService.HealthCheck:input_type -> auth.v1.HealthCheckRequest
+	2,  // 15: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	6,  // 16: auth.v1.AuthService.HasPassword:output_type -> auth.v1.HasPasswordResponse
+	7,  // 17: auth.v1.AuthService.SetPassword:output_type -> auth.v1.AuthEmptyResponse
+	7,  // 18: auth.v1.AuthService.UpdatePassword:output_type -> auth.v1.AuthEmptyResponse
+	8,  // 19: auth.v1.AuthService.GetAuthIdentityByUID:output_type -> auth.v1.AuthIdentity
+	10, // 20: auth.v1.AuthService.IssueTokens:output_type -> auth.v1.DualTokens
+	7,  // 21: auth.v1.AuthService.ClearTokens:output_type -> auth.v1.AuthEmptyResponse
+	13, // 22: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.JWTTokenClaims
+	14, // 23: auth.v1.AuthService.GetInfoByRefreshToken:output_type -> auth.v1.GetInfoByRefreshTokenResponse
+	16, // 24: auth.v1.AuthService.CheckBlackList:output_type -> auth.v1.CheckBlackListResponse
+	18, // 25: auth.v1.AuthService.HealthCheck:output_type -> auth.v1.HealthCheckResponse
+	15, // [15:26] is the sub-list for method output_type
+	4,  // [4:15] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_auth_v1_auth_proto_init() }
@@ -1125,13 +1180,14 @@ func file_api_proto_auth_v1_auth_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_auth_v1_auth_proto_rawDesc), len(file_api_proto_auth_v1_auth_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_api_proto_auth_v1_auth_proto_goTypes,
 		DependencyIndexes: file_api_proto_auth_v1_auth_proto_depIdxs,
+		EnumInfos:         file_api_proto_auth_v1_auth_proto_enumTypes,
 		MessageInfos:      file_api_proto_auth_v1_auth_proto_msgTypes,
 	}.Build()
 	File_api_proto_auth_v1_auth_proto = out.File

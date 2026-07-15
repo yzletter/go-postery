@@ -14,14 +14,17 @@ type AuthServiceManager struct {
 	hub     ServiceHub
 }
 
-func NewAuthManager(service string, hub ServiceHub) *AuthServiceManager {
-	return &AuthServiceManager{
-		service: service,
-		hub:     hub,
-	}
+func NewAuthManager(ctx context.Context, service string, hub ServiceHub) *AuthServiceManager {
+	hub.LoadEndpoints(ctx, service)
+	hub.WatchEndpointsFromServiceHub(ctx, service)
+
+	manager := &AuthServiceManager{service: service, hub: hub}
+	go manager.startHealthCheck(ctx) // 开启下游服务健康检查
+
+	return manager
 }
 
-func (manager *AuthServiceManager) LoginByPassword(ctx context.Context, req *auth_grpc.LoginByPasswordRequest) (*auth_grpc.UserID, error) {
+func (manager *AuthServiceManager) Login(ctx context.Context, req *auth_grpc.LoginRequest) (*auth_grpc.LoginResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -37,41 +40,8 @@ func (manager *AuthServiceManager) LoginByPassword(ctx context.Context, req *aut
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *auth_grpc.UserID
-		resp, err = client.LoginByPassword(ctx, req) // 微服务调用
-		cancel()
-
-		if isEndpointFailure(err) {
-			endpoint.MarkFailed()
-			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
-			continue
-		}
-		endpoint.MarkSuccess()
-		return resp, err // 返回 grpc 错误
-	}
-
-	// 默认会返回服务调用失败
-	return nil, err
-}
-
-func (manager *AuthServiceManager) LoginByPhone(ctx context.Context, req *auth_grpc.LoginByPhoneRequest) (*auth_grpc.UserID, error) {
-	var err = errs.ErrUnavailable // 暴露错误
-	var tryCnt = 1                // 写入类调用只适合一次
-	for try := 0; try < tryCnt; try++ {
-		endpoint := manager.hub.Take(ctx, manager.service)
-		if endpoint == nil {
-			continue
-		}
-		conn := endpoint.ClientConn()
-		if conn == nil {
-			continue
-		}
-		client := auth_grpc.NewAuthServiceClient(conn) // 建立 Client
-
-		// 添加超时控制
-		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *auth_grpc.UserID
-		resp, err = client.LoginByPhone(ctx, req) // 微服务调用
+		var resp *auth_grpc.LoginResponse
+		resp, err = client.Login(ctx, req) // 微服务调用
 		cancel()
 
 		if isEndpointFailure(err) {
@@ -384,7 +354,7 @@ func (manager *AuthServiceManager) CheckBlackList(ctx context.Context, req *auth
 	return nil, err
 }
 
-func (manager *AuthServiceManager) StartHealthCheck(ctx context.Context) {
+func (manager *AuthServiceManager) startHealthCheck(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 

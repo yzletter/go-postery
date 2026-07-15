@@ -91,13 +91,15 @@ func main() {
 	// Repository 层
 	MessageRepo := repository.NewMessageRepository(MessageDAO) // 注册 MessageRepository
 	SessionRepo := repository.NewSessionRepository(SessionDAO) // 注册 SessionRepository
-	// Service 层
-	SessionService := service.NewSessionService(SessionRepo, MessageRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
-	MetricService := pkg.NewMetricService(Service + suffix)
 
 	// ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
+	WSGatewayManager := manager.NewWSGatewayManager(ctx, manager.WSGatewayService, ETCDServiceHub)
+
+	// Service 层
+	SessionService := service.NewSessionService(WSGatewayManager, SessionRepo, MessageRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	MetricService := pkg.NewMetricService(Service + suffix)
 
 	go SessionService.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能
 
@@ -155,7 +157,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(infraRabbitMQ.Close).AddFunc(cancel).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

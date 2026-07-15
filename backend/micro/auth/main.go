@@ -96,10 +96,7 @@ func main() {
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Client
-	ETCDServiceHub.LoadEndpoints(ctx, manager.CodeService)
-	ETCDServiceHub.WatchEndpointsFromServiceHub(ctx, manager.CodeService)
-	CodeManager := manager.NewCodeManager(manager.CodeService, ETCDServiceHub)
-	go CodeManager.StartHealthCheck(ctx) // 开启下游服务健康检查
+	CodeManager := manager.NewCodeManager(ctx, manager.CodeService, ETCDServiceHub)
 
 	// Service 层
 	AuthService := service.NewAuthService(AuthRepo, JwtManager, PasswordHasher, IDGenerator, CodeManager) // 注册 AuthService

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -10,14 +11,18 @@ import (
 	"github.com/bytedance/sonic"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
+	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
+	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/session/domain"
+	session_bff_dto "github.com/yzletter/go-postery/backend/micro/session/dto"
 	repository "github.com/yzletter/go-postery/backend/micro/session/repository"
 	"github.com/yzletter/go-postery/backend/ports"
 )
 
 type sessionService struct {
+	wsGateway     manager.WSGatewayClient
 	sessionRepo   repository.SessionRepository
 	messageRepo   repository.MessageRepository
 	mqConn        *amqp.Connection
@@ -25,14 +30,192 @@ type sessionService struct {
 	idGen         ports.IDGenerator
 }
 
-func NewSessionService(sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
+func NewSessionService(wsGateway manager.WSGatewayClient, sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
 	return &sessionService{
+		wsGateway:     wsGateway,
 		sessionRepo:   sessionRepo,
 		messageRepo:   messageRepo,
 		mqConn:        mq,
 		kafkaConsumer: consumer,
 		idGen:         idGen,
 	}
+}
+
+// 消费队列
+func (svc *sessionService) consumeMQ(ctx context.Context, mqConn *amqp.Connection, id int64) (retErr error) {
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("Receive Failed", "error", err)
+			retErr = fmt.Errorf("consume session queue panic: %v", err)
+		}
+	}()
+	if svc.wsGateway == nil {
+		return errs.ErrUnavailable
+	}
+
+	// 消费的队列名
+	queueName := fmt.Sprintf("%d_computer", id)
+
+	ch, err := mqConn.Channel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+
+	// 开始消费队列并写入 Websocket
+	deliverCh, err := ch.ConsumeWithContext(ctx, queueName, "", false, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case deliver, ok := <-deliverCh:
+			if !ok {
+				return nil
+			}
+			var message domain.Message
+
+			if err := json.Unmarshal(deliver.Body, &message); err != nil {
+				slog.Error("Unmarshal MQ message failed", "error", err)
+				_ = deliver.Nack(false, false)
+				continue
+			}
+			msgDTO := session_bff_dto.ToMessageDTO(&message)
+			data, err := sonic.Marshal(msgDTO)
+			if err != nil {
+				_ = deliver.Nack(false, false)
+				return err
+			}
+			if _, err := svc.wsGateway.Push(ctx, &ws_gateway_grpc.PushRequest{
+				UserID:  id,
+				BizType: "session",
+				BizData: data,
+			}); err != nil {
+				return err
+			}
+			if err := deliver.Ack(false); err != nil {
+				slog.Error("ACK MQ message failed", "error", err)
+			}
+		}
+	}
+}
+
+func (svc *sessionService) NewConnection(ctx context.Context, uid int64) error {
+	// WebSocket 断开时 ctx 会取消，consumeMQ 随之停止消费并关闭 channel。
+	if err := svc.consumeMQ(ctx, svc.mqConn, uid); err != nil {
+		if ctx.Err() == nil {
+			slog.Error("consume session queue failed", "user_id", uid, "error", err)
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (svc *sessionService) Chat(ctx context.Context, uid int64, message domain.Message) error {
+	// 过滤消息
+	ok := intercept(message, uid)
+	if !ok {
+		slog.Warn("chat rejected: sender mismatch", "user_id", uid, "message_from", message.MessageFrom)
+		return errs.ErrUnauthenticated
+	}
+
+	session, err := svc.GetSession(ctx, uid, message.MessageTo)
+	if err != nil {
+		return err
+	}
+	if session.SessionID != message.SessionID {
+		slog.Warn("chat rejected: session mismatch", "user_id", uid, "session_id", message.SessionID, "actual_session_id", session.SessionID)
+		return errs.ErrInvalidArgument
+	}
+
+	// 消息落库
+	message, err = svc.CreateMessage(ctx, message)
+	if err != nil {
+		return err
+	}
+
+	// 更新会话信息
+	contentBrief := []rune(message.Content) // 最后一条消息的摘要
+	if len(contentBrief) > 5 {
+		contentBrief = contentBrief[:5]
+	}
+
+	// 更新对方会话信息, 增加未读
+	if err := svc.UpdateUnread(ctx, message.MessageTo, message.SessionID, domain.UpdateUnread{
+		Updates: domain.Updates{
+			LastMessageID:   message.ID,
+			LastMessage:     string(contentBrief),
+			LastMessageTime: message.CreatedAt,
+		},
+		Delta: 1,
+	}); err != nil {
+		slog.Error("Update Unread Failed", "user_id", message.MessageTo, "error", err)
+	}
+
+	// 更新己方会话信息，不增加未读数。
+	if err := svc.UpdateUnread(ctx, message.MessageFrom, message.SessionID, domain.UpdateUnread{
+		Updates: domain.Updates{
+			LastMessageID:   message.ID,
+			LastMessage:     string(contentBrief),
+			LastMessageTime: message.CreatedAt,
+		},
+		Delta: 0,
+	}); err != nil {
+		slog.Error("Update Unread Failed", "user_id", message.MessageFrom, "error", err)
+	}
+
+	// 双向投递, 发给 MQ
+	if err = produceMQ(ctx, svc.mqConn, message, message.MessageTo); err != nil {
+		slog.Error("Produce To MQ Failed", "id", message.MessageTo, "error", err)
+	}
+
+	if err = produceMQ(ctx, svc.mqConn, message, message.MessageFrom); err != nil {
+		slog.Error("Produce To MQ Failed", "id", message.MessageFrom, "error", err)
+	}
+
+	return nil
+}
+
+// 将消息发给 MQ 的 Exchange
+func produceMQ(ctx context.Context, conn *amqp.Connection, message domain.Message, id int64) error {
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer ch.Close()
+
+	msg, _ := json.Marshal(message)
+
+	exchangeName := fmt.Sprintf("%d_exchange", id)
+	err = ch.PublishWithContext(
+		ctx,
+		exchangeName,
+		"",
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json", // MIME content type
+			Body:         msg,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// todo 处理消息内容, 正常应进行对非法内容进行拦截。比如机器人消息（发言频率过快）；包含欺诈、涉政等违规内容；涉嫌私下联系/交易等。
+func intercept(message domain.Message, uid int64) bool {
+	if message.MessageFrom != uid {
+		return false
+	}
+	return true
 }
 
 func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
@@ -294,6 +477,7 @@ func (svc *sessionService) ClearUnread(ctx context.Context, userID int64, sessio
 }
 
 func (svc *sessionService) CreateMessage(ctx context.Context, message domain.Message) (domain.Message, error) {
+	now := time.Now()
 	messageModel := domain.Message{
 		ID:          svc.idGen.NextID(), // 补充 ID
 		SessionID:   message.SessionID,
@@ -301,6 +485,9 @@ func (svc *sessionService) CreateMessage(ctx context.Context, message domain.Mes
 		MessageFrom: message.MessageFrom,
 		MessageTo:   message.MessageTo,
 		Content:     message.Content,
+		// Repository 接口按值传递，需在这里补齐时间供会话更新和 WebSocket 下行使用。
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	if err := svc.messageRepo.Create(ctx, messageModel); err != nil {

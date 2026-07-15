@@ -3,8 +3,13 @@ package model
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/event"
+)
+
+const (
+	UserStatusNormal = iota
+	UserStatusBanned
+	UserStatusDeleted
 )
 
 // User 用户最小单位
@@ -16,12 +21,6 @@ type User struct {
 	UpdatedAt time.Time  `gorm:"column:updated_at"`                        // 更新时间
 	DeletedAt *time.Time `gorm:"column:deleted_at"`                        // 逻辑删除时间
 }
-
-const (
-	UserStatusNormal = iota
-	UserStatusBanned
-	UserStatusDeleted
-)
 
 func (u User) TableName() string {
 	return "users"
@@ -77,17 +76,7 @@ func (u AuthPassword) TableName() string {
 	return "auth_passwords"
 }
 
-func AuthTypeFromBiz(biz conf.CodeBiz) int {
-	switch biz {
-	case conf.CodeBizSMS:
-		return 1
-	case conf.CodeBizEmail:
-		return 2
-	default:
-		return 0
-	}
-}
-
+// AuthAggregate 创建用户的聚合
 type AuthAggregate struct {
 	User         *User
 	UserProfile  *UserProfile

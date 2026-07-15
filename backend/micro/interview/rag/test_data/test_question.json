@@ -1,0 +1,297 @@
+[
+  {
+    "id": 1,
+    "content": "Slice 的底层实现原理是什么?它和数组有什么区别?",
+    "type": "basic",
+    "difficulty": "easy",
+    "skills": [
+      "Go",
+      "Slice"
+    ],
+    "follow_ups": [
+      "Slice 扩容时容量是如何变化的?"
+    ],
+    "reference": "Slice 底层是一个结构体,包含指向底层数组的指针、长度 len 和容量 cap。数组长度固定,Slice 是对数组的动态视图,可以通过 append 扩容。"
+  },
+  {
+    "id": 2,
+    "content": "Go 中 Map 的底层实现原理是什么?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "Map",
+      "数据结构"
+    ],
+    "follow_ups": [
+      "为什么 Map 并发读写会 panic?"
+    ],
+    "reference": "Go 的 Map 底层主要基于哈希表实现,通过 bucket 存储 key/value。发生哈希冲突时会使用 overflow bucket。Map 不是并发安全的,并发读写需要加锁或使用 sync.Map。"
+  },
+  {
+    "id": 3,
+    "content": "Interface 的底层结构是什么?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "Interface"
+    ],
+    "follow_ups": [
+      "为什么 nil 接口和接口中存 nil 指针不一样?"
+    ],
+    "reference": "Interface 底层可以理解为类型信息和数据指针的组合。空接口 eface 包含类型信息和数据指针,非空接口 iface 还包含方法表信息。只有类型和值都为 nil 时,接口才等于 nil。"
+  },
+  {
+    "id": 4,
+    "content": "defer 的执行顺序是什么?常见使用场景有哪些?",
+    "type": "basic",
+    "difficulty": "easy",
+    "skills": [
+      "Go",
+      "defer"
+    ],
+    "follow_ups": [
+      "defer 中修改返回值会生效吗?"
+    ],
+    "reference": "defer 会在当前函数返回前执行,多个 defer 按后进先出顺序执行。常用于释放资源、关闭文件、解锁、recover 捕获 panic 等。"
+  },
+  {
+    "id": 5,
+    "content": "panic 和 recover 的作用分别是什么?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "异常处理"
+    ],
+    "follow_ups": [
+      "recover 为什么必须在 defer 中调用?"
+    ],
+    "reference": "panic 用于触发运行时异常,会中断当前函数并沿调用栈向上传播。recover 用于捕获 panic,但只有在 defer 函数中调用才有效。"
+  },
+  {
+    "id": 6,
+    "content": "Context 在 Go 中主要解决什么问题?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "Context",
+      "并发控制"
+    ],
+    "follow_ups": [
+      "context.WithCancel、WithTimeout、WithDeadline 有什么区别?"
+    ],
+    "reference": "Context 主要用于在 goroutine 之间传递取消信号、超时时间、截止时间和请求级别的数据。常用于控制请求生命周期,防止 goroutine 泄漏。"
+  },
+  {
+    "id": 7,
+    "content": "sync.Mutex 和 sync.RWMutex 有什么区别?",
+    "type": "basic",
+    "difficulty": "easy",
+    "skills": [
+      "Go",
+      "并发",
+      "锁"
+    ],
+    "follow_ups": [
+      "RWMutex 适合什么场景?"
+    ],
+    "reference": "Mutex 是互斥锁,同一时间只允许一个 goroutine 访问临界区。RWMutex 是读写锁,允许多个读锁并发,但写锁会排斥所有读写操作,适合读多写少场景。"
+  },
+  {
+    "id": 8,
+    "content": "sync.WaitGroup 的作用是什么?使用时要注意什么?",
+    "type": "basic",
+    "difficulty": "easy",
+    "skills": [
+      "Go",
+      "并发",
+      "sync"
+    ],
+    "follow_ups": [
+      "为什么 Add 通常要在启动 goroutine 前调用?"
+    ],
+    "reference": "WaitGroup 用于等待一组 goroutine 执行完成。Add 增加计数,Done 减少计数,Wait 阻塞直到计数为 0。Add 通常应在 goroutine 启动前调用,避免 Wait 过早返回。"
+  },
+  {
+    "id": 9,
+    "content": "sync.Once 的作用是什么?它如何保证只执行一次?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "sync",
+      "并发安全"
+    ],
+    "follow_ups": [
+      "sync.Once 如果执行函数 panic 了,后续还会再执行吗?"
+    ],
+    "reference": "sync.Once 用于保证某段逻辑在并发环境下只执行一次,常用于单例初始化、配置加载等场景。它内部通过原子状态和锁保证并发安全。"
+  },
+  {
+    "id": 10,
+    "content": "Go 的垃圾回收机制大致是怎样的?",
+    "type": "advanced",
+    "difficulty": "hard",
+    "skills": [
+      "Go",
+      "GC",
+      "运行时"
+    ],
+    "follow_ups": [
+      "三色标记法是什么?",
+      "写屏障的作用是什么?"
+    ],
+    "reference": "Go 使用并发标记清扫的垃圾回收机制。核心思想是从根对象出发标记可达对象,未被标记的对象会被回收。现代 Go GC 尽量减少 STW 时间,通过并发标记和写屏障保证正确性。"
+  },
+  {
+    "id": 11,
+    "content": "什么是逃逸分析?变量什么时候会分配到堆上?",
+    "type": "advanced",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "内存管理",
+      "编译器"
+    ],
+    "follow_ups": [
+      "如何查看变量是否发生逃逸?"
+    ],
+    "reference": "逃逸分析是 Go 编译器判断变量生命周期的过程。如果变量在函数返回后仍可能被访问,或者被接口、闭包、指针等引用导致无法确定生命周期,就可能逃逸到堆上。可以通过 go build -gcflags='-m' 查看逃逸情况。"
+  },
+  {
+    "id": 12,
+    "content": "Go 的 GMP 调度模型是什么?",
+    "type": "advanced",
+    "difficulty": "hard",
+    "skills": [
+      "Go",
+      "运行时",
+      "调度器"
+    ],
+    "follow_ups": [
+      "G、M、P 分别代表什么?",
+      "为什么需要 P?"
+    ],
+    "reference": "GMP 是 Go 运行时调度模型。G 表示 goroutine,M 表示操作系统线程,P 表示处理器上下文。P 持有本地运行队列和调度资源,M 必须绑定 P 才能执行 G。"
+  },
+  {
+    "id": 13,
+    "content": "select 的作用是什么?多个 case 同时就绪时会怎么执行?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "Channel",
+      "select"
+    ],
+    "follow_ups": [
+      "select 中 default 的作用是什么?"
+    ],
+    "reference": "select 用于同时监听多个 channel 操作。当多个 case 同时就绪时,Go 会伪随机选择一个执行。如果没有 case 就绪且存在 default,会立即执行 default,否则会阻塞等待。"
+  },
+  {
+    "id": 14,
+    "content": "关闭 Channel 后继续发送或接收会发生什么?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "Channel",
+      "并发"
+    ],
+    "follow_ups": [
+      "如何判断 Channel 是否已经关闭?"
+    ],
+    "reference": "向已经关闭的 channel 发送数据会 panic。从已经关闭的 channel 接收数据不会 panic,会立即返回元素类型的零值和 ok=false。通常由发送方负责关闭 channel。"
+  },
+  {
+    "id": 15,
+    "content": "Go 内存模型中的 happens-before 是什么?",
+    "type": "advanced",
+    "difficulty": "hard",
+    "skills": [
+      "Go",
+      "并发",
+      "内存模型"
+    ],
+    "follow_ups": [
+      "Mutex 解锁和加锁之间有什么内存可见性保证?"
+    ],
+    "reference": "happens-before 描述并发操作之间的可见性和顺序关系。如果操作 A happens-before 操作 B,那么 A 的写入对 B 可见。Mutex、Channel、atomic 等同步原语都会建立特定的 happens-before 关系。"
+  },
+  {
+    "id": 16,
+    "content": "sync/atomic 包解决什么问题?它和锁有什么区别?",
+    "type": "advanced",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "并发",
+      "atomic"
+    ],
+    "follow_ups": [
+      "atomic 操作一定比 Mutex 快吗?"
+    ],
+    "reference": "sync/atomic 提供底层原子操作,用于在无锁情况下安全读写共享变量。它适合简单计数、状态标记等场景。锁适合保护复杂临界区,atomic 使用不当容易造成代码难以维护。"
+  },
+  {
+    "id": 17,
+    "content": "Go 中反射 reflect 的作用是什么?",
+    "type": "advanced",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "反射"
+    ],
+    "follow_ups": [
+      "reflect.TypeOf 和 reflect.ValueOf 有什么区别?"
+    ],
+    "reference": "反射允许程序在运行时检查和操作类型和值。reflect.TypeOf 用于获取类型信息,reflect.ValueOf 用于获取值信息。反射常用于 ORM、JSON 序列化、依赖注入等场景,但性能和类型安全性较弱。"
+  },
+  {
+    "id": 18,
+    "content": "Go 的 encoding/json 默认如何序列化结构体字段?",
+    "type": "basic",
+    "difficulty": "easy",
+    "skills": [
+      "Go",
+      "JSON",
+      "序列化"
+    ],
+    "follow_ups": [
+      "json tag 中 omitempty 的作用是什么?"
+    ],
+    "reference": "encoding/json 默认只序列化导出的字段,字段名默认使用结构体字段名。可以通过 json tag 修改字段名、忽略字段或设置 omitempty。未导出的字段不会被序列化。"
+  },
+  {
+    "id": 19,
+    "content": "Go 中 error 的设计思想是什么?",
+    "type": "basic",
+    "difficulty": "easy",
+    "skills": [
+      "Go",
+      "错误处理"
+    ],
+    "follow_ups": [
+      "errors.Is 和 errors.As 有什么区别?"
+    ],
+    "reference": "Go 将错误作为普通返回值处理,鼓励调用方显式判断错误。error 本质上是一个接口,只包含 Error() string 方法。errors.Is 用于判断错误链中是否包含目标错误,errors.As 用于提取特定类型的错误。"
+  },
+  {
+    "id": 20,
+    "content": "Go 中 nil 可以用于哪些类型?使用时有什么坑?",
+    "type": "basic",
+    "difficulty": "medium",
+    "skills": [
+      "Go",
+      "基础语法"
+    ],
+    "follow_ups": [
+      "为什么 interface 中存放 nil 指针时不等于 nil?"
+    ],
+    "reference": "nil 可以用于指针、slice、map、channel、function、interface 等引用类型。常见坑包括 nil map 不能写入、nil channel 会永久阻塞、接口中保存 nil 指针时接口本身不等于 nil。"
+  }
+]

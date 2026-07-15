@@ -1,0 +1,50 @@
+# ==================== 构建阶段 ====================
+# Go 版本与 go.mod 保持一致；Alpine 版本用于减小构建镜像体积。
+FROM golang:1.25.5-alpine AS builder
+
+LABEL authors="yzletter"
+
+# 后续 COPY 和 RUN 均以该目录为工作目录。
+WORKDIR /src
+
+# 先复制依赖清单并下载模块，使源码变化时仍可复用依赖缓存层。
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 复制构建上下文；无关文件由仓库根目录的 .dockerignore 排除。
+COPY . .
+
+# 编译 auth 微服务：
+# - CGO_ENABLED=0：不依赖目标主机的 C 运行库；
+# - GOOS=linux：生成 Linux 可执行文件；
+# - GOARCH=amd64：面向 x86_64 Linux 服务器。
+# 如果目标 Linux 服务器为 ARM64，需要将 GOARCH 改为 arm64。
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/auth-service ./backend/micro/auth
+
+# ==================== 运行阶段 ====================
+# 最终镜像不包含 Go 工具链和项目源码，只保留运行所需内容。
+FROM alpine:3.22
+
+# ca-certificates 用于访问 HTTPS/TLS 服务，tzdata 提供时区数据。
+RUN apk add --no-cache ca-certificates tzdata
+
+# 设置容器默认时区。
+ENV TZ=Asia/Shanghai
+
+# 应用的默认工作目录。
+WORKDIR /app
+
+# 仅从构建阶段复制编译完成的 auth 服务二进制文件。
+COPY --from=builder /out/auth-service /app/auth-service
+
+# 声明 gRPC 和 Prometheus 指标端口。
+# 实际监听端口以 etcd 配置为准；EXPOSE 不会自动发布宿主机端口。
+EXPOSE 9001 9101
+
+# 使用 exec 形式启动，使 Go 进程直接接收 SIGTERM/SIGINT 等停止信号。
+ENTRYPOINT ["/app/auth-service"]
+
+# 默认使用生产环境配置；docker run 末尾传入参数可覆盖该默认值。
+CMD ["-env=production"]
+
+

@@ -28,7 +28,7 @@ var (
 )
 
 type Manager interface {
-	Sign(dir string) (string, error)
+	Sign(dir string, uploadCallbackURL string) (string, error)
 	Resign(objectName string) (string, error)
 }
 
@@ -57,9 +57,18 @@ type AliyunOSSManager struct {
 }
 
 func Init(config conf.OSSConfig) *AliyunOSSManager {
-	region = "cn-hongkong"
-	bucketName = "go-postery"
-	callbackURL = "http://gopostery.top/api/v1/users/callback"
+	region = config.Region
+	if region == "" {
+		region = "cn-hongkong"
+	}
+	bucketName = config.Bucket
+	if bucketName == "" {
+		bucketName = "go-postery"
+	}
+	callbackURL = config.CallbackURL
+	if callbackURL == "" {
+		callbackURL = "http://gopostery.top/api/v1/users/callback"
+	}
 
 	return &AliyunOSSManager{
 		AccessKeyID:     config.AccessKeyID,
@@ -68,7 +77,10 @@ func Init(config conf.OSSConfig) *AliyunOSSManager {
 	}
 }
 
-func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
+func (manager *AliyunOSSManager) Sign(dir string, uploadCallbackURL string) (string, error) {
+	if uploadCallbackURL == "" {
+		uploadCallbackURL = callbackURL
+	}
 	host := fmt.Sprintf("https://%s.oss-%s.aliyuncs.com", bucketName, region)
 
 	config := new(credentials.Config).
@@ -137,7 +149,7 @@ func (manager *AliyunOSSManager) Sign(dir string) (string, error) {
 	signature := hex.EncodeToString(h.Sum(nil))
 
 	callbackParam := CallbackParam{
-		CallbackURL:      callbackURL,
+		CallbackURL:      uploadCallbackURL,
 		CallbackBody:     "{\"bucket\":\"${bucket}\",\"object\":\"${object}\",\"size\":\"${size}\"}",
 		CallbackBodyType: "application/json",
 	}
@@ -184,7 +196,7 @@ func (manager *AliyunOSSManager) Resign(objectName string) (string, error) {
 			Bucket: oss.Ptr(bucketName),
 			Key:    oss.Ptr(objectName),
 		},
-		oss.PresignExpires(15*time.Second),
+		oss.PresignExpires(30*time.Minute),
 	)
 	if err != nil {
 		slog.Error("Get OSS Object Presign Failed", "error", err)

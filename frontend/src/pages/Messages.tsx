@@ -109,6 +109,10 @@ const extractWsMessages = (payload: unknown): MessageResponse[] => {
   }
   if (!isRecord(payload)) return []
 
+  // 新 WebSocket 网关使用 biz_type 区分业务模块，聊天消息位于 biz_data。
+  const bizType = typeof payload.biz_type === 'string' ? payload.biz_type : ''
+  if (bizType && bizType !== 'session') return []
+
   const type = typeof payload.type === 'string' ? payload.type : ''
   if (type && type !== 'message') return []
 
@@ -123,7 +127,7 @@ const extractWsMessages = (payload: unknown): MessageResponse[] => {
     return [payload as MessageResponse]
   }
 
-  const nested = payload.data ?? payload.message ?? payload.payload ?? payload.messages
+  const nested = payload.biz_data ?? payload.data ?? payload.message ?? payload.payload ?? payload.messages
   if (Array.isArray(nested)) {
     return nested.filter(Boolean) as MessageResponse[]
   }

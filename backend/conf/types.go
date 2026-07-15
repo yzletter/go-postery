@@ -7,13 +7,23 @@ type CommonMicroConf struct {
 	RabbitMQ   RabbitMQConfig
 	RocketMQ   RocketMQConfig
 	Qdrant     QdrantConfig
+	Milvus     MilvusConfig
 	Jaeger     JaegerConfig
 	ServiceHub ServiceHubConfig
+}
+
+type AppConfig struct {
+	FrontendAddr string
+	BackendAddr  string
 }
 
 type RedisConfig struct {
 	Addr string
 	DB   int
+}
+
+type MilvusConfig struct {
+	Addr string
 }
 
 type MySQLConfig struct {
@@ -48,9 +58,23 @@ type OSSConfig struct {
 	AccessKeyID     string
 	AccessKeySecret string
 	Arn             string
+	Region          string
+	Bucket          string
+	CallbackURL     string
 }
 
 type ArkConfig struct {
+	EmbedderModel string
+	LLMModel      string
+	APIKey        string
+}
+
+type GithubConfig struct {
+	Token string
+}
+
+type QwenConfig struct {
+	BaseURL       string
 	EmbedderModel string
 	LLMModel      string
 	APIKey        string
@@ -77,6 +101,10 @@ type EmailConfig struct {
 type SMSConfig struct {
 	AccessKeyID     string
 	AccessKeySecret string
+}
+
+type WSGatewayHTTPConfig struct {
+	Port string
 }
 
 type LogConfig struct {

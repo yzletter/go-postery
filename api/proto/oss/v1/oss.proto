@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package oss.v1;
+
+option go_package = "github.com/yzletter/go-postery/api/proto/oss/v1;oss_grpc";
+
+enum UploadBiz {
+  UPLOAD_BIZ_UNSPECIFIED = 0;
+  UPLOAD_BIZ_USER_AVATAR = 1;
+  UPLOAD_BIZ_INTERVIEW_QUESTION_BANK = 2;
+}
+
+message SignUploadRequest {
+  UploadBiz Biz = 1;
+  int64 UserID = 2;
+  string FileName = 3;
+}
+
+message SignUploadResponse {
+  string Response = 1;
+  string Dir = 2;
+}
+
+message UploadCallbackRequest {
+  string Bucket = 1;
+  string ObjectName = 2;
+  string Size = 3;
+}
+
+message UploadCallbackResponse {
+  UploadBiz Biz = 1;
+  int64 UserID = 2;
+  string ObjectName = 3;
+  string SourceFile = 4;
+  string Size = 5;
+}
+
+message GetObjectURLRequest {
+  string ObjectName = 1;
+}
+
+message GetObjectURLResponse {
+  string URL = 1;
+}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service OSSService {
+  // 获取公共 OSS 上传签名
+  rpc SignUpload(SignUploadRequest) returns (SignUploadResponse);
+  // 解析 OSS 上传回调对象, 业务服务负责后续落库/索引
+  rpc UploadCallback(UploadCallbackRequest) returns (UploadCallbackResponse);
+  // 获取 OSS 对象下载预签名 URL
+  rpc GetObjectURL(GetObjectURLRequest) returns (GetObjectURLResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+/*
+protoc \
+-I . \
+api/proto/oss/v1/oss.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+*/
