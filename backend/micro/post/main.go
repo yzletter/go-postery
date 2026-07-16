@@ -102,7 +102,7 @@ func main() {
 
 	// Service 层
 	PostService := service.NewPostService(PostRepo, TagRepo, IDGenerator, InteractiveManager, RankManager) // 注册 PostService
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix) // 注册 MetricService
 
 	// gRPC Server

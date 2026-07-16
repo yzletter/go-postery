@@ -26,7 +26,7 @@ func NewJDAnalyzerNodeBuilder(agent *agent.JDAnalyzerAgent, callbacks FrontendCa
 
 func (builder *JDAnalyzerNodeBuilder) Build(ctx context.Context, input *RunState) (*RunState, error) {
 	// JD 分析开始
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageJDAnalysisStart, "正在分析岗位 JD...")
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageJDAnalysisStart, "正在分析岗位 JD...")
 
 	// 进行 JD 分析
 	analysis, err := builder.JDAnalyzerAgent.Analyze(ctx, input.JDText)
@@ -40,7 +40,7 @@ func (builder *JDAnalyzerNodeBuilder) Build(ctx context.Context, input *RunState
 	input.Status = domain.StatusJDAnalyzed
 
 	// JD 分析结束
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageJDAnalysisDone, fmt.Sprintf("JD 分析完成：%s - %s", analysis.Position, analysis.ExperienceLevel))
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageJDAnalysisDone, fmt.Sprintf("JD 分析完成：%s - %s", analysis.Position, analysis.ExperienceLevel))
 
 	// 更新会话信息
 	if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {

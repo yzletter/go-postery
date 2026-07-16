@@ -92,7 +92,7 @@ func main() {
 	SearchService := service.NewSearchService(KafkaConsumer, Tokenizer, IDGenerator, PostManager)
 	go SearchService.StartConsumer(ctx) // 开启协程消费消息对新文章进行索引
 
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10) // 注册限流服务
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000) // 注册限流服务
 	MetricService := pkg.NewMetricService(Service + suffix)                         // 注册 MetricService
 
 	// gRPC Server

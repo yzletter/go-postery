@@ -133,7 +133,7 @@ func (builder *InterviewerNodeBuilder) BuildQuestionNode(ctx context.Context, in
 	input.InterviewState.CurrentDifficulty = difficulty
 
 	// 发送问题到前端
-	builder.Callbacks.OnQuestion(ctx, input.UserID, input.InterviewState.CurrentQuestionNum, questionText)
+	builder.Callbacks.OnQuestion(ctx, input.UserID, input.ID, input.InterviewState.CurrentQuestionNum, questionText)
 
 	// 保存快照
 	input.SchedulerSnapshot = questionScheduler.Save()
@@ -197,7 +197,7 @@ func (builder *InterviewerNodeBuilder) BuildAnswerNode(ctx context.Context, inpu
 	}
 
 	// 发送评分到前端
-	builder.Callbacks.OnScore(ctx, input.UserID, score)
+	builder.Callbacks.OnScore(ctx, input.UserID, input.ID, score)
 
 	// 更新用户画像
 	profile, err := builder.InterviewerAgent.UpdateCandidateProfile(ctx, input.InterviewState.CandidateProfile, input.InterviewState.CurrentQuestionNum, &question, score)
@@ -230,7 +230,7 @@ func (builder *InterviewerNodeBuilder) BuildAnswerNode(ctx context.Context, inpu
 		}
 
 		// 发送追问问题到前端
-		builder.Callbacks.OnQuestion(ctx, input.UserID, input.InterviewState.CurrentQuestionNum, "[追问] "+followUpText)
+		builder.Callbacks.OnQuestion(ctx, input.UserID, input.ID, input.InterviewState.CurrentQuestionNum, "[追问] "+followUpText)
 
 		// 更新状态机
 		input.InterviewState.Phase = domain.PhaseWaitingFollowUp
@@ -318,7 +318,7 @@ func (builder *InterviewerNodeBuilder) BuildFollowUpNode(ctx context.Context, in
 	followUpScore, fsErr := builder.InterviewerAgent.ScoreAnswer(ctx, &question, answer)
 	if fsErr == nil {
 		// 发送追问评分到前端
-		builder.Callbacks.OnScore(ctx, input.UserID, followUpScore)
+		builder.Callbacks.OnScore(ctx, input.UserID, input.ID, followUpScore)
 	} else {
 		slog.Warn("score follow up answer failed", "user_id", input.UserID, "session_id", input.ID, "question_id", question.ID, "error", fsErr)
 	}

@@ -104,7 +104,7 @@ func main() {
 	// 定时更新榜单
 	Cron.AddFuncWithSpec("*/10 * * * *", RankService.CronRankTopK).Build()
 
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix) // 注册 MetricService
 
 	// gRPC Server

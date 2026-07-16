@@ -757,6 +757,7 @@ type InteractiveComment struct {
 	ReplyID       int64                  `protobuf:"varint,4,opt,name=ReplyID,proto3" json:"ReplyID,omitempty"`
 	UserID        int64                  `protobuf:"varint,5,opt,name=UserID,proto3" json:"UserID,omitempty"`
 	Content       string                 `protobuf:"bytes,6,opt,name=Content,proto3" json:"Content,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,7,opt,name=CreatedAt,proto3" json:"CreatedAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -829,6 +830,13 @@ func (x *InteractiveComment) GetUserID() int64 {
 func (x *InteractiveComment) GetContent() string {
 	if x != nil {
 		return x.Content
+	}
+	return ""
+}
+
+func (x *InteractiveComment) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
 	}
 	return ""
 }
@@ -1157,14 +1165,15 @@ const file_api_proto_interactive_v1_interactive_proto_rawDesc = "" +
 	"\x16ListReplyByPageRequest\x12\x1c\n" +
 	"\tCommentID\x18\x01 \x01(\x03R\tCommentID\x12\x16\n" +
 	"\x06PageNo\x18\x02 \x01(\rR\x06PageNo\x12\x1a\n" +
-	"\bPageSize\x18\x03 \x01(\rR\bPageSize\"\xa4\x01\n" +
+	"\bPageSize\x18\x03 \x01(\rR\bPageSize\"\xc2\x01\n" +
 	"\x12InteractiveComment\x12\x0e\n" +
 	"\x02ID\x18\x01 \x01(\x03R\x02ID\x12\x16\n" +
 	"\x06PostID\x18\x02 \x01(\x03R\x06PostID\x12\x1a\n" +
 	"\bParentID\x18\x03 \x01(\x03R\bParentID\x12\x18\n" +
 	"\aReplyID\x18\x04 \x01(\x03R\aReplyID\x12\x16\n" +
 	"\x06UserID\x18\x05 \x01(\x03R\x06UserID\x12\x18\n" +
-	"\aContent\x18\x06 \x01(\tR\aContent\"h\n" +
+	"\aContent\x18\x06 \x01(\tR\aContent\x12\x1c\n" +
+	"\tCreatedAt\x18\a \x01(\tR\tCreatedAt\"h\n" +
 	"\x10CommentsResponse\x12\x14\n" +
 	"\x05Count\x18\x01 \x01(\x04R\x05Count\x12>\n" +
 	"\bComments\x18\x02 \x03(\v2\".interactive.v1.InteractiveCommentR\bComments\"_\n" +

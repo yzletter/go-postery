@@ -13,7 +13,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Send, MessageCircle, Trash2 } from 'lucide-react'
 import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
-import { apiGet, apiDelete, API_BASE_URL } from '../utils/api'
+import { apiGet, apiPost, API_BASE_URL } from '../utils/api'
 import { formatRelativeTime } from '../utils/date'
 import { normalizeId } from '../utils/id'
 
@@ -21,6 +21,10 @@ const MESSAGE_PAGE_SIZE = 8
 const SESSION_TYPE_PRIVATE = 1
 const HISTORY_REVEAL_DELAY_MS = 500
 const MESSAGE_TIME_GAP_MS = 5 * 60 * 1000
+const MESSAGE_CONFIRM_TIMEOUT_MS = 15 * 1000
+const MESSAGE_CONFIRM_MATCH_WINDOW_MS = 5 * 60 * 1000
+
+type DeliveryStatus = 'pending' | 'failed'
 
 type SessionResponse = {
   session_id?: string | number
@@ -40,6 +44,8 @@ type Conversation = {
   avatar: string
   lastMessage: string
   lastMessageTime?: string
+  lastMessageDeliveryStatus?: DeliveryStatus
+  lastLocalMessageId?: string
   unread: number
   sessionType: number
 }
@@ -49,7 +55,7 @@ type ChatMessage = {
   from: 'me' | 'other'
   content: string
   createdAt?: string
-  pending?: boolean
+  deliveryStatus?: DeliveryStatus
 }
 
 type MessageResponse = {
@@ -86,7 +92,7 @@ const buildWsUrl = (apiBaseUrl: string) => {
   const base = new URL(apiBaseUrl, window.location.origin)
   base.protocol = base.protocol === 'https:' ? 'wss:' : 'ws:'
   const cleanPath = base.pathname.replace(/\/+$/, '')
-  base.pathname = `${cleanPath}/ws`
+  base.pathname = `${cleanPath}/ws/session`
   base.search = ''
   return base.toString()
 }
@@ -141,30 +147,77 @@ const sortMessages = (messages: ChatMessage[]) =>
   [...messages].sort((a, b) => {
     const diff = toTimestamp(a.createdAt) - toTimestamp(b.createdAt)
     if (diff !== 0) return diff
-    return a.id.localeCompare(b.id)
+    return a.id.localeCompare(b.id, undefined, { numeric: true })
   })
 
-const reconcileIncomingMessage = (messages: ChatMessage[], incoming: ChatMessage) => {
-  if (!incoming.id) return messages
-  if (messages.some((msg) => msg.id === incoming.id)) return messages
-  if (incoming.from === 'me') {
-    const pendingIndex = messages.findIndex((msg) => msg.pending && msg.content === incoming.content)
-    if (pendingIndex !== -1) {
-      const next = [...messages]
-      next[pendingIndex] = { ...incoming }
-      return next
-    }
-  }
-  return [...messages, incoming]
+type MessageConfirmation = {
+  localId: string
+  confirmedMessage: ChatMessage
 }
 
-const mergeMessageList = (current: ChatMessage[], incoming: ChatMessage[]) => {
-  let merged = current
-  for (const message of incoming) {
-    merged = reconcileIncomingMessage(merged, message)
-  }
-  return sortMessages(merged)
+type MessageMergeResult = {
+  messages: ChatMessage[]
+  confirmations: MessageConfirmation[]
 }
+
+const reconcileIncomingMessage = (
+  messages: ChatMessage[],
+  incoming: ChatMessage,
+  options: { allowTimelessConfirmation?: boolean } = {}
+): MessageMergeResult => {
+  if (!incoming.id || messages.some((msg) => msg.id === incoming.id)) {
+    return { messages, confirmations: [] }
+  }
+  if (incoming.from === 'me' && !incoming.deliveryStatus) {
+    const incomingTimestamp = toTimestamp(incoming.createdAt)
+    const awaitingIndex = messages.findIndex(
+      (msg) => {
+        if (
+          msg.from !== 'me' ||
+          !msg.deliveryStatus ||
+          msg.content !== incoming.content
+        ) {
+          return false
+        }
+        const localTimestamp = toTimestamp(msg.createdAt)
+        if (incomingTimestamp > 0 && localTimestamp > 0) {
+          return Math.abs(incomingTimestamp - localTimestamp) <= MESSAGE_CONFIRM_MATCH_WINDOW_MS
+        }
+        return Boolean(options.allowTimelessConfirmation)
+      }
+    )
+    if (awaitingIndex !== -1) {
+      const localId = messages[awaitingIndex].id
+      const next = [...messages]
+      next[awaitingIndex] = { ...incoming }
+      return {
+        messages: next,
+        confirmations: [{ localId, confirmedMessage: incoming }],
+      }
+    }
+  }
+  return { messages: [...messages, incoming], confirmations: [] }
+}
+
+const mergeMessageList = (
+  current: ChatMessage[],
+  incoming: ChatMessage[],
+  options: { allowTimelessConfirmation?: boolean } = {}
+): MessageMergeResult => {
+  let merged = current
+  const confirmations: MessageConfirmation[] = []
+  for (const message of incoming) {
+    const result = reconcileIncomingMessage(merged, message, options)
+    merged = result.messages
+    confirmations.push(...result.confirmations)
+  }
+  return {
+    messages: sortMessages(merged),
+    confirmations,
+  }
+}
+
+const summarizeMessage = (content: string) => Array.from(content).slice(0, 5).join('')
 
 const normalizeSession = (
   item: SessionResponse,
@@ -196,27 +249,23 @@ const normalizeSession = (
 
 const normalizeMessage = (
   item: MessageResponse,
-  currentUserId: string,
-  fallbackCreatedAt?: string
+  currentUserId: string
 ): ChatMessage | null => {
   if (!item) return null
   const content = typeof item.content === 'string' ? item.content : String(item.content ?? '')
   const fromId = normalizeId(item.message_from)
-  let createdAt =
+  const createdAt =
     typeof item.created_at === 'string'
       ? item.created_at
       : typeof item.createdAt === 'string'
         ? item.createdAt
         : undefined
-  if (!createdAt && fallbackCreatedAt) {
-    createdAt = fallbackCreatedAt
-  }
   const isMe = Boolean(currentUserId && fromId && currentUserId === fromId)
   const id = normalizeId(item.id)
-  const resolvedId = id || `${fromId || 'msg'}-${createdAt || Date.now()}`
+  if (!id) return null
 
   return {
-    id: resolvedId,
+    id,
     from: isMe ? 'me' : 'other',
     content,
     createdAt,
@@ -247,7 +296,10 @@ export default function Messages() {
   const wsRef = useRef<WebSocket | null>(null)
   const activeIdRef = useRef('')
   const sessionsRef = useRef<Conversation[]>([])
+  const messagesBySessionRef = useRef<Record<string, ChatMessage[]>>({})
   const messagePageBySessionRef = useRef<Record<string, MessagePageState>>({})
+  const confirmationTimersRef = useRef<Map<string, number>>(new Map())
+  const localMessageSequenceRef = useRef(0)
   const handledRouteTargetRef = useRef(false)
   const pendingScrollAdjustmentRef = useRef<{
     sessionId: string
@@ -320,6 +372,87 @@ export default function Messages() {
     }
   }, [connectionStatus, user])
 
+  const clearConfirmationTimer = useCallback((localId: string) => {
+    const timerId = confirmationTimersRef.current.get(localId)
+    if (timerId !== undefined) {
+      window.clearTimeout(timerId)
+      confirmationTimersRef.current.delete(localId)
+    }
+  }, [])
+
+  const mergeIncomingMessages = useCallback(
+    (
+      sessionId: string,
+      incoming: ChatMessage[],
+      options: { allowTimelessConfirmation?: boolean } = {}
+    ) => {
+      const currentState = messagesBySessionRef.current
+      const result = mergeMessageList(currentState[sessionId] ?? [], incoming, options)
+      const nextState = {
+        ...currentState,
+        [sessionId]: result.messages,
+      }
+      messagesBySessionRef.current = nextState
+      setMessagesBySession(nextState)
+      result.confirmations.forEach(({ localId }) => clearConfirmationTimer(localId))
+      return result.confirmations
+    },
+    [clearConfirmationTimer]
+  )
+
+  const applyConfirmationsToSession = useCallback(
+    (sessionId: string, confirmations: MessageConfirmation[]) => {
+      if (confirmations.length === 0) return
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id !== sessionId || !session.lastLocalMessageId) return session
+          const confirmation = confirmations.find(
+            ({ localId }) => localId === session.lastLocalMessageId
+          )
+          if (!confirmation) return session
+          return {
+            ...session,
+            lastMessage: summarizeMessage(confirmation.confirmedMessage.content),
+            lastMessageTime: confirmation.confirmedMessage.createdAt,
+            lastMessageDeliveryStatus: undefined,
+            lastLocalMessageId: undefined,
+          }
+        })
+      )
+    },
+    []
+  )
+
+  const markMessageUnconfirmed = useCallback((sessionId: string, localId: string) => {
+    confirmationTimersRef.current.delete(localId)
+    const currentState = messagesBySessionRef.current
+    const currentMessages = currentState[sessionId] ?? []
+    let didMarkFailed = false
+    const nextMessages = currentMessages.map((message) => {
+      if (message.id !== localId || message.deliveryStatus !== 'pending') return message
+      didMarkFailed = true
+      return { ...message, deliveryStatus: 'failed' as const }
+    })
+    if (!didMarkFailed) return
+
+    const nextState = {
+      ...currentState,
+      [sessionId]: nextMessages,
+    }
+    messagesBySessionRef.current = nextState
+    setMessagesBySession(nextState)
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === sessionId && session.lastLocalMessageId === localId
+          ? { ...session, lastMessageDeliveryStatus: 'failed' }
+          : session
+      )
+    )
+    if (activeIdRef.current === sessionId) {
+      setSendError('消息已写入连接，但未收到后端确认，请检查后再决定是否重发')
+    }
+  }, [])
+
   useEffect(() => {
     activeIdRef.current = activeId
   }, [activeId])
@@ -329,8 +462,20 @@ export default function Messages() {
   }, [sessions])
 
   useEffect(() => {
+    messagesBySessionRef.current = messagesBySession
+  }, [messagesBySession])
+
+  useEffect(() => {
     messagePageBySessionRef.current = messagePageBySession
   }, [messagePageBySession])
+
+  useEffect(
+    () => () => {
+      confirmationTimersRef.current.forEach((timerId) => window.clearTimeout(timerId))
+      confirmationTimersRef.current.clear()
+    },
+    []
+  )
 
   useEffect(() => {
     pendingScrollAdjustmentRef.current = null
@@ -352,12 +497,14 @@ export default function Messages() {
     const ws = wsRef.current
     if (!normalizedSessionId || !ws || ws.readyState !== WebSocket.OPEN) return
     const payload = {
-      type: 'read_ack',
-      session_id: normalizedSessionId,
-      ...(currentUserId ? { user_id: currentUserId } : {}),
+      biz_type: 'session',
+      biz_data: {
+        type: 'read_ack',
+        session_id: normalizedSessionId,
+      },
     }
     ws.send(JSON.stringify(payload))
-  }, [currentUserId])
+  }, [])
 
   const fetchMessages = useCallback(
     async (
@@ -383,7 +530,7 @@ export default function Messages() {
         const delayPromise = minDelayMs > 0 ? wait(minDelayMs) : Promise.resolve()
         const [{ data }] = await Promise.all([
           apiGet<MessageListResponse>(
-            `/users/${encodeURIComponent(normalizedTargetId)}/sessions/messages?pageNo=${pageNo}&pageSize=${MESSAGE_PAGE_SIZE}`,
+            `/sessions/target/${encodeURIComponent(normalizedTargetId)}/messages?pageNo=${pageNo}&pageSize=${MESSAGE_PAGE_SIZE}`,
             { signal }
           ),
           delayPromise,
@@ -396,10 +543,8 @@ export default function Messages() {
           data?.has_more ?? (data as { hasMore?: boolean } | null)?.hasMore
         )
 
-        setMessagesBySession((prev) => ({
-          ...prev,
-          [normalizedSessionId]: mergeMessageList(prev[normalizedSessionId] ?? [], normalized),
-        }))
+        const confirmations = mergeIncomingMessages(normalizedSessionId, normalized)
+        applyConfirmationsToSession(normalizedSessionId, confirmations)
 
         setMessagePageBySession((prev) => {
           const previous = prev[normalizedSessionId] ?? { pageNo: 0, hasMore: false, isLoading: false, error: null }
@@ -442,7 +587,12 @@ export default function Messages() {
         })
       }
     },
-    [currentUserId, sendReadAck]
+    [
+      applyConfirmationsToSession,
+      currentUserId,
+      mergeIncomingMessages,
+      sendReadAck,
+    ]
   )
 
   const fetchOrCreateSession = useCallback(
@@ -457,7 +607,7 @@ export default function Messages() {
 
       try {
         const { data } = await apiGet<SessionResponse>(
-          `/users/${encodeURIComponent(normalizedTargetId)}/sessions`
+          `/sessions/target/${encodeURIComponent(normalizedTargetId)}`
         )
         const session = normalizeSession(data ?? {}, { targetId: normalizedTargetId, name: fallbackName })
         if (!session.id) return null
@@ -495,6 +645,10 @@ export default function Messages() {
 
   useEffect(() => {
     if (!user) {
+      confirmationTimersRef.current.forEach((timerId) => window.clearTimeout(timerId))
+      confirmationTimersRef.current.clear()
+      sessionsRef.current = []
+      messagesBySessionRef.current = {}
       setSessions([])
       setActiveId('')
       setMessagesBySession({})
@@ -712,13 +866,11 @@ export default function Messages() {
       const incoming = extractWsMessages(payload)
       if (incoming.length === 0) return
 
-      const receivedBase = Date.now()
-      incoming.forEach((raw, index) => {
+      incoming.forEach((raw) => {
         const sessionId = normalizeId(raw.session_id)
         if (!sessionId) return
 
-        const fallbackCreatedAt = new Date(receivedBase + index).toISOString()
-        const message = normalizeMessage(raw, currentUserId, fallbackCreatedAt)
+        const message = normalizeMessage(raw, currentUserId)
         if (!message) return
 
         const fromId = normalizeId(raw.message_from)
@@ -727,10 +879,10 @@ export default function Messages() {
         const sessionType = Number.isFinite(Number(raw.session_type)) ? Number(raw.session_type) : SESSION_TYPE_PRIVATE
         const isActive = activeIdRef.current === sessionId
 
-        setMessagesBySession((prev) => ({
-          ...prev,
-          [sessionId]: mergeMessageList(prev[sessionId] ?? [], [message]),
-        }))
+        const confirmations = mergeIncomingMessages(sessionId, [message], {
+          allowTimelessConfirmation: true,
+        })
+        const confirmedLocalId = confirmations[0]?.localId
 
         setSessions((prev) => {
           const index = prev.findIndex((session) => session.id === sessionId)
@@ -752,11 +904,26 @@ export default function Messages() {
             : message.from === 'other'
               ? baseSession.unread + 1
               : baseSession.unread
+          const keepNewerLocalSummary =
+            message.from === 'me' &&
+            Boolean(confirmedLocalId) &&
+            Boolean(baseSession.lastLocalMessageId) &&
+            baseSession.lastLocalMessageId !== confirmedLocalId
           const updated = {
             ...baseSession,
             targetId: baseSession.targetId || otherId,
-            lastMessage: message.content,
-            lastMessageTime: message.createdAt || baseSession.lastMessageTime,
+            lastMessage: keepNewerLocalSummary
+              ? baseSession.lastMessage
+              : summarizeMessage(message.content),
+            lastMessageTime: keepNewerLocalSummary
+              ? baseSession.lastMessageTime
+              : message.createdAt,
+            lastMessageDeliveryStatus: keepNewerLocalSummary
+              ? baseSession.lastMessageDeliveryStatus
+              : undefined,
+            lastLocalMessageId: keepNewerLocalSummary
+              ? baseSession.lastLocalMessageId
+              : undefined,
             unread: nextUnread,
             sessionType,
           }
@@ -779,7 +946,7 @@ export default function Messages() {
       ws.close()
       wsRef.current = null
     }
-  }, [currentUserId, fetchOrCreateSession, sendReadAck, user])
+  }, [currentUserId, fetchOrCreateSession, mergeIncomingMessages, sendReadAck, user])
 
   const handleSelectSession = useCallback((sessionId: string) => {
     const hadUnread = sessionsRef.current.find((session) => session.id === sessionId)?.unread ?? 0
@@ -809,12 +976,14 @@ export default function Messages() {
     if (!sessionId) return
 
     const payload = {
-      type: 'message',
-      session_id: sessionId,
-      session_type: activeSession.sessionType,
-      message_from: currentUserId,
-      message_to: activeSession.targetId,
-      content: trimmed,
+      biz_type: 'session',
+      biz_data: {
+        type: 'message',
+        session_id: sessionId,
+        session_type: activeSession.sessionType,
+        message_to: activeSession.targetId,
+        content: trimmed,
+      },
     }
 
     try {
@@ -825,34 +994,36 @@ export default function Messages() {
     }
 
     const createdAt = new Date().toISOString()
+    localMessageSequenceRef.current += 1
     const newMsg: ChatMessage = {
-      id: `local-${Date.now()}`,
+      id: `local-${Date.now()}-${localMessageSequenceRef.current}`,
       from: 'me',
       content: trimmed,
       createdAt,
-      pending: true,
+      deliveryStatus: 'pending',
     }
 
-    setMessagesBySession((prev) => {
-      const current = prev[sessionId] ?? []
-      return {
-        ...prev,
-        [sessionId]: mergeMessageList(current, [newMsg]),
-      }
-    })
+    mergeIncomingMessages(sessionId, [newMsg])
     setSessions((prev) => {
       const index = prev.findIndex((session) => session.id === sessionId)
       if (index === -1) return prev
       const updated = {
         ...prev[index],
-        lastMessage: trimmed,
+        lastMessage: summarizeMessage(trimmed),
         lastMessageTime: createdAt,
+        lastMessageDeliveryStatus: 'pending' as const,
+        lastLocalMessageId: newMsg.id,
         unread: 0,
       }
       const next = [...prev]
       next.splice(index, 1)
       return [updated, ...next]
     })
+    const timerId = window.setTimeout(
+      () => markMessageUnconfirmed(sessionId, newMsg.id),
+      MESSAGE_CONFIRM_TIMEOUT_MS
+    )
+    confirmationTimersRef.current.set(newMsg.id, timerId)
     setInput('')
   }
 
@@ -868,14 +1039,14 @@ export default function Messages() {
       setError(null)
 
       try {
-        await apiDelete(`/sessions/${encodeURIComponent(session.id)}`)
+        await apiPost(`/sessions/${encodeURIComponent(session.id)}/delete`, null)
         setSessions((prev) => prev.filter((item) => item.id !== session.id))
-        setMessagesBySession((prev) => {
-          if (!(session.id in prev)) return prev
-          const next = { ...prev }
-          delete next[session.id]
-          return next
-        })
+        const currentMessages = messagesBySessionRef.current[session.id] ?? []
+        currentMessages.forEach((message) => clearConfirmationTimer(message.id))
+        const nextMessagesBySession = { ...messagesBySessionRef.current }
+        delete nextMessagesBySession[session.id]
+        messagesBySessionRef.current = nextMessagesBySession
+        setMessagesBySession(nextMessagesBySession)
         setMessagePageBySession((prev) => {
           if (!(session.id in prev)) return prev
           const next = { ...prev }
@@ -894,7 +1065,7 @@ export default function Messages() {
         })
       }
     },
-    [deletingSessionIds]
+    [clearConfirmationTimer, deletingSessionIds]
   )
 
   let lastShownTimestamp = 0
@@ -953,6 +1124,15 @@ export default function Messages() {
             sessions.map((session) => {
               const isActive = session.id === activeId
               const isDeleting = Boolean(deletingSessionIds[session.id])
+              const lastMessageStatus =
+                session.lastMessageDeliveryStatus === 'pending'
+                  ? '发送中'
+                  : session.lastMessageDeliveryStatus === 'failed'
+                    ? '未确认'
+                    : ''
+              const lastMessageTime = session.lastMessage
+                ? formatRelativeTime(session.lastMessageTime, '时间未提供')
+                : ''
               return (
                 <div
                   key={session.id}
@@ -977,13 +1157,22 @@ export default function Messages() {
                       <p className="font-medium text-sm line-clamp-1">{session.name}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-gray-500 line-clamp-1 flex-1">
+                      <p
+                        className={`text-xs line-clamp-1 flex-1 ${
+                          session.lastMessageDeliveryStatus === 'failed'
+                            ? 'text-red-600'
+                            : session.lastMessageDeliveryStatus === 'pending'
+                              ? 'text-amber-600'
+                              : 'text-gray-500'
+                        }`}
+                      >
                         {session.lastMessage || '暂无消息'}
+                        {lastMessageStatus ? ` · ${lastMessageStatus}` : ''}
                       </p>
                       <div className="flex items-center gap-2 shrink-0">
-                        {session.lastMessageTime && (
+                        {lastMessageTime && (
                           <span className="text-[10px] text-gray-400">
-                            {formatRelativeTime(session.lastMessageTime, '')}
+                            {lastMessageTime}
                           </span>
                         )}
                         {session.unread > 0 ? (
@@ -1092,6 +1281,20 @@ export default function Messages() {
                   lastShownTimestamp = messageTimestamp
                 }
                 const messageTime = shouldShowTime ? formatRelativeTime(msg.createdAt, '') : ''
+                const deliveryLabel =
+                  msg.deliveryStatus === 'pending'
+                    ? '等待后端确认'
+                    : msg.deliveryStatus === 'failed'
+                      ? '未获后端确认'
+                      : ''
+                const metadataLabel =
+                  deliveryLabel || (messageTimestamp <= 0 ? '时间未提供' : messageTime)
+                const metadataColor =
+                  msg.deliveryStatus === 'failed'
+                    ? 'text-red-500'
+                    : msg.deliveryStatus === 'pending'
+                      ? 'text-amber-500'
+                      : 'text-gray-400'
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     {!isMe && (
@@ -1107,12 +1310,16 @@ export default function Messages() {
                       <div
                         className={`max-w-[30ch] break-words rounded-2xl px-3 py-2 text-sm ${
                           isMe ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-900 rounded-bl-sm'
-                        }`}
+                        } ${msg.deliveryStatus === 'failed' ? 'ring-2 ring-red-300' : ''}`}
                       >
-                        <span className={msg.pending ? 'opacity-70' : ''}>{msg.content}</span>
+                        <span className={msg.deliveryStatus === 'pending' ? 'opacity-70' : ''}>
+                          {msg.content}
+                        </span>
                       </div>
-                      {messageTime ? (
-                        <span className="mt-1 text-[10px] text-gray-400">{messageTime}</span>
+                      {metadataLabel ? (
+                        <span className={`mt-1 text-[10px] ${metadataColor}`}>
+                          {metadataLabel}
+                        </span>
                       ) : null}
                     </div>
                     {isMe && (

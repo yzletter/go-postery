@@ -57,7 +57,7 @@ func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.Send
 	return nil, err
 }
 
-func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
+func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.VerifyCodeRequest) (*code_grpc.VerifyCodeResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // Verify 只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -73,7 +73,7 @@ func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.Ch
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *code_grpc.CheckCodeResponse
+		var resp *code_grpc.VerifyCodeResponse
 		resp, err = client.Verify(ctx, req) // 微服务调用
 		cancel()
 

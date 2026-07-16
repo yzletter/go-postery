@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
-import { apiGet, apiPost } from '../utils/api'
+import { apiGet, apiPost, AUTH_API_BASE_URL } from '../utils/api'
 import { normalizeUserDetail } from '../utils/user'
 import type { ModifyUserProfileRequest, UserDetail } from '../types'
 
@@ -45,7 +45,18 @@ type AvatarUploadSignResponse = {
   response?: string
 }
 
+type PasswordStatusResponse = {
+  has_password: boolean
+}
+
+type AuthIdentityResponse = {
+  phone: string
+  email: string
+}
+
 const AVATAR_SIZE_LABEL = `${Math.round(AVATAR_MAX_FILE_SIZE / 1024 / 1024)}MB`
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
 
 const readAvatarDimensions = (file: File) =>
   new Promise<{ width: number; height: number }>((resolve, reject) => {
@@ -149,8 +160,31 @@ const uploadAvatarFile = async (file: File) => {
     body: formData,
   })
 
-  if (!response.ok) {
-    throw new Error('头像上传失败，请稍后重试')
+  const responseText = await response.text()
+  if (response.status !== 200) {
+    throw new Error(
+      response.status === 203
+        ? '头像已上传，但后端回调保存失败'
+        : '头像上传失败，请稍后重试'
+    )
+  }
+
+  if (responseText.trim()) {
+    let callbackResult: unknown
+    try {
+      callbackResult = JSON.parse(responseText) as unknown
+    } catch {
+      throw new Error('头像回调响应格式错误')
+    }
+
+    if (isRecord(callbackResult)) {
+      const code = Number(callbackResult.code)
+      if (Number.isFinite(code) && code !== 0) {
+        const message =
+          typeof callbackResult.msg === 'string' ? callbackResult.msg.trim() : ''
+        throw new Error(message || '头像保存失败')
+      }
+    }
   }
 
   return objectKey
@@ -158,7 +192,7 @@ const uploadAvatarFile = async (file: File) => {
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { user, changePassword, updateUser } = useAuth()
+  const { user, changePassword, setPassword, updateUser } = useAuth()
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile')
   const [nickname, setNickname] = useState(user?.name || '')
   const [avatarObjectKey, setAvatarObjectKey] = useState('')
@@ -179,6 +213,12 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+  const [isPasswordStatusLoading, setIsPasswordStatusLoading] = useState(false)
+  const [hasPassword, setHasPassword] = useState(true)
+  const [boundPhone, setBoundPhone] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isSendingCode, setIsSendingCode] = useState(false)
+  const [codeCountdown, setCodeCountdown] = useState(0)
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -208,6 +248,65 @@ export default function Settings() {
       }
     }
   }, [avatarPreviewUrl])
+
+  useEffect(() => {
+    if (activeTab !== 'password') return
+
+    let cancelled = false
+    setIsPasswordStatusLoading(true)
+    setPasswordError('')
+
+    Promise.all([
+      apiGet<PasswordStatusResponse>('/auth/password/status', { baseUrl: AUTH_API_BASE_URL }),
+      apiGet<AuthIdentityResponse>('/auth/auth_identity', { baseUrl: AUTH_API_BASE_URL }),
+    ])
+      .then(([statusResponse, identityResponse]) => {
+        if (cancelled) return
+        setHasPassword(statusResponse.data?.has_password ?? true)
+        setBoundPhone(identityResponse.data?.phone?.trim() ?? '')
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setPasswordError(err instanceof Error ? err.message : '获取密码状态失败')
+      })
+      .finally(() => {
+        if (!cancelled) setIsPasswordStatusLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (codeCountdown <= 0) return undefined
+    const timer = window.setInterval(() => {
+      setCodeCountdown((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [codeCountdown])
+
+  const handleSendPasswordCode = async () => {
+    setPasswordError('')
+    if (!boundPhone) {
+      setPasswordError('当前账号未绑定手机号，无法设置密码')
+      return
+    }
+
+    setIsSendingCode(true)
+    try {
+      await apiPost(
+        '/auth/sms',
+        { phone: boundPhone },
+        { baseUrl: AUTH_API_BASE_URL, skipAuthToken: true }
+      )
+      setCodeCountdown(60)
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : '验证码发送失败')
+    } finally {
+      setIsSendingCode(false)
+    }
+  }
 
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return
@@ -341,22 +440,31 @@ export default function Settings() {
       return
     }
 
-    if (oldPassword === newPassword) {
+    if (hasPassword && oldPassword === newPassword) {
       setPasswordError('新密码不能与旧密码相同')
+      return
+    }
+
+    if (!hasPassword && !verificationCode.trim()) {
+      setPasswordError('请输入验证码')
       return
     }
 
     setIsPasswordLoading(true)
 
     try {
-      const ok = await changePassword(oldPassword, newPassword)
+      const ok = hasPassword
+        ? await changePassword(oldPassword, newPassword)
+        : await setPassword(newPassword, verificationCode)
       if (ok) {
         setOldPassword('')
         setNewPassword('')
         setConfirmPassword('')
-        setPasswordSuccess('密码修改成功')
+        setVerificationCode('')
+        setPasswordSuccess(hasPassword ? '密码修改成功' : '密码设置成功')
+        setHasPassword(true)
       } else {
-        setPasswordError('修改密码失败，请检查旧密码是否正确')
+        setPasswordError(hasPassword ? '修改密码失败，请检查旧密码是否正确' : '设置密码失败，请检查验证码是否正确')
       }
     } catch (err) {
       setPasswordError('发生错误，请重试')
@@ -618,8 +726,12 @@ export default function Settings() {
             {activeTab === 'password' && (
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-1">修改密码</h2>
-                  <p className="text-sm text-gray-500">建议定期更换密码，确保账户安全</p>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                    {hasPassword ? '修改密码' : '设置密码'}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {hasPassword ? '建议定期更换密码，确保账户安全' : '设置密码后可使用手机号或邮箱和密码登录'}
+                  </p>
                 </div>
 
                 {passwordError && (
@@ -634,15 +746,45 @@ export default function Settings() {
                   </div>
                 )}
 
+                {isPasswordStatusLoading ? (
+                  <div className="py-8 text-center text-sm text-gray-500">正在获取密码状态...</div>
+                ) : (
                 <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                  <PasswordField
-                    id="oldPassword"
-                    label="当前密码"
-                    value={oldPassword}
-                    onChange={setOldPassword}
-                    show={showOldPassword}
-                    setShow={setShowOldPassword}
-                  />
+                  {hasPassword ? (
+                    <PasswordField
+                      id="oldPassword"
+                      label="当前密码"
+                      value={oldPassword}
+                      onChange={setOldPassword}
+                      show={showOldPassword}
+                      setShow={setShowOldPassword}
+                    />
+                  ) : (
+                    <div>
+                      <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
+                        手机验证码
+                      </label>
+                      <div className="flex gap-3">
+                        <input
+                          id="verificationCode"
+                          type="text"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          placeholder={boundPhone ? `验证码将发送至 ${boundPhone}` : '未绑定手机号'}
+                          required
+                          className="input flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSendPasswordCode}
+                          disabled={!boundPhone || isSendingCode || codeCountdown > 0}
+                          className="btn-secondary whitespace-nowrap"
+                        >
+                          {codeCountdown > 0 ? `${codeCountdown}s后重试` : isSendingCode ? '发送中...' : '发送验证码'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <PasswordField
                     id="newPassword"
                     label="新密码"
@@ -670,17 +812,18 @@ export default function Settings() {
                       {isPasswordLoading ? (
                         <>
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>修改中...</span>
+                          <span>{hasPassword ? '修改中...' : '设置中...'}</span>
                         </>
                       ) : (
                         <>
                           <Save className="h-5 w-5" />
-                          <span>保存新密码</span>
+                          <span>{hasPassword ? '保存新密码' : '设置密码'}</span>
                         </>
                       )}
                     </button>
                   </div>
                 </form>
+                )}
               </div>
             )}
           </div>

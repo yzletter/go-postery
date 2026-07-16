@@ -15,6 +15,7 @@ import (
 // ETCDServiceHub 用 etcd 实现的 ServiceHub
 type ETCDServiceHub struct {
 	globalMu           sync.RWMutex
+	poolMu             sync.RWMutex
 	locks              map[string]*sync.RWMutex // 每种服务一把锁
 	heartbeatFrequency int64
 	prefix             string
@@ -53,6 +54,9 @@ func (hub *ETCDServiceHub) GetEndpoints(ctx context.Context, service string) []*
 	defer lock.Unlock()
 
 	addrs := hub.getEndpoints(ctx, service)
+	hub.poolMu.RLock()
+	defer hub.poolMu.RUnlock()
+
 	endpoints := make([]*Endpoint, 0, len(addrs))
 	for _, addr := range addrs {
 		if endpoint := hub.pool[addr]; endpoint != nil {
@@ -68,6 +72,8 @@ func (hub *ETCDServiceHub) AddEndpoint(ctx context.Context, service string, addr
 	lock := hub.getLock(service)
 	lock.Lock()
 	defer lock.Unlock()
+	hub.poolMu.Lock()
+	defer hub.poolMu.Unlock()
 
 	// 查重
 	if _, ok := hub.pool[addr]; ok {
@@ -95,6 +101,8 @@ func (hub *ETCDServiceHub) RemoveEndpoint(ctx context.Context, service string, a
 	lock := hub.getLock(service)
 	lock.Lock()
 	defer lock.Unlock()
+	hub.poolMu.Lock()
+	defer hub.poolMu.Unlock()
 
 	endpoint := hub.pool[addr]
 	if endpoint != nil {
@@ -120,6 +128,8 @@ func (hub *ETCDServiceHub) Take(ctx context.Context, service string) *Endpoint {
 	lock := hub.getLock(service)
 	lock.RLock()
 	defer lock.RUnlock()
+	hub.poolMu.RLock()
+	defer hub.poolMu.RUnlock()
 
 	// 最多尝试 5 次
 	for i := 0; i < len(hub.addrs[service]); i++ {

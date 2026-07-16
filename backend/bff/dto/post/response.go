@@ -79,11 +79,12 @@ type CommentDTO struct {
 
 func ToInteractiveCommentDTO(comment *interactive_grpc.InteractiveComment, user *user_grpc.Profile) CommentDTO {
 	return CommentDTO{
-		ID:       comment.ID,
-		PostID:   comment.PostID,
-		ParentID: comment.ParentID,
-		ReplyID:  comment.ReplyID,
-		Content:  comment.Content,
-		Author:   userdto.ToBriefDTO(user),
+		ID:        comment.ID,
+		PostID:    comment.PostID,
+		ParentID:  comment.ParentID,
+		ReplyID:   comment.ReplyID,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt,
+		Author:    userdto.ToBriefDTO(user),
 	}
 }

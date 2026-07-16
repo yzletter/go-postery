@@ -37,7 +37,7 @@ func NewQuestionPlanNodeBuilder(agent *agent.QuestionPlannerAgent, callbacks Fro
 
 func (builder *QuestionPlanNodeBuilder) Build(ctx context.Context, input *RunState) (*RunState, error) {
 	// 出题规划开始
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageQuestionPlan, "正在进行出题规划 ... ")
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageQuestionPlan, "正在进行出题规划 ... ")
 
 	// 获取薄弱点
 	var weakPointsText string
@@ -46,9 +46,9 @@ func (builder *QuestionPlanNodeBuilder) Build(ctx context.Context, input *RunSta
 	filteredWeakPoints := filterWeakPointsWithJD(input.JDAnalysis, weakPoints)
 	if len(filteredWeakPoints) > 0 {
 		weakPointsText = strings.Join(filteredWeakPoints, "\n")
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageMemoryLoaded, fmt.Sprintf("已加载 %d 个与当前 JD 相关的历史薄弱点，将针对性出题", len(filteredWeakPoints)))
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageMemoryLoaded, fmt.Sprintf("已加载 %d 个与当前 JD 相关的历史薄弱点，将针对性出题", len(filteredWeakPoints)))
 	}
-	
+
 	// 出题方向
 	directionPlan, err := builder.QuestionPlannerAgent.PlanDirections(ctx, *input.JDAnalysis, *input.ResumeMatchResult, weakPointsText)
 	if err != nil {
@@ -200,7 +200,7 @@ func (builder *QuestionPlanNodeBuilder) Build(ctx context.Context, input *RunSta
 	input.Status = domain.StatusPlanned
 
 	// 出题规划结束
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageQuestionPlanDone, "")
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageQuestionPlanDone, "")
 
 	// 更新会话信息
 	if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {

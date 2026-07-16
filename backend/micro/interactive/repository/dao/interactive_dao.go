@@ -385,18 +385,18 @@ func (dao *gormInteractiveDAO) GetFollowees(ctx context.Context, id int64, pageN
 }
 
 // CreateComment 创建 Comment
-func (dao *gormInteractiveDAO) CreateComment(ctx context.Context, comment *model.Comment, events ...*event.OutboxEvent) error {
+func (dao *gormInteractiveDAO) CreateComment(ctx context.Context, comment *model.Comment, events ...*event.OutboxEvent) (*model.Comment, error) {
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(comment).Error; err != nil {
 			return err
 		}
 
 		// 写 Outbox
-		for _, event := range events {
-			if event == nil {
+		for _, outboxEvent := range events {
+			if outboxEvent == nil {
 				continue
 			}
-			if err := tx.Create(event).Error; err != nil {
+			if err := tx.Create(outboxEvent).Error; err != nil {
 				return err
 			}
 		}
@@ -406,12 +406,12 @@ func (dao *gormInteractiveDAO) CreateComment(ctx context.Context, comment *model
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return ErrUniqueKey
+			return comment, ErrUniqueKey
 		}
-		return ErrServerInternal
+		return nil, ErrServerInternal
 	}
 
-	return nil
+	return comment, nil
 }
 
 // GetCommentByID 根据 Comment 的 ID 查找 Comment

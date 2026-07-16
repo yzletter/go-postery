@@ -144,7 +144,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	CreateComment(ctx context.Context, comment *model.Comment, events ...*event.OutboxEvent) error
+	CreateComment(ctx context.Context, comment *model.Comment, events ...*event.OutboxEvent) (*model.Comment, error)
 
 	// GetCommentByID 根据评论 ID 获取评论
 	//

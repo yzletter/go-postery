@@ -81,7 +81,7 @@ func main() {
 
 	// Service 层
 	OSSService := service.NewOSSService(OSSManager, OSSServiceConf.OSS)
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix)
 
 	// gRPC Server

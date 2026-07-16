@@ -91,7 +91,6 @@ func main() {
 	InteractiveServiceClient := manager.NewInteractiveManager(ctx, manager.InteractiveService, ETCDServiceHub)
 	PostServiceClient := manager.NewPostManager(ctx, manager.PostService, ETCDServiceHub)
 	SearchServiceClient := manager.NewSearchManager(ctx, manager.SearchService, ETCDServiceHub)
-	AgentServiceClient := manager.NewAgentManager(ctx, manager.AgentService, ETCDServiceHub)
 	InterviewServiceClient := manager.NewInterviewManager(ctx, manager.InterviewService, ETCDServiceHub)
 	LotteryServiceClient := manager.NewLotteryManager(ctx, manager.LotteryService, ETCDServiceHub)
 	SessionServiceClient := manager.NewSessionManager(ctx, manager.SessionService, ETCDServiceHub)
@@ -105,7 +104,6 @@ func main() {
 	AuthHdl := handler.NewAuthHandler(AuthServiceClient, CodeServiceClient, UserServiceClient)        // 注册 AuthHandler
 	UserHdl := handler.NewUserHandler(UserServiceClient, PostServiceClient, InteractiveServiceClient) // 注册 UserHandler
 	SearchHdl := handler.NewSearchHandler(SearchServiceClient, PostServiceClient, UserServiceClient)  // 注册 SearchHandler
-	AgentHdl := handler.NewAgentHandler(AgentServiceClient)                                           // 注册 AgentHandler
 	InterviewHdl := handler.NewInterviewHandler(InterviewServiceClient)                               // 注册 InterviewHandler
 	LotteryHdl := handler.NewLotteryHandler(LotteryServiceClient, UserServiceClient)                  // 注册 LotteryHandler
 	SessionHdl := handler.NewSessionHandler(SessionServiceClient, UserServiceClient)                  // 注册 SessionHandler
@@ -221,7 +219,6 @@ func main() {
 	InterviewHdl.RegisterRouter(v1, AuthRequiredMdl) // 面试模块路由
 	PostHdl.RegisterRouter(v1, AuthRequiredMdl)      // 帖子模块路由
 	SearchHdl.RegisterRouter(v1, AuthRequiredMdl)    // 搜索模块路由
-	AgentHdl.RegisterRouter(v1, AuthRequiredMdl)     // 智能体模块路由
 	LotteryHdl.RegisterRouter(v1, AuthRequiredMdl)   // 抽奖模块路由
 	SessionHdl.RegisterRouter(v1, AuthRequiredMdl)   // 会话模块路由
 

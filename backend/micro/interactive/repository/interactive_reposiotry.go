@@ -333,14 +333,22 @@ func (repo *interactiveRepository) GetFollowees(ctx context.Context, id int64, p
 }
 
 // CreateComment 创建评论
-func (repo *interactiveRepository) CreateComment(ctx context.Context, comment domain.Comment, events ...*event.OutboxEvent) error {
+func (repo *interactiveRepository) CreateComment(ctx context.Context, comment domain.Comment, events ...*event.OutboxEvent) (domain.Comment, error) {
 	m := toCommentModel(comment)
-	err := repo.dao.CreateComment(ctx, &m, events...)
+	c, err := repo.dao.CreateComment(ctx, &m, events...)
 	if err != nil {
-		return toRepositoryErr(err)
+		return domain.Comment{}, toRepositoryErr(err)
 	}
 
-	return nil
+	return domain.Comment{
+		ID:        c.ID,
+		PostID:    c.PostID,
+		ParentID:  c.ParentID,
+		ReplyID:   c.ReplyID,
+		UserID:    c.UserID,
+		Content:   c.Content,
+		CreatedAt: c.CreatedAt,
+	}, nil
 }
 
 // GetCommentByID 根据 ID 获取评论

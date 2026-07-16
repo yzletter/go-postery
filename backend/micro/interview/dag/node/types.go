@@ -29,12 +29,12 @@ const (
 // FrontendCallbacks 面试过程回调，用于 CLI/Web 等不同界面
 type FrontendCallbacks interface {
 	// OnStageChange 面试阶段转换 Callback
-	OnStageChange(ctx context.Context, userID int64, stage DAGStage, msg string)
+	OnStageChange(ctx context.Context, userID int64, sessionID int64, stage DAGStage, msg string)
 	// OnQuestion 向前端发送问题
-	OnQuestion(ctx context.Context, userID int64, questionNum int, content string)
-	OnScore(ctx context.Context, userID int64, score *agent.AnswerScore)
-	OnReport(ctx context.Context, userID int64, report string)
-	OnReviewPlan(ctx context.Context, userID int64, plan string)
+	OnQuestion(ctx context.Context, userID int64, sessionID int64, questionNum int, content string)
+	OnScore(ctx context.Context, userID int64, sessionID int64, score *agent.AnswerScore)
+	OnReport(ctx context.Context, userID int64, sessionID int64, report string)
+	OnReviewPlan(ctx context.Context, userID int64, sessionID int64, plan string)
 	GetUserAnswer(ctx context.Context, userID int64) (string, error)
 }
 

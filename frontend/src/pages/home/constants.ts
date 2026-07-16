@@ -1,10 +1,9 @@
-import { Bot, Braces, Code2, Coffee, Goal, Grid, Pi, Server, Star } from 'lucide-react'
+import { Bot, Braces, Code2, Coffee, Goal, Grid, Pi, Server } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export type CategoryItem = { key: string; label: string; icon: LucideIcon; tag?: string }
 
 export const categories: CategoryItem[] = [
-  { key: 'follow', label: '关注', icon: Star },
   { key: 'all', label: '全部', icon: Grid },
   { key: 'frontend', label: '前端', tag: '前端', icon: Code2 },
   { key: 'backend', label: '后端', tag: '后端', icon: Server },
@@ -19,19 +18,6 @@ export const getRequestTag = (categoryKey: string): string => {
   const match = categories.find(cat => cat.key === categoryKey)
   return match?.tag ?? match?.label ?? categoryKey
 }
-
-export const mockHotPosts = [
-  { id: 1, title: 'React 18 并发特性最佳实践', heat: 985 },
-  { id: 2, title: 'Go 微服务网关设计要点', heat: 912 },
-  { id: 3, title: 'Tailwind 设计系统落地经验', heat: 876 },
-  { id: 4, title: '前端性能优化 25 条检查清单', heat: 844 },
-  { id: 5, title: '数据库索引失效的常见原因', heat: 828 },
-  { id: 6, title: 'Vue3 + Vite 项目工程化模板', heat: 801 },
-  { id: 7, title: 'Rust 学习路径与上手案例', heat: 776 },
-  { id: 8, title: 'K8s 部署流水线实战分享', heat: 754 },
-  { id: 9, title: '前后端接口约定与错误码规范', heat: 731 },
-  { id: 10, title: '设计师和工程师协作的 7 个技巧', heat: 702 },
-]
 
 export const FETCH_TIMEOUT_MS = 8000
 export const DEFAULT_PAGE_SIZE = 10

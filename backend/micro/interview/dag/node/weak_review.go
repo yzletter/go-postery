@@ -32,7 +32,7 @@ func NewWeakReviewNodeBuilder(callbacks FrontendCallbacks, longTermMemory *memor
 
 func (builder *WeakReviewNodeBuilder) Build(ctx context.Context, input *RunState) (*RunState, error) {
 	if len(input.InterviewState.QAHistory) == 0 {
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageTerminated, "面试未作答即终止，不生成评估报告。")
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageTerminated, "面试未作答即终止，不生成评估报告。")
 		if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {
 			slog.Error("upsert session failed", "user_id", input.UserID, "session_id", input.ID, "error", err)
 			return input, err
@@ -41,13 +41,13 @@ func (builder *WeakReviewNodeBuilder) Build(ctx context.Context, input *RunState
 	}
 
 	if input.UserTerminated {
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageTerminated, fmt.Sprintf("用户主动终止面试（已完成 %d/%d 题）", len(input.InterviewState.QAHistory), input.InterviewState.TotalQuestions))
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageTerminated, fmt.Sprintf("用户主动终止面试（已完成 %d/%d 题）", len(input.InterviewState.QAHistory), input.InterviewState.TotalQuestions))
 	}
 
 	// 遍历历史回答
 	if len(input.InterviewState.QAHistory) == 0 {
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageWeakReviewStart, "正在检查低分题目...")
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageWeakReviewDone, "暂无答题记录，跳过低分题目巩固")
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageWeakReviewStart, "正在检查低分题目...")
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageWeakReviewDone, "暂无答题记录，跳过低分题目巩固")
 		if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {
 			slog.Error("upsert session failed", "user_id", input.UserID, "session_id", input.ID, "error", err)
 			return input, err
@@ -61,8 +61,8 @@ func (builder *WeakReviewNodeBuilder) Build(ctx context.Context, input *RunState
 		}
 	}
 	if len(weakQAPairs) == 0 {
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageWeakReviewStart, "正在检查低分题目...")
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageWeakReviewDone, "没有低分题目需要巩固")
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageWeakReviewStart, "正在检查低分题目...")
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageWeakReviewDone, "没有低分题目需要巩固")
 		if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {
 			slog.Error("upsert session failed", "user_id", input.UserID, "session_id", input.ID, "error", err)
 			return input, err
@@ -70,7 +70,7 @@ func (builder *WeakReviewNodeBuilder) Build(ctx context.Context, input *RunState
 		return input, nil
 	}
 
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageWeakReviewStart, fmt.Sprintf("正在对 %d 道低分题目进行巩固...", len(weakQAPairs)))
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageWeakReviewStart, fmt.Sprintf("正在对 %d 道低分题目进行巩固...", len(weakQAPairs)))
 
 	for idx, qa := range weakQAPairs {
 		var text string
@@ -150,11 +150,11 @@ func (builder *WeakReviewNodeBuilder) Build(ctx context.Context, input *RunState
 
 		// 返回前端
 		if text != "" {
-			builder.Callbacks.OnQuestion(ctx, input.UserID, 0, text)
+			builder.Callbacks.OnQuestion(ctx, input.UserID, input.ID, 0, text)
 		}
 	}
 
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageWeakReviewDone, "低分题目巩固完成")
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageWeakReviewDone, "低分题目巩固完成")
 
 	// 更新会话信息
 	if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {

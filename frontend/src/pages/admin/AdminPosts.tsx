@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RefreshCw, Search, Trash2 } from 'lucide-react'
 import type { Post } from '../../types'
-import { apiDelete } from '../../utils/api'
+import { apiPost } from '../../utils/api'
 import { formatRelativeTime } from '../../utils/date'
 import { normalizeId } from '../../utils/id'
 import { fetchPosts } from '../home/fetchPosts'
@@ -61,7 +61,7 @@ export default function AdminPosts() {
 
     setDeletingId(id)
     try {
-      await apiDelete(`/posts/${encodeURIComponent(id)}`)
+      await apiPost(`/posts/${encodeURIComponent(id)}/delete`, null)
       await load()
     } catch (err) {
       const message = err instanceof Error ? err.message : '删除失败'

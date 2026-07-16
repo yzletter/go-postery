@@ -99,7 +99,7 @@ func main() {
 
 	// Service 层
 	UserService := service.NewUserService(UserRepo, InteractiveManager, RankManager, OSSManager, IDGenerator) // 注册 UserService
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix) // 注册指标服务
 
 	// gRPC Server 层

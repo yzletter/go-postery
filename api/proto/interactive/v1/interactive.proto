@@ -81,6 +81,7 @@ message InteractiveComment {
   int64 ReplyID = 4;
   int64 UserID = 5;
   string Content = 6;
+  string CreatedAt = 7;
 }
 
 message CommentsResponse {

@@ -7,12 +7,13 @@ import (
 )
 
 type Comment struct {
-	ID       int64  // 评论 ID
-	PostID   int64  // 帖子 ID
-	ParentID int64  // 父评论 ID, 可为空
-	ReplyID  int64  // 回复的评论 ID, 可为空
-	UserID   int64  // 评论者 ID
-	Content  string // 评论内容
+	ID        int64     // 评论 ID
+	PostID    int64     // 帖子 ID
+	ParentID  int64     // 父评论 ID, 可为空
+	ReplyID   int64     // 回复的评论 ID, 可为空
+	UserID    int64     // 评论者 ID
+	Content   string    // 评论内容
+	CreatedAt time.Time // 评论时间
 }
 
 type Follow struct {
@@ -60,12 +61,13 @@ const (
 
 func ToCommentDomain(comment model.Comment) Comment {
 	return Comment{
-		ID:       comment.ID,
-		PostID:   comment.PostID,
-		ParentID: comment.ParentID,
-		ReplyID:  comment.ReplyID,
-		UserID:   comment.UserID,
-		Content:  comment.Content,
+		ID:        comment.ID,
+		PostID:    comment.PostID,
+		ParentID:  comment.ParentID,
+		ReplyID:   comment.ReplyID,
+		UserID:    comment.UserID,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt,
 	}
 }
 

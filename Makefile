@@ -96,6 +96,14 @@ build-docker:
 	# docker rm -f go-postery-interview 2>/dev/null || true
 	# docker run -d --name go-postery-interview --restart unless-stopped --network host -v /var/log/go-postery-interview:/app/logs docker.io/yzletter666/go-postery-interview:v0.0.1
 
+	@docker build --platform=linux/amd64 -t go-postery-bff:v0.0.1 -f ./docker/Dockerfile_bff .
+	@docker tag go-postery-bff:v0.0.1 yzletter666/go-postery-bff:v0.0.1
+	@docker push yzletter666/go-postery-bff:v0.0.1
+	# Linux 部署：
+	# docker pull yzletter666/go-postery-bff:v0.0.1
+	# docker rm -f go-postery-bff 2>/dev/null || true
+	# docker run -d --name go-postery-bff --restart unless-stopped --network host -v /var/log/go-postery-bff:/app/logs docker.io/yzletter666/go-postery-bff:v0.0.1
+
 build:
 	@rm -rf ./app/linux || true
 	@go mod tidy

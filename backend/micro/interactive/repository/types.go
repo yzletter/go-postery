@@ -170,7 +170,7 @@ type InteractiveRepository interface {
 	//	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrUniqueKey: 评论的雪花 ID 冲突
-	CreateComment(ctx context.Context, comment domain.Comment, events ...*event.OutboxEvent) error
+	CreateComment(ctx context.Context, comment domain.Comment, events ...*event.OutboxEvent) (domain.Comment, error)
 
 	// GetCommentByID 根据 ID 获取评论
 	//

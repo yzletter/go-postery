@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink, RefreshCw, Search, Trash2, UserRound } from 'lucide-react'
 import UserAvatar from '../../components/UserAvatar'
 import type { Post, UserDetail } from '../../types'
-import { apiDelete, apiGet } from '../../utils/api'
+import { apiGet, apiPost } from '../../utils/api'
 import { formatRelativeTime } from '../../utils/date'
 import { normalizeId } from '../../utils/id'
 import { normalizePost } from '../../utils/post'
@@ -14,6 +14,8 @@ export default function AdminUsers() {
   const [userId, setUserId] = useState<string>('')
   const [profile, setProfile] = useState<UserDetail | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
+  const [postsTotal, setPostsTotal] = useState<number | null>(null)
+  const [postsHasMore, setPostsHasMore] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [postsError, setPostsError] = useState<string | null>(null)
@@ -32,6 +34,7 @@ export default function AdminUsers() {
       posts: any[]
       total?: number
       hasMore?: boolean
+      has_more?: boolean
     }>(`/users/${encodeURIComponent(normalizedUserId)}/posts?pageNo=1&pageSize=50`)
 
     const [profileResult, postsResult] = await Promise.allSettled([profileTask, postsTask])
@@ -50,20 +53,15 @@ export default function AdminUsers() {
     if (postsResult.status === 'fulfilled') {
       const data = postsResult.value.data
       const rawList = Array.isArray(data?.posts) ? data.posts : []
-      const normalized = rawList.map((item: any) => {
-        const post = normalizePost(item)
-        return {
-          ...post,
-          views: post.views ?? 0,
-          likes: post.likes ?? 0,
-          comments: post.comments ?? 0,
-        }
-      })
-      setPosts(normalized)
+      setPosts(rawList.map((item: any) => normalizePost(item)))
+      setPostsTotal(typeof data?.total === 'number' ? data.total : null)
+      setPostsHasMore(Boolean(data?.has_more ?? data?.hasMore))
     } else {
       const message = postsResult.reason instanceof Error ? postsResult.reason.message : '获取用户帖子失败'
       setPostsError(message)
       setPosts([])
+      setPostsTotal(null)
+      setPostsHasMore(false)
     }
 
     setIsLoading(false)
@@ -83,7 +81,7 @@ export default function AdminUsers() {
 
     setDeletingId(id)
     try {
-      await apiDelete(`/posts/${encodeURIComponent(id)}`)
+      await apiPost(`/posts/${encodeURIComponent(id)}/delete`, null)
       if (userId) {
         await loadUser(userId)
       }
@@ -174,7 +172,9 @@ export default function AdminUsers() {
                     <span className="text-xs text-gray-500">#{userId}</span>
                   </div>
                   <div className="text-sm text-gray-600 truncate">
-                    {profile?.email ? profile.email : '未设置邮箱'}
+                    {profile?.bio ||
+                      [profile?.country, profile?.location].filter(Boolean).join(' · ') ||
+                      '暂无个人简介'}
                   </div>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function AdminUsers() {
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
                   <UserRound className="h-4 w-4 text-primary-600" />
-                  {posts.length} 篇帖子
+                  {postsTotal === null ? `已加载 ${posts.length} 篇帖子` : `${postsTotal} 篇帖子`}
                 </span>
               </div>
             </div>
@@ -193,6 +193,11 @@ export default function AdminUsers() {
               <h3 className="text-base font-semibold text-gray-900">用户帖子</h3>
               {postsError && <span className="text-sm text-red-600">{postsError}</span>}
             </div>
+            {postsHasMore && (
+              <p className="text-sm text-amber-700">
+                共 {postsTotal ?? '多于 50'} 篇帖子，当前页面仅显示接口返回的前 50 篇。
+              </p>
+            )}
 
             <div className="overflow-x-auto border border-gray-100 rounded-xl bg-white/60">
               <table className="min-w-full text-sm">
@@ -201,7 +206,7 @@ export default function AdminUsers() {
                     <th className="text-left font-medium px-4 py-3">ID</th>
                     <th className="text-left font-medium px-4 py-3">标题</th>
                     <th className="text-left font-medium px-4 py-3">创建</th>
-                    <th className="text-left font-medium px-4 py-3">数据</th>
+                    <th className="text-left font-medium px-4 py-3">互动数据</th>
                     <th className="text-right font-medium px-4 py-3">操作</th>
                   </tr>
                 </thead>
@@ -228,10 +233,10 @@ export default function AdminUsers() {
                             </Link>
                           </td>
                           <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                            {formatRelativeTime(post.createdAt)}
+                            {formatRelativeTime(post.createdAt, '—')}
                           </td>
-                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                            {post.views ?? 0} 浏览 · {post.likes ?? 0} 赞 · {post.comments ?? 0} 评论
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                            接口未提供
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-2">

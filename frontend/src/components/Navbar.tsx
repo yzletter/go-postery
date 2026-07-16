@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, Bot, HeartHandshake, Send, Sparkles, Shield } from 'lucide-react'
+import { MessageSquare, Plus, LogOut, LogIn, User, Search, Settings, GraduationCap, HeartHandshake, Send, Sparkles } from 'lucide-react'
 import UserAvatar from './UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
-import { isAdminUser } from '../utils/admin'
 
 type SearchInputProps = {
   value: string
@@ -18,7 +17,7 @@ function SearchInput({ value, onChange }: SearchInputProps) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="搜索帖子标题、内容或作者..."
+        placeholder="搜索帖子标题或正文..."
         className="input w-full pl-10 pr-4 h-11"
       />
     </div>
@@ -32,7 +31,6 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const profileLink = user?.id ? `/users/${user.id}` : '/profile'
-  const showAdmin = isAdminUser(user)
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -73,26 +71,18 @@ export default function Navbar() {
               <Search className="h-5 w-5" />
             </button>
             <Link
-              to="/agent"
+              to="/interview-agent"
+              aria-label="面试 Agent"
               className="relative overflow-hidden group flex items-center gap-2 px-3.5 py-2 rounded-full border border-primary-100 bg-gradient-to-r from-primary-50 via-white to-white text-primary-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
               <span className="absolute inset-0 bg-primary-100/40 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" aria-hidden />
-              <Bot className="h-5 w-5 relative z-10" />
-              <span className="hidden sm:inline font-semibold relative z-10">AI 助手</span>
+              <GraduationCap className="h-5 w-5 relative z-10" />
+              <span className="hidden sm:inline font-semibold relative z-10">面试 Agent</span>
               <span className="hidden sm:inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-white/70 border border-primary-100 text-primary-700 relative z-10">
                 <Sparkles className="h-3 w-3" />
                 新
               </span>
             </Link>
-            {showAdmin && (
-              <Link
-                to="/admin"
-                className="btn-secondary flex items-center space-x-2"
-              >
-                <Shield className="h-5 w-5" />
-                <span className="hidden sm:inline">后台</span>
-              </Link>
-            )}
             {user ? (
               <>
                 <Link

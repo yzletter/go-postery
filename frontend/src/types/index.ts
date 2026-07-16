@@ -9,14 +9,12 @@ export type Id = string
 export interface User {
   id?: Id
   name: string
-  email?: string
   avatar?: string
 }
 
 export interface UserDetail {
   id: Id
   name: string
-  email?: string
   avatar?: string
   bio?: string
   gender?: number

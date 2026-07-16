@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"time"
 
 	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
@@ -162,11 +163,12 @@ func (server *InteractiveServiceServer) HealthCheck(ctx context.Context, req *in
 
 func toComment(comment domain.Comment) *interactive_grpc.InteractiveComment {
 	return &interactive_grpc.InteractiveComment{
-		ID:       comment.ID,
-		PostID:   comment.PostID,
-		ParentID: comment.ParentID,
-		ReplyID:  comment.ReplyID,
-		UserID:   comment.UserID,
-		Content:  comment.Content,
+		ID:        comment.ID,
+		PostID:    comment.PostID,
+		ParentID:  comment.ParentID,
+		ReplyID:   comment.ReplyID,
+		UserID:    comment.UserID,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt.Format(time.RFC3339),
 	}
 }

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Users, HeartHandshake, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, Users, HeartHandshake } from 'lucide-react'
 import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
 import type { FollowRelation, FollowUser } from '../types'
 import { followUser, getFollowRelation, isFollowing, listFollowers, listFollowees, unfollowUser } from '../utils/follow'
 
-type TabKey = 'following' | 'followers' | 'blocked'
+type TabKey = 'following' | 'followers'
 
 const relationLabelMap: Record<FollowRelation, string> = {
   0: '互不关注',
@@ -20,62 +20,53 @@ export default function Follows() {
   const [activeTab, setActiveTab] = useState<TabKey>('following')
   const [followees, setFollowees] = useState<FollowUser[]>([])
   const [followers, setFollowers] = useState<FollowUser[]>([])
+  const [followeesTotal, setFolloweesTotal] = useState<number | null>(null)
+  const [followersTotal, setFollowersTotal] = useState<number | null>(null)
+  const [followeesHasMore, setFolloweesHasMore] = useState(false)
+  const [followersHasMore, setFollowersHasMore] = useState(false)
   const [followeesLoading, setFolloweesLoading] = useState(false)
   const [followersLoading, setFollowersLoading] = useState(false)
   const [followeesError, setFolloweesError] = useState<string | null>(null)
   const [followersError, setFollowersError] = useState<string | null>(null)
   const [relationById, setRelationById] = useState<Record<string, FollowRelation>>({})
+  const [relationErrorById, setRelationErrorById] = useState<Record<string, boolean>>({})
   const [actingId, setActingId] = useState<string | null>(null)
-
-  const hydrateRelations = useCallback(async (users: FollowUser[]) => {
-    if (!users.length) return
-
-    const entries = await Promise.all(
-      users.map(async (u) => {
-        try {
-          const relation = await getFollowRelation(u.id)
-          return [u.id, relation] as const
-        } catch {
-          return [u.id, 0 as FollowRelation] as const
-        }
-      })
-    )
-
-    setRelationById(prev => ({
-      ...prev,
-      ...Object.fromEntries(entries),
-    }))
-  }, [])
 
   const reloadFollowees = useCallback(async () => {
     setFolloweesLoading(true)
     setFolloweesError(null)
     try {
-      const list = await listFollowees()
-      setFollowees(list)
-      await hydrateRelations(list)
+      const { users, total, hasMore } = await listFollowees()
+      setFollowees(users)
+      setFolloweesTotal(total)
+      setFolloweesHasMore(hasMore)
     } catch (error) {
       setFollowees([])
+      setFolloweesTotal(null)
+      setFolloweesHasMore(false)
       setFolloweesError(error instanceof Error ? error.message : '获取关注列表失败')
     } finally {
       setFolloweesLoading(false)
     }
-  }, [hydrateRelations])
+  }, [])
 
   const reloadFollowers = useCallback(async () => {
     setFollowersLoading(true)
     setFollowersError(null)
     try {
-      const list = await listFollowers()
-      setFollowers(list)
-      await hydrateRelations(list)
+      const { users, total, hasMore } = await listFollowers()
+      setFollowers(users)
+      setFollowersTotal(total)
+      setFollowersHasMore(hasMore)
     } catch (error) {
       setFollowers([])
+      setFollowersTotal(null)
+      setFollowersHasMore(false)
       setFollowersError(error instanceof Error ? error.message : '获取粉丝列表失败')
     } finally {
       setFollowersLoading(false)
     }
-  }, [hydrateRelations])
+  }, [])
 
   useEffect(() => {
     if (!user) return
@@ -83,11 +74,40 @@ export default function Follows() {
     void reloadFollowers()
   }, [reloadFollowers, reloadFollowees, user])
 
-  const current = useMemo(() => {
-    const blocked: FollowUser[] = []
-    const blockedHint = '后端暂未提供黑名单接口'
-    const isBlockedTab = activeTab === 'blocked'
+  // 两个列表本身已经能推导大多数关系，避免为每个用户额外请求一次关系接口。
+  useEffect(() => {
+    const followeeIds = new Set(followees.map((item) => item.id))
+    const followerIds = new Set(followers.map((item) => item.id))
+    const nextRelations: Record<string, FollowRelation> = {}
+    const nextUnknown: Record<string, boolean> = {}
 
+    followees.forEach((item) => {
+      nextRelations[item.id] = followerIds.has(item.id) ? 3 : 1
+    })
+
+    const followeesIncomplete =
+      followeesLoading || Boolean(followeesError) || followeesHasMore
+    followers.forEach((item) => {
+      if (followeeIds.has(item.id)) {
+        nextRelations[item.id] = 3
+      } else if (followeesIncomplete) {
+        nextUnknown[item.id] = true
+      } else {
+        nextRelations[item.id] = 2
+      }
+    })
+
+    setRelationById(nextRelations)
+    setRelationErrorById(nextUnknown)
+  }, [
+    followees,
+    followeesError,
+    followeesHasMore,
+    followeesLoading,
+    followers,
+  ])
+
+  const current = useMemo(() => {
     if (activeTab === 'following') {
       return {
         label: '我关注的',
@@ -95,42 +115,59 @@ export default function Follows() {
         data: followees,
         isLoading: followeesLoading,
         error: followeesError,
-        hint: '',
-        isReadOnly: false,
-      }
-    }
-
-    if (activeTab === 'followers') {
-      return {
-        label: '关注我的',
-        icon: <Users className="h-4 w-4" />,
-        data: followers,
-        isLoading: followersLoading,
-        error: followersError,
-        hint: '',
-        isReadOnly: false,
+        hasMore: followeesHasMore,
+        total: followeesTotal,
       }
     }
 
     return {
-      label: '黑名单',
-      icon: <ShieldAlert className="h-4 w-4" />,
-      data: blocked,
-      isLoading: false,
-      error: null as string | null,
-      hint: isBlockedTab ? blockedHint : '',
-      isReadOnly: true,
+      label: '关注我的',
+      icon: <Users className="h-4 w-4" />,
+      data: followers,
+      isLoading: followersLoading,
+      error: followersError,
+      hasMore: followersHasMore,
+      total: followersTotal,
     }
-  }, [activeTab, followees, followeesError, followeesLoading, followers, followersError, followersLoading])
+  }, [
+    activeTab,
+    followees,
+    followeesError,
+    followeesHasMore,
+    followeesLoading,
+    followeesTotal,
+    followers,
+    followersError,
+    followersHasMore,
+    followersLoading,
+    followersTotal,
+  ])
 
   const tabConfig = useMemo(
     () => ({
-      following: { label: '我关注的', count: followees.length, icon: <HeartHandshake className="h-4 w-4" /> },
-      followers: { label: '关注我的', count: followers.length, icon: <Users className="h-4 w-4" /> },
-      blocked: { label: '黑名单', count: 0, icon: <ShieldAlert className="h-4 w-4" /> },
+      following: { label: '我关注的', count: followeesTotal ?? '—', icon: <HeartHandshake className="h-4 w-4" /> },
+      followers: { label: '关注我的', count: followersTotal ?? '—', icon: <Users className="h-4 w-4" /> },
     }),
-    [followees.length, followers.length]
+    [followeesTotal, followersTotal]
   )
+
+  const handleRetryRelation = useCallback(async (target: FollowUser) => {
+    if (actingId) return
+    setActingId(target.id)
+    try {
+      const relation = await getFollowRelation(target.id)
+      setRelationById(prev => ({ ...prev, [target.id]: relation }))
+      setRelationErrorById(prev => {
+        const next = { ...prev }
+        delete next[target.id]
+        return next
+      })
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '获取关注关系失败')
+    } finally {
+      setActingId(null)
+    }
+  }, [actingId])
 
   const handleToggleFollow = useCallback(
     async (target: FollowUser) => {
@@ -145,15 +182,23 @@ export default function Follows() {
         if (shouldUnfollow) {
           await unfollowUser(target.id)
           setFollowees(prev => prev.filter(u => u.id !== target.id))
-          const nextRelation = await getFollowRelation(target.id)
-          setRelationById(prev => ({ ...prev, [target.id]: nextRelation }))
+          setFolloweesTotal(prev => (prev == null ? prev : Math.max(0, prev - 1)))
+          setRelationById(prev => ({
+            ...prev,
+            [target.id]: currentRelation === 3 ? 2 : 0,
+          }))
           return
         }
 
         await followUser(target.id)
-        setFollowees(prev => (prev.some(u => u.id === target.id) ? prev : [target, ...prev]))
-        const nextRelation = await getFollowRelation(target.id)
-        setRelationById(prev => ({ ...prev, [target.id]: nextRelation }))
+        if (!followees.some(u => u.id === target.id)) {
+          setFollowees(prev => [target, ...prev])
+          setFolloweesTotal(prev => (prev == null ? prev : prev + 1))
+        }
+        setRelationById(prev => ({
+          ...prev,
+          [target.id]: currentRelation === 2 ? 3 : 1,
+        }))
       } catch (error) {
         console.error('更新关注关系失败:', error)
         alert(error instanceof Error ? error.message : '更新关注关系失败')
@@ -161,7 +206,7 @@ export default function Follows() {
         setActingId(null)
       }
     },
-    [actingId, activeTab, relationById, user]
+    [actingId, activeTab, followees, relationById, user]
   )
 
   const handleRetry = useCallback(() => {
@@ -223,8 +268,10 @@ export default function Follows() {
               {current.icon}
               <h2 className="text-lg font-semibold text-gray-900">{current.label}</h2>
             </div>
-            {current.hint ? (
-              <span className="text-xs text-gray-500">{current.hint}</span>
+            {current.hasMore ? (
+              <span className="text-xs text-amber-700">
+                当前展示前 {current.data.length} / {current.total ?? '更多'} 人
+              </span>
             ) : null}
           </div>
           {current.isLoading ? (
@@ -244,9 +291,14 @@ export default function Follows() {
                 const relation = relationById[item.id]
                 const relationToShow =
                   relation ?? (activeTab === 'following' ? (1 as FollowRelation) : undefined)
-                const label = relationToShow !== undefined ? relationLabelMap[relationToShow] : '加载中...'
+                const relationFailed = Boolean(relationErrorById[item.id])
+                const label = relationFailed
+                  ? '关注状态需单独确认'
+                  : relationToShow !== undefined
+                    ? relationLabelMap[relationToShow]
+                    : '加载中...'
                 const canToggle =
-                  !current.isReadOnly && (activeTab === 'following' ? true : relation !== undefined)
+                  !relationFailed && (activeTab === 'following' ? true : relation !== undefined)
                 const isActing = actingId === item.id
                 const followButtonText = canToggle
                   ? isFollowing(relationToShow ?? 0) || activeTab === 'following'
@@ -281,7 +333,16 @@ export default function Follows() {
                       </Link>
                       <p className="text-xs text-gray-500 line-clamp-1">{label}</p>
                     </div>
-                    {!current.isReadOnly && (
+                    {relationFailed ? (
+                      <button
+                        type="button"
+                        disabled={isActing}
+                        onClick={() => void handleRetryRelation(item)}
+                        className="text-xs text-primary-600 font-medium hover:text-primary-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {isActing ? '查询中...' : '查询状态'}
+                      </button>
+                    ) : (
                       <button
                         type="button"
                         disabled={!canToggle || isActing}

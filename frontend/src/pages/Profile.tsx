@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
-  Heart,
   PenSquare,
   Settings,
-  Share2,
-  Users,
   HeartHandshake,
   Send,
 } from 'lucide-react'
@@ -30,10 +27,13 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [recentPosts, setRecentPosts] = useState<Post[]>([])
+  const [recentTotal, setRecentTotal] = useState<number | null>(null)
+  const [recentHasMore, setRecentHasMore] = useState(false)
   const [isRecentLoading, setIsRecentLoading] = useState(true)
   const [recentError, setRecentError] = useState<string | null>(null)
   const [followRelation, setFollowRelation] = useState<FollowRelation | null>(null)
   const [isFollowLoading, setIsFollowLoading] = useState(false)
+  const [followRelationError, setFollowRelationError] = useState(false)
 
   const resolvedUserId = userId ?? (user?.id != null ? String(user.id) : '')
   const isCurrentUser = userId
@@ -43,7 +43,6 @@ export default function Profile() {
     profileInfo?.name ||
     locationState.username ||
     (isCurrentUser ? user?.name : undefined) ||
-    user?.name ||
     (resolvedUserId ? `用户 ${resolvedUserId}` : '个人主页')
   const displayUserId = profileInfo?.id || resolvedUserId
   const subtitle = isCurrentUser
@@ -67,10 +66,12 @@ export default function Profile() {
     }
   })()
   const summaryStats = [
-    { key: 'posts', label: '帖子', value: '12', icon: <PenSquare className="h-4 w-4 text-primary-600" /> },
-    { key: 'followers', label: '关注者', value: '89', icon: <Users className="h-4 w-4 text-primary-600" /> },
-    { key: 'likes', label: '获赞', value: '326', icon: <Heart className="h-4 w-4 text-primary-600" /> },
-    { key: 'share', label: '分享', value: '34', icon: <Share2 className="h-4 w-4 text-primary-600" /> },
+    {
+      key: 'posts',
+      label: '帖子',
+      value: recentTotal == null ? '—' : recentTotal.toLocaleString('zh-CN'),
+      icon: <PenSquare className="h-4 w-4 text-primary-600" />,
+    },
   ]
   const detailStatus = isLoading ? '资料加载中...' : error ? '加载失败' : '最新资料'
   const actionButtons = (
@@ -86,57 +87,51 @@ export default function Profile() {
     </div>
   )
 
-  useEffect(() => {
+  const loadFollowRelation = useCallback(async () => {
     if (!user || isCurrentUser || !resolvedUserId) {
       setFollowRelation(null)
+      setFollowRelationError(false)
       return
     }
 
-    let cancelled = false
     setIsFollowLoading(true)
-
-    getFollowRelation(resolvedUserId)
-      .then((relation) => {
-        if (!cancelled) {
-          setFollowRelation(relation)
-        }
-      })
-      .catch((error) => {
-        console.warn('Failed to fetch follow relation:', error)
-        if (!cancelled) {
-          setFollowRelation(null)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsFollowLoading(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
+    setFollowRelationError(false)
+    try {
+      const relation = await getFollowRelation(resolvedUserId)
+      setFollowRelation(relation)
+    } catch (error) {
+      console.warn('Failed to fetch follow relation:', error)
+      setFollowRelation(null)
+      setFollowRelationError(true)
+    } finally {
+      setIsFollowLoading(false)
     }
   }, [isCurrentUser, resolvedUserId, user])
 
+  useEffect(() => {
+    void loadFollowRelation()
+  }, [loadFollowRelation])
+
   const handleToggleFollow = async () => {
-    if (!user || isCurrentUser || !resolvedUserId || isFollowLoading) return
+    if (!user || isCurrentUser || !resolvedUserId || isFollowLoading || followRelation === null) return
 
     const prev = followRelation
-    const relation = followRelation ?? 0
+    const relation = followRelation
 
     setIsFollowLoading(true)
+    setFollowRelationError(false)
     try {
       if (isFollowing(relation)) {
         await unfollowUser(resolvedUserId)
+        setFollowRelation(relation === 3 ? 2 : 0)
       } else {
         await followUser(resolvedUserId)
+        setFollowRelation(relation === 2 ? 3 : 1)
       }
-
-      const next = await getFollowRelation(resolvedUserId)
-      setFollowRelation(next)
     } catch (error) {
       console.error('更新关注关系失败:', error)
       setFollowRelation(prev)
+      setFollowRelationError(true)
       alert(error instanceof Error ? error.message : '更新关注关系失败')
     } finally {
       setIsFollowLoading(false)
@@ -156,6 +151,7 @@ export default function Profile() {
     const fetchProfile = async () => {
       setIsLoading(true)
       setError(null)
+      setProfileInfo(null)
 
       try {
         const { data } = await apiGet<UserDetail>(`/users/${resolvedUserId}`)
@@ -184,6 +180,8 @@ export default function Profile() {
   useEffect(() => {
     if (!resolvedUserId) {
       setRecentPosts([])
+      setRecentTotal(null)
+      setRecentHasMore(false)
       setIsRecentLoading(false)
       setRecentError(null)
       return
@@ -195,11 +193,15 @@ export default function Profile() {
     const fetchRecentPosts = async () => {
       setIsRecentLoading(true)
       setRecentError(null)
+      setRecentPosts([])
+      setRecentTotal(null)
+      setRecentHasMore(false)
 
       try {
         const { data } = await apiGet<{
           posts: any[]
           total?: number
+          has_more?: boolean
           hasMore?: boolean
         }>(`/users/${resolvedUserId}/posts?pageNo=1&pageSize=20`, { signal: controller.signal })
         if (!isMounted) return
@@ -208,21 +210,29 @@ export default function Profile() {
 
         const normalized = rawList.map((item: any) => {
           const post = normalizePost(item)
+          const createdAt =
+            item?.created_at ??
+            item?.createdAt ??
+            item?.CreatedAt ??
+            ''
           return {
             ...post,
-            views: post.views ?? 0,
-            likes: post.likes ?? 0,
-            comments: post.comments ?? 0,
+            createdAt: typeof createdAt === 'string' ? createdAt.trim() : '',
           }
         })
+        const total = Number(data?.total)
 
         setRecentPosts(normalized)
+        setRecentTotal(Number.isFinite(total) && total >= 0 ? total : null)
+        setRecentHasMore(Boolean(data?.has_more ?? data?.hasMore))
       } catch (err) {
         if (!isMounted) return
         console.error('Failed to fetch recent posts:', err)
         const message = err instanceof Error ? err.message : '获取最近动态失败'
         setRecentError(message)
         setRecentPosts([])
+        setRecentTotal(null)
+        setRecentHasMore(false)
       } finally {
         if (isMounted) {
           setIsRecentLoading(false)
@@ -289,14 +299,24 @@ export default function Profile() {
                 {user ? (
                   <button
                     type="button"
-                    onClick={() => void handleToggleFollow()}
-                    disabled={isFollowLoading}
+                    onClick={() => {
+                      if (followRelationError) {
+                        void loadFollowRelation()
+                        return
+                      }
+                      void handleToggleFollow()
+                    }}
+                    disabled={isFollowLoading || (!followRelationError && followRelation === null)}
                     className="btn-secondary flex items-center space-x-2 shadow-sm hover:-translate-y-0.5 transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <HeartHandshake className="h-4 w-4" />
                     <span>
                       {isFollowLoading
-                        ? '处理中...'
+                        ? followRelation === null
+                          ? '获取关注状态...'
+                          : '处理中...'
+                        : followRelationError
+                          ? '重试关注状态'
                         : isFollowing(followRelation ?? 0)
                           ? '取消关注'
                           : followRelation === 2
@@ -324,7 +344,7 @@ export default function Profile() {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {summaryStats.map((stat) => (
               <div
                 key={stat.key}
@@ -361,7 +381,6 @@ export default function Profile() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <InfoItem label="性别" value={genderLabel} />
             <InfoItem label="生日" value={formatDate(profileInfo?.birthday)} />
-            <InfoItem label="邮箱" value={profileInfo?.email || '—'} />
             <InfoItem label="国家" value={profileInfo?.country || '—'} />
             <InfoItem label="所在地" value={profileInfo?.location || '—'} />
             <InfoItem label="最近登录 IP" value={profileInfo?.lastLoginIP || '—'} />
@@ -407,13 +426,19 @@ export default function Profile() {
                   <div>
                     <p className="text-gray-900 font-medium line-clamp-1">{post.title}</p>
                     <p className="text-xs text-gray-500">
-                      更新于 {formatRelativeTime(post.createdAt, '刚刚')}
+                      发布时间：{formatRelativeTime(post.createdAt, '时间未提供')}
                     </p>
                   </div>
                 </div>
-                <div className="text-sm text-gray-500">浏览 {post.views ?? 0}</div>
+                <div className="text-sm text-primary-600">查看详情</div>
               </Link>
             ))}
+            {!isRecentLoading && !recentError && recentPosts.length > 0 && recentTotal != null && (
+              <div className="py-3 px-2 text-xs text-gray-500">
+                已展示 {recentPosts.length} / {recentTotal} 条动态
+                {recentHasMore ? '，还有更多内容' : ''}
+              </div>
+            )}
           </div>
         </div>
       </div>

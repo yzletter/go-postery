@@ -28,6 +28,7 @@ export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
 }
 
 const AUTH_COOKIE_KEY = 'x-jwt-token'
+const unauthorizedListeners = new Set<() => void>()
 
 const syncAuthCookie = (token: string | null) => {
   if (typeof document === 'undefined') return
@@ -71,6 +72,21 @@ function persistAuthToken(token: string | null) {
 
   localStorage.setItem('token', normalized)
   syncAuthCookie(normalized)
+}
+
+export function clearAuthToken() {
+  persistAuthToken(null)
+}
+
+export function onUnauthorized(listener: () => void) {
+  unauthorizedListeners.add(listener)
+  return () => {
+    unauthorizedListeners.delete(listener)
+  }
+}
+
+const notifyUnauthorized = () => {
+  unauthorizedListeners.forEach((listener) => listener())
 }
 
 function buildHeaders(options: ApiRequestOptions, token: string | null, isJsonBody: boolean) {
@@ -122,7 +138,8 @@ export async function apiRequest<T>(
     persistAuthToken(nextToken)
   }
   if (response.status === 401) {
-    persistAuthToken(null)
+    clearAuthToken()
+    notifyUnauthorized()
   }
 
   let payload: ApiResponse<T> | null = null

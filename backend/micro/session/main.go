@@ -98,7 +98,7 @@ func main() {
 
 	// Service 层
 	SessionService := service.NewSessionService(WSGatewayManager, SessionRepo, MessageRepo, RabbitMQ, SessionKafkaConsumer, IDGenerator) // 注册 SessionService
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix)
 
 	go SessionService.StartSessionRegisterConsumer(ctx) // 开启协程注册新用户聊天功能

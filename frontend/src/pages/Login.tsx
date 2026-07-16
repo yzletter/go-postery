@@ -37,6 +37,10 @@ export default function Login() {
       setError('请输入手机号')
       return
     }
+    if (!/^\d{11}$/.test(trimmedPhone)) {
+      setError('请输入 11 位手机号')
+      return
+    }
     setIsSendingCode(true)
     try {
       await apiPost(
@@ -63,6 +67,10 @@ export default function Login() {
 
       if (!trimmedPhone) {
         setError('请输入手机号')
+        return
+      }
+      if (!/^\d{11}$/.test(trimmedPhone)) {
+        setError('请输入 11 位手机号')
         return
       }
       if (!trimmedCode) {
@@ -188,8 +196,10 @@ export default function Login() {
                       type="tel"
                       autoComplete="tel"
                       value={loginPhone}
-                      onChange={(e) => setLoginPhone(e.target.value)}
+                      onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
                       placeholder="输入手机号"
+                      inputMode="numeric"
+                      maxLength={11}
                       required
                       className="input pl-10"
                     />

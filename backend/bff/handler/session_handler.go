@@ -36,8 +36,7 @@ func (hdl *SessionHandler) RegisterRouter(engine *gin.RouterGroup, authMiddlewar
 		sessions.POST("/:id/delete", hdl.Delete) // POST /api/v1/sessions/:id/delete										删除当前会话
 	}
 
-	chat := sessions.Group("/target")
-	chat.Use(authMiddleware)
+	chat := sessions.Group("/target/:id")
 	{
 		chat.GET("", hdl.GetSession)                 // GET /api/v1/sessions/target/:id/									获取与对方的会话
 		chat.GET("/messages", hdl.GetHistoryMessage) // GET /api/v1/sessions/target/:id/messages?pageNo=1&pageSize=5		获取与对方会话的聊天记录

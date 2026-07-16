@@ -18,7 +18,7 @@ import { normalizeComment } from '../utils/comment'
 import { normalizeId } from '../utils/id'
 import { formatRelativeTime } from '../utils/date'
 import { useAuth } from '../contexts/AuthContext'
-import { apiDelete, apiGet, apiPost } from '../utils/api'
+import { apiGet, apiPost } from '../utils/api'
 import { buildCommentAuthorMap } from './postDetail/commentModel'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -33,8 +33,38 @@ type ReplyPaginationState = {
   replies: Comment[]
 }
 
+type CommentPageData = {
+  comments?: any[]
+  total?: number
+  hasMore?: boolean
+}
+
 const COMMENTS_PAGE_SIZE = 10
 const REPLIES_PAGE_SIZE = 3
+
+const mergeUniqueComments = (current: Comment[], incoming: Comment[]) => {
+  const seen = new Set<string>()
+  return [...current, ...incoming].filter((comment) => {
+    const commentId = normalizeId(comment.id)
+    if (!commentId || seen.has(commentId)) return false
+    seen.add(commentId)
+    return true
+  })
+}
+
+const sortCommentsByIdAscending = (comments: Comment[]) => (
+  [...comments].sort((left, right) => {
+    const leftId = normalizeId(left.id)
+    const rightId = normalizeId(right.id)
+    try {
+      const leftValue = BigInt(leftId)
+      const rightValue = BigInt(rightId)
+      return leftValue < rightValue ? -1 : leftValue > rightValue ? 1 : 0
+    } catch {
+      return leftId.localeCompare(rightId)
+    }
+  })
+)
 
 const markdownComponents = {
   h1: (props: HTMLAttributes<HTMLHeadingElement>) => (
@@ -121,15 +151,23 @@ export default function PostDetail() {
   const [hasLiked, setHasLiked] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
   const [isCheckingLike, setIsCheckingLike] = useState(false)
+  const [likeStatusError, setLikeStatusError] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<Comment[]>([])
   const [commentTotal, setCommentTotal] = useState<number | null>(null)
+  const [commentsPageNo, setCommentsPageNo] = useState(0)
+  const [commentsHasMore, setCommentsHasMore] = useState(false)
   const [commentsError, setCommentsError] = useState<string | null>(null)
   const [isCommentsLoading, setIsCommentsLoading] = useState(true)
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [replyTarget, setReplyTarget] = useState<Comment | null>(null)
   const [replyPaginationByParentId, setReplyPaginationByParentId] = useState<Record<string, ReplyPaginationState>>({})
+  const pendingCommentsPageRequest = useRef(false)
   const pendingReplyRequests = useRef<Set<string>>(new Set())
   const latestPostIdRef = useRef<string>('')
+  const likePostId = normalizeId(post?.id)
+  const currentUserId = normalizeId(user?.id)
 
   const loadedReplies = useMemo(
     () => Object.values(replyPaginationByParentId).flatMap((state) => state.replies),
@@ -142,6 +180,9 @@ export default function PostDetail() {
 
   useEffect(() => {
     latestPostIdRef.current = normalizeId(id)
+    setCommentsPageNo(0)
+    setCommentsHasMore(false)
+    pendingCommentsPageRequest.current = false
     setReplyPaginationByParentId({})
     pendingReplyRequests.current.clear()
   }, [id])
@@ -152,16 +193,17 @@ export default function PostDetail() {
     setCommentsError(null)
     try {
       const postIdStr = normalizeId(id)
-      const { data } = await apiGet<{
-        comments: any[]
-        total?: number
-        hasMore?: boolean
-      }>(`/posts/${encodeURIComponent(postIdStr)}/comments?pageNo=1&pageSize=${COMMENTS_PAGE_SIZE}`)
+      const { data } = await apiGet<CommentPageData>(
+        `/posts/${encodeURIComponent(postIdStr)}/comments?pageNo=1&pageSize=${COMMENTS_PAGE_SIZE}`
+      )
+      if (latestPostIdRef.current !== postIdStr) return
 
       const parentRawList = Array.isArray(data?.comments) ? data.comments : []
       const parents = parentRawList.map((c: any) => normalizeComment(c))
       setComments(parents)
       setCommentTotal(typeof data?.total === 'number' ? data.total : null)
+      setCommentsPageNo(1)
+      setCommentsHasMore(Boolean(data?.hasMore))
 
       setReplyPaginationByParentId((prev) => {
         const parentIdSet = new Set(parents.map((comment) => normalizeId(comment.id)))
@@ -177,11 +219,48 @@ export default function PostDetail() {
       console.error('获取评论失败:', error)
       setComments([])
       setCommentTotal(null)
+      setCommentsPageNo(0)
+      setCommentsHasMore(false)
       setCommentsError(error instanceof Error ? error.message : '获取评论失败')
     } finally {
       setIsCommentsLoading(false)
     }
   }, [id])
+
+  const loadNextCommentsPage = useCallback(async () => {
+    if (!id || !commentsHasMore || isLoadingMoreComments || pendingCommentsPageRequest.current) {
+      return
+    }
+
+    const postIdStr = normalizeId(id)
+    if (!postIdStr) return
+
+    const nextPageNo = commentsPageNo + 1
+    pendingCommentsPageRequest.current = true
+    setIsLoadingMoreComments(true)
+    setCommentsError(null)
+
+    try {
+      const { data } = await apiGet<CommentPageData>(
+        `/posts/${encodeURIComponent(postIdStr)}/comments?pageNo=${nextPageNo}&pageSize=${COMMENTS_PAGE_SIZE}`
+      )
+      if (latestPostIdRef.current !== postIdStr) return
+
+      const parentRawList = Array.isArray(data?.comments) ? data.comments : []
+      const incoming = parentRawList.map((comment: any) => normalizeComment(comment))
+      setComments((prev) => mergeUniqueComments(prev, incoming))
+      setCommentTotal((prev) => (typeof data?.total === 'number' ? data.total : prev))
+      setCommentsPageNo(nextPageNo)
+      setCommentsHasMore(Boolean(data?.hasMore))
+    } catch (error) {
+      if (latestPostIdRef.current !== postIdStr) return
+      console.error('加载更多评论失败:', error)
+      setCommentsError(error instanceof Error ? error.message : '加载更多评论失败')
+    } finally {
+      pendingCommentsPageRequest.current = false
+      setIsLoadingMoreComments(false)
+    }
+  }, [commentsHasMore, commentsPageNo, id, isLoadingMoreComments])
 
   const loadNextRepliesPage = useCallback(async (rawParentId: string) => {
     if (!id) return
@@ -216,11 +295,7 @@ export default function PostDetail() {
     }))
 
     try {
-      const { data } = await apiGet<{
-        comments: any[]
-        total?: number
-        hasMore?: boolean
-      }>(
+      const { data } = await apiGet<CommentPageData>(
         `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(parentId)}?pageNo=${nextPageNo}&pageSize=${REPLIES_PAGE_SIZE}`
       )
       if (latestPostIdRef.current !== postIdStr) return
@@ -230,15 +305,6 @@ export default function PostDetail() {
 
       setReplyPaginationByParentId((prev) => {
         const state = prev[parentId] ?? createReplyPaginationState()
-        const merged = [...state.replies, ...incoming]
-        const seen = new Set<string>()
-        const deduped = merged.filter((item) => {
-          const cid = normalizeId(item.id)
-          if (!cid) return false
-          if (seen.has(cid)) return false
-          seen.add(cid)
-          return true
-        })
 
         return {
           ...prev,
@@ -250,7 +316,7 @@ export default function PostDetail() {
             pageNo: nextPageNo,
             total: data?.total ?? state.total,
             hasMore: data?.hasMore ?? state.hasMore,
-            replies: deduped,
+            replies: sortCommentsByIdAscending(mergeUniqueComments(state.replies, incoming)),
           },
         }
       })
@@ -303,10 +369,97 @@ export default function PostDetail() {
     }))
   }, [loadNextRepliesPage, replyPaginationByParentId])
 
+  const refreshRepliesForParent = useCallback(async (rawParentId: string) => {
+    if (!id) return
+
+    const postIdStr = normalizeId(id)
+    const parentId = normalizeId(rawParentId)
+    if (!postIdStr || !parentId) return
+
+    setReplyPaginationByParentId((prev) => ({
+      ...prev,
+      [parentId]: {
+        ...(prev[parentId] ?? createReplyPaginationState()),
+        isExpanded: true,
+        isLoading: true,
+        error: null,
+      },
+    }))
+
+    try {
+      const { data } = await apiGet<CommentPageData>(
+        `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(parentId)}?pageNo=1&pageSize=${REPLIES_PAGE_SIZE}`
+      )
+      if (latestPostIdRef.current !== postIdStr) return
+
+      const total = typeof data?.total === 'number' ? data.total : undefined
+      const lastPageNo = total ? Math.max(1, Math.ceil(total / REPLIES_PAGE_SIZE)) : 1
+      let rawReplies = Array.isArray(data?.comments) ? data.comments : []
+      let refreshError: string | null = null
+
+      // Replies are ordered oldest-first by the BFF. When a thread spans
+      // multiple pages, also re-read its last page so the just-created reply
+      // is obtained from the reliable list DTO instead of the create response.
+      if (lastPageNo > 1) {
+        try {
+          const { data: lastPageData } = await apiGet<CommentPageData>(
+            `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(parentId)}?pageNo=${lastPageNo}&pageSize=${REPLIES_PAGE_SIZE}`
+          )
+          if (latestPostIdRef.current !== postIdStr) return
+          rawReplies = [
+            ...rawReplies,
+            ...(Array.isArray(lastPageData?.comments) ? lastPageData.comments : []),
+          ]
+        } catch (error) {
+          refreshError = error instanceof Error ? error.message : '刷新最新回复失败'
+        }
+      }
+
+      const refreshedReplies = rawReplies.map((reply: any) => normalizeComment(reply))
+      setReplyPaginationByParentId((prev) => {
+        const state = prev[parentId] ?? createReplyPaginationState()
+        const pageNo = Math.max(1, state.pageNo)
+        return {
+          ...prev,
+          [parentId]: {
+            ...state,
+            isExpanded: true,
+            isLoading: false,
+            error: refreshError ? `评论已提交，但${refreshError}` : null,
+            pageNo,
+            total,
+            hasMore: typeof total === 'number'
+              ? pageNo * REPLIES_PAGE_SIZE < total
+              : Boolean(data?.hasMore),
+            replies: sortCommentsByIdAscending(
+              mergeUniqueComments(state.replies, refreshedReplies)
+            ),
+          },
+        }
+      })
+    } catch (error) {
+      if (latestPostIdRef.current !== postIdStr) return
+      const message = error instanceof Error ? error.message : '刷新回复失败'
+      setReplyPaginationByParentId((prev) => ({
+        ...prev,
+        [parentId]: {
+          ...(prev[parentId] ?? createReplyPaginationState()),
+          isExpanded: true,
+          isLoading: false,
+          error: `评论已提交，但${message}`,
+          pageNo: 0,
+          hasMore: true,
+        },
+      }))
+    }
+  }, [id])
+
   const handleSubmitComment = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!commentText.trim() || !id) return
+    const content = commentText.trim()
+    if (!content || !id || isSubmittingComment) return
 
+    setIsSubmittingComment(true)
     try {
       setCommentsError(null)
       const replyTargetId = replyTarget ? normalizeId(replyTarget.id) : '0'
@@ -318,58 +471,29 @@ export default function PostDetail() {
       const replyIdToSend = replyTarget ? replyTargetId || '0' : '0'
       const postIdToSend = normalizeId(id)
 
-      const { data } = await apiPost(`/posts/${encodeURIComponent(postIdToSend)}/comments`, {
+      await apiPost(`/posts/${encodeURIComponent(postIdToSend)}/comments`, {
         parent_id: parentIdToSend,
         reply_id: replyIdToSend,
-        content: commentText.trim(),
+        content,
       })
 
-      const newComment = normalizeComment(
-        data || { parent_id: parentIdToSend, reply_id: replyIdToSend, content: commentText.trim() }
-      )
-      const hydrated: Comment = {
-        ...newComment,
-        parentId: newComment.parentId ?? parentIdToSend,
-        replyId: newComment.replyId ?? replyIdToSend,
-      }
-
-      if (parentIdToSend === '0') {
-        setComments(prev => [hydrated, ...prev])
-        setCommentTotal((prev) => (typeof prev === 'number' ? prev + 1 : prev))
-      } else {
-        const parentId = normalizeId(parentIdToSend)
-        if (parentId) {
-          setReplyPaginationByParentId((prev) => {
-            const state = prev[parentId] ?? createReplyPaginationState()
-            const merged = [hydrated, ...state.replies]
-            const seen = new Set<string>()
-            const deduped = merged.filter((item) => {
-              const cid = normalizeId(item.id)
-              if (!cid) return false
-              if (seen.has(cid)) return false
-              seen.add(cid)
-              return true
-            })
-
-            return {
-              ...prev,
-              [parentId]: {
-                ...state,
-                isExpanded: true,
-                error: null,
-                total: typeof state.total === 'number' ? state.total + 1 : state.total,
-                replies: deduped,
-              },
-            }
-          })
-        }
-      }
       setCommentText('')
       setReplyTarget(null)
+
+      // CreateComment currently returns a raw gRPC object: int64 IDs may lose
+      // precision in JavaScript and author data is absent. Only render data
+      // re-read from the list endpoints, whose DTO uses string IDs and authors.
+      if (parentIdToSend === '0') {
+        await fetchComments()
+      } else {
+        await refreshRepliesForParent(parentIdToSend)
+      }
     } catch (error) {
       console.error('发表评论失败:', error)
       setCommentsError(error instanceof Error ? error.message : '发表评论失败')
       alert('发表评论失败，请稍后重试')
+    } finally {
+      setIsSubmittingComment(false)
     }
   }
 
@@ -409,7 +533,10 @@ export default function PostDetail() {
     }
 
     try {
-      await apiDelete(`/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(commentIdStr)}`)
+      await apiPost(
+        `/posts/${encodeURIComponent(postIdStr)}/comments/${encodeURIComponent(commentIdStr)}/delete`,
+        null
+      )
       if (parentIdForReply) {
         setReplyPaginationByParentId((prev) => {
           const state = prev[parentIdForReply] ?? createReplyPaginationState()
@@ -496,23 +623,28 @@ export default function PostDetail() {
   }, [post])
 
   const fetchLikeStatus = useCallback(async () => {
-    if (!post?.id || !user) {
+    if (!likePostId || !currentUserId) {
       setHasLiked(false)
+      setLikeStatusError(false)
       return
     }
 
-    const normalizedId = normalizeId(post.id)
     setIsCheckingLike(true)
+    setLikeStatusError(false)
     try {
-      const { data } = await apiGet<boolean>(`/posts/${encodeURIComponent(normalizedId)}/likes`)
-      setHasLiked(Boolean(data))
+      const { data } = await apiGet<boolean>(`/posts/${encodeURIComponent(likePostId)}/like`)
+      if (typeof data !== 'boolean') {
+        throw new Error('点赞状态响应数据格式错误')
+      }
+      setHasLiked(data)
     } catch (error) {
       console.error('检查点赞状态失败:', error)
       setHasLiked(false)
+      setLikeStatusError(true)
     } finally {
       setIsCheckingLike(false)
     }
-  }, [post, user])
+  }, [currentUserId, likePostId])
 
   useEffect(() => {
     void fetchLikeStatus()
@@ -527,6 +659,10 @@ export default function PostDetail() {
       navigate('/login')
       return
     }
+    if (likeStatusError) {
+      await fetchLikeStatus()
+      return
+    }
 
     const normalizedId = normalizeId(post.id)
     const willLike = !hasLiked
@@ -535,17 +671,17 @@ export default function PostDetail() {
     const prevState = { liked: hasLiked, count: likeCount }
 
     setIsLiking(true)
+    setLikeStatusError(false)
     setHasLiked(willLike)
     setLikeCount(optimisticCount)
     setPost(prev => (prev ? { ...prev, likes: optimisticCount } : prev))
 
     try {
       if (willLike) {
-        await apiPost(`/posts/${encodeURIComponent(normalizedId)}/likes`, null)
+        await apiPost(`/posts/${encodeURIComponent(normalizedId)}/like`, null)
       } else {
-        await apiDelete(`/posts/${encodeURIComponent(normalizedId)}/likes`)
+        await apiPost(`/posts/${encodeURIComponent(normalizedId)}/unlike`, null)
       }
-      await fetchLikeStatus()
     } catch (error) {
       console.error('点赞操作失败:', error)
       setHasLiked(prevState.liked)
@@ -565,7 +701,7 @@ export default function PostDetail() {
     }
     
     try {
-      await apiDelete(`/posts/${encodeURIComponent(id)}`)
+      await apiPost(`/posts/${encodeURIComponent(id)}/delete`, null)
       alert('帖子删除成功')
       navigate('/')
     } catch (error) {
@@ -716,11 +852,23 @@ export default function PostDetail() {
                 className="h-4 w-4"
                 fill={hasLiked ? 'currentColor' : 'none'}
               />
-              <span>{hasLiked ? '取消点赞' : '点赞'}</span>
+              <span>
+                {isCheckingLike
+                  ? '检查点赞状态...'
+                  : likeStatusError
+                    ? '重试点赞状态'
+                    : hasLiked
+                      ? '取消点赞'
+                      : '点赞'}
+              </span>
               <span className={hasLiked ? 'text-primary-700' : 'text-gray-500'}>{likeCount}</span>
             </button>
             <span className="text-sm text-gray-500">
-              {likeCount > 0 ? `${likeCount} 人觉得这篇内容不错` : '成为第一个点赞的人'}
+              {likeStatusError
+                ? '当前无法确认你的点赞状态'
+                : likeCount > 0
+                  ? `${likeCount} 人觉得这篇内容不错`
+                  : '成为第一个点赞的人'}
               {isLiking && !hasLiked && ' · 提交中...'}
             </span>
           </div>
@@ -758,11 +906,16 @@ export default function PostDetail() {
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="写下你的评论..."
             rows={3}
+            disabled={isSubmittingComment}
             className="textarea mb-3"
           />
           <div className="flex justify-end">
-            <button type="submit" className="btn-primary">
-              发表评论
+            <button
+              type="submit"
+              disabled={isSubmittingComment || !commentText.trim()}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmittingComment ? '提交中...' : '发表评论'}
             </button>
           </div>
         </form>
@@ -773,7 +926,7 @@ export default function PostDetail() {
             <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
             <span>评论加载中...</span>
           </div>
-        ) : commentsError ? (
+        ) : commentsError && comments.length === 0 ? (
           <p className="text-sm text-red-600">{commentsError}</p>
         ) : comments.length === 0 ? (
           <p className="text-gray-500 text-sm">暂时还没有评论，快来抢沙发吧～</p>
@@ -812,7 +965,7 @@ export default function PostDetail() {
                             {parent.author.name}
                           </Link>
                           <span className="text-xs text-gray-500">
-                            {formatRelativeTime(parent.createdAt)}
+                            {formatRelativeTime(parent.createdAt, '时间未提供')}
                           </span>
                         </div>
                         <p className="text-gray-700">{parent.content}</p>
@@ -860,7 +1013,7 @@ export default function PostDetail() {
                           <span className="min-w-0 break-words">{replyState.error}</span>
                           <button
                             type="button"
-                            onClick={() => void loadNextRepliesPage(parentId)}
+                            onClick={() => void refreshRepliesForParent(parentId)}
                             className="text-primary-600 hover:text-primary-700 flex-shrink-0"
                           >
                             重试
@@ -918,7 +1071,7 @@ export default function PostDetail() {
                                       )}
                                   </div>
                                   <span className="text-[11px] text-gray-500">
-                                    {formatRelativeTime(reply.createdAt)}
+                                    {formatRelativeTime(reply.createdAt, '时间未提供')}
                                   </span>
                                 </div>
                                 <p className="text-gray-700 text-sm">{reply.content}</p>
@@ -971,6 +1124,23 @@ export default function PostDetail() {
                 </div>
               )
             })}
+
+            {commentsError && (
+              <p className="text-center text-sm text-red-600">{commentsError}</p>
+            )}
+
+            {commentsHasMore && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => void loadNextCommentsPage()}
+                  disabled={isLoadingMoreComments}
+                  className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoadingMoreComments ? '加载更多评论中...' : commentsError ? '重试加载更多评论' : '加载更多评论'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

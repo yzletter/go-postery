@@ -26,9 +26,9 @@ func NewEvaluationNodeBuilder(agent *agent.EvaluatorAgent, callbacks FrontendCal
 
 func (builder *EvaluationNodeBuilder) Build(ctx context.Context, input *RunState) (*RunState, error) {
 	if input.UserTerminated {
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageEvaluationStart, fmt.Sprintf("面试提前终止，正在基于已完成的 %d 道题生成评估报告...", len(input.InterviewState.QAHistory)))
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageEvaluationStart, fmt.Sprintf("面试提前终止，正在基于已完成的 %d 道题生成评估报告...", len(input.InterviewState.QAHistory)))
 	} else {
-		builder.Callbacks.OnStageChange(ctx, input.UserID, StageEvaluationStart, "正在生成评估报告...")
+		builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageEvaluationStart, "正在生成评估报告...")
 		input.Status = domain.StatusEvaluated
 	}
 
@@ -42,8 +42,8 @@ func (builder *EvaluationNodeBuilder) Build(ctx context.Context, input *RunState
 	input.EvaluationReport = report
 
 	reportMD := agent.FormatReport(input.EvaluationReport)
-	builder.Callbacks.OnReport(ctx, input.UserID, reportMD)
-	builder.Callbacks.OnStageChange(ctx, input.UserID, StageEvaluationDone, "评估报告生成完成")
+	builder.Callbacks.OnReport(ctx, input.UserID, input.ID, reportMD)
+	builder.Callbacks.OnStageChange(ctx, input.UserID, input.ID, StageEvaluationDone, "评估报告生成完成")
 
 	// 更新会话信息
 	if err := builder.LongTermMemory.UpsertSession(ctx, input.UserID, input.ID, input); err != nil {

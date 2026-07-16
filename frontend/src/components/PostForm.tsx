@@ -50,7 +50,7 @@ export default function PostForm({
     ? contentType === 1
       ? 'Markdown 文本将按语法渲染'
       : '普通文本将按原样展示'
-    : '支持 Markdown 格式'
+    : '文本格式沿用发布时的设置'
 
   return (
     <form onSubmit={onSubmit} className="card space-y-6">

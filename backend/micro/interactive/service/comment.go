@@ -90,7 +90,7 @@ func (svc *interactiveService) Comment(ctx context.Context, postID int64, parent
 		Biz:   event.UpdatePostScore,
 		BizID: comment.PostID,
 	}
-	if err := svc.interRepo.CreateComment(ctx, comment,
+	if comment, err = svc.interRepo.CreateComment(ctx, comment,
 		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, event.KafkaInteractiveGroup, e),
 		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, ee),
 	); err != nil {

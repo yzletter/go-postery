@@ -8,14 +8,11 @@ import EditPost from './pages/EditPost'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
-import Agent from './pages/Agent'
+import InterviewAgent from './pages/InterviewAgent'
 import Follows from './pages/Follows'
 import Messages from './pages/Messages'
 import Search from './pages/Search'
 import Lottery from './pages/Lottery'
-import Admin from './pages/admin/Admin'
-import AdminForbidden from './pages/admin/AdminForbidden'
-import { isAdminUser } from './utils/admin'
 
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -25,11 +22,10 @@ const LoadingScreen = () => (
 
 type AuthRouteProps = {
   children: React.ReactElement
-  requireAdmin?: boolean
 }
 
 // 保护需要登录的路由
-function AuthRoute({ children, requireAdmin }: AuthRouteProps) {
+function AuthRoute({ children }: AuthRouteProps) {
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
@@ -40,40 +36,30 @@ function AuthRoute({ children, requireAdmin }: AuthRouteProps) {
     return <Navigate to="/login" replace />
   }
 
-  if (requireAdmin && !isAdminUser(user)) {
-    return <AdminForbidden />
-  }
-
   return children
 }
 
 function AppRoutes() {
   const protectedRoutes = [
+    { path: '/search', element: <Search /> },
     { path: '/follows', element: <Follows /> },
     { path: '/messages', element: <Messages /> },
     { path: '/create', element: <CreatePost /> },
+    { path: '/edit/:id', element: <EditPost /> },
     { path: '/profile', element: <Profile /> },
     { path: '/settings', element: <Settings /> },
+    { path: '/interview-agent', element: <InterviewAgent /> },
   ]
 
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/search" element={<Search />} />
       <Route path="/post/:id" element={<PostDetail />} />
       <Route path="/postDetailDTO/:id" element={<PostDetail />} />
-      <Route path="/edit/:id" element={<EditPost />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/agent" element={<Agent />} />
+      <Route path="/agent" element={<Navigate to="/interview-agent" replace />} />
       <Route path="/lottery" element={<Lottery />} />
-      <Route
-        path="/admin/*"
-        element={
-          <AuthRoute requireAdmin>
-            <Admin />
-          </AuthRoute>
-        }
-      />
+      <Route path="/admin/*" element={<Navigate to="/" replace />} />
       {protectedRoutes.map(({ path, element }) => (
         <Route
           key={path}

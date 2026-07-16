@@ -2,11 +2,13 @@ import { useCallback, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink, RefreshCw, Search, Trash2 } from 'lucide-react'
 import type { Comment } from '../../types'
-import { apiDelete, apiGet } from '../../utils/api'
+import { apiGet, apiPost } from '../../utils/api'
 import { normalizeComment } from '../../utils/comment'
 import { formatRelativeTime } from '../../utils/date'
 import { normalizeId } from '../../utils/id'
 import { groupComments } from '../postDetail/commentModel'
+
+const ADMIN_COMMENT_PAGE_SIZE = 20
 
 function CommentItem({
   comment,
@@ -27,7 +29,7 @@ function CommentItem({
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span className="font-semibold text-gray-900">{comment.author?.name || '匿名用户'}</span>
           <span className="text-xs text-gray-500">#{id}</span>
-          <span className="text-xs text-gray-500">{formatRelativeTime(comment.createdAt)}</span>
+          <span className="text-xs text-gray-500">{formatRelativeTime(comment.createdAt, '—')}</span>
         </div>
         <div className="mt-1 text-sm text-gray-700 whitespace-pre-wrap break-words">
           {comment.content || '（空）'}
@@ -51,6 +53,10 @@ export default function AdminComments() {
   const [postIdInput, setPostIdInput] = useState('')
   const [postId, setPostId] = useState<string>('')
   const [comments, setComments] = useState<Comment[]>([])
+  const [parentTotal, setParentTotal] = useState<number | null>(null)
+  const [parentHasMore, setParentHasMore] = useState(false)
+  const [truncatedReplyParentCount, setTruncatedReplyParentCount] = useState(0)
+  const [failedReplyParentCount, setFailedReplyParentCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -67,7 +73,9 @@ export default function AdminComments() {
         comments: any[]
         total?: number
         hasMore?: boolean
-      }>(`/posts/${encodeURIComponent(normalizedPostId)}/comments?pageNo=1&pageSize=20`)
+      }>(
+        `/posts/${encodeURIComponent(normalizedPostId)}/comments?pageNo=1&pageSize=${ADMIN_COMMENT_PAGE_SIZE}`
+      )
 
       const parentRawList = Array.isArray(data?.comments) ? data.comments : []
       const parents = parentRawList.map((item: any) => normalizeComment(item))
@@ -75,19 +83,25 @@ export default function AdminComments() {
       const replyResults = await Promise.allSettled(
         parents.map(async (parent) => {
           const parentId = normalizeId(parent.id)
-          if (!parentId) return [] as Comment[]
+          if (!parentId) return { replies: [] as Comment[], hasMore: false }
           const { data: repliesData } = await apiGet<{
             comments: any[]
             total?: number
             hasMore?: boolean
           }>(
-            `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(parentId)}?pageNo=1&pageSize=20`
+            `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(parentId)}?pageNo=1&pageSize=${ADMIN_COMMENT_PAGE_SIZE}`
           )
           const rawReplies = Array.isArray(repliesData?.comments) ? repliesData.comments : []
-          return rawReplies.map((reply: any) => normalizeComment(reply))
+          return {
+            replies: rawReplies.map((reply: any) => normalizeComment(reply)),
+            hasMore: Boolean(repliesData?.hasMore),
+          }
         })
       )
-      const replies = replyResults.flatMap((result) => (result.status === 'fulfilled' ? result.value : []))
+      const fulfilledReplyResults = replyResults.flatMap((result) =>
+        result.status === 'fulfilled' ? [result.value] : []
+      )
+      const replies = fulfilledReplyResults.flatMap((result) => result.replies)
       const merged = [...parents, ...replies]
       const seen = new Set<string>()
       const deduped = merged.filter((item) => {
@@ -99,11 +113,23 @@ export default function AdminComments() {
       })
 
       setComments(deduped)
+      setParentTotal(typeof data?.total === 'number' ? data.total : null)
+      setParentHasMore(Boolean(data?.hasMore))
+      setTruncatedReplyParentCount(
+        fulfilledReplyResults.filter((result) => result.hasMore).length
+      )
+      setFailedReplyParentCount(
+        replyResults.filter((result) => result.status === 'rejected').length
+      )
       setPostId(normalizedPostId)
     } catch (err) {
       const message = err instanceof Error ? err.message : '加载评论失败'
       setError(message)
       setComments([])
+      setParentTotal(null)
+      setParentHasMore(false)
+      setTruncatedReplyParentCount(0)
+      setFailedReplyParentCount(0)
       setPostId(normalizedPostId)
     } finally {
       setIsLoading(false)
@@ -128,8 +154,9 @@ export default function AdminComments() {
 
     setDeletingId(normalizedCommentId)
     try {
-      await apiDelete(
-        `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(normalizedCommentId)}`
+      await apiPost(
+        `/posts/${encodeURIComponent(normalizedPostId)}/comments/${encodeURIComponent(normalizedCommentId)}/delete`,
+        null
       )
       await loadComments(normalizedPostId)
     } catch (err) {
@@ -141,6 +168,7 @@ export default function AdminComments() {
   }
 
   const groups = useMemo(() => groupComments(comments), [comments])
+  const loadedReplyCount = comments.length - groups.length
 
   return (
     <div className="space-y-4">
@@ -208,7 +236,30 @@ export default function AdminComments() {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="text-sm text-gray-500">共 {comments.length} 条评论</div>
+          <div className="text-sm text-gray-500">
+            当前显示 {groups.length} 条主评论、{loadedReplyCount} 条回复
+            {parentTotal !== null ? `；主评论总数 ${parentTotal} 条` : ''}
+          </div>
+
+          {(parentHasMore || truncatedReplyParentCount > 0 || failedReplyParentCount > 0) && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-1">
+              {parentHasMore && (
+                <p>
+                  主评论尚未全部加载，当前仅显示前 {ADMIN_COMMENT_PAGE_SIZE} 条。
+                </p>
+              )}
+              {truncatedReplyParentCount > 0 && (
+                <p>
+                  有 {truncatedReplyParentCount} 条主评论仍有更多回复，当前每条仅显示前 {ADMIN_COMMENT_PAGE_SIZE} 条回复。
+                </p>
+              )}
+              {failedReplyParentCount > 0 && (
+                <p>
+                  有 {failedReplyParentCount} 条主评论的回复加载失败，当前列表不代表全部评论。
+                </p>
+              )}
+            </div>
+          )}
 
           {groups.map(group => {
             const parentId = normalizeId(group.parent.id)

@@ -40,7 +40,6 @@ type LotteryOrder = {
   user: {
     id: string
     name?: string
-    email?: string
     avatar?: string
   }
   gift: GiftItem
@@ -65,6 +64,8 @@ type LotteryDrawResult = {
 const DECISION_SECONDS = 600
 const SPIN_TIMEOUT = 4400
 const MAX_HISTORY = 8
+const ORDER_STATUS_PENDING = 0
+const ORDER_STATUS_PAID = 1
 
 const WHEEL_COLORS = [
   '#0ea5e9',
@@ -157,11 +158,10 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
         : typeof userRaw.name === 'string'
           ? userRaw.name.trim()
           : ''
-  const email = typeof userRaw.email === 'string' ? userRaw.email.trim() : ''
   const avatar = typeof userRaw.avatar === 'string' ? userRaw.avatar.trim() : ''
   const gift = normalizeGift(raw.gift ?? raw.Gift ?? raw.prize ?? raw.gift_info)
   if (!gift) return null
-  const countValue = Number(raw.count)
+  const countValue = Number(raw.count ?? raw.Count)
   const count = Number.isFinite(countValue) ? countValue : 1
   const createdAt =
     typeof raw.created_at === 'string'
@@ -195,7 +195,6 @@ const normalizeOrder = (raw: any): LotteryOrder | null => {
     user: {
       id: userId,
       name: userName || undefined,
-      email: email || undefined,
       avatar: avatar || undefined,
     },
     gift,
@@ -261,7 +260,7 @@ const isPayableDrawResult = (drawResult: LotteryDrawResult) => {
 
 const getDrawNotice = (drawResult: LotteryDrawResult) => {
   if (drawResult.status === 'pending_order') {
-    return '检测到已有待处理订单，请继续支付或放弃。'
+    return '检测到已有待处理订单，请继续确认领取或放弃。'
   }
   if (drawResult.status === 'sold_out') {
     return drawResult.description || RESULT_DESCRIPTION_NO_GIFTS
@@ -311,6 +310,31 @@ const formatDateTime = (value?: string) => {
   return date.toLocaleString('zh-CN')
 }
 
+const getOrderDeadline = (order: LotteryOrder): number | null => {
+  if (order.expire_at) {
+    const expireAt = new Date(order.expire_at).getTime()
+    if (Number.isFinite(expireAt)) return expireAt
+  }
+
+  if (order.created_at) {
+    const createdAt = new Date(order.created_at).getTime()
+    if (Number.isFinite(createdAt)) {
+      return createdAt + DECISION_SECONDS * 1000
+    }
+  }
+
+  return null
+}
+
+const requestLatestOrder = async (): Promise<LotteryOrder | null> => {
+  const { data } = await apiGet<LotteryOrder>('/lottery/result')
+  return normalizeOrder(data)
+}
+
+const isMissingOrderError = (error: unknown) => {
+  return error instanceof ApiError && error.status === 404
+}
+
 export default function Lottery() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -332,6 +356,7 @@ export default function Lottery() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState<'pay' | 'giveup' | null>(null)
   const [latestOrder, setLatestOrder] = useState<LotteryOrder | null>(null)
+  const [pendingOrder, setPendingOrder] = useState<LotteryOrder | null>(null)
   const [orderStatus, setOrderStatus] = useState<'idle' | 'loading' | 'empty' | 'error' | 'ready'>('idle')
   const [orderError, setOrderError] = useState<string | null>(null)
 
@@ -364,7 +389,7 @@ export default function Lottery() {
     setIsGiftsLoading(true)
     setGiftsError(null)
     try {
-      const { data } = await apiGet<unknown>('/gifts')
+      const { data } = await apiGet<unknown>('/lottery/gifts')
       const payload = data as any
       const rawList: unknown[] = Array.isArray(payload)
         ? payload
@@ -382,6 +407,11 @@ export default function Lottery() {
       })
       setGifts(Array.from(uniqueMap.values()))
     } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        setGifts([])
+        setGiftsError(null)
+        return
+      }
       console.error('Failed to fetch gifts:', error)
       setGifts([])
       setGiftsError(error instanceof Error ? error.message : '获取奖品失败')
@@ -397,6 +427,7 @@ export default function Lottery() {
   const fetchLatestOrder = useCallback(async () => {
     if (!userId) {
       setLatestOrder(null)
+      setPendingOrder(null)
       setOrderStatus('idle')
       setOrderError(null)
       return
@@ -405,22 +436,30 @@ export default function Lottery() {
     setOrderStatus('loading')
     setOrderError(null)
     try {
-      const { data } = await apiGet<LotteryOrder>('/lottery/result')
-      const normalized = normalizeOrder(data)
-      if (normalized) {
+      const normalized = await requestLatestOrder()
+      if (normalized?.status === ORDER_STATUS_PAID) {
         setLatestOrder(normalized)
+        setPendingOrder(null)
         setOrderStatus('ready')
       } else {
         setLatestOrder(null)
+        setPendingOrder(
+          normalized?.status === ORDER_STATUS_PENDING &&
+          (getOrderDeadline(normalized) ?? 0) > Date.now()
+            ? normalized
+            : null
+        )
         setOrderStatus('empty')
       }
     } catch (error) {
-      console.error('Failed to fetch lottery result:', error)
-      if (error instanceof ApiError && error.status === 200) {
+      if (isMissingOrderError(error)) {
         setLatestOrder(null)
+        setPendingOrder(null)
         setOrderStatus('empty')
       } else {
+        console.error('Failed to fetch lottery result:', error)
         setLatestOrder(null)
+        setPendingOrder(null)
         setOrderStatus('error')
         setOrderError(error instanceof Error ? error.message : '获取中奖结果失败')
       }
@@ -430,6 +469,7 @@ export default function Lottery() {
   useEffect(() => {
     if (!userId) {
       setLatestOrder(null)
+      setPendingOrder(null)
       setOrderStatus('idle')
       setOrderError(null)
       return
@@ -538,8 +578,8 @@ export default function Lottery() {
       setTempOrderId('')
       activeTempOrderIdRef.current = ''
     } catch (error) {
-      console.error('放弃支付失败:', error)
-      const message = error instanceof Error ? error.message : '放弃支付失败'
+      console.error('放弃领取失败:', error)
+      const message = error instanceof Error ? error.message : '放弃领取失败'
       if (isRelease) {
         setDrawError(message)
       } else {
@@ -550,10 +590,14 @@ export default function Lottery() {
     }
   }, [navigate, resetDecisionTimer, updateHistoryStatus, userId])
 
-  const startDecisionWindow = useCallback((drawResult: LotteryDrawResult) => {
+  const startDecisionWindow = useCallback((
+    drawResult: LotteryDrawResult,
+    orderDeadline?: number | null
+  ) => {
+    resetDecisionTimer()
+
     if (!isPayableDrawResult(drawResult)) {
       setDecisionState('missed')
-      resetDecisionTimer()
       updateHistoryStatus(getHistoryStatus(drawResult))
       if (drawResult.tempOrderId) {
         void submitGiveup('release')
@@ -561,9 +605,30 @@ export default function Lottery() {
       return
     }
 
+    const deadline =
+      typeof orderDeadline === 'number'
+        ? orderDeadline
+        : drawResult.status === 'pending_order'
+          ? null
+          : Date.now() + DECISION_SECONDS * 1000
+
     setDecisionState('pending')
-    setCountdown(DECISION_SECONDS)
-    decisionDeadlineRef.current = Date.now() + DECISION_SECONDS * 1000
+    if (!deadline) {
+      setActionError('暂时无法获取该订单的剩余有效期，请刷新页面后重试。')
+      return
+    }
+
+    const initialRemaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+    if (initialRemaining <= 0) {
+      setDecisionState('abandoned')
+      setDrawNotice('该订单已超过确认时限，请重新抽奖。')
+      updateHistoryStatus('订单已超时')
+      return
+    }
+
+    setActionError(null)
+    setCountdown(initialRemaining)
+    decisionDeadlineRef.current = deadline
 
     countdownTimerRef.current = window.setInterval(() => {
       if (!decisionDeadlineRef.current) return
@@ -579,6 +644,32 @@ export default function Lottery() {
       }
     }, 250)
   }, [resetDecisionTimer, submitGiveup, updateHistoryStatus])
+
+  useEffect(() => {
+    if (!pendingOrder || isSpinning) return
+
+    const deadline = getOrderDeadline(pendingOrder)
+    if (!deadline || deadline <= Date.now()) return
+
+    const restoredResult: LotteryDrawResult = {
+      gift: pendingOrder.gift,
+      tempOrderId: pendingOrder.id,
+      success: false,
+      description: RESULT_DESCRIPTION_TEMP_ORDER,
+      userId: pendingOrder.user.id || userId,
+      status: 'pending_order',
+    }
+
+    setResult(pendingOrder.gift)
+    setTempOrderId(pendingOrder.id)
+    activeGiftRef.current = pendingOrder.gift
+    activeTempOrderIdRef.current = pendingOrder.id
+    setDrawError(null)
+    setActionError(null)
+    setDrawNotice(getDrawNotice(restoredResult))
+    startDecisionWindow(restoredResult, deadline)
+    setPendingOrder(null)
+  }, [isSpinning, pendingOrder, startDecisionWindow, userId])
 
   const findWheelIndex = useCallback((gift: GiftItem) => {
     if (!wheelItems.length) return 0
@@ -622,6 +713,32 @@ export default function Lottery() {
         throw new Error('抽奖失败，请稍后重试')
       }
       const { gift } = drawResult
+      let orderDeadline: number | null | undefined
+
+      if (isPayableDrawResult(drawResult)) {
+        const restoredDeadline =
+          pendingOrder?.id === drawResult.tempOrderId
+            ? getOrderDeadline(pendingOrder)
+            : null
+
+        if (restoredDeadline) {
+          orderDeadline = restoredDeadline
+        } else {
+          try {
+            const order = await requestLatestOrder()
+            if (
+              order?.status === ORDER_STATUS_PENDING &&
+              order.id === drawResult.tempOrderId
+            ) {
+              orderDeadline = getOrderDeadline(order)
+            }
+          } catch (error) {
+            if (!isMissingOrderError(error)) {
+              console.error('Failed to fetch lottery order deadline:', error)
+            }
+          }
+        }
+      }
 
       const targetIndex = findWheelIndex(gift)
       const extraTurns = 6 + Math.floor(Math.random() * 3)
@@ -652,7 +769,7 @@ export default function Lottery() {
           ...prev,
         ].slice(0, MAX_HISTORY))
 
-        startDecisionWindow(drawResult)
+        startDecisionWindow(drawResult, orderDeadline)
       }, SPIN_TIMEOUT)
     } catch (error) {
       console.error('Failed to draw lottery:', error)
@@ -688,11 +805,11 @@ export default function Lottery() {
       setTempOrderId('')
       activeTempOrderIdRef.current = ''
       setDrawNotice(null)
-      updateHistoryStatus('已支付领取')
+      updateHistoryStatus('已确认领取')
       void fetchLatestOrder()
     } catch (error) {
-      console.error('支付失败:', error)
-      setActionError(error instanceof Error ? error.message : '支付失败，请稍后重试')
+      console.error('确认领取失败:', error)
+      setActionError(error instanceof Error ? error.message : '确认领取失败，请稍后重试')
     } finally {
       setIsSubmitting(null)
     }
@@ -730,16 +847,16 @@ export default function Lottery() {
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">抽出今天的专属福利</h1>
             <p className="text-gray-600 max-w-2xl">
-              奖品池来自后台奖品列表，中奖后需在 {decisionMinutes} 分钟内完成支付或放弃，超时系统将自动释放订单。
+              奖品池来自后台奖品列表，中奖后需在 {decisionMinutes} 分钟内确认领取或放弃，超时系统将自动释放订单。
             </p>
             <div className="flex flex-wrap gap-3 text-sm text-gray-600">
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-gray-200">
                 <Clock3 className="h-4 w-4 text-primary-600" />
-                {decisionMinutes} 分钟支付时限
+                {decisionMinutes} 分钟确认时限
               </span>
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-gray-200">
                 <Wallet className="h-4 w-4 text-primary-600" />
-                中奖后需确认支付
+                中奖后需确认领取
               </span>
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-gray-200">
                 <Ticket className="h-4 w-4 text-primary-600" />
@@ -841,7 +958,7 @@ export default function Lottery() {
 
               <div className="grid gap-3 w-full">
                 <div className="rounded-xl bg-primary-50 border border-primary-100 px-4 py-3 text-sm text-primary-800">
-                  中奖需在 {decisionMinutes} 分钟内选择支付或放弃，超时自动释放
+                  中奖需在 {decisionMinutes} 分钟内选择确认领取或放弃，超时自动释放
                 </div>
                 {giftsError && (
                   <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-xs text-red-700 flex items-center justify-between">
@@ -932,7 +1049,7 @@ export default function Lottery() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-primary-600" />
-                <h2 className="text-lg font-semibold text-gray-900">支付或放弃</h2>
+                <h2 className="text-lg font-semibold text-gray-900">确认领取或放弃</h2>
               </div>
               {decisionState === 'pending' && (
                 <div className="flex items-center gap-2 text-xs text-primary-700 bg-primary-50 border border-primary-100 px-3 py-1.5 rounded-full">
@@ -945,7 +1062,7 @@ export default function Lottery() {
             {!result && (
               <div className="text-sm text-gray-600">
                 {isLoggedIn
-                  ? '先启动抽奖，抽中后会在这里展示奖品并进入支付/放弃倒计时。'
+                  ? '先启动抽奖，抽中后会在这里展示奖品并进入确认领取/放弃倒计时。'
                   : '登录后即可参与抽奖，中奖结果会显示在这里。'}
               </div>
             )}
@@ -1012,7 +1129,7 @@ export default function Lottery() {
                     <div className="flex items-center gap-2 text-sm">
                       <Clock3 className="h-4 w-4 text-primary-600" />
                       <span className="text-gray-700">
-                        请在倒计时结束前确认支付或放弃。
+                        请在倒计时结束前确认领取或放弃。
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1023,7 +1140,7 @@ export default function Lottery() {
                         className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <Wallet className="h-4 w-4" />
-                        {isSubmitting === 'pay' ? '支付中...' : '支付并领取'}
+                        {isSubmitting === 'pay' ? '确认中...' : '确认领取'}
                       </button>
                       <button
                         type="button"
@@ -1044,7 +1161,7 @@ export default function Lottery() {
                     {decisionState === 'paid' && (
                       <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 border border-green-100 px-3 py-2 rounded-lg">
                         <CheckCircle2 className="h-4 w-4" />
-                        支付完成，奖品已锁定。
+                        领取已确认，奖品已锁定。
                       </div>
                     )}
                     {decisionState === 'abandoned' && (
@@ -1079,7 +1196,7 @@ export default function Lottery() {
             </div>
 
             {!isLoggedIn && (
-              <p className="text-sm text-gray-600">登录后查看支付成功的中奖结果。</p>
+              <p className="text-sm text-gray-600">登录后查看已确认领取的中奖结果。</p>
             )}
 
             {isLoggedIn && orderStatus === 'loading' && (
@@ -1087,7 +1204,7 @@ export default function Lottery() {
             )}
 
             {isLoggedIn && orderStatus === 'empty' && (
-              <p className="text-sm text-gray-600">暂无中奖记录，支付成功后会展示在这里。</p>
+              <p className="text-sm text-gray-600">暂无已确认领取的中奖记录。</p>
             )}
 
             {isLoggedIn && orderStatus === 'error' && (
@@ -1124,7 +1241,7 @@ export default function Lottery() {
                   <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                     <span>数量 {latestOrder.count}</span>
                     {(latestOrder.paid_at || latestOrder.created_at) && (
-                      <span>支付时间 {formatDateTime(latestOrder.paid_at || latestOrder.created_at)}</span>
+                      <span>确认时间 {formatDateTime(latestOrder.paid_at || latestOrder.created_at)}</span>
                     )}
                     <span>价值 {formatPrize(latestOrder.gift.prize)}</span>
                   </div>
@@ -1166,9 +1283,9 @@ export default function Lottery() {
             </div>
             <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
               <li>奖品列表实时同步后台接口，库存以系统数据为准。</li>
-              <li>抽奖需登录，中奖后请在 {decisionMinutes} 分钟内完成支付或放弃。</li>
-              <li>抽到「谢谢参与」或奖品已抽完不会进入支付流程。</li>
-              <li>支付成功后可在「最新中奖结果」查看记录。</li>
+              <li>抽奖需登录，中奖后请在 {decisionMinutes} 分钟内确认领取或放弃。</li>
+              <li>抽到「谢谢参与」或奖品已抽完不会进入领取流程。</li>
+              <li>确认领取后可在「最新中奖结果」查看记录。</li>
               <li>抽奖记录仅保留本地最近 {MAX_HISTORY} 条。</li>
             </ul>
           </div>

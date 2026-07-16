@@ -13,7 +13,7 @@ import (
 	status "google.golang.org/grpc/status"
 )
 
-// This is a.json compile-time assertion to ensure that this generated file
+// This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
@@ -285,7 +285,7 @@ type InteractiveServiceServer interface {
 // UnimplementedInteractiveServiceServer must be embedded to have
 // forward compatible implementations.
 //
-// NOTE: this should be embedded by value instead of pointer to avoid a.json nil
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
 type UnimplementedInteractiveServiceServer struct{}
 
@@ -648,7 +648,7 @@ func _InteractiveService_HealthCheck_Handler(srv interface{}, ctx context.Contex
 
 // InteractiveService_ServiceDesc is the grpc.ServiceDesc for InteractiveService service.
 // It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a.json copy)
+// and not to be introspected or modified (even as a copy)
 var InteractiveService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "interactive.v1.InteractiveService",
 	HandlerType: (*InteractiveServiceServer)(nil),

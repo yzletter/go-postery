@@ -102,7 +102,7 @@ func main() {
 
 	// Service 层
 	AgentService := service.NewAgentService(AgentRepo, AgentKafkaConsumer, QdrantKafkaConsumer, ArkEmbedder, ArkChatModel, IDGenerator, PostManager)
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix)
 
 	go AgentService.StartChunkDocConsumer(ctx)     // 开启切分文档协程

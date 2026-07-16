@@ -69,7 +69,7 @@ type ServiceHub interface {
 
 type CodeClient interface {
 	Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error)
-	Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error)
+	Verify(ctx context.Context, req *code_grpc.VerifyCodeRequest) (*code_grpc.VerifyCodeResponse, error)
 }
 
 type AuthClient interface {

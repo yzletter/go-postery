@@ -111,7 +111,7 @@ func main() {
 	go InteractiveService.StartKafkaConsumer(ctx) // 开启协程消费消息更新互动数
 
 	// Common Service
-	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 10)
+	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000)
 	MetricService := pkg.NewMetricService(Service + suffix)
 
 	// gRPC Server

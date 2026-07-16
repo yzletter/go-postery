@@ -144,9 +144,17 @@ func (svc *interviewService) Answer(ctx context.Context, userID int64, sessionID
 		return errs.ErrInvalidArgument
 	}
 
-	_, err = svc.interviewGraph.Invoke(ctx, state)
+	output, err := svc.interviewGraph.Invoke(ctx, state)
 	if err != nil {
 		return err
+	}
+	if output != nil && output.InterviewState != nil && output.InterviewState.Phase == domain.PhaseCompleted {
+		if svc.evaluationGraph == nil {
+			return errs.ErrInternal
+		}
+		if _, err = svc.evaluationGraph.Invoke(ctx, output); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -164,11 +172,12 @@ func (svc *interviewService) QuitInterview(ctx context.Context, userID int64, se
 		return errs.ErrInvalidArgument
 	}
 
-	state.InterviewState.Phase = domain.PhaseUserQuit
-	_, err = svc.interviewGraph.Invoke(ctx, state)
-	if err != nil {
-		return err
+	if svc.evaluationGraph == nil {
+		return errs.ErrInternal
 	}
+	state.UserTerminated = true
+	state.InterviewState.Phase = domain.PhaseUserQuit
+	state.Status = domain.StatusTerminated
 
 	_, err = svc.evaluationGraph.Invoke(ctx, state)
 	if err != nil {

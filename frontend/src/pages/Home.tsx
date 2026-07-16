@@ -4,13 +4,13 @@ import { MessageSquare, Clock, Loader2, Eye, Heart, Flame, UserPlus, Gift, Spark
 import type { Post, FollowRelation } from '../types'
 import UserAvatar from '../components/UserAvatar'
 import { useAuth } from '../contexts/AuthContext'
-import { buildIdSeed, normalizeId } from '../utils/id'
-import { followUser, getFollowRelation, isFollowing, unfollowUser } from '../utils/follow'
+import { normalizeId } from '../utils/id'
+import { followUser, getFollowRelation, isFollowing, listFollowees, unfollowUser } from '../utils/follow'
 import { formatRelativeTime } from '../utils/date'
 import { CATEGORY_PAGE_SIZE, DEFAULT_PAGE_SIZE, categories } from './home/constants'
 import { fetchPosts } from './home/fetchPosts'
 import { fetchTopPosts, type TopPost } from './home/fetchTopPosts'
-import { apiGet, AUTH_API_BASE_URL, ApiError } from '../utils/api'
+import { apiGet } from '../utils/api'
 
 type RecommendUser = {
   id: string
@@ -75,8 +75,9 @@ export default function Home() {
   const [recommendLoading, setRecommendLoading] = useState(false)
   const [recommendError, setRecommendError] = useState<string | null>(null)
   const [recommendRelationById, setRecommendRelationById] = useState<Record<string, FollowRelation | undefined>>({})
+  const [recommendRelationErrorById, setRecommendRelationErrorById] = useState<Record<string, boolean>>({})
   const [recommendActingId, setRecommendActingId] = useState<string | null>(null)
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const observerTarget = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
@@ -87,55 +88,30 @@ export default function Home() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [])
 
-  useEffect(() => {
-    if (!user) return
-
-    let isActive = true
-    const checkAuthStatus = async () => {
-      try {
-        await apiGet('/auth/status', { baseUrl: AUTH_API_BASE_URL })
-      } catch (error) {
-        if (!isActive) return
-        if (error instanceof ApiError && error.status === 401) {
-          await logout()
-          if (isActive) {
-            navigate('/login', { replace: true })
-          }
-          return
-        }
-        console.warn('Failed to verify auth status on home:', error)
-      }
-    }
-
-    void checkAuthStatus()
-
-    return () => {
-      isActive = false
-    }
-  }, [user, logout, navigate])
-
-  const categoryPool = useMemo(() => categories.filter(c => c.key !== 'all'), [])
-
-  const decoratePosts = useCallback((list: Post[], options: { offset?: number; fallbackCategory?: string } = {}): Post[] => {
-    const { offset = 0, fallbackCategory } = options
-    const hasCategories = categoryPool.length > 0
-    return list.map((post, idx) => {
-      const seed = buildIdSeed(post.id, idx + offset)
-      const randomCategory = hasCategories ? categoryPool[seed % categoryPool.length] : undefined
-      const category = post.category ?? fallbackCategory ?? randomCategory?.key
+  const decoratePosts = useCallback((list: Post[], fallbackCategory?: string): Post[] => {
+    return list.map((post) => {
       const tags = (post.tags ?? [])
         .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
         .filter(Boolean)
+      const matchedCategory = categories.find((category) =>
+        category.tag
+          ? tags.some((tag) => tag.toLowerCase() === category.tag?.toLowerCase())
+          : false
+      )
+      const category =
+        post.category ??
+        matchedCategory?.key ??
+        (fallbackCategory && fallbackCategory !== 'all' ? fallbackCategory : undefined)
       return {
         ...post,
         category,
         tags: tags.length > 0 ? tags : undefined,
       }
     })
-  }, [categoryPool])
+  }, [])
 
   const getPageSizeForCategory = useCallback((categoryKey: string) => {
-    if (!categoryKey || categoryKey === 'all' || categoryKey === 'follow') {
+    if (!categoryKey || categoryKey === 'all') {
       return DEFAULT_PAGE_SIZE
     }
     return CATEGORY_PAGE_SIZE
@@ -167,11 +143,10 @@ export default function Home() {
       
       const { posts: newPosts, hasMore: hasMoreFromApi } = await fetchPosts(page, pageSize, targetCategory)
       setPosts(prev => {
-        const offset = reset ? 0 : prev.length
-        const decorated = decoratePosts(newPosts, {
-          offset,
-          fallbackCategory: targetCategory !== 'all' ? targetCategory : undefined
-        })
+        const decorated = decoratePosts(
+          newPosts,
+          targetCategory !== 'all' ? targetCategory : undefined
+        )
         return reset ? decorated : [...prev, ...decorated]
       })
       setHasMore(hasMoreFromApi)
@@ -200,7 +175,7 @@ export default function Home() {
     } finally {
       setIsHotLoading(false)
     }
-  }, [fetchTopPosts])
+  }, [])
 
   const loadRecommendUsers = useCallback(async () => {
     setRecommendLoading(true)
@@ -224,36 +199,44 @@ export default function Home() {
   useEffect(() => {
     if (!user || recommendUsers.length === 0) {
       setRecommendRelationById({})
+      setRecommendRelationErrorById({})
       return
     }
 
     let cancelled = false
     setRecommendRelationById({})
+    setRecommendRelationErrorById({})
 
-    Promise.all(
-      recommendUsers.map(async (item) => {
-        const targetId = normalizeId(item.id)
-        if (!targetId) return null
-        if (currentUserId && targetId === currentUserId) {
-          return null
-        }
-        try {
-          const relation = await getFollowRelation(targetId)
-          return [targetId, relation] as const
-        } catch {
-          return [targetId, 0 as FollowRelation] as const
-        }
-      })
-    )
-      .then((entries) => {
+    listFollowees()
+      .then(({ users, hasMore }) => {
         if (cancelled) return
-        const filtered = entries.filter(
-          (entry): entry is [string, FollowRelation] => Boolean(entry)
-        )
-        setRecommendRelationById(Object.fromEntries(filtered))
+        const followedIds = new Set(users.map((item) => item.id))
+        const nextRelations: Record<string, FollowRelation> = {}
+        const nextUnknown: Record<string, boolean> = {}
+
+        recommendUsers.forEach((item) => {
+          const targetId = normalizeId(item.id)
+          if (!targetId || targetId === currentUserId) return
+          if (followedIds.has(targetId)) {
+            nextRelations[targetId] = 1
+          } else if (hasMore) {
+            nextUnknown[targetId] = true
+          } else {
+            nextRelations[targetId] = 0
+          }
+        })
+
+        setRecommendRelationById(nextRelations)
+        setRecommendRelationErrorById(nextUnknown)
       })
       .catch((error) => {
         console.warn('Failed to load follow relations:', error)
+        if (cancelled) return
+        const failed = recommendUsers
+          .map((item) => normalizeId(item.id))
+          .filter((targetId) => targetId && targetId !== currentUserId)
+          .map((targetId) => [targetId, true] as const)
+        setRecommendRelationErrorById(Object.fromEntries(failed))
       })
 
     return () => {
@@ -272,7 +255,26 @@ export default function Home() {
         return
       }
 
-      const relation = recommendRelationById[targetId] ?? 0
+      if (recommendRelationErrorById[targetId]) {
+        setRecommendActingId(targetId)
+        try {
+          const relation = await getFollowRelation(targetId)
+          setRecommendRelationById((prev) => ({ ...prev, [targetId]: relation }))
+          setRecommendRelationErrorById((prev) => {
+            const next = { ...prev }
+            delete next[targetId]
+            return next
+          })
+        } catch (error) {
+          alert(error instanceof Error ? error.message : '获取关注关系失败')
+        } finally {
+          setRecommendActingId(null)
+        }
+        return
+      }
+
+      const relation = recommendRelationById[targetId]
+      if (relation === undefined) return
       const shouldUnfollow = isFollowing(relation)
 
       setRecommendActingId(targetId)
@@ -282,8 +284,10 @@ export default function Home() {
         } else {
           await followUser(targetId)
         }
-        const nextRelation = await getFollowRelation(targetId)
-        setRecommendRelationById((prev) => ({ ...prev, [targetId]: nextRelation }))
+        setRecommendRelationById((prev) => ({
+          ...prev,
+          [targetId]: shouldUnfollow ? 0 : 1,
+        }))
       } catch (error) {
         console.error(shouldUnfollow ? '取消关注失败:' : '关注失败:', error)
         alert(error instanceof Error ? error.message : shouldUnfollow ? '取消关注失败，请稍后重试' : '关注失败，请稍后重试')
@@ -291,7 +295,14 @@ export default function Home() {
         setRecommendActingId(null)
       }
     },
-    [currentUserId, navigate, recommendActingId, recommendRelationById, user]
+    [
+      currentUserId,
+      navigate,
+      recommendActingId,
+      recommendRelationById,
+      recommendRelationErrorById,
+      user,
+    ]
   )
 
   // 初始加载帖子
@@ -489,7 +500,7 @@ export default function Home() {
                           <span className="flex items-center space-x-1">
                             <Clock className="h-4 w-4" />
                             <span>
-                              {formatRelativeTime(post.createdAt)}
+                              {formatRelativeTime(post.createdAt, '时间未提供')}
                             </span>
                           </span>
                         </div>
@@ -559,9 +570,9 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <Gift className="h-5 w-5 text-primary-700" />
                 <h2 className="text-lg font-semibold text-gray-900">今日抽奖</h2>
-                <span className="text-xs text-primary-700 bg-primary-100 px-2 py-0.5 rounded-full border border-primary-200">模拟</span>
+                <span className="text-xs text-primary-700 bg-primary-100 px-2 py-0.5 rounded-full border border-primary-200">实时奖池</span>
               </div>
-              <p className="text-sm text-gray-600">每日签到即可抽奖，会员、积分、限定徽章等你拿～</p>
+              <p className="text-sm text-gray-600">登录后即可参与，奖品与库存以后台实时数据为准。</p>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -655,6 +666,7 @@ export default function Home() {
               {recommendUsers.map((item) => {
                 const isSelf = currentUserId && normalizeId(item.id) === currentUserId
                 const relation = isSelf ? undefined : recommendRelationById[item.id]
+                const relationFailed = Boolean(recommendRelationErrorById[item.id])
                 const isRelationReady = !user || isSelf || relation !== undefined
                 const isFollowed = !isSelf && isFollowing(relation ?? 0)
                 const isActing = recommendActingId === item.id
@@ -663,10 +675,12 @@ export default function Home() {
                   ? '处理中...'
                   : isFollowed
                     ? '已关注'
+                    : relationFailed
+                      ? '重试'
                     : user && !isRelationReady
                       ? '...'
                       : '关注'
-                const isDisabled = (user && !isRelationReady) || isActing
+                const isDisabled = (user && !isRelationReady && !relationFailed) || isActing
 
                 return (
                   <div key={item.id} className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">

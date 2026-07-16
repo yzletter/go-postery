@@ -9,25 +9,7 @@ import { Post } from '../types'
 
 type SearchResultItem = Post & {
   summary?: string
-  matchScore?: number
-  badge?: string
 }
-
-const searchCategories = [
-  { key: 'all', label: '全部' },
-  { key: 'frontend', label: '前端' },
-  { key: 'backend', label: '后端' },
-  { key: 'go', label: 'Go' },
-  { key: 'java', label: 'Java' },
-  { key: 'python', label: 'Python' },
-  { key: 'ai', label: 'AI' },
-  { key: 'ops', label: '运维' },
-]
-
-const categoryLabelMap = searchCategories.reduce<Record<string, string>>((acc, cur) => {
-  acc[cur.key] = cur.label
-  return acc
-}, {})
 
 const SEARCH_TIMEOUT_MS = 8000
 const SUMMARY_LIMIT = 160
@@ -40,20 +22,7 @@ const buildSummary = (content: string) => {
   return `${normalized.slice(0, SUMMARY_LIMIT)}...`
 }
 
-const computeMatchScore = (post: Post, keyword: string) => {
-  const query = keyword.trim().toLowerCase()
-  if (!query) return undefined
-  const title = post.title.toLowerCase()
-  const content = post.content.toLowerCase()
-  const tags = (post.tags ?? []).join(' ').toLowerCase()
-  let score = 60
-  if (title.includes(query)) score += 25
-  if (content.includes(query)) score += 10
-  if (tags.includes(query)) score += 5
-  return Math.min(98, score)
-}
-
-const normalizeSearchItem = (raw: any, keyword: string): SearchResultItem | null => {
+const normalizeSearchItem = (raw: any): SearchResultItem | null => {
   const normalized = normalizePost(raw)
   if (!normalized.id || !normalized.title) return null
   const summary = buildSummary(normalized.content)
@@ -63,7 +32,6 @@ const normalizeSearchItem = (raw: any, keyword: string): SearchResultItem | null
     likes: normalized.likes ?? 0,
     comments: normalized.comments ?? 0,
     summary: summary || undefined,
-    matchScore: computeMatchScore(normalized, keyword),
   }
 }
 
@@ -90,9 +58,6 @@ const highlightText = (text: string, keyword: string) => {
   })
 }
 
-const computeHeat = (post: SearchResultItem) =>
-  (post.likes ?? 0) * 3 + (post.comments ?? 0) * 4 + (post.views ?? 0) * 0.4 + (post.matchScore ?? 0)
-
 export default function SearchPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -106,6 +71,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     setKeyword(searchQuery)
+    setSelectedCategory('all')
   }, [searchQuery])
 
   useEffect(() => {
@@ -139,7 +105,7 @@ export default function SearchPage() {
         }
 
         const normalized = data
-          .map((item) => normalizeSearchItem(item, searchQuery))
+          .map((item) => normalizeSearchItem(item))
           .filter(Boolean) as SearchResultItem[]
 
         setResults(normalized)
@@ -170,30 +136,36 @@ export default function SearchPage() {
     }
   }, [searchQuery])
 
+  const searchCategories = useMemo(() => {
+    const labelsByKey = new Map<string, string>()
+
+    results.forEach((post) => {
+      post.tags?.forEach((tag) => {
+        const label = tag.trim()
+        const key = label.toLocaleLowerCase()
+        if (label && !labelsByKey.has(key)) {
+          labelsByKey.set(key, label)
+        }
+      })
+    })
+
+    return [
+      { key: 'all', label: '全部' },
+      ...Array.from(labelsByKey, ([key, label]) => ({ key, label })),
+    ]
+  }, [results])
+
   const filteredResults = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-    const byCategory = results.filter((post) => {
-      if (selectedCategory !== 'all' && post.category !== selectedCategory) return false
+    return results.filter((post) => {
+      if (
+        selectedCategory !== 'all' &&
+        !post.tags?.some((tag) => tag.trim().toLocaleLowerCase() === selectedCategory)
+      ) {
+        return false
+      }
       return true
     })
-
-    const sortBy = [...byCategory].sort((a, b) => {
-      const relevanceScore = (post: SearchResultItem) => {
-        if (!query) {
-          return (post.matchScore ?? 0) + computeHeat(post) / 10
-        }
-        let score = 0
-        if (post.title.toLowerCase().includes(query)) score += 6
-        if (post.content.toLowerCase().includes(query)) score += 3
-        if ((post.tags || []).some((tag) => tag.toLowerCase().includes(query))) score += 2
-        return score + (post.matchScore ?? 0) / 5 + computeHeat(post) / 500
-      }
-
-      return relevanceScore(b) - relevanceScore(a)
-    })
-
-    return sortBy
-  }, [results, searchQuery, selectedCategory])
+  }, [results, selectedCategory])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -215,7 +187,7 @@ export default function SearchPage() {
   const totalCount = filteredResults.length
   const rawCount = results.length
   const emptyStateTitle = hasSearched ? '还没有找到匹配的内容' : '输入关键词开始搜索'
-  const emptyStateHint = hasSearched ? '试试换个关键词，或者调整筛选条件' : '支持标题、内容与作者检索'
+  const emptyStateHint = hasSearched ? '试试换个关键词，或者调整标签筛选' : '支持标题与正文关键词检索'
 
   return (
     <div className="space-y-6">
@@ -230,7 +202,7 @@ export default function SearchPage() {
                 搜索结果
               </p>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">找到你想要的内容</h1>
-              <p className="text-gray-600 mt-1">基于关键词实时检索社区内容，返回最匹配的帖子。</p>
+              <p className="text-gray-600 mt-1">基于标题和正文关键词检索社区帖子。</p>
             </div>
             <div className="hidden sm:flex items-center gap-3 text-sm text-gray-600">
               <div className="flex items-center gap-2 bg-white/60 px-3 py-2 rounded-lg border border-primary-100 shadow-sm">
@@ -239,7 +211,7 @@ export default function SearchPage() {
               </div>
               <div className="flex items-center gap-2 bg-white/60 px-3 py-2 rounded-lg border border-primary-100 shadow-sm">
                 <BarChart3 className="h-4 w-4 text-primary-600" />
-                <span>实时搜索与排序</span>
+                <span>后端实时搜索</span>
               </div>
             </div>
           </div>
@@ -260,7 +232,7 @@ export default function SearchPage() {
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-gray-500">快捷标签：</span>
+              <span className="text-xs text-gray-500">快捷搜索：</span>
               {quickTags.map((tag) => (
                 <button
                   key={tag}
@@ -337,22 +309,6 @@ export default function SearchPage() {
                 onClick={() => handleOpenPost(post.id)}
               >
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {post.badge && (
-                      <span className="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-primary-50 text-primary-700 border border-primary-100">
-                        {post.badge}
-                      </span>
-                    )}
-                    {post.category && (
-                      <span className="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-gray-100 text-gray-700">
-                        {categoryLabelMap[post.category] || '其他'}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center px-2 py-0.5 text-[11px] rounded-full bg-orange-50 text-orange-700 border border-orange-100">
-                      匹配度 {post.matchScore ?? 72}%
-                    </span>
-                  </div>
-
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
                       <UserAvatar
@@ -438,7 +394,7 @@ export default function SearchPage() {
             <p className="text-sm text-gray-600">总计</p>
             <p className="text-3xl font-bold text-gray-900 mb-1">{hasSearched ? rawCount : 0}</p>
             <p className="text-sm text-gray-600">
-              {hasSearched ? '条匹配结果，支持分类与排序。' : '输入关键词即可发起搜索。'}
+              {hasSearched ? '条匹配结果，可按返回的标签筛选。' : '输入关键词即可发起搜索。'}
             </p>
             <p className="mt-3 text-sm text-gray-500">
               {hasSearched ? `当前关键词：${searchQuery}` : '搜索将通过 /api/v1/search 返回匹配帖子。'}

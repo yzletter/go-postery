@@ -16,7 +16,6 @@ export const normalizeUserDetail = (raw: any): UserDetail => {
   return {
     id: normalizeId(raw?.id ?? raw?.Id),
     name: nickname,
-    email: raw?.email ?? raw?.Email,
     avatar: raw?.avatar ?? raw?.Avatar,
     bio: raw?.bio ?? raw?.Bio,
     gender: normalizedGender,

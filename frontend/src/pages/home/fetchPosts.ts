@@ -1,5 +1,5 @@
 import type { Post } from '../../types'
-import { apiGet } from '../../utils/api'
+import { ApiError, apiGet } from '../../utils/api'
 import { normalizePost } from '../../utils/post'
 import { DEFAULT_PAGE_SIZE, FETCH_TIMEOUT_MS, getRequestTag } from './constants'
 
@@ -18,7 +18,7 @@ export const fetchPosts = async (
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
   try {
-    const useAllEndpoint = !categoryKey || categoryKey === 'all' || categoryKey === 'follow'
+    const useAllEndpoint = !categoryKey || categoryKey === 'all'
     const tag = categoryKey ? getRequestTag(categoryKey) : ''
     const path = useAllEndpoint
       ? `/posts?pageNo=${page}&pageSize=${pageSize}`
@@ -55,6 +55,14 @@ export const fetchPosts = async (
     if ((error as any)?.name === 'AbortError') {
       console.error('Fetch posts request timeout')
       throw new Error('请求超时，请检查后端服务状态')
+    }
+    if (
+      error instanceof ApiError &&
+      error.status === 404 &&
+      categoryKey &&
+      categoryKey !== 'all'
+    ) {
+      return { posts: [], total: 0, hasMore: false }
     }
     console.error('Failed to fetch posts:', error)
     throw error

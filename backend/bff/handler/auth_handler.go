@@ -8,7 +8,7 @@ import (
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
-	auth2 "github.com/yzletter/go-postery/backend/bff/dto/auth"
+	"github.com/yzletter/go-postery/backend/bff/dto/auth"
 	userdto "github.com/yzletter/go-postery/backend/bff/dto/user"
 	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
@@ -53,7 +53,7 @@ func (hdl *AuthHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware g
 // LoginByPassword 手机号码/邮箱 + 密码登录
 func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.LoginByPasswordRequest
+	var req auth.LoginByPasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -106,7 +106,7 @@ func (hdl *AuthHandler) LoginByPassword(ctx *gin.Context) {
 // LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.LoginByPhoneRequest
+	var req auth.LoginByPhoneRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -159,7 +159,7 @@ func (hdl *AuthHandler) LoginByPhone(ctx *gin.Context) {
 // SendEmailCode 发送邮箱验证码
 func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.SendEmailCodeRequest
+	var req auth.SendEmailCodeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -183,7 +183,7 @@ func (hdl *AuthHandler) SendEmailCode(ctx *gin.Context) {
 // SendSMSCode 发送短信验证码
 func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.SendSMSCodeRequest
+	var req auth.SendSMSCodeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -205,7 +205,7 @@ func (hdl *AuthHandler) SendSMSCode(ctx *gin.Context) {
 
 func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.UpdatePassRequest
+	var req auth.UpdatePassRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -241,7 +241,7 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 // SetPassword 初始化密码
 func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	// 获取参数并校验
-	var req auth2.SetPassRequest
+	var req auth.SetPassRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
@@ -279,11 +279,11 @@ func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 查询是否有密码
 	has, err := hdl.authSvc.HasPassword(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), auth2.PassStatusResponse{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), auth.PassStatusResponse{})
 		return
 	}
 
-	response.Success(ctx, "获取密码状态成功", auth2.PassStatusResponse{HasPassword: has.Result})
+	response.Success(ctx, "获取密码状态成功", auth.PassStatusResponse{HasPassword: has.Result})
 	return
 }
 
@@ -298,11 +298,11 @@ func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 
 	authIdentity, err := hdl.authSvc.GetAuthIdentityByUID(ctx, &auth_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), auth2.AuthIdentityResponse{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), auth.AuthIdentityResponse{})
 		return
 	}
 
-	response.Success(ctx, "获取用户身份认证成功", auth2.AuthIdentityResponse{
+	response.Success(ctx, "获取用户身份认证成功", auth.AuthIdentityResponse{
 		Phone: authIdentity.Phone,
 		Email: authIdentity.Email,
 	})

@@ -83,7 +83,7 @@ func (svc *authService) LoginByPassword(ctx context.Context, identifier string, 
 // LoginByPhone 手机号码 + 验证码进行登录, 未注册的手机号码自动进行注册
 func (svc *authService) LoginByPhone(ctx context.Context, phone string, code string) (int64, error) {
 	// 校验验证码并消费
-	verifyReq := code_grpc.CheckCodeRequest{Biz: code_grpc.CodeBiz_CODE_BIZ_SMS, Identifier: phone, Code: code}
+	verifyReq := code_grpc.VerifyCodeRequest{Biz: code_grpc.CodeBiz_CODE_BIZ_SMS, Identifier: phone, Code: code}
 	if resp, err := svc.codeClient.Verify(ctx, &verifyReq); err != nil {
 		// 下游挂了
 		slog.Error("verify login code failed", "error", err)
@@ -200,7 +200,7 @@ func (svc *authService) SetPassword(ctx context.Context, uid int64, code string,
 
 	// 校验验证码并消费
 
-	verifyReq := code_grpc.CheckCodeRequest{
+	verifyReq := code_grpc.VerifyCodeRequest{
 		Biz:        code_grpc.CodeBiz_CODE_BIZ_SMS,
 		Identifier: authIdentity.Identifier,
 		Code:       code,
