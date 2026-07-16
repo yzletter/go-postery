@@ -20,14 +20,14 @@ message SendCodeRequest{
 message SendCodeResponse{}
 
 // 校验验证码请求体
-message CheckCodeRequest{
+message VerifyCodeRequest{
   CodeBiz biz = 1;
   string identifier = 2;
   string code = 3;
 }
 
 // 校验验证码响应体
-message CheckCodeResponse{
+message VerifyCodeResponse{
   bool result = 1;
 }
 
@@ -39,7 +39,7 @@ service CodeService {
   // 发送验证码
   rpc Send(SendCodeRequest) returns (SendCodeResponse);
   // 校验验证码
-  rpc Verify(CheckCodeRequest) returns (CheckCodeResponse);
+  rpc Verify(VerifyCodeRequest) returns (VerifyCodeResponse);
   // 健康检查
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }

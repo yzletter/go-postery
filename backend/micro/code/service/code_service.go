@@ -79,19 +79,18 @@ func (svc *codeService) Send(ctx context.Context, biz domain.BizType, identifier
 		slog.Warn("record code send failed", "biz", biz, "identifier_hash", hashIdentifier(identifier), "error", err)
 	}
 
-	slog.Info("send code success", "biz", biz, "identifier_hash", hashIdentifier(identifier))
 	return nil
 }
 
 // Verify 校验验证码并标识验证码已验证
 func (svc *codeService) Verify(ctx context.Context, biz domain.BizType, identifier string, code string) (bool, error) {
-	if ok, err := svc.repository.Verify(ctx, biz, identifier, code, hashCode(code)); err != nil {
+	ok, err := svc.repository.Verify(ctx, biz, identifier, code, hashCode(code))
+	if err != nil {
 		slog.Error("verify code failed", "biz", biz, "identifier_hash", hashIdentifier(identifier), "error", err)
 		return false, errs.ErrInternal
-	} else {
-		slog.Info("verify code finished", "biz", biz, "identifier_hash", hashIdentifier(identifier), "result", ok)
-		return ok, nil
 	}
+
+	return ok, nil
 }
 
 // 生成六位验证码

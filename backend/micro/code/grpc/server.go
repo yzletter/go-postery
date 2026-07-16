@@ -23,7 +23,7 @@ func NewCodeServiceServer(svc service.CodeService) *CodeServiceServer {
 // Send 发送验证码
 func (server *CodeServiceServer) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
 	// 调用 Service
-	if err := server.svc.Send(ctx, domain.BizType(req.Biz), req.Identifier); err != nil {
+	if err := server.svc.Send(ctx, convert(req.Biz), req.Identifier); err != nil {
 		return &code_grpc.SendCodeResponse{}, err
 	}
 	// 返回 Response
@@ -31,15 +31,25 @@ func (server *CodeServiceServer) Send(ctx context.Context, req *code_grpc.SendCo
 }
 
 // Verify 校验验证码
-func (server *CodeServiceServer) Verify(ctx context.Context, req *code_grpc.CheckCodeRequest) (*code_grpc.CheckCodeResponse, error) {
+func (server *CodeServiceServer) Verify(ctx context.Context, req *code_grpc.VerifyCodeRequest) (*code_grpc.VerifyCodeResponse, error) {
 	// 调用 Service
-	if res, err := server.svc.Verify(ctx, domain.BizType(req.Biz), req.Identifier, req.Code); err != nil {
-		return &code_grpc.CheckCodeResponse{Result: false}, err
+	if res, err := server.svc.Verify(ctx, convert(req.Biz), req.Identifier, req.Code); err != nil {
+		return &code_grpc.VerifyCodeResponse{Result: false}, err
 	} else {
-		return &code_grpc.CheckCodeResponse{Result: res}, nil
+		return &code_grpc.VerifyCodeResponse{Result: res}, nil
 	}
 }
 
 func (server *CodeServiceServer) HealthCheck(ctx context.Context, req *code_grpc.HealthCheckRequest) (*code_grpc.HealthCheckResponse, error) {
 	return &code_grpc.HealthCheckResponse{}, nil
+}
+
+func convert(biz code_grpc.CodeBiz) domain.BizType {
+	switch biz {
+	case code_grpc.CodeBiz_CODE_BIZ_SMS:
+		return domain.BizSMS
+	case code_grpc.CodeBiz_CODE_BIZ_Email:
+		return domain.BizEmail
+	}
+	return 0
 }

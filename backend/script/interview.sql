@@ -1,8 +1,7 @@
--- Agent 微服务模块建表语句
+-- Interview 微服务模块建表语句
 
 -- 切到 go_postery 数据库
 use go_postery;
-
 
 CREATE TABLE IF NOT EXISTS interview_profiles
 (
@@ -12,8 +11,7 @@ CREATE TABLE IF NOT EXISTS interview_profiles
     weak_points JSON,
     created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE IF NOT EXISTS interview_records
 (
@@ -27,8 +25,7 @@ CREATE TABLE IF NOT EXISTS interview_records
     created_at       DATETIME     DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_id (user_id),
     INDEX idx_session_id (session_id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE IF NOT EXISTS interview_sessions
 (
@@ -38,5 +35,4 @@ CREATE TABLE IF NOT EXISTS interview_sessions
     created_at   DATETIME    DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_user_id (user_id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

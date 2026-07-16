@@ -161,7 +161,7 @@ func (*SendCodeResponse) Descriptor() ([]byte, []int) {
 }
 
 // 校验验证码请求体
-type CheckCodeRequest struct {
+type VerifyCodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Biz           CodeBiz                `protobuf:"varint,1,opt,name=biz,proto3,enum=code.v1.CodeBiz" json:"biz,omitempty"`
 	Identifier    string                 `protobuf:"bytes,2,opt,name=identifier,proto3" json:"identifier,omitempty"`
@@ -170,20 +170,20 @@ type CheckCodeRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CheckCodeRequest) Reset() {
-	*x = CheckCodeRequest{}
+func (x *VerifyCodeRequest) Reset() {
+	*x = VerifyCodeRequest{}
 	mi := &file_api_proto_code_v1_code_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CheckCodeRequest) String() string {
+func (x *VerifyCodeRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CheckCodeRequest) ProtoMessage() {}
+func (*VerifyCodeRequest) ProtoMessage() {}
 
-func (x *CheckCodeRequest) ProtoReflect() protoreflect.Message {
+func (x *VerifyCodeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_api_proto_code_v1_code_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -195,26 +195,26 @@ func (x *CheckCodeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CheckCodeRequest.ProtoReflect.Descriptor instead.
-func (*CheckCodeRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyCodeRequest.ProtoReflect.Descriptor instead.
+func (*VerifyCodeRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *CheckCodeRequest) GetBiz() CodeBiz {
+func (x *VerifyCodeRequest) GetBiz() CodeBiz {
 	if x != nil {
 		return x.Biz
 	}
 	return CodeBiz_EMPTY
 }
 
-func (x *CheckCodeRequest) GetIdentifier() string {
+func (x *VerifyCodeRequest) GetIdentifier() string {
 	if x != nil {
 		return x.Identifier
 	}
 	return ""
 }
 
-func (x *CheckCodeRequest) GetCode() string {
+func (x *VerifyCodeRequest) GetCode() string {
 	if x != nil {
 		return x.Code
 	}
@@ -222,27 +222,27 @@ func (x *CheckCodeRequest) GetCode() string {
 }
 
 // 校验验证码响应体
-type CheckCodeResponse struct {
+type VerifyCodeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Result        bool                   `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CheckCodeResponse) Reset() {
-	*x = CheckCodeResponse{}
+func (x *VerifyCodeResponse) Reset() {
+	*x = VerifyCodeResponse{}
 	mi := &file_api_proto_code_v1_code_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CheckCodeResponse) String() string {
+func (x *VerifyCodeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CheckCodeResponse) ProtoMessage() {}
+func (*VerifyCodeResponse) ProtoMessage() {}
 
-func (x *CheckCodeResponse) ProtoReflect() protoreflect.Message {
+func (x *VerifyCodeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_api_proto_code_v1_code_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -254,12 +254,12 @@ func (x *CheckCodeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CheckCodeResponse.ProtoReflect.Descriptor instead.
-func (*CheckCodeResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyCodeResponse.ProtoReflect.Descriptor instead.
+func (*VerifyCodeResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_code_v1_code_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *CheckCodeResponse) GetResult() bool {
+func (x *VerifyCodeResponse) GetResult() bool {
 	if x != nil {
 		return x.Result
 	}
@@ -348,24 +348,24 @@ const file_api_proto_code_v1_code_proto_rawDesc = "" +
 	"\n" +
 	"identifier\x18\x02 \x01(\tR\n" +
 	"identifier\"\x12\n" +
-	"\x10SendCodeResponse\"j\n" +
-	"\x10CheckCodeRequest\x12\"\n" +
+	"\x10SendCodeResponse\"k\n" +
+	"\x11VerifyCodeRequest\x12\"\n" +
 	"\x03biz\x18\x01 \x01(\x0e2\x10.code.v1.CodeBizR\x03biz\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x02 \x01(\tR\n" +
 	"identifier\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\tR\x04code\"+\n" +
-	"\x11CheckCodeResponse\x12\x16\n" +
+	"\x04code\x18\x03 \x01(\tR\x04code\",\n" +
+	"\x12VerifyCodeResponse\x12\x16\n" +
 	"\x06result\x18\x01 \x01(\bR\x06result\"\x14\n" +
 	"\x12HealthCheckRequest\"\x15\n" +
 	"\x13HealthCheckResponse*:\n" +
 	"\aCodeBiz\x12\t\n" +
 	"\x05EMPTY\x10\x00\x12\x10\n" +
 	"\fCODE_BIZ_SMS\x10\x01\x12\x12\n" +
-	"\x0eCODE_BIZ_Email\x10\x022\xd5\x01\n" +
+	"\x0eCODE_BIZ_Email\x10\x022\xd7\x01\n" +
 	"\vCodeService\x12;\n" +
-	"\x04Send\x12\x18.code.v1.SendCodeRequest\x1a\x19.code.v1.SendCodeResponse\x12?\n" +
-	"\x06Verify\x12\x19.code.v1.CheckCodeRequest\x1a\x1a.code.v1.CheckCodeResponse\x12H\n" +
+	"\x04Send\x12\x18.code.v1.SendCodeRequest\x1a\x19.code.v1.SendCodeResponse\x12A\n" +
+	"\x06Verify\x12\x1a.code.v1.VerifyCodeRequest\x1a\x1b.code.v1.VerifyCodeResponse\x12H\n" +
 	"\vHealthCheck\x12\x1b.code.v1.HealthCheckRequest\x1a\x1c.code.v1.HealthCheckResponseB<Z:github.com/yzletter/go-postery/api/proto/code/v1;code_grpcb\x06proto3"
 
 var (
@@ -386,19 +386,19 @@ var file_api_proto_code_v1_code_proto_goTypes = []any{
 	(CodeBiz)(0),                // 0: code.v1.CodeBiz
 	(*SendCodeRequest)(nil),     // 1: code.v1.SendCodeRequest
 	(*SendCodeResponse)(nil),    // 2: code.v1.SendCodeResponse
-	(*CheckCodeRequest)(nil),    // 3: code.v1.CheckCodeRequest
-	(*CheckCodeResponse)(nil),   // 4: code.v1.CheckCodeResponse
+	(*VerifyCodeRequest)(nil),   // 3: code.v1.VerifyCodeRequest
+	(*VerifyCodeResponse)(nil),  // 4: code.v1.VerifyCodeResponse
 	(*HealthCheckRequest)(nil),  // 5: code.v1.HealthCheckRequest
 	(*HealthCheckResponse)(nil), // 6: code.v1.HealthCheckResponse
 }
 var file_api_proto_code_v1_code_proto_depIdxs = []int32{
 	0, // 0: code.v1.SendCodeRequest.biz:type_name -> code.v1.CodeBiz
-	0, // 1: code.v1.CheckCodeRequest.biz:type_name -> code.v1.CodeBiz
+	0, // 1: code.v1.VerifyCodeRequest.biz:type_name -> code.v1.CodeBiz
 	1, // 2: code.v1.CodeService.Send:input_type -> code.v1.SendCodeRequest
-	3, // 3: code.v1.CodeService.Verify:input_type -> code.v1.CheckCodeRequest
+	3, // 3: code.v1.CodeService.Verify:input_type -> code.v1.VerifyCodeRequest
 	5, // 4: code.v1.CodeService.HealthCheck:input_type -> code.v1.HealthCheckRequest
 	2, // 5: code.v1.CodeService.Send:output_type -> code.v1.SendCodeResponse
-	4, // 6: code.v1.CodeService.Verify:output_type -> code.v1.CheckCodeResponse
+	4, // 6: code.v1.CodeService.Verify:output_type -> code.v1.VerifyCodeResponse
 	6, // 7: code.v1.CodeService.HealthCheck:output_type -> code.v1.HealthCheckResponse
 	5, // [5:8] is the sub-list for method output_type
 	2, // [2:5] is the sub-list for method input_type

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourcePerFileMappings">
-    <file url="file://$PROJECT_DIR$/backend/script/agent.sql" value="50105238-9caa-4488-9421-1fae2467e0d9" />
     <file url="file://$PROJECT_DIR$/backend/script/create_table.sql" value="50105238-9caa-4488-9421-1fae2467e0d9" />
+    <file url="file://$PROJECT_DIR$/backend/script/interview.sql" value="50105238-9caa-4488-9421-1fae2467e0d9" />
   </component>
 </project>

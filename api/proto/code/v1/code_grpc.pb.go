@@ -33,7 +33,7 @@ type CodeServiceClient interface {
 	// 发送验证码
 	Send(ctx context.Context, in *SendCodeRequest, opts ...grpc.CallOption) (*SendCodeResponse, error)
 	// 校验验证码
-	Verify(ctx context.Context, in *CheckCodeRequest, opts ...grpc.CallOption) (*CheckCodeResponse, error)
+	Verify(ctx context.Context, in *VerifyCodeRequest, opts ...grpc.CallOption) (*VerifyCodeResponse, error)
 	// 健康检查
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
@@ -56,9 +56,9 @@ func (c *codeServiceClient) Send(ctx context.Context, in *SendCodeRequest, opts 
 	return out, nil
 }
 
-func (c *codeServiceClient) Verify(ctx context.Context, in *CheckCodeRequest, opts ...grpc.CallOption) (*CheckCodeResponse, error) {
+func (c *codeServiceClient) Verify(ctx context.Context, in *VerifyCodeRequest, opts ...grpc.CallOption) (*VerifyCodeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CheckCodeResponse)
+	out := new(VerifyCodeResponse)
 	err := c.cc.Invoke(ctx, CodeService_Verify_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ type CodeServiceServer interface {
 	// 发送验证码
 	Send(context.Context, *SendCodeRequest) (*SendCodeResponse, error)
 	// 校验验证码
-	Verify(context.Context, *CheckCodeRequest) (*CheckCodeResponse, error)
+	Verify(context.Context, *VerifyCodeRequest) (*VerifyCodeResponse, error)
 	// 健康检查
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedCodeServiceServer()
@@ -101,7 +101,7 @@ type UnimplementedCodeServiceServer struct{}
 func (UnimplementedCodeServiceServer) Send(context.Context, *SendCodeRequest) (*SendCodeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Send not implemented")
 }
-func (UnimplementedCodeServiceServer) Verify(context.Context, *CheckCodeRequest) (*CheckCodeResponse, error) {
+func (UnimplementedCodeServiceServer) Verify(context.Context, *VerifyCodeRequest) (*VerifyCodeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Verify not implemented")
 }
 func (UnimplementedCodeServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
@@ -147,7 +147,7 @@ func _CodeService_Send_Handler(srv interface{}, ctx context.Context, dec func(in
 }
 
 func _CodeService_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckCodeRequest)
+	in := new(VerifyCodeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func _CodeService_Verify_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: CodeService_Verify_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CodeServiceServer).Verify(ctx, req.(*CheckCodeRequest))
+		return srv.(CodeServiceServer).Verify(ctx, req.(*VerifyCodeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
