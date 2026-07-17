@@ -1,5 +1,7 @@
 package user
 
+import "encoding/json"
+
 type ModifyProfileRequest struct {
 	Nickname *string `json:"nickname,omitempty"`
 	Avatar   *string `json:"avatar,omitempty"`   // 头像 URL
@@ -11,9 +13,9 @@ type ModifyProfileRequest struct {
 }
 
 type UploadCallbackRequest struct {
-	Bucket string `json:"bucket"`
-	Size   string `json:"size"`
-	Object string `json:"object"`
+	Bucket string      `json:"bucket"`
+	Size   json.Number `json:"size"`
+	Object string      `json:"object"`
 }
 
 type GetAvatarURLRequest struct {

@@ -550,26 +550,58 @@ export default function Settings() {
                   </div>
                 )}
 
-                <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
-                  <UserAvatar
-                    avatar={avatarPreview}
-                    name={displayName}
-                    userId={user.id}
-                    className="w-14 h-14 rounded-full border border-white shadow-sm"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{displayName}</p>
-                    <p className="text-xs text-gray-500">用户 ID：{user.id ?? '—'}</p>
-                    <p className="text-xs text-gray-500">
-                      {isUploadingAvatar ? '头像上传中...' : '头像展示会通过 presign 临时地址加载'}
+                <form onSubmit={handleProfileSubmit} className="space-y-5">
+                  <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-4 sm:p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <UserAvatar
+                        avatar={avatarPreview}
+                        name={displayName}
+                        userId={user.id}
+                        className="h-20 w-20 shrink-0 rounded-full border-4 border-white shadow-sm"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-base font-semibold text-gray-900">{displayName}</p>
+                          {isUploadingAvatar ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600" />
+                              上传中
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-0.5 text-xs text-gray-500">用户 ID：{user.id ?? '—'}</p>
+                        <p className="mt-2 text-xs leading-5 text-gray-500">
+                          支持 JPG、PNG、WebP，文件不超过 {AVATAR_SIZE_LABEL}
+                        </p>
+                      </div>
+
+                      <label
+                        className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors ${
+                          disableProfileForm
+                            ? 'pointer-events-none border-gray-200 bg-gray-100 text-gray-400'
+                            : 'cursor-pointer border-primary-200 bg-primary-50 text-primary-700 hover:border-primary-300 hover:bg-primary-100'
+                        }`}
+                      >
+                        <Image className="h-4 w-4" />
+                        <span>{avatarObjectKey ? '更换头像' : '上传头像'}</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleAvatarChange}
+                          className="sr-only"
+                          disabled={disableProfileForm}
+                        />
+                      </label>
+                    </div>
+                    <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-400">
+                      图片尺寸需在 {AVATAR_MIN_DIMENSION} × {AVATAR_MIN_DIMENSION} 到 {AVATAR_MAX_DIMENSION} × {AVATAR_MAX_DIMENSION} 之间
                     </p>
                   </div>
-                </div>
 
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">昵称</label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700">昵称</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <UserIcon className="h-5 w-5 text-gray-400" />
@@ -585,31 +617,8 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">上传头像</label>
-                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                          <Image className="h-4 w-4 text-gray-400" />
-                          <span>支持 JPG / PNG / WebP</span>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handleAvatarChange}
-                          className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-700 hover:file:bg-primary-50"
-                          disabled={disableProfileForm}
-                        />
-                        <p className="text-xs text-gray-500">
-                          大小不超过 {AVATAR_SIZE_LABEL}，尺寸需在 {AVATAR_MIN_DIMENSION} x {AVATAR_MIN_DIMENSION} 到 {AVATAR_MAX_DIMENSION} x {AVATAR_MAX_DIMENSION} 之间
-                        </p>
-                        {avatarObjectKey ? (
-                          <p className="text-[11px] text-gray-400 break-all">对象键：{avatarObjectKey}</p>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">国家</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">国家</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Globe className="h-5 w-5 text-gray-400" />
@@ -625,8 +634,8 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">地区</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">地区</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <MapPin className="h-5 w-5 text-gray-400" />
@@ -642,8 +651,8 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">生日</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">生日</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Calendar className="h-5 w-5 text-gray-400" />
@@ -659,8 +668,8 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">性别</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">性别</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <UserIcon className="h-5 w-5 text-gray-400" />
@@ -680,26 +689,26 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">个性签名</label>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">个性签名</label>
                     <textarea
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       className="input h-24 resize-none"
-                      placeholder="用一段话介绍自己，这会落入 bio 字段"
+                      placeholder="用一段话介绍自己"
                       disabled={disableProfileForm}
                       maxLength={160}
                     />
-                    <p className="mt-1 text-xs text-gray-500">支持 160 字以内，提交时带上 bio 字段</p>
+                    <p className="text-right text-xs text-gray-400">{bio.length}/160</p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
+                  <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500">
                       {isUploadingAvatar
-                        ? '头像已单独上传，正在等待上传完成...'
+                        ? '正在上传头像...'
                         : isSavingProfile
                           ? '正在保存到服务器...'
-                          : '保存后刷新个人主页即可查看变更'}
+                          : '保存后个人资料将立即更新'}
                     </div>
                     <button
                       type="submit"

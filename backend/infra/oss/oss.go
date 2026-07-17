@@ -150,7 +150,7 @@ func (manager *AliyunOSSManager) Sign(dir string, uploadCallbackURL string) (str
 
 	callbackParam := CallbackParam{
 		CallbackURL:      uploadCallbackURL,
-		CallbackBody:     "{\"bucket\":\"${bucket}\",\"object\":\"${object}\",\"size\":\"${size}\"}",
+		CallbackBody:     `{"bucket":${bucket},"object":${object},"size":${size}}`,
 		CallbackBodyType: "application/json",
 	}
 	callbackPayload, err := json.Marshal(callbackParam)
