@@ -56,8 +56,8 @@ func (repo *postRepository) Create(ctx context.Context, post domain.Post, events
 }
 
 // Delete 删除帖子
-func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID int64) error {
-	if err := repo.dao.Delete(ctx, postID); err != nil {
+func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID int64, events []*event.OutboxEvent) error {
+	if err := repo.dao.Delete(ctx, postID, events); err != nil {
 		return toRepositoryErr(err)
 	}
 
@@ -79,7 +79,7 @@ func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID i
 }
 
 // Update 更新帖子
-func (repo *postRepository) Update(ctx context.Context, post domain.Post) error {
+func (repo *postRepository) Update(ctx context.Context, post domain.Post, events []*event.OutboxEvent) error {
 	// 构造 Post、Tag 和 PostTag
 	m := domain.ToModelPost(post)
 	tags := make([]*model.Tag, 0, len(post.Tags))
@@ -97,7 +97,7 @@ func (repo *postRepository) Update(ctx context.Context, post domain.Post) error 
 	}
 
 	// 更新帖子和标签
-	if err := repo.dao.Update(ctx, &m, tags, postTags); err != nil {
+	if err := repo.dao.Update(ctx, &m, tags, postTags, events); err != nil {
 		return toRepositoryErr(err)
 	}
 

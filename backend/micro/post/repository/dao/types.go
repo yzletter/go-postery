@@ -29,10 +29,11 @@ type PostDAO interface {
 	//
 	// Parameter:
 	//	- id: 帖子 ID
+	//	- events: 事件列表
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Delete(ctx context.Context, id int64) error
+	Delete(ctx context.Context, id int64, events []*event.OutboxEvent) error
 
 	// UpdateCount 更新帖子计数字段
 	//
@@ -51,6 +52,7 @@ type PostDAO interface {
 	//	- post: 待更新帖子
 	//	- tags: 待绑定标签
 	//	- postTags: 帖子标签关系
+	//	- events: 事件列表
 	//
 	// Return:
 	//	- error: 可能返回的错误
@@ -58,7 +60,7 @@ type PostDAO interface {
 	//		- ErrServerInternal: 数据库内部错误
 	//		- ErrRecordNotFound: 帖子不存在
 	//		- ErrUniqueKey: 唯一键冲突
-	Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag) error
+	Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*event.OutboxEvent) error
 
 	// GetByID 根据 ID 获取帖子
 	//

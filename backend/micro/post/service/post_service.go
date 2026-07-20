@@ -48,7 +48,7 @@ func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Po
 	// 构造 Outbox
 	events := make([]*event.OutboxEvent, 0)
 
-	payload := event.NewPostEventPayload{ID: post.ID}
+	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostCreate}
 
 	// Search 事件
 	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
@@ -241,7 +241,16 @@ func (svc *postService) Update(ctx context.Context, updatePost domain.Post) erro
 		return errs.ErrUnauthenticated
 	}
 
-	if err := svc.postRepo.Update(ctx, updatePost); err != nil {
+	// 构造 Outbox
+	events := make([]*event.OutboxEvent, 0)
+
+	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostUpdate}
+
+	// Search 事件
+	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
+	events = append(events, searchEvent)
+
+	if err := svc.postRepo.Update(ctx, updatePost, events); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Info("update post skipped: post not found", "id", postID)
 			return errs.ErrNotFound
@@ -340,8 +349,17 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 		return errs.ErrUnauthenticated
 	}
 
+	// 构造 Outbox
+	events := make([]*event.OutboxEvent, 0)
+
+	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostDelete}
+
+	// Search 事件
+	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
+	events = append(events, searchEvent)
+
 	// 删除帖子
-	if err := svc.postRepo.Delete(ctx, postID, userID); err != nil {
+	if err := svc.postRepo.Delete(ctx, postID, userID, events); err != nil {
 		slog.Error("delete post failed", "id", post.ID, "user_id", userID, "error", err)
 		return errs.ErrInternal
 	}

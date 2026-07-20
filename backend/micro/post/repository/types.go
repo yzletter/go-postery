@@ -28,7 +28,7 @@ type PostRepository interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Delete(ctx context.Context, postID int64, authorID int64) error
+	Delete(ctx context.Context, postID int64, authorID int64, events []*event.OutboxEvent) error
 
 	// Update 更新帖子和标签
 	//
@@ -37,7 +37,7 @@ type PostRepository interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Update(ctx context.Context, post domain.Post) error
+	Update(ctx context.Context, post domain.Post, events []*event.OutboxEvent) error
 
 	// GetByID 根据 ID 获取帖子
 	//
@@ -107,19 +107,6 @@ type PostRepository interface {
 	//	- error: 可能返回的错误
 	GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []domain.Post, error)
 }
-
-//type PostRepository interface {
-//	Create(ctx context.Context, post *model.Post, events []*event.OutboxEvent) error
-//	Delete(ctx context.Context, id int64) error
-//	UpdateCount(ctx context.Context, id int64, field model.PostCntField, delta int) error
-//	Update(ctx context.Context, id int64, updates map[string]any) error
-//	GetByID(ctx context.Context, id int64) (*model.Post, error)
-//	GetByUid(ctx context.Context, id int64, pageNo, pageSize int) (int64, []*model.Post, error)
-//	GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []*model.Post, error)
-//	GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []*model.Post, error)
-//	ChangeScore(ctx context.Context, pid int64, delta int)
-//	Top(ctx context.Context) ([]*model.Post, []float64, error)
-//}
 
 type TagRepository interface {
 	// Create 创建标签

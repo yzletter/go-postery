@@ -120,16 +120,34 @@ func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, tags []*mo
 	return nil
 }
 
-// Delete 删除 Post
-func (dao *gormPostDAO) Delete(ctx context.Context, id int64) error {
+// Delete 删除 Post 并写 Outbox
+func (dao *gormPostDAO) Delete(ctx context.Context, id int64, events []*event.OutboxEvent) error {
 	// 1. 操作数据库
-	now := time.Now()
-	result := dao.db.WithContext(ctx).Model(&model.Post{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now)
-	if result.Error != nil {
+	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		result := tx.Model(&model.Post{}).Where("id = ? AND deleted_at IS NULL", id).Update("deleted_at", &now)
+		if result.Error != nil {
+			return result.Error
+		} else if result.RowsAffected == 0 {
+			// 业务层面错误
+			return ErrRecordNotFound
+		}
+
+		// 写 Outbox
+		if len(events) != 0 {
+			if err := tx.Create(events).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if errors.Is(err, ErrRecordNotFound) {
+			return ErrRecordNotFound
+		}
 		return ErrServerInternal
-	} else if result.RowsAffected == 0 {
-		// 业务层面错误
-		return ErrRecordNotFound
 	}
 
 	// 2. 返回结果
@@ -167,8 +185,8 @@ func (dao *gormPostDAO) UpdateCount(ctx context.Context, id int64, field model.P
 	return nil
 }
 
-// Update 更新 Post 和 Tag
-func (dao *gormPostDAO) Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag) error {
+// Update 更新 Post 和 Tag 并写 Outbox
+func (dao *gormPostDAO) Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*event.OutboxEvent) error {
 	// 0. 兜底
 	if post.ID == 0 || len(tags) != len(postTags) {
 		return ErrParamsInvalid
@@ -295,6 +313,13 @@ func (dao *gormPostDAO) Update(ctx context.Context, post *model.Post, tags []*mo
 				if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 					continue
 				}
+				return err
+			}
+		}
+
+		// 写 Outbox
+		if len(events) != 0 {
+			if err := tx.Create(events).Error; err != nil {
 				return err
 			}
 		}

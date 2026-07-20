@@ -7,9 +7,18 @@ type NewUserEventPayload struct {
 	ID int64 `json:"id,string"`
 }
 
-// NewPostEventPayload 新帖子创建
-type NewPostEventPayload struct {
-	ID int64 `json:"id,string"`
+type PostEventType string
+
+const (
+	PostCreate PostEventType = "post_created"
+	PostUpdate PostEventType = "post_updated"
+	PostDelete PostEventType = "post_deleted"
+)
+
+// PostEventPayload 帖子相关事件
+type PostEventPayload struct {
+	ID        int64         `json:"id,string"`  // 帖子 ID
+	EventType PostEventType `json:"event_type"` // 帖子事件类型
 }
 
 // NewReadEventPayload 新阅读相关互动
