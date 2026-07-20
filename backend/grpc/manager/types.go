@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	BFFService         = "bff_service"
 	InterviewService   = "interview_service"
 	AuthService        = "auth_service"
 	CodeService        = "code_service"

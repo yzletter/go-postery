@@ -17,7 +17,6 @@ import (
 	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/bff/handler"
 	"github.com/yzletter/go-postery/backend/bff/middleware"
-	"github.com/yzletter/go-postery/backend/bff/service"
 	ws_gateway_grpc_server "github.com/yzletter/go-postery/backend/bff/ws_gateway/grpc"
 	ws_gateway_handler "github.com/yzletter/go-postery/backend/bff/ws_gateway/handler"
 	service2 "github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
@@ -37,8 +36,8 @@ import (
 )
 
 var (
-	ServiceName  = "bff_service" // 微服务名
-	GoPostery    = "go_postery"  // GoPostery 公共配置前缀
+	ServiceName  = manager.BFFService // 微服务名
+	GoPostery    = "go_postery"       // GoPostery 公共配置前缀
 	suffix       = ""
 	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
 )
@@ -96,7 +95,7 @@ func main() {
 	SessionServiceClient := manager.NewSessionManager(ctx, manager.SessionService, ETCDServiceHub)
 
 	// Service 层
-	MetricSvc := service.NewMetricService()                                                                // 注册 MetricService
+	MetricSvc := pkg.NewMetricService(ServiceName + suffix)                                                // 注册 MetricService
 	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
 
 	// Handler 层

@@ -37,7 +37,7 @@ func (svc *MetricService) TimerInterceptor() func(ctx context.Context, req any, 
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		start := time.Now()
 		resp, err = handler(ctx, req)
-		svc.timerSet(getMethod(info.FullMethod), start)
+		svc.TimerSet(getMethod(info.FullMethod), start)
 		return
 	}
 }
@@ -45,21 +45,23 @@ func (svc *MetricService) TimerInterceptor() func(ctx context.Context, req any, 
 // CounterInterceptor gRPC 计数拦截器
 func (svc *MetricService) CounterInterceptor() func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-		svc.counterAdd(getMethod(info.FullMethod))
+		svc.CounterAdd(getMethod(info.FullMethod))
 		resp, err = handler(ctx, req)
 		return
 	}
 }
 
-func (svc *MetricService) counterAdd(method string) {
-	svc.reqCounter.WithLabelValues(svc.service, method).Inc() // 计数器 + 1 即可
+// CounterAdd 计数
+func (svc *MetricService) CounterAdd(key string) {
+	svc.reqCounter.WithLabelValues(svc.service, key).Inc() // 计数器 + 1 即可
 }
 
-func (svc *MetricService) timerSet(method string, start time.Time) {
-	svc.reqTimer.WithLabelValues(svc.service, method).Set(float64(time.Since(start).Milliseconds())) // 计时器记录从 start 到现在过了多久
+// TimerSet 计时
+func (svc *MetricService) TimerSet(key string, start time.Time) {
+	svc.reqTimer.WithLabelValues(svc.service, key).Set(float64(time.Since(start).Milliseconds())) // 计时器记录从 start 到现在过了多久
 }
 
-// 取具体方法
+// 取 gRPC 调用的具体方法
 func getMethod(fullMethod string) string {
 	segments := strings.Split(fullMethod, "/")
 	return segments[len(segments)-1]

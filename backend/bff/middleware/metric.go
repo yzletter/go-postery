@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yzletter/go-postery/backend/bff/service"
+	"github.com/yzletter/go-postery/backend/pkg"
 )
 
 // MetricMiddleware 返回每个接口的调用次数和调用时间
-func MetricMiddleware(metricService *service.MetricService) gin.HandlerFunc {
+func MetricMiddleware(metricService *pkg.MetricService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 记录开始时间
 		start := time.Now()
