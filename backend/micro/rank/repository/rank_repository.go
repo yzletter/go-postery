@@ -17,6 +17,20 @@ func NewRankRepository(cache cache.RankCache) RankRepository {
 	}
 }
 
+func (repo *rankRepository) DeleteUserScore(ctx context.Context, id int64) error {
+	if err := repo.cache.DeleteScore(ctx, domain.BizUser, id); err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
+func (repo *rankRepository) DeletePostScore(ctx context.Context, id int64) error {
+	if err := repo.cache.DeleteScore(ctx, domain.BizPost, id); err != nil {
+		return toRepositoryErr(err)
+	}
+	return nil
+}
+
 func (repo *rankRepository) UpdateUserScore(ctx context.Context, id int64, score int64) error {
 	err := repo.cache.UpdateScore(ctx, domain.BizUser, id, score)
 	if err != nil {

@@ -88,4 +88,6 @@ type UpdateType int
 const (
 	UpdateUserScore UpdateType = iota + 1
 	UpdatePostScore
+	DeleteUserScore
+	DeletePostScore
 )

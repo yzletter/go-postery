@@ -358,6 +358,15 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
 	events = append(events, searchEvent)
 
+	// Rank 事件
+	rankPayload := event.UpdateScoreEventPayload{
+		ID:    svc.idGen.NextID(),
+		Biz:   event.DeletePostScore,
+		BizID: post.ID,
+	}
+	rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, rankPayload)
+	events = append(events, rankEvent)
+
 	// 删除帖子
 	if err := svc.postRepo.Delete(ctx, postID, userID, events); err != nil {
 		slog.Error("delete post failed", "id", post.ID, "user_id", userID, "error", err)

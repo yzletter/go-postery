@@ -7,6 +7,24 @@ import (
 )
 
 type RankService interface {
+	// DeleteUserScore 删除用户分数
+	//
+	// Parameter:
+	//	- id: 用户 ID
+	//
+	// Return:
+	//	- error: 可能返回的错误
+	DeleteUserScore(ctx context.Context, id int64) error
+
+	// DeletePostScore 删除帖子分数
+	//
+	// Parameter:
+	//	- id: 帖子 ID
+	//
+	// Return:
+	//	- error: 可能返回的错误
+	DeletePostScore(ctx context.Context, id int64) error
+
 	// RankUser 计算用户分数
 	//
 	// Parameter:

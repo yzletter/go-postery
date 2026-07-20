@@ -204,6 +204,24 @@ func (svc *rankService) TopKPost(ctx context.Context) ([]domain.Post, error) {
 	return posts, nil
 }
 
+// DeleteUserScore 删除用户分数
+func (svc *rankService) DeleteUserScore(ctx context.Context, id int64) error {
+	if err := svc.rankRepo.DeleteUserScore(ctx, id); err != nil {
+		slog.Error("delete user score failed", "id", id, "error", err)
+		return errs.ErrInternal
+	}
+	return nil
+}
+
+// DeletePostScore 删除帖子分数
+func (svc *rankService) DeletePostScore(ctx context.Context, id int64) error {
+	if err := svc.rankRepo.DeletePostScore(ctx, id); err != nil {
+		slog.Error("delete post score failed", "id", id, "error", err)
+		return errs.ErrInternal
+	}
+	return nil
+}
+
 // CronRankTopK 定时计算榜单
 func (svc *rankService) CronRankTopK() {
 	ctx := context.Background()
@@ -253,6 +271,10 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 				_ = svc.RankUser(ctx, e.BizID)
 			case event.UpdatePostScore:
 				_ = svc.RankPost(ctx, e.BizID)
+			case event.DeleteUserScore:
+				_ = svc.DeleteUserScore(ctx, e.BizID)
+			case event.DeletePostScore:
+				_ = svc.DeletePostScore(ctx, e.BizID)
 			default:
 				slog.Warn("unknown rank event biz", "biz", e.Biz, "biz_id", e.BizID)
 			}

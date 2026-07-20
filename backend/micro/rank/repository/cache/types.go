@@ -3,6 +3,16 @@ package cache
 import "context"
 
 type RankCache interface {
+	// DeleteScore 删除业务主体分数
+	//
+	// Parameter:
+	//	- biz: 业务类型
+	//	- bizID: 业务主体 ID
+	//
+	// Return:
+	//	- error: 可能返回的错误
+	DeleteScore(ctx context.Context, biz int, bizID int64) error
+
 	// UpdateScore 更新分数并放入排行榜
 	//
 	// Parameter:

@@ -23,6 +23,18 @@ func NewRankCache(client redis.UniversalClient) RankCache {
 	}
 }
 
+// DeleteScore 删除分数
+func (cache *redisRankCache) DeleteScore(ctx context.Context, biz int, bizID int64) error {
+	var key string
+	if biz == domain.BizUser {
+		key = rankUserZSetKey
+	} else {
+		key = rankPostZSetKey
+	}
+
+	return cache.client.ZRem(ctx, key, strconv.FormatInt(bizID, 10)).Err()
+}
+
 // UpdateScore 更新分数
 func (cache *redisRankCache) UpdateScore(ctx context.Context, biz int, bizID int64, score int64) error {
 	var key string
