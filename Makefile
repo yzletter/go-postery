@@ -167,7 +167,6 @@ build-macos:
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/auth_service ./backend/micro/auth
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/lottery_service ./backend/micro/lottery
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/post_service ./backend/micro/post
-	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/agent_service ./backend/micro/agent
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/user_service ./backend/micro/user
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/session_service ./backend/micro/session
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/outbox_service ./backend/micro/outbox

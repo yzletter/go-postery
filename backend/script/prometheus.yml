@@ -34,11 +34,6 @@ scrape_configs:
       - targets: [ "172.16.52.125:9105" ]
     metrics_path: "/metrics"
 
-#  - job_name: "agent_service"
-#    static_configs:
-#      - targets: [ "172.16.150.246:9106","172.16.57.13:9106","172.16.52.125:9106" ]
-#    metrics_path: "/metrics"
-
   - job_name: "user_service"
     static_configs:
       - targets: [ "172.16.150.246:9107","172.16.57.13:9107","172.16.52.125:9107" ]

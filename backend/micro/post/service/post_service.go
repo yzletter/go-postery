@@ -50,10 +50,6 @@ func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Po
 
 	payload := event.NewPostEventPayload{ID: post.ID}
 
-	// RAG 事件
-	ragEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaRAGTopic, event.KafkaAgentGroup, payload)
-	events = append(events, ragEvent)
-
 	// Search 事件
 	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
 	events = append(events, searchEvent)

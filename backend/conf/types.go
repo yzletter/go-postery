@@ -6,7 +6,6 @@ type CommonMicroConf struct {
 	Kafka      KafkaConfig
 	RabbitMQ   RabbitMQConfig
 	RocketMQ   RocketMQConfig
-	Qdrant     QdrantConfig
 	Milvus     MilvusConfig
 	Jaeger     JaegerConfig
 	ServiceHub ServiceHubConfig
@@ -47,11 +46,6 @@ type RabbitMQConfig struct {
 
 type RocketMQConfig struct {
 	Addr string // RocketMQ 地址
-}
-
-type QdrantConfig struct {
-	Host string
-	Port int
 }
 
 type OSSConfig struct {

@@ -17,15 +17,6 @@ const (
 	// KafkaSessionGroup 用户 IM 注册 Kafka 消息 Group
 	KafkaSessionGroup = "session"
 
-	// =================== Agent Service ===================
-
-	// KafkaRAGTopic 新文章 RAG 切分 Chunk Kafka 消息 Topic
-	KafkaRAGTopic = "rag_chunk_document"
-	// KafkaQdrantTopic 新向量入 Qdrant Kafka 消息 Topic
-	KafkaQdrantTopic = "agent_insert_vector"
-	// KafkaAgentGroup 新文章 RAG 切分 Chunk Kafka 消息 Group
-	KafkaAgentGroup = "agent"
-
 	// =================== Interactive Service ===================
 
 	// KafkaTopicInteractiveRead 用户新阅读 Kafka 消息 Topic

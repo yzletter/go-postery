@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 
-	agent_grpc "github.com/yzletter/go-postery/api/proto/agent/v1"
 	auth_grpc "github.com/yzletter/go-postery/api/proto/auth/v1"
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	inter_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
@@ -24,7 +23,6 @@ import (
 
 const (
 	InterviewService   = "interview_service"
-	AgentService       = "agent_service"
 	AuthService        = "auth_service"
 	CodeService        = "code_service"
 	InteractiveService = "interactive_service"
@@ -114,10 +112,6 @@ type SearchClient interface {
 	DeleteDoc(ctx context.Context, req *search_grpc.DocID) (*search_grpc.AffectedCount, error)
 	AddDoc(ctx context.Context, req *search_grpc.Document) (*search_grpc.AffectedCount, error)
 	Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error)
-}
-
-type AgentClient interface {
-	Chat(ctx context.Context, req *agent_grpc.ChatRequest) (*agent_grpc.ChatResponse, error)
 }
 
 type InterviewClient interface {

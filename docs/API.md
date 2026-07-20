@@ -567,9 +567,3 @@
 ### GET /api/v1/lottery/result
 - 认证: 是
 - 响应 data: OrderDTO
-
-## Agent 模块
-### POST /api/v1/agent/chat
-- 认证: 是
-- 请求体: AgentChatRequest
-- 响应 data: AgentDTO

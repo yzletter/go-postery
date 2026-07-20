@@ -377,18 +377,6 @@ CREATE TABLE IF NOT EXISTS events
     KEY idx_events_scan_lock (status, next_retry_at, lock_owner, locked_until, created_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '消息队列表';
 
-CREATE TABLE IF NOT EXISTS chunks
-(
-    id         VARCHAR(255) NOT NULL COMMENT 'ID，用 UUID',
-    batch_id   BIGINT       NOT NULL COMMENT '指定 Chunk 批次',
-    content    TEXT COMMENT '内容',
-    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    deleted_at DATETIME              DEFAULT NULL COMMENT '逻辑删除时间',
-    PRIMARY KEY (id),
-    KEY idx_batch_id (batch_id, id)
-) DEFAULT CHARSET = utf8mb4 COMMENT '语义片段';
-
 CREATE TABLE IF NOT EXISTS verification_codes
 (
     id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '验证码记录 ID',

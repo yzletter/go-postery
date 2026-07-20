@@ -5,7 +5,6 @@
 ```
 ├── README.md
 ├── dto                     // 定义各个模块的请求和响应结构体
-│   ├── agent
 │   ├── auth
 │   ├── interview
 │   ├── lottery
@@ -16,7 +15,6 @@
 ├── errno                   // 返回给前端的错误
 │   └── errors.go
 ├── handler                 // 各模块 Handler
-│   ├── agent_handler.go
 │   ├── auth_handler.go
 │   ├── interactive_handler.go
 │   ├── interview_handler.go

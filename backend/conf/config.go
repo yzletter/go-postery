@@ -22,7 +22,6 @@ func LoadCommonMicroConf(ctx context.Context, client *etcdv3.Client, prefix stri
 		Kafka:    loadKafkaConfig(ctx, client, prefix),
 		RabbitMQ: loadRabbitMQConfig(ctx, client, prefix),
 		RocketMQ: loadRocketMQConfig(ctx, client, prefix),
-		Qdrant:   loadQdrantConfig(ctx, client, prefix),
 		Milvus:   loadMilvusConfig(ctx, client, prefix),
 		// 链路追踪
 		Jaeger: loadJaegerConfig(ctx, client, prefix),
@@ -291,28 +290,6 @@ func loadRocketMQConfig(ctx context.Context, client *etcdv3.Client, prefix strin
 		if len(resp.Kvs) > 0 {
 			config.Addr = string(resp.Kvs[0].Value)
 			watchKeys[prefix+"rocket_addr"] = struct{}{}
-		}
-	}
-
-	return config
-}
-
-func loadQdrantConfig(ctx context.Context, client *etcdv3.Client, prefix string) QdrantConfig {
-	var config QdrantConfig
-
-	// 获取地址
-	if resp, err := client.Get(ctx, prefix+"qdrant_host"); err == nil {
-		if len(resp.Kvs) > 0 {
-			config.Host = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"qdrant_host"] = struct{}{}
-		}
-	}
-
-	// 获取端口
-	if resp, err := client.Get(ctx, prefix+"qdrant_port"); err == nil {
-		if len(resp.Kvs) > 0 {
-			config.Port, _ = strconv.Atoi(string(resp.Kvs[0].Value))
-			watchKeys[prefix+"qdrant_port"] = struct{}{}
 		}
 	}
 

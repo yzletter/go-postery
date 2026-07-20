@@ -13,15 +13,12 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/bytedance/sonic v1.15.0
 	github.com/cloudwego/eino v0.7.13
-	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20260116084156-bb0daea635b9
-	github.com/cloudwego/eino-ext/components/document/transformer/splitter/recursive v0.0.0-20260116084156-bb0daea635b9
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.1.1
 	github.com/cloudwego/eino-ext/components/embedding/dashscope v0.0.0-20260630024214-84091ffbdce4
 	github.com/cloudwego/eino-ext/components/indexer/milvus v0.0.0-20260630024214-84091ffbdce4
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.63
 	github.com/cloudwego/eino-ext/components/model/qwen v0.1.9
 	github.com/cloudwego/eino-ext/components/retriever/milvus v0.0.0-20260630024214-84091ffbdce4
-	github.com/cloudwego/eino-ext/components/retriever/qdrant v0.0.0-20260109062358-b9080dbc7bed
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-playground/validator/v10 v10.28.0
@@ -39,13 +36,11 @@ require (
 	github.com/mozillazg/go-pinyin v0.21.0
 	github.com/nguyenthenguyen/docx v0.0.0-20230621112118-9c8e795a11db
 	github.com/prometheus/client_golang v1.23.2
-	github.com/qdrant/go-client v1.16.2
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/xid v1.6.0
 	github.com/segmentio/kafka-go v0.4.50
-	github.com/sony/gobreaker/v2 v2.4.0
 	github.com/spf13/viper v1.21.0
 	github.com/yanyiwu/gojieba v1.4.6
 	go.etcd.io/bbolt v1.4.3

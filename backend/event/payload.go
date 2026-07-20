@@ -12,10 +12,6 @@ type NewPostEventPayload struct {
 	ID int64 `json:"id,string"`
 }
 
-type UpsertQdrantEventPayload struct {
-	BatchID int64 `json:"batch_id,string"`
-}
-
 // NewReadEventPayload 新阅读相关互动
 type NewReadEventPayload struct {
 	ID      int64
