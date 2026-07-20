@@ -70,7 +70,7 @@ build-docker:
 	# Linux 部署：
 	# docker pull yzletter666/go-postery-search:v0.0.1
 	# docker rm -f go-postery-search 2>/dev/null || true
-	# docker run -d --name go-postery-search --restart unless-stopped --network host -v /var/log/go-postery-search:/app/logs docker.io/yzletter666/go-postery-search:v0.0.1
+	# docker run -d --name go-postery-search --restart unless-stopped --network host -v /data/go-postery/search:/app/data/local_db -v /var/log/go-postery-search:/app/logs docker.io/yzletter666/go-postery-search:v0.0.1
 
 	@docker build --platform=linux/amd64 -t go-postery-session:v0.0.1 -f ./docker/Dockerfile_session .
 	@docker tag go-postery-session:v0.0.1 yzletter666/go-postery-session:v0.0.1

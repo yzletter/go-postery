@@ -6,13 +6,6 @@ import (
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
-const (
-	// SearchKafkaTopic 搜索索引消息 Topic
-	SearchKafkaTopic = "index_search"
-	// SearchKafkaGroup 搜索索引消费者组
-	SearchKafkaGroup = "search_index"
-)
-
 type SearchServiceConfig struct {
 	Log    LogConfig
 	Metric MetricConfig

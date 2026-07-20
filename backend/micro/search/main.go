@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -76,8 +77,8 @@ func main() {
 	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service+suffix) // 初始化 JaegerTracer
 
 	// Infrastructure 层
-	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                         // 初始化 Redis
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, conf.SearchKafkaTopic, conf.SearchKafkaGroup) // 初始化 KafkaConsumer
+	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                           // 初始化 Redis
+	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, event.KafkaSearchTopic, event.KafkaSearchGroup) // 初始化 KafkaConsumer
 	//Tokenizer := tokenizer.NewJiebaTokenizer()                                                                    // 初始化分词器
 	Tokenizer := tokenizer.NewSegoTokenizer()           // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
@@ -93,7 +94,7 @@ func main() {
 	go SearchService.StartConsumer(ctx) // 开启协程消费消息对新文章进行索引
 
 	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000) // 注册限流服务
-	MetricService := pkg.NewMetricService(Service + suffix)                         // 注册 MetricService
+	MetricService := pkg.NewMetricService(Service + suffix)                           // 注册 MetricService
 
 	// gRPC Server
 	SearchServiceServer := server.NewSearchServiceServer(SearchService)
