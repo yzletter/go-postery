@@ -13,6 +13,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/bff/handler"
@@ -95,7 +97,12 @@ func main() {
 	SessionServiceClient := manager.NewSessionManager(ctx, manager.SessionService, ETCDServiceHub)
 
 	// Service 层
-	MetricSvc := pkg.NewMetricService(ServiceName + suffix)                                                // 注册 MetricService
+	BFFMetricRegistry := prometheus.NewRegistry()
+	BFFMetricRegistry.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+	)
+	MetricSvc := pkg.NewMetricServiceWithRegistry(ServiceName+suffix, BFFMetricRegistry)                   // 注册 MetricService
 	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
 
 	// Handler 层
@@ -123,7 +130,8 @@ func main() {
 	// Websocket 网关
 	WSGatewayHandler := ws_gateway_handler.NewHandler(InterviewServiceClient, SessionServiceClient)
 	WSGateway := service2.NewWebsocketGateway(WSGatewayHandler)
-	WSGatewayMetricSvc := pkg.NewMetricService(manager.WSGatewayService + suffix)
+	WSGatewayMetricRegistry := prometheus.NewRegistry()
+	WSGatewayMetricSvc := pkg.NewMetricServiceWithRegistry(manager.WSGatewayService+suffix, WSGatewayMetricRegistry)
 	WSGatewayServiceServer := ws_gateway_grpc_server.NewWSGatewayServiceServer(WSGateway)
 	WSGatewayServiceRegistrar := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(WSGatewayMetricSvc.CounterInterceptor(), WSGatewayMetricSvc.TimerInterceptor()),
@@ -134,7 +142,7 @@ func main() {
 	WSGatewayMetricAddr := ip + ":" + WSGatewayServiceConf.Metric.Port
 	WSGatewayMetricMux := http.NewServeMux()
 	WSGatewayMetricMux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
-		promhttp.Handler().ServeHTTP(w, r)
+		promhttp.HandlerFor(WSGatewayMetricRegistry, promhttp.HandlerOpts{}).ServeHTTP(w, r)
 	})
 	WSGatewayMetricServer := &http.Server{
 		Addr:    WSGatewayMetricAddr,
@@ -206,7 +214,7 @@ func main() {
 
 	// 运维接口
 	engine.GET("/metrics", func(ctx *gin.Context) { // Prometheus 访问的接口
-		promhttp.Handler().ServeHTTP(ctx.Writer, ctx.Request) // 固定写法
+		promhttp.HandlerFor(BFFMetricRegistry, promhttp.HandlerOpts{}).ServeHTTP(ctx.Writer, ctx.Request)
 	})
 
 	// 业务接口

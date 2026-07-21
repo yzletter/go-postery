@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/event/outbox/model"
 )
 
 const (
@@ -82,5 +82,5 @@ type AuthAggregate struct {
 	UserProfile  *UserProfile
 	AuthPassword *AuthPassword
 	AuthIdentity *AuthIdentity
-	Events       []*event.OutboxEvent
+	Events       []*model.OutboxEvent
 }

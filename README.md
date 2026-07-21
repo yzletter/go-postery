@@ -12,62 +12,48 @@
 ## 简介
 
 - 用 Go 实现一个现代化论坛
-- 后端纯代码量：30000 + 行
-- 当前分支为微服务应用
+- 后端代码量：40900 + 行
+- 当前分支为微服务
 
 ## 项目介绍
-
-**Gin + Eino + Gorm + MySQL + Redis + Qdrant + etcd + Kafka + RabbitMQ + RocketMQ + gRPC + Prometheus + Grafana + Jaeger + Crontab**
-- 基本功能：短信 / 邮箱验证码注册登录、修改资料、上传头像、帖子发布修改、标签、搜索、评论关注、私信、榜单、抽奖及 AI 助手等功能；
-- 配置读取：使用 etcd 建立远程配置中心读取配置并监听配置变化，并通过 Crontab 定时保持数据库连接活跃，利用信号机制的监听实现优雅关机；
-- OSS 存储：通过阿里云 OSS 实现头像功能，服务端签名在前端直传，需要时返回预签名 URL 进行前端显示，避免公开访问 Bucket；
-- 热门榜单：设计简化版的 Reddit 论坛算法，通过 Redis ZSet 实现用户和帖子热榜功能，并定时扫表进行榜单计算；
-- 点赞评论：实现用户点赞功能，通过 Kafka + Outbox 扫表进行削峰；设计评论树结构，实现二级子评论回复功能；
+**技术栈：Gin + Gorm + Eino + MySQL + Redis + Qdrant + Milvus + etcd + Kafka + Rabbit + Rocket + gRPC + Prometheus + Grafana + Docker + Jaeger + BM25**
+- 项目功能：短信 / 邮箱验证码注册登录、修改资料、上传头像、帖子发布修改、标签、搜索、评论关注、私信、榜单、抽奖及 AI 面试助手等功能；
+- 基础设施：采用雪花算法生成分布式 ID，建立 etcd 远程配置中心读取配置并监听配置变化，利用信号机制的监听实现优雅关机；
+- OSS 存储：通过阿里云 OSS 实现头像功能，服务端签名在前端直传，并对上传回调进行资源落库处理，返回预签名 URL 进行前端显示，避免公开访问 Bucket；
+- 热门榜单：设计简化版的 Reddit 论坛算法，通过 Redis ZSet 实现用户和帖子热榜功能，并通过 Crontab 定时定时扫表进行榜单计算；
+- 身份鉴权：通过中间件对长短双 Token 进行鉴权，其中 AccessToken 为 JWT-Token 放在请求头中，RefreshToken 为随机生成字符串放在 HTTP-Only Cookie 中，并在 Redis 中以 RefreshToken 为关键字保存用户相关信息用于刷新 AccessToken，同时也依靠 Redis 实现黑名单机制；
+- 点赞评论：实现用户点赞评论等功能，通过 Kafka + Outbox 扫表进行发消息削峰，具有抢占、重试、退避设计，保证了至少一次投递，并进行消费者幂等处理，减少消息重复消费，消费后手动 ACK 减少消息丢失；设计了记录帖子 ID + 主评论 ID 的评论树结构，实现二级子评论回复功能；
 - 帖子搜索：利用 sego 对搜索内容进行分词，结合自研手写的 Go-Searchery 分布式类 ElasticSearch 搜索引擎实现论坛帖子搜索功能；
-- 即时通讯：基于 WebSocket 实现心跳机制维持长连接，持久化消息后利用 RabbitMQ 的 Fan-Out 模式进行双向投递推送到目标窗口，同时加载历史消息，并设计简单实现已读消息和未读消息数功能；
-- 运维监控：通过 Prometheus + Grafana 统计接口 QPS 和平均耗时，并进行可视化，通过 OpenTelemetry + Jaeger 进行微服务间的分布式链路追踪；
-- gRPC 微服务：基于 etcd 设计并实现服务发现和注册中心，对分布式部署的微服务进行注册、节点选择、限流、熔断、降级治理；
-- 在 BFF 层设计滑动窗口限流算法，通过 Redis + Lua 脚本对 IP 实现限流；使用 NGINX 代理前后端分离部署上线，网址：[gopostery.top](http://gopostery.top)；
-- 鉴权：通过中间件对长短双 Token 进行鉴权，其中 AccessToken 为 JWT 放在请求头中，RefreshToken 为随机生成字符串放在 HTTP-Only Cookie 中，并在 Redis 中以 RefreshToken 为关键字保存相关信息用于刷新 AccessToken，同时依靠 Redis 实现黑名单机制；
-- 高并发：预热库存，验证用户抽奖资格，设计了根据实时库存计算概率的抽奖算法并通过 Redis + Lua 实现库存原子扣减和临时订单控制，结合 RocketMQ 的延迟消息完成订单超时回收和库存回补，本地单机测试抽奖接口 QPS 2800+，平均接口耗时 70+ms;
-
+- IM 即时通讯：持久化消息后利用 RabbitMQ 的 Fan-Out 模式通过 Websocket 双向投递推送到目标窗口，同时加载历史消息，设计简单实现已读和未读消息数功能；
+- 运维监控：通过 Prometheus + Grafana 统计接口 QPS 和平均耗时，并进行可视化，通过 Jaeger 进行微服务间的分布式链路追踪；
+- gRPC 微服务：设计并实现 etcd 服务发现和注册中心，对分布式部署的微服务进行注册、续约、健康检查、负载均衡、重试、限流、熔断、降级治理；
+- 服务限流：设计滑动窗口限流算法，通过 Redis + Lua 脚本对 IP 或微服务方法调用实现限流；通过 Docker 打包镜像，使用 NGINX 代理前后端分离部署上线；
+  - 上线网址：gopostery.top；
+- 高并发：Redis 预热库存，验证用户抽奖资格，设计了根据实时库存计算概率的抽奖算法并通过 Redis + Lua 实现库存原子扣减，结合 RocketMQ 的延迟消息完成订单超时回收和库存回补;
+  - 本地单机测试抽奖接口 QPS 2800+，平均接口耗时 70+ms;
+- AI Agent：编排 7 个 Agent DAG 图，实现模拟面试系统，通过 RAG + BM25 两路检索 RRF 并行召回后重排结果，具备动态难度调节、记忆用户画像与 Skill 多轮交互能力，覆盖 JD 分析、简历匹配、智能出题、实时面试到评估报告的完整流程；
+  - 构建基于 50 条标注样本的 RAG 离线评估流水线，统计 Recall@K、MRR 及 topic 分组效果，通过 A/B 对比将 TopK 从 10 调至 20，使 Recall@10 提升 7.3%，MySQL 领域召回率提升 16.7%；
 ## 待开发
 
 - 设计高性能分布式 Websocket 网关
-- Agent 重构
-- **用户头像**
-- agent 流式传输
-- agent 历史消息拉取
-- 抽象出 Kafka Consumer
-- 添加 RAG metadata
-  1. **biz**：文本类型（plain / md）
-  2. **source_id**：原始文档 id（你索引的 document_id）
-  3. **chunk_id**：chunk 唯一 id（建议：`source_id + ":" + chunk_index` 或 snowflake）
-  4. **chunk_index**：chunk 序号
-  5. **chunk_total**：该 source 一共几个 chunk
-  6. **start_offset / end_offset**：chunk 在原文中的字符区间（方便回溯定位、拼接上下文）
-  7. **title / headers**：如果是 markdown，记录 header 路径（`# A / ## B`）
-  8. **hash**：chunk 内容 hash（去重、幂等、更新对比非常好用）
 - 对每个 email、phone 设置单日验证码上限防刷
 - 注册 Session 前进行 DB 唯一约束避免打爆 RabbitMQ
 - 密码校验 identifier
 - 找回密码功能
-- **关注用户发表的文章**
-- **Auth 中间件针对 Websocket 连接的优化**
-- **点赞：** 当前版本通过 Kafka 进行改造
-- **私信：** 对私信前置条件进行限制（当前为任意皆可私信）、群聊
-- **抽奖：** 中间状态保持
-- **微服务部署与上线**
-- **管理员后台**
+- 关注用户发表的文章
+- 私信： 对私信前置条件进行限制（当前为任意皆可私信）、群聊
+- 抽奖： 中间状态保持
+- 管理员后台
 
 ## 项目演示
 
-|           ![首页.png](imgs/%E9%A6%96%E9%A1%B5.png)           | ![帖子详情.png](imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)                     |
-|:----------------------------------------------------------:|--------------------------------------------------------------------------------|
-|      ![评论区.png](imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)      | ![发布帖子.png](imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png)                     |
-| ![关注页面.png](imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png) | ![修改个人资料.png](imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png) |
-| ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png) | ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)                     |
-|                ![链路追踪.png](imgs/Jaeger.png)                | ![抽奖.png](imgs/lottery.png)                                                    |
+|               ![首页.png](imgs/%E9%A6%96%E9%A1%B5.png)               | ![帖子详情.png](imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)                     |
+|:------------------------------------------------------------------:|--------------------------------------------------------------------------------|
+|          ![评论区.png](imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)          | ![发布帖子.png](imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png)                     |
+|     ![关注页面.png](imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)     | ![修改个人资料.png](imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png) |
+|     ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)     | ![个人主页.png](imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)                     |
+|                   ![链路追踪.png](imgs/Jaeger1.png)                    | ![链路追踪.png](imgs/Jaeger2.png)                                                  |
+|             ![观测.png](imgs/%E8%A7%82%E6%B5%8B.png)                 | ![抽奖.png](imgs/lottery.png)                                                    |
 
 ## 项目难点
 

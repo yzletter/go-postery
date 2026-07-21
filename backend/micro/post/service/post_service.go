@@ -9,6 +9,7 @@ import (
 	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
 	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/post/domain"
@@ -46,7 +47,7 @@ func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Po
 	}
 
 	// 构造 Outbox
-	events := make([]*event.OutboxEvent, 0)
+	events := make([]*model2.OutboxEvent, 0)
 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostCreate}
 
@@ -242,7 +243,7 @@ func (svc *postService) Update(ctx context.Context, updatePost domain.Post) erro
 	}
 
 	// 构造 Outbox
-	events := make([]*event.OutboxEvent, 0)
+	events := make([]*model2.OutboxEvent, 0)
 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostUpdate}
 
@@ -350,7 +351,7 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 	}
 
 	// 构造 Outbox
-	events := make([]*event.OutboxEvent, 0)
+	events := make([]*model2.OutboxEvent, 0)
 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostDelete}
 

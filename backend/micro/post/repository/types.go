@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/post/domain"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 )
@@ -18,7 +18,7 @@ type PostRepository interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Create(ctx context.Context, post domain.Post, events []*event.OutboxEvent) error
+	Create(ctx context.Context, post domain.Post, events []*model2.OutboxEvent) error
 
 	// Delete 删除帖子
 	//
@@ -28,7 +28,7 @@ type PostRepository interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Delete(ctx context.Context, postID int64, authorID int64, events []*event.OutboxEvent) error
+	Delete(ctx context.Context, postID int64, authorID int64, events []*model2.OutboxEvent) error
 
 	// Update 更新帖子和标签
 	//
@@ -37,7 +37,7 @@ type PostRepository interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Update(ctx context.Context, post domain.Post, events []*event.OutboxEvent) error
+	Update(ctx context.Context, post domain.Post, events []*model2.OutboxEvent) error
 
 	// GetByID 根据 ID 获取帖子
 	//

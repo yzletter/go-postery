@@ -8,6 +8,7 @@ import (
 
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository"
@@ -140,7 +141,7 @@ func (svc *interactiveService) DelComment(ctx context.Context, commentID int64, 
 		BizID: comment.PostID,
 	}
 
-	buildEventsFunc := func(cnt int) []*event.OutboxEvent {
+	buildEventsFunc := func(cnt int) []*model.OutboxEvent {
 		e := event.NewCommentEventPayload{
 			ID:          svc.idGen.NextID(),
 			UserID:      userID,
@@ -150,7 +151,7 @@ func (svc *interactiveService) DelComment(ctx context.Context, commentID int64, 
 			EventAt:     now,
 		}
 
-		return []*event.OutboxEvent{
+		return []*model.OutboxEvent{
 			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, event.KafkaInteractiveGroup, e),
 			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, ee),
 		}

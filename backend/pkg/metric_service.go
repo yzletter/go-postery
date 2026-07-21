@@ -32,6 +32,23 @@ func NewMetricService(service string) *MetricService {
 	}
 }
 
+func NewMetricServiceWithRegistry(service string, registry *prometheus.Registry) *MetricService {
+	factory := promauto.With(registry)
+	return &MetricService{
+		service: service,
+		reqCounter: factory.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "go_postery",
+			Subsystem: service,
+			Name:      "request_counter",
+		}, []string{"service", "interface"}),
+		reqTimer: factory.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "go_postery",
+			Subsystem: service,
+			Name:      "request_timer",
+		}, []string{"service", "interface"}),
+	}
+}
+
 // TimerInterceptor gRPC 计时拦截器
 func (svc *MetricService) TimerInterceptor() func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {

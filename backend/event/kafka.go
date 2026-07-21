@@ -1,6 +1,9 @@
 package event
 
-import "github.com/bytedance/sonic"
+import (
+	"github.com/bytedance/sonic"
+	"github.com/yzletter/go-postery/backend/event/outbox/model"
+)
 
 const (
 	// =================== Search Service ===================
@@ -38,7 +41,7 @@ const (
 	KafkaRankGroup = "rank"
 )
 
-func NewKafkaOutboxEvent(id int64, topic string, key string, payload any) *OutboxEvent {
+func NewKafkaOutboxEvent(id int64, topic string, key string, payload any) *model.OutboxEvent {
 	value := ""
 	switch v := payload.(type) {
 	case string:
@@ -49,7 +52,7 @@ func NewKafkaOutboxEvent(id int64, topic string, key string, payload any) *Outbo
 		value, _ = sonic.MarshalString(v)
 	}
 
-	return &OutboxEvent{
+	return &model.OutboxEvent{
 		ID:           id,
 		Topic:        topic,
 		MessageKey:   key,

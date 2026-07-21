@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 )
 
@@ -23,7 +23,7 @@ type PostDAO interface {
 	//		- ErrParamsInvalid: 参数错误
 	//		- ErrServerInternal: 数据库内部错误
 	//		- ErrUniqueKey: 唯一键冲突
-	Create(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*event.OutboxEvent) error
+	Create(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*model2.OutboxEvent) error
 
 	// Delete 删除帖子
 	//
@@ -33,7 +33,7 @@ type PostDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Delete(ctx context.Context, id int64, events []*event.OutboxEvent) error
+	Delete(ctx context.Context, id int64, events []*model2.OutboxEvent) error
 
 	// UpdateCount 更新帖子计数字段
 	//
@@ -60,7 +60,7 @@ type PostDAO interface {
 	//		- ErrServerInternal: 数据库内部错误
 	//		- ErrRecordNotFound: 帖子不存在
 	//		- ErrUniqueKey: 唯一键冲突
-	Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*event.OutboxEvent) error
+	Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*model2.OutboxEvent) error
 
 	// GetByID 根据 ID 获取帖子
 	//

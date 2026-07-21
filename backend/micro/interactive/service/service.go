@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
@@ -144,7 +145,7 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 				delta = -1
 			}
 
-			processedEvent := &event.ProcessedEvent{
+			processedEvent := &model.ProcessedEvent{
 				ID:       svc.idGen.NextID(),
 				Consumer: event.KafkaInteractiveGroup,
 				EventID:  e.ID,
@@ -180,7 +181,7 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 				delta = -1
 			}
 
-			processedEvent := &event.ProcessedEvent{
+			processedEvent := &model.ProcessedEvent{
 				ID:       svc.idGen.NextID(),
 				Consumer: event.KafkaInteractiveGroup,
 				EventID:  e.ID,
@@ -216,7 +217,7 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 				delta = -e.Cnt
 			}
 
-			processedEvent := event.ProcessedEvent{
+			processedEvent := model.ProcessedEvent{
 				ID:       svc.idGen.NextID(),
 				Consumer: event.KafkaInteractiveGroup,
 				EventID:  e.ID,

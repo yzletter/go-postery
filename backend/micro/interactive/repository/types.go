@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 )
 
@@ -56,7 +57,7 @@ type InteractiveRepository interface {
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrRecordNotFound: 业务主题找不到
 	ChangeInteractiveCntWithOutbox(ctx context.Context, biz domain.BizType, bizID int64, timeAt time.Time, delta int64,
-		processedEvent *event.ProcessedEvent) error
+		processedEvent *model.ProcessedEvent) error
 
 	// Like 点赞
 	//
@@ -67,7 +68,7 @@ type InteractiveRepository interface {
 	// 	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrUniqueKey: 重复点赞
-	Like(ctx context.Context, like domain.Like, events ...*event.OutboxEvent) error
+	Like(ctx context.Context, like domain.Like, events ...*model.OutboxEvent) error
 
 	// UnLike 取消点赞
 	//
@@ -79,7 +80,7 @@ type InteractiveRepository interface {
 	// 	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrRecordNotFound: 重复取消点赞
-	UnLike(ctx context.Context, uid, pid int64, events ...*event.OutboxEvent) error
+	UnLike(ctx context.Context, uid, pid int64, events ...*model.OutboxEvent) error
 
 	// HasLiked 用户是否已点赞
 	//
@@ -103,7 +104,7 @@ type InteractiveRepository interface {
 	// Return:
 	//	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
-	CreateFollow(ctx context.Context, follow domain.Follow, events ...*event.OutboxEvent) error
+	CreateFollow(ctx context.Context, follow domain.Follow, events ...*model.OutboxEvent) error
 
 	// DelFollow 删除关注关系
 	//
@@ -115,7 +116,7 @@ type InteractiveRepository interface {
 	//	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrRecordNotFound: 关注关系找不到或已删除
-	DelFollow(ctx context.Context, follower, followee int64, events ...*event.OutboxEvent) error
+	DelFollow(ctx context.Context, follower, followee int64, events ...*model.OutboxEvent) error
 
 	// GetFollow 获取关注关系
 	//
@@ -170,7 +171,7 @@ type InteractiveRepository interface {
 	//	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrUniqueKey: 评论的雪花 ID 冲突
-	CreateComment(ctx context.Context, comment domain.Comment, events ...*event.OutboxEvent) (domain.Comment, error)
+	CreateComment(ctx context.Context, comment domain.Comment, events ...*model.OutboxEvent) (domain.Comment, error)
 
 	// GetCommentByID 根据 ID 获取评论
 	//
@@ -193,7 +194,7 @@ type InteractiveRepository interface {
 	//	- int: 删除评论的个数
 	//	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
-	DelComment(ctx context.Context, id int64, buildEventsFunc func(cnt int) []*event.OutboxEvent) (int, error)
+	DelComment(ctx context.Context, id int64, buildEventsFunc func(cnt int) []*model.OutboxEvent) (int, error)
 
 	// GetCommentByPostID 根据帖子 ID 按页获取主评论
 	//

@@ -1,7 +1,4 @@
 rule_files:
-# - "first_rules.yml"
-# - "second_rules.yml"
-
 scrape_configs:
   - job_name: "prometheus"
     static_configs:
@@ -21,7 +18,7 @@ scrape_configs:
 
   - job_name: "lottery_service"
     static_configs:
-      - targets: [ "172.16.150.246:9104","172.16.57.13:9104","172.16.52.125:9104" ]
+      - targets: [ "172.16.150.246:9103","172.16.57.13:9103","172.16.52.125:9103" ]
     metrics_path: "/metrics"
 
   - job_name: "post_service"
@@ -59,7 +56,7 @@ scrape_configs:
       - targets: [ "172.16.150.246:9111","172.16.57.13:9111","172.16.52.125:9111" ]
     metrics_path: "/metrics"
 
-  - job_name: "ws_service"
+  - job_name: "ws_gateway_service"
     static_configs:
       - targets: [ "172.16.150.246:9112","172.16.57.13:9112","172.16.52.125:9112" ]
     metrics_path: "/metrics"

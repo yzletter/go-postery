@@ -12,6 +12,7 @@ import (
 	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/auth/model"
@@ -120,7 +121,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 			userProfile := model.UserProfile{UserID: uid, Nickname: nickname}
 
 			// Event
-			events := make([]*event.OutboxEvent, 0)
+			events := make([]*model2.OutboxEvent, 0)
 
 			// 注册聊天功能 Event
 			value, _ := sonic.MarshalString(event.NewUserEventPayload{ID: uid})

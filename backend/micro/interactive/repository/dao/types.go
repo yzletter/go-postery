@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/model"
 )
@@ -49,7 +50,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	ChangeInteractiveCnt(ctx context.Context, biz domain.BizType, bizID int64, delta int64, processedEvent *event.ProcessedEvent) error
+	ChangeInteractiveCnt(ctx context.Context, biz domain.BizType, bizID int64, delta int64, processedEvent *model2.ProcessedEvent) error
 
 	// CreateLike 创建点赞记录
 	//
@@ -58,7 +59,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	CreateLike(ctx context.Context, like *model.Like, events ...*event.OutboxEvent) error
+	CreateLike(ctx context.Context, like *model.Like, events ...*model2.OutboxEvent) error
 
 	// DelLike 删除点赞记录
 	//
@@ -68,7 +69,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	DelLike(ctx context.Context, uid, pid int64, events ...*event.OutboxEvent) error
+	DelLike(ctx context.Context, uid, pid int64, events ...*model2.OutboxEvent) error
 
 	// GetLike 查询用户是否已点赞帖子
 	//
@@ -88,7 +89,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	CreateFollow(ctx context.Context, follow *model.Follow, events ...*event.OutboxEvent) error
+	CreateFollow(ctx context.Context, follow *model.Follow, events ...*model2.OutboxEvent) error
 
 	// DelFollow 删除关注关系
 	//
@@ -98,7 +99,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	DelFollow(ctx context.Context, ferID, feeID int64, events ...*event.OutboxEvent) error
+	DelFollow(ctx context.Context, ferID, feeID int64, events ...*model2.OutboxEvent) error
 
 	// GetFollow 获取两个用户之间的关注关系
 	//
@@ -144,7 +145,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	CreateComment(ctx context.Context, comment *model.Comment, events ...*event.OutboxEvent) (*model.Comment, error)
+	CreateComment(ctx context.Context, comment *model.Comment, events ...*model2.OutboxEvent) (*model.Comment, error)
 
 	// GetCommentByID 根据评论 ID 获取评论
 	//
@@ -164,7 +165,7 @@ type InteractiveDAO interface {
 	// Return:
 	//	- int: 受影响的评论数量
 	//	- error: 可能返回的错误
-	DelComment(ctx context.Context, id int64, buildEvents func(cnt int) []*event.OutboxEvent) (int, error)
+	DelComment(ctx context.Context, id int64, buildEvents func(cnt int) []*model2.OutboxEvent) (int, error)
 
 	// GetCommentByPostID 分页获取帖子的主评论
 	//

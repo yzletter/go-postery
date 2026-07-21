@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/model"
 	"github.com/yzletter/go-postery/backend/ports"
@@ -69,7 +70,7 @@ func (dao *gormInteractiveDAO) IncrReadCnt(ctx context.Context, consumer string,
 			result := tx.Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "consumer"}, {Name: "event_id"}},
 				DoNothing: true,
-			}).Create(&event.ProcessedEvent{
+			}).Create(&model2.ProcessedEvent{
 				ID:        dao.idGen.NextID(),
 				Consumer:  consumer,
 				EventID:   readEvent.ID,
@@ -108,7 +109,7 @@ func (dao *gormInteractiveDAO) IncrReadCnt(ctx context.Context, consumer string,
 }
 
 // ChangeInteractiveCnt 根据业务类型修改 Inter 计数
-func (dao *gormInteractiveDAO) ChangeInteractiveCnt(ctx context.Context, biz domain.BizType, bizID int64, delta int64, processedEvent *event.ProcessedEvent) error {
+func (dao *gormInteractiveDAO) ChangeInteractiveCnt(ctx context.Context, biz domain.BizType, bizID int64, delta int64, processedEvent *model2.ProcessedEvent) error {
 	// 新建 Inter 记录时需要雪花 ID
 	if dao.idGen == nil {
 		return ErrServerInternal
@@ -245,7 +246,7 @@ func (dao *gormInteractiveDAO) GetFollow(ctx context.Context, follower, followee
 }
 
 // CreateFollow 创建 ferID 关注 feeID
-func (dao *gormInteractiveDAO) CreateFollow(ctx context.Context, follow *model.Follow, events ...*event.OutboxEvent) error {
+func (dao *gormInteractiveDAO) CreateFollow(ctx context.Context, follow *model.Follow, events ...*model2.OutboxEvent) error {
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. 尝试恢复记录
 		result := tx.Model(&model.Follow{}).
@@ -287,7 +288,7 @@ func (dao *gormInteractiveDAO) CreateFollow(ctx context.Context, follow *model.F
 }
 
 // DelFollow 删除 ferID 关注 feeID
-func (dao *gormInteractiveDAO) DelFollow(ctx context.Context, ferID, feeID int64, events ...*event.OutboxEvent) error {
+func (dao *gormInteractiveDAO) DelFollow(ctx context.Context, ferID, feeID int64, events ...*model2.OutboxEvent) error {
 	now := time.Now()
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. 软删除
@@ -385,7 +386,7 @@ func (dao *gormInteractiveDAO) GetFollowees(ctx context.Context, id int64, pageN
 }
 
 // CreateComment 创建 Comment
-func (dao *gormInteractiveDAO) CreateComment(ctx context.Context, comment *model.Comment, events ...*event.OutboxEvent) (*model.Comment, error) {
+func (dao *gormInteractiveDAO) CreateComment(ctx context.Context, comment *model.Comment, events ...*model2.OutboxEvent) (*model.Comment, error) {
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(comment).Error; err != nil {
 			return err
@@ -432,7 +433,7 @@ func (dao *gormInteractiveDAO) GetCommentByID(ctx context.Context, id int64) (mo
 }
 
 // DelComment 软删除 Comment 并返回删除的条数
-func (dao *gormInteractiveDAO) DelComment(ctx context.Context, id int64, buildEvents func(cnt int) []*event.OutboxEvent) (int, error) {
+func (dao *gormInteractiveDAO) DelComment(ctx context.Context, id int64, buildEvents func(cnt int) []*model2.OutboxEvent) (int, error) {
 	now := time.Now()
 	cnt := 0
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -446,7 +447,7 @@ func (dao *gormInteractiveDAO) DelComment(ctx context.Context, id int64, buildEv
 		cnt = int(result.RowsAffected)
 
 		// 写 Outbox
-		var events []*event.OutboxEvent
+		var events []*model2.OutboxEvent
 		if buildEvents != nil {
 			events = buildEvents(cnt)
 		}
@@ -530,7 +531,7 @@ func (dao *gormInteractiveDAO) GetCommentRepliesByParentID(ctx context.Context, 
 }
 
 // CreateLike 创建 Like
-func (dao *gormInteractiveDAO) CreateLike(ctx context.Context, like *model.Like, events ...*event.OutboxEvent) error {
+func (dao *gormInteractiveDAO) CreateLike(ctx context.Context, like *model.Like, events ...*model2.OutboxEvent) error {
 	// 0. 兜底
 	if like == nil || like.UserID == 0 || like.PostID == 0 {
 		return ErrParamsInvalid
@@ -578,7 +579,7 @@ func (dao *gormInteractiveDAO) CreateLike(ctx context.Context, like *model.Like,
 }
 
 // DelLike 删除 Like
-func (dao *gormInteractiveDAO) DelLike(ctx context.Context, uid, pid int64, events ...*event.OutboxEvent) error {
+func (dao *gormInteractiveDAO) DelLike(ctx context.Context, uid, pid int64, events ...*model2.OutboxEvent) error {
 	now := time.Now()
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		result := tx.Model(&model.Like{}).Where("user_id = ? AND post_id = ? AND deleted_at IS NULL", uid, pid).Update("deleted_at", &now)

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event"
+	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"gorm.io/gorm"
 )
 
@@ -34,22 +34,22 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			// 加锁
 			lockOwner := uuid.New().String() // 本轮加锁者
 			updates := map[string]any{
-				"status":       event.OutboxEventStatusProcessing,                                    // 发送中
+				"status":       model.OutboxEventStatusProcessing,                                    // 发送中
 				"lock_owner":   lockOwner,                                                            // 加锁者
 				"locked_until": gorm.Expr("DATE_ADD(NOW(), INTERVAL ? SECOND)", conf.OutboxLockTime), // 锁过期时间
 			}
 
 			// 第一部分：没有发送过, 或需要重试
 			pendingOrRetry := db.
-				Where("status IN (?, ?)", event.OutboxEventStatusPending, event.OutboxEventStatusRetry). // 等待发送 或 需要重试
+				Where("status IN (?, ?)", model.OutboxEventStatusPending, model.OutboxEventStatusRetry). // 等待发送 或 需要重试
 				Where("next_retry_at IS NULL OR next_retry_at <= NOW()").
 				Where("lock_owner IS NULL OR locked_until IS NULL OR locked_until <= NOW()")
 
 			// 第二部分：发送中, 但锁已过期
-			processingExpired := db.Where("status = ? AND (locked_until IS NULL OR locked_until <= NOW())", event.OutboxEventStatusProcessing)
+			processingExpired := db.Where("status = ? AND (locked_until IS NULL OR locked_until <= NOW())", model.OutboxEventStatusProcessing)
 
 			// 进行加锁
-			result := db.Model(&event.OutboxEvent{}).
+			result := db.Model(&model.OutboxEvent{}).
 				Where(pendingOrRetry).Or(processingExpired).
 				Order("created_at ASC").
 				Limit(lockBatch).Updates(updates)
@@ -64,9 +64,9 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			lockedRows := result.RowsAffected
 
 			// 查哪些 Event 抢到了锁
-			var events []*event.OutboxEvent
-			result = db.Model(&event.OutboxEvent{}).
-				Where("status = ? AND lock_owner = ?", event.OutboxEventStatusProcessing, lockOwner).
+			var events []*model.OutboxEvent
+			result = db.Model(&model.OutboxEvent{}).
+				Where("status = ? AND lock_owner = ?", model.OutboxEventStatusProcessing, lockOwner).
 				Order("created_at ASC").
 				Limit(lockBatch).Find(&events)
 
@@ -106,10 +106,10 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 
 				// 发送失败回填表释放锁
 				if err != nil {
-					status := event.OutboxEventStatusRetry
+					status := model.OutboxEventStatusRetry
 					// 超过五次重试的消息标记为失败
 					if e.RetryCnt >= 5 {
-						status = event.OutboxEventStatusFailed
+						status = model.OutboxEventStatusFailed
 						failedCnt++
 					} else {
 						retryCnt++
@@ -134,7 +134,7 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 					}
 
 					// 发送失败的更新失败错误可忽略，原消息在数据库的锁会释放
-					result = db.Model(&event.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
+					result = db.Model(&model.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
 					if result.Error != nil {
 						updateFailedCnt++
 						logger.Error(
@@ -152,11 +152,11 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 
 				// 发送成功回填表释放锁
 				updates := map[string]any{
-					"status":       event.OutboxEventStatusSent,
+					"status":       model.OutboxEventStatusSent,
 					"lock_owner":   nil,
 					"locked_until": nil,
 				}
-				result = db.Model(&event.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
+				result = db.Model(&model.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
 				if result.Error != nil {
 					updateFailedCnt++
 					logger.Error(
@@ -188,15 +188,15 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 
 func outboxStatusName(status int) string {
 	switch status {
-	case event.OutboxEventStatusPending:
+	case model.OutboxEventStatusPending:
 		return "pending"
-	case event.OutboxEventStatusProcessing:
+	case model.OutboxEventStatusProcessing:
 		return "processing"
-	case event.OutboxEventStatusSent:
+	case model.OutboxEventStatusSent:
 		return "sent"
-	case event.OutboxEventStatusRetry:
+	case model.OutboxEventStatusRetry:
 		return "retry"
-	case event.OutboxEventStatusFailed:
+	case model.OutboxEventStatusFailed:
 		return "failed"
 	default:
 		return "unknown"

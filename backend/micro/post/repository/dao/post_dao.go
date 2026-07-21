@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"gorm.io/gorm"
 )
@@ -22,7 +22,7 @@ func NewPostDAO(db *gorm.DB) PostDAO {
 }
 
 // Create 创建 Post, 同时绑定 Tag 并写 Outbox
-func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*event.OutboxEvent) error {
+func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*model2.OutboxEvent) error {
 	// 0. 兜底
 	if post.ID == 0 || post.UserID == 0 || post.Title == "" || post.Content == "" {
 		return ErrParamsInvalid
@@ -121,7 +121,7 @@ func (dao *gormPostDAO) Create(ctx context.Context, post *model.Post, tags []*mo
 }
 
 // Delete 删除 Post 并写 Outbox
-func (dao *gormPostDAO) Delete(ctx context.Context, id int64, events []*event.OutboxEvent) error {
+func (dao *gormPostDAO) Delete(ctx context.Context, id int64, events []*model2.OutboxEvent) error {
 	// 1. 操作数据库
 	err := dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
@@ -186,7 +186,7 @@ func (dao *gormPostDAO) UpdateCount(ctx context.Context, id int64, field model.P
 }
 
 // Update 更新 Post 和 Tag 并写 Outbox
-func (dao *gormPostDAO) Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*event.OutboxEvent) error {
+func (dao *gormPostDAO) Update(ctx context.Context, post *model.Post, tags []*model.Tag, postTags []*model.PostTag, events []*model2.OutboxEvent) error {
 	// 0. 兜底
 	if post.ID == 0 || len(tags) != len(postTags) {
 		return ErrParamsInvalid

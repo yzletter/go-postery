@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/backend/event"
+	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/cache"
@@ -115,7 +116,7 @@ func (repo *interactiveRepository) IncrReadCnt(ctx context.Context, consumer str
 	return nil
 }
 
-func (repo *interactiveRepository) ChangeInteractiveCntWithOutbox(ctx context.Context, biz domain.BizType, bizID int64, timeAt time.Time, delta int64, processedEvent *event.ProcessedEvent) error {
+func (repo *interactiveRepository) ChangeInteractiveCntWithOutbox(ctx context.Context, biz domain.BizType, bizID int64, timeAt time.Time, delta int64, processedEvent *model2.ProcessedEvent) error {
 	// 查缓存是否消费过
 	ok, err := repo.cache.GetConsume(ctx, processedEvent.Consumer, processedEvent.EventID)
 	if err == nil && ok {
@@ -179,7 +180,7 @@ func (repo *interactiveRepository) ChangeInteractiveCntWithOutbox(ctx context.Co
 }
 
 // Like 点赞
-func (repo *interactiveRepository) Like(ctx context.Context, like domain.Like, events ...*event.OutboxEvent) error {
+func (repo *interactiveRepository) Like(ctx context.Context, like domain.Like, events ...*model2.OutboxEvent) error {
 	// 写数据库
 	m := &model.Like{
 		ID:     like.ID,
@@ -200,7 +201,7 @@ func (repo *interactiveRepository) Like(ctx context.Context, like domain.Like, e
 }
 
 // UnLike 取消点赞
-func (repo *interactiveRepository) UnLike(ctx context.Context, uid, pid int64, events ...*event.OutboxEvent) error {
+func (repo *interactiveRepository) UnLike(ctx context.Context, uid, pid int64, events ...*model2.OutboxEvent) error {
 	// 写数据库
 	err := repo.dao.DelLike(ctx, uid, pid, events...)
 	if err != nil {
@@ -241,7 +242,7 @@ func (repo *interactiveRepository) HasLiked(ctx context.Context, uid, pid int64)
 }
 
 // CreateFollow 新建关注关系
-func (repo *interactiveRepository) CreateFollow(ctx context.Context, follow domain.Follow, events ...*event.OutboxEvent) error {
+func (repo *interactiveRepository) CreateFollow(ctx context.Context, follow domain.Follow, events ...*model2.OutboxEvent) error {
 	// 写数据库
 	m := &model.Follow{
 		ID:         follow.ID,
@@ -262,7 +263,7 @@ func (repo *interactiveRepository) CreateFollow(ctx context.Context, follow doma
 }
 
 // DelFollow 删除关注关系
-func (repo *interactiveRepository) DelFollow(ctx context.Context, ferID, feeID int64, events ...*event.OutboxEvent) error {
+func (repo *interactiveRepository) DelFollow(ctx context.Context, ferID, feeID int64, events ...*model2.OutboxEvent) error {
 	// 写数据库
 	err := repo.dao.DelFollow(ctx, ferID, feeID, events...)
 	if err != nil {
@@ -333,7 +334,7 @@ func (repo *interactiveRepository) GetFollowees(ctx context.Context, id int64, p
 }
 
 // CreateComment 创建评论
-func (repo *interactiveRepository) CreateComment(ctx context.Context, comment domain.Comment, events ...*event.OutboxEvent) (domain.Comment, error) {
+func (repo *interactiveRepository) CreateComment(ctx context.Context, comment domain.Comment, events ...*model2.OutboxEvent) (domain.Comment, error) {
 	m := toCommentModel(comment)
 	c, err := repo.dao.CreateComment(ctx, &m, events...)
 	if err != nil {
@@ -362,7 +363,7 @@ func (repo *interactiveRepository) GetCommentByID(ctx context.Context, id int64)
 }
 
 // DelComment 删除评论
-func (repo *interactiveRepository) DelComment(ctx context.Context, id int64, buildEvents func(cnt int) []*event.OutboxEvent) (int, error) {
+func (repo *interactiveRepository) DelComment(ctx context.Context, id int64, buildEvents func(cnt int) []*model2.OutboxEvent) (int, error) {
 	cnt, err := repo.dao.DelComment(ctx, id, buildEvents)
 	if err != nil {
 		return cnt, toRepositoryErr(err)
