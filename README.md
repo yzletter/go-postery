@@ -75,13 +75,12 @@
   - API 文档与统一响应/错误码体系（见 `API.md`）
   - 抽奖压测脚本与指标记录（见 `test/lottery_test.go`，README 内已有 QPS 结果）
 
-## 实现功能
+## Star History
 
-- **认证与账号：** 短信/邮箱验证码登录；手机号/邮箱 + 密码登录；首次登录自动注册；设置/修改/校验密码；退出登录；双 Token 机制与黑名单
-- **用户与社交：** 个人主页与资料修改；关注/取关；粉丝/关注列表；推荐关注榜单
-- **帖子与互动：** 发帖/删帖/编辑；热门榜单；标签体系与按标签浏览；点赞/取消点赞；评论与回复
-- **私信与会话：** 一对一实时私信；会话列表；历史消息；未读数维护；WebSocket 心跳与 MQ 推送
-- **搜索：** 站内文章搜索（标题/内容分词检索）
-- **抽奖：** 高并发抽奖；临时订单；支付/放弃/结果查询；库存回流
-- **AI Agent：** 基于站内内容的知识库问答（RAG + 向量检索）
-- **监控与运维：** Prometheus 指标；Slog 轮转日志；限流；定时任务；优雅关机
+<a href="https://www.star-history.com/?repos=yzletter%2Fgo-postery&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&theme=dark&legend=top-left&sealed_token=KinK2RpMbu6ursHu-lZJESeMSIzWJpfC2u-9QP5MZRGY8MBQIVy0OWzwWKAPPob_Nm-BEf7wbXG62ZxgRVREzLbjyOG_o08g0JlLKAPhN3B0_ng7aCnx6f8UOjRqhmz6RJNjxsfkXvD2bhWmPsFPVLIwgFCc7h4BUF08YLsydu669RtMccrHm0L8Oke8" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&legend=top-left&sealed_token=KinK2RpMbu6ursHu-lZJESeMSIzWJpfC2u-9QP5MZRGY8MBQIVy0OWzwWKAPPob_Nm-BEf7wbXG62ZxgRVREzLbjyOG_o08g0JlLKAPhN3B0_ng7aCnx6f8UOjRqhmz6RJNjxsfkXvD2bhWmPsFPVLIwgFCc7h4BUF08YLsydu669RtMccrHm0L8Oke8" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&legend=top-left&sealed_token=KinK2RpMbu6ursHu-lZJESeMSIzWJpfC2u-9QP5MZRGY8MBQIVy0OWzwWKAPPob_Nm-BEf7wbXG62ZxgRVREzLbjyOG_o08g0JlLKAPhN3B0_ng7aCnx6f8UOjRqhmz6RJNjxsfkXvD2bhWmPsFPVLIwgFCc7h4BUF08YLsydu669RtMccrHm0L8Oke8" />
+ </picture>
+</a>
