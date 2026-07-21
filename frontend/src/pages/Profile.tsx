@@ -123,10 +123,10 @@ export default function Profile() {
     try {
       if (isFollowing(relation)) {
         await unfollowUser(resolvedUserId)
-        setFollowRelation(relation === 3 ? 2 : 0)
+        setFollowRelation(relation === 4 ? 3 : 1)
       } else {
         await followUser(resolvedUserId)
-        setFollowRelation(relation === 2 ? 3 : 1)
+        setFollowRelation(relation === 3 ? 4 : 2)
       }
     } catch (error) {
       console.error('更新关注关系失败:', error)
@@ -317,9 +317,9 @@ export default function Profile() {
                           : '处理中...'
                         : followRelationError
                           ? '重试关注状态'
-                        : isFollowing(followRelation ?? 0)
+                        : isFollowing(followRelation ?? 1)
                           ? '取消关注'
-                          : followRelation === 2
+                          : followRelation === 3
                             ? '回关'
                             : '关注'}
                     </span>

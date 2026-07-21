@@ -9,10 +9,10 @@ import { followUser, getFollowRelation, isFollowing, listFollowers, listFollowee
 type TabKey = 'following' | 'followers'
 
 const relationLabelMap: Record<FollowRelation, string> = {
-  0: '互不关注',
-  1: '已关注',
-  2: '关注你',
-  3: '互相关注',
+  1: '互不关注',
+  2: '已关注',
+  3: '关注你',
+  4: '互相关注',
 }
 
 export default function Follows() {
@@ -82,18 +82,18 @@ export default function Follows() {
     const nextUnknown: Record<string, boolean> = {}
 
     followees.forEach((item) => {
-      nextRelations[item.id] = followerIds.has(item.id) ? 3 : 1
+      nextRelations[item.id] = followerIds.has(item.id) ? 4 : 2
     })
 
     const followeesIncomplete =
       followeesLoading || Boolean(followeesError) || followeesHasMore
     followers.forEach((item) => {
       if (followeeIds.has(item.id)) {
-        nextRelations[item.id] = 3
+        nextRelations[item.id] = 4
       } else if (followeesIncomplete) {
         nextUnknown[item.id] = true
       } else {
-        nextRelations[item.id] = 2
+        nextRelations[item.id] = 3
       }
     })
 
@@ -176,7 +176,7 @@ export default function Follows() {
 
       setActingId(target.id)
       try {
-        const currentRelation = relationById[target.id] ?? 0
+        const currentRelation = relationById[target.id] ?? 1
         const shouldUnfollow = isFollowing(currentRelation) || activeTab === 'following'
 
         if (shouldUnfollow) {
@@ -185,7 +185,7 @@ export default function Follows() {
           setFolloweesTotal(prev => (prev == null ? prev : Math.max(0, prev - 1)))
           setRelationById(prev => ({
             ...prev,
-            [target.id]: currentRelation === 3 ? 2 : 0,
+            [target.id]: currentRelation === 4 ? 3 : 1,
           }))
           return
         }
@@ -197,7 +197,7 @@ export default function Follows() {
         }
         setRelationById(prev => ({
           ...prev,
-          [target.id]: currentRelation === 2 ? 3 : 1,
+          [target.id]: currentRelation === 3 ? 4 : 2,
         }))
       } catch (error) {
         console.error('更新关注关系失败:', error)
@@ -290,7 +290,7 @@ export default function Follows() {
               {current.data.map((item) => {
                 const relation = relationById[item.id]
                 const relationToShow =
-                  relation ?? (activeTab === 'following' ? (1 as FollowRelation) : undefined)
+                  relation ?? (activeTab === 'following' ? (2 as FollowRelation) : undefined)
                 const relationFailed = Boolean(relationErrorById[item.id])
                 const label = relationFailed
                   ? '关注状态需单独确认'
@@ -301,7 +301,7 @@ export default function Follows() {
                   !relationFailed && (activeTab === 'following' ? true : relation !== undefined)
                 const isActing = actingId === item.id
                 const followButtonText = canToggle
-                  ? isFollowing(relationToShow ?? 0) || activeTab === 'following'
+                  ? isFollowing(relationToShow ?? 1) || activeTab === 'following'
                     ? '取消关注'
                     : '关注'
                   : '...'

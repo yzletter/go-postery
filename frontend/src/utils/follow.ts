@@ -79,10 +79,10 @@ export async function getFollowRelation(targetUserId: string): Promise<FollowRel
   const id = normalizeId(targetUserId)
   const { data } = await apiGet<unknown>(`/users/${encodeURIComponent(id)}/follow`)
   const parsed = typeof data === 'number' ? data : Number(data)
-  if (parsed === 0 || parsed === 1 || parsed === 2 || parsed === 3) {
+  if (parsed === 1 || parsed === 2 || parsed === 3 || parsed === 4) {
     return parsed as FollowRelation
   }
   throw new Error('关注关系响应数据格式错误')
 }
 
-export const isFollowing = (relation: FollowRelation) => relation === 1 || relation === 3
+export const isFollowing = (relation: FollowRelation) => relation === 2 || relation === 4

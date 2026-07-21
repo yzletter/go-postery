@@ -74,4 +74,4 @@ export interface FollowUser {
   avatar?: string
 }
 
-export type FollowRelation = 0 | 1 | 2 | 3
+export type FollowRelation = 1 | 2 | 3 | 4

@@ -218,11 +218,11 @@ export default function Home() {
           const targetId = normalizeId(item.id)
           if (!targetId || targetId === currentUserId) return
           if (followedIds.has(targetId)) {
-            nextRelations[targetId] = 1
+            nextRelations[targetId] = 2
           } else if (hasMore) {
             nextUnknown[targetId] = true
           } else {
-            nextRelations[targetId] = 0
+            nextRelations[targetId] = 1
           }
         })
 
@@ -286,7 +286,9 @@ export default function Home() {
         }
         setRecommendRelationById((prev) => ({
           ...prev,
-          [targetId]: shouldUnfollow ? 0 : 1,
+          [targetId]: shouldUnfollow
+            ? relation === 4 ? 3 : 1
+            : relation === 3 ? 4 : 2,
         }))
       } catch (error) {
         console.error(shouldUnfollow ? '取消关注失败:' : '关注失败:', error)
@@ -668,7 +670,7 @@ export default function Home() {
                 const relation = isSelf ? undefined : recommendRelationById[item.id]
                 const relationFailed = Boolean(recommendRelationErrorById[item.id])
                 const isRelationReady = !user || isSelf || relation !== undefined
-                const isFollowed = !isSelf && isFollowing(relation ?? 0)
+                const isFollowed = !isSelf && isFollowing(relation ?? 1)
                 const isActing = recommendActingId === item.id
                 const scoreLabel = item.score > 0 ? formatCompactScore(item.score) : ''
                 const buttonLabel = isActing
