@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
@@ -92,8 +93,8 @@ func (svc *interactiveService) Comment(ctx context.Context, postID int64, parent
 		BizID: comment.PostID,
 	}
 	if comment, err = svc.interRepo.CreateComment(ctx, comment,
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, event.KafkaInteractiveGroup, e),
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, ee),
+		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, strconv.FormatInt(e.PostID, 10), e),
+		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 	); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			slog.Warn("create comment id conflict", "comment_id", comment.ID, "post_id", postID, "error", err)
@@ -152,8 +153,8 @@ func (svc *interactiveService) DelComment(ctx context.Context, commentID int64, 
 		}
 
 		return []*model.OutboxEvent{
-			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, event.KafkaInteractiveGroup, e),
-			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, ee),
+			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, strconv.FormatInt(e.PostID, 10), e),
+			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 		}
 	}
 

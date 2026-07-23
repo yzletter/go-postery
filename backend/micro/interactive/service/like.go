@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
@@ -51,8 +52,8 @@ func (svc *interactiveService) Like(ctx context.Context, userID int64, postID in
 		BizID: postID,
 	}
 	if err := svc.interRepo.Like(ctx, like,
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveLike, event.KafkaInteractiveGroup, e),
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, ee),
+		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveLike, strconv.FormatInt(e.PostID, 10), e),
+		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 	); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			slog.Info("like skipped: already liked", "user_id", userID, "post_id", postID)
@@ -98,8 +99,8 @@ func (svc *interactiveService) Unlike(ctx context.Context, postID int64, userID 
 
 	// 删除点赞记录
 	if err := svc.interRepo.UnLike(ctx, userID, postID,
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveLike, event.KafkaInteractiveGroup, e),
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, ee),
+		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveLike, strconv.FormatInt(e.PostID, 10), e),
+		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 	); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Info("unlike skipped: not liked", "user_id", userID, "post_id", postID)

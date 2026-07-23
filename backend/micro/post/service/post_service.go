@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
@@ -52,7 +53,7 @@ func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Po
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostCreate}
 
 	// Search 事件
-	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
+	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
 	events = append(events, searchEvent)
 
 	// 创建帖子、绑定标签并写 Outbox
@@ -248,7 +249,7 @@ func (svc *postService) Update(ctx context.Context, updatePost domain.Post) erro
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostUpdate}
 
 	// Search 事件
-	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
+	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
 	events = append(events, searchEvent)
 
 	if err := svc.postRepo.Update(ctx, updatePost, events); err != nil {
@@ -356,7 +357,7 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostDelete}
 
 	// Search 事件
-	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, event.KafkaSearchGroup, payload)
+	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
 	events = append(events, searchEvent)
 
 	// Rank 事件
@@ -365,7 +366,7 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 		Biz:   event.DeletePostScore,
 		BizID: post.ID,
 	}
-	rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, rankPayload)
+	rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(rankPayload.BizID, 10), rankPayload)
 	events = append(events, rankEvent)
 
 	// 删除帖子

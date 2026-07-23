@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -125,7 +126,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 
 			// 注册聊天功能 Event
 			value, _ := sonic.MarshalString(event.NewUserEventPayload{ID: uid})
-			sessionEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSessionTopic, event.KafkaSessionGroup, value)
+			sessionEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSessionTopic, strconv.FormatInt(uid, 10), value)
 			events = append(events, sessionEvent)
 
 			// 初始化用户分数 Event
@@ -134,7 +135,7 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 				Biz:   event.UpdateUserScore, // 更新用户分数
 				BizID: uid,
 			})
-			rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, event.KafkaRankGroup, value2)
+			rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(uid, 10), value2)
 			events = append(events, rankEvent)
 
 			// 聚合信息
