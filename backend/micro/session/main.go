@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -83,7 +84,7 @@ func main() {
 	RabbitMQ := infraRabbitMQ.Init(CommonMicroConf.RabbitMQ) // 初始化 RabbitMQ
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL)    // 初始化 MySQL
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)      // 初始化 雪花算法
-	SessionKafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, conf.SessionKafkaTopic, conf.SessionKafkaGroup)
+	SessionKafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, event.KafkaSessionTopic, event.KafkaSessionGroup)
 
 	// DAO 层
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
