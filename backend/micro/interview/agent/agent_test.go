@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraLLM "github.com/yzletter/go-postery/backend/infra/llm"
+	"github.com/yzletter/go-postery/backend/micro/interview/config"
 	"github.com/yzletter/go-postery/backend/micro/interview/domain"
 	"github.com/yzletter/go-postery/backend/micro/interview/mcp"
 	"github.com/yzletter/go-postery/backend/ports"
@@ -20,7 +20,7 @@ func TestAgent(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
 	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
 	QwenLLMModel := infraLLM.NewQwenLLMModel(ctx, InterviewServiceConf.Qwen) // 初始化千问大模型
@@ -67,7 +67,7 @@ func TestResumeAgent(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
 	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
 	QwenLLMModel := infraLLM.NewQwenLLMModel(ctx, InterviewServiceConf.Qwen) // 初始化千问大模型
@@ -105,7 +105,7 @@ func TestQuestionPlanner(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
 	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
 	QwenLLMModel := infraLLM.NewQwenLLMModel(ctx, InterviewServiceConf.Qwen) // 初始化千问大模型
@@ -144,7 +144,7 @@ func TestEvaluator(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
 	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
 	QwenLLMModel := infraLLM.NewQwenLLMModel(ctx, InterviewServiceConf.Qwen) // 初始化千问大模型
@@ -179,7 +179,7 @@ func TestReview(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
 	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
 	QwenLLMModel := infraLLM.NewQwenLLMModel(ctx, InterviewServiceConf.Qwen) // 初始化千问大模型

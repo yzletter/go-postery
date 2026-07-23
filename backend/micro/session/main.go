@@ -25,6 +25,7 @@ import (
 	infraRabbitMQ "github.com/yzletter/go-postery/backend/infra/mq/rabbitmq"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	"github.com/yzletter/go-postery/backend/micro/session/config"
 	server "github.com/yzletter/go-postery/backend/micro/session/grpc"
 	"github.com/yzletter/go-postery/backend/micro/session/repository"
 	"github.com/yzletter/go-postery/backend/micro/session/repository/dao"
@@ -72,7 +73,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	SessionServiceConf := conf.LoadSessionServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	SessionServiceConf := config.LoadSessionServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(SessionServiceConf.Log) // Init Slog

@@ -25,6 +25,7 @@ import (
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	"github.com/yzletter/go-postery/backend/infra/tokenizer"
+	"github.com/yzletter/go-postery/backend/micro/interview/config"
 	"github.com/yzletter/go-postery/backend/micro/interview/dag"
 	server "github.com/yzletter/go-postery/backend/micro/interview/grpc"
 	"github.com/yzletter/go-postery/backend/micro/interview/loader"
@@ -83,7 +84,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	infraSlog.InitSlog(InterviewServiceConf.Log) // Init Slog
 

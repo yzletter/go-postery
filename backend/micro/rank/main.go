@@ -23,6 +23,7 @@ import (
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
 	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
+	"github.com/yzletter/go-postery/backend/micro/rank/config"
 	server "github.com/yzletter/go-postery/backend/micro/rank/grpc"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository/cache"
@@ -71,7 +72,7 @@ func main() {
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 
 	// 加载私有配置
-	RankServiceConf := conf.LoadRankServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	RankServiceConf := config.LoadRankServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructures
 	infraSlog.InitSlog(RankServiceConf.Log) // Init Slog

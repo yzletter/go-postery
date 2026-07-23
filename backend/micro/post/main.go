@@ -22,6 +22,7 @@ import (
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	"github.com/yzletter/go-postery/backend/micro/post/config"
 	server "github.com/yzletter/go-postery/backend/micro/post/grpc"
 	"github.com/yzletter/go-postery/backend/micro/post/repository"
 	"github.com/yzletter/go-postery/backend/micro/post/repository/cache"
@@ -70,7 +71,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	PostServiceConf := conf.LoadPostServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	PostServiceConf := config.LoadPostServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(PostServiceConf.Log) // Init Slog

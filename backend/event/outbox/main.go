@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/event/outbox/config"
 	"github.com/yzletter/go-postery/backend/event/outbox/service"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
@@ -57,7 +58,7 @@ func main() {
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, GoPostery+suffix+"/")
 	fmt.Printf("%s Init Common Config Success %+v\n", Service+suffix, CommonMicroConf)
 	// 加载私有配置
-	OutboxServiceConf := conf.LoadOutboxServiceConfig(ctx, EtcdClient, Service+suffix+"/")
+	OutboxServiceConf := config.LoadOutboxServiceConfig(ctx, EtcdClient, Service+suffix+"/")
 	fmt.Printf("%s Init OutboxService Config Success %+v\n", Service+suffix, OutboxServiceConf)
 
 	// gRPC Common Infrastructure

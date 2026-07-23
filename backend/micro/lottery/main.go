@@ -23,6 +23,7 @@ import (
 	infraRocketMQ "github.com/yzletter/go-postery/backend/infra/mq/rocketmq"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	"github.com/yzletter/go-postery/backend/micro/lottery/config"
 	server "github.com/yzletter/go-postery/backend/micro/lottery/grpc"
 	"github.com/yzletter/go-postery/backend/micro/lottery/repository"
 	"github.com/yzletter/go-postery/backend/micro/lottery/repository/cache"
@@ -70,7 +71,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	LotteryServiceConf := conf.LoadLotteryServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	LotteryServiceConf := config.LoadLotteryServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(LotteryServiceConf.Log) // Init Slog

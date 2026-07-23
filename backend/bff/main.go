@@ -17,8 +17,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
+	bffConfig "github.com/yzletter/go-postery/backend/bff/config"
 	"github.com/yzletter/go-postery/backend/bff/handler"
 	"github.com/yzletter/go-postery/backend/bff/middleware"
+	wsGatewayConfig "github.com/yzletter/go-postery/backend/bff/ws_gateway/config"
 	ws_gateway_grpc_server "github.com/yzletter/go-postery/backend/bff/ws_gateway/grpc"
 	ws_gateway_handler "github.com/yzletter/go-postery/backend/bff/ws_gateway/handler"
 	service2 "github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
@@ -71,10 +73,10 @@ func main() {
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, GoPostery+suffix+"/")
 	fmt.Printf("%s Init Common Config Success %+v\n", ServiceName+suffix, CommonMicroConf)
 	// 加载私有配置
-	BFFServiceConf := conf.LoadBFFServiceConfig(ctx, EtcdClient, ServiceName+suffix+"/")
+	BFFServiceConf := bffConfig.LoadBFFServiceConfig(ctx, EtcdClient, ServiceName+suffix+"/")
 	fmt.Printf("%s Init BFFService Config Success %+v\n", ServiceName+suffix, BFFServiceConf)
 	// 加载 Websocket 网关配置
-	WSGatewayServiceConf := conf.LoadWSGatewayServiceConfig(ctx, EtcdClient, manager.WSGatewayService+suffix+"/")
+	WSGatewayServiceConf := wsGatewayConfig.LoadWSGatewayServiceConfig(ctx, EtcdClient, manager.WSGatewayService+suffix+"/")
 	fmt.Printf("%s Init WSGatewayService Config Success %+v\n", manager.WSGatewayService+suffix, WSGatewayServiceConf)
 
 	// gRPC Common Infrastructure

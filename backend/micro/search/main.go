@@ -24,6 +24,7 @@ import (
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	"github.com/yzletter/go-postery/backend/infra/tokenizer"
+	"github.com/yzletter/go-postery/backend/micro/search/config"
 	server "github.com/yzletter/go-postery/backend/micro/search/grpc"
 	"github.com/yzletter/go-postery/backend/micro/search/service"
 	"github.com/yzletter/go-postery/backend/pkg"
@@ -69,7 +70,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	SearchServiceConf := conf.LoadSearchServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	SearchServiceConf := config.LoadSearchServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC 公共基础设施
 	infraSlog.InitSlog(SearchServiceConf.Log) // 初始化 Slog

@@ -13,6 +13,7 @@ import (
 	infraLLM "github.com/yzletter/go-postery/backend/infra/llm"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/tokenizer"
+	"github.com/yzletter/go-postery/backend/micro/interview/config"
 )
 
 func TestRetrieve(t *testing.T) {
@@ -23,7 +24,7 @@ func TestRetrieve(t *testing.T) {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, "go_postery_test"+"/")
 	// 加载私有配置
-	InterviewServiceConf := conf.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"_test/")
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"_test/")
 
 	// 初始化千问 Embedder
 	embedder := infraLLM.NewQwenEmbedder(ctx, InterviewServiceConf.Qwen)

@@ -21,6 +21,7 @@ import (
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
 	infraOSS "github.com/yzletter/go-postery/backend/infra/oss"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
+	"github.com/yzletter/go-postery/backend/micro/oss/config"
 	server "github.com/yzletter/go-postery/backend/micro/oss/grpc"
 	"github.com/yzletter/go-postery/backend/micro/oss/service"
 	"github.com/yzletter/go-postery/backend/pkg"
@@ -66,7 +67,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	OSSServiceConf := conf.LoadOSSServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	OSSServiceConf := config.LoadOSSServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	infraSlog.InitSlog(OSSServiceConf.Log)
 	slog.Info("config loaded", "service", Service+suffix, "grpc_port", OSSServiceConf.GRPC.Port, "metric_port", OSSServiceConf.Metric.Port)

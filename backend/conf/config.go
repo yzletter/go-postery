@@ -12,29 +12,31 @@ var (
 	watchKeys = make(map[string]struct{})
 )
 
+// LoadCommonMicroConf 加载微服务公共配置
 func LoadCommonMicroConf(ctx context.Context, client *etcdv3.Client, prefix string) CommonMicroConf {
 	conf := CommonMicroConf{
 		// 数据库
-		MySQL: loadMySQLConfig(ctx, client, prefix),
+		MySQL: LoadMySQLConfig(ctx, client, prefix),
 		// 缓存
-		Redis: loadRedisConfig(ctx, client, prefix),
+		Redis: LoadRedisConfig(ctx, client, prefix),
 		// 消息队列
-		Kafka:    loadKafkaConfig(ctx, client, prefix),
-		RabbitMQ: loadRabbitMQConfig(ctx, client, prefix),
-		RocketMQ: loadRocketMQConfig(ctx, client, prefix),
-		Milvus:   loadMilvusConfig(ctx, client, prefix),
+		Kafka:    LoadKafkaConfig(ctx, client, prefix),
+		RabbitMQ: LoadRabbitMQConfig(ctx, client, prefix),
+		RocketMQ: LoadRocketMQConfig(ctx, client, prefix),
+		Milvus:   LoadMilvusConfig(ctx, client, prefix),
 		// 链路追踪
-		Jaeger: loadJaegerConfig(ctx, client, prefix),
+		Jaeger: LoadJaegerConfig(ctx, client, prefix),
 		// 服务发现
-		ServiceHub: loadServiceHubConfig(ctx, client, prefix),
+		ServiceHub: LoadServiceHubConfig(ctx, client, prefix),
 	}
 
-	go watch(ctx, client, prefix, watchKeys)
+	go WatchConfig(ctx, client, prefix)
 
 	return conf
 }
 
-func loadOSSConfig(ctx context.Context, client *etcdv3.Client, prefix string) OSSConfig {
+// LoadOSSConfig 加载 OSS 配置
+func LoadOSSConfig(ctx context.Context, client *etcdv3.Client, prefix string) OSSConfig {
 	var config OSSConfig
 
 	if resp, err := client.Get(ctx, prefix+"oss_access_key_id"); err == nil {
@@ -82,7 +84,43 @@ func loadOSSConfig(ctx context.Context, client *etcdv3.Client, prefix string) OS
 	return config
 }
 
-func loadArkConfig(ctx context.Context, client *etcdv3.Client, prefix string) ArkConfig {
+// LoadAppConfig 加载应用配置
+func LoadAppConfig(ctx context.Context, client *etcdv3.Client, prefix string) AppConfig {
+	var config AppConfig
+
+	if resp, err := client.Get(ctx, prefix+"frontend_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.FrontendAddr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"frontend_addr"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"backend_addr"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.BackendAddr = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"backend_addr"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+// LoadWSGatewayHTTPConfig 加载 WebSocket 网关 HTTP 配置
+func LoadWSGatewayHTTPConfig(ctx context.Context, client *etcdv3.Client, prefix string) WSGatewayHTTPConfig {
+	var config WSGatewayHTTPConfig
+
+	if resp, err := client.Get(ctx, prefix+"http_port"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.Port = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"http_port"] = struct{}{}
+		}
+	}
+
+	return config
+}
+
+// LoadArkConfig 加载 Ark 配置
+func LoadArkConfig(ctx context.Context, client *etcdv3.Client, prefix string) ArkConfig {
 	var config ArkConfig
 
 	if resp, err := client.Get(ctx, prefix+"ark_embedder_model"); err == nil {
@@ -109,7 +147,8 @@ func loadArkConfig(ctx context.Context, client *etcdv3.Client, prefix string) Ar
 	return config
 }
 
-func loadQwenConfig(ctx context.Context, client *etcdv3.Client, prefix string) QwenConfig {
+// LoadQwenConfig 加载 Qwen 配置
+func LoadQwenConfig(ctx context.Context, client *etcdv3.Client, prefix string) QwenConfig {
 	var config QwenConfig
 
 	if resp, err := client.Get(ctx, prefix+"qwen_embedder_model"); err == nil {
@@ -143,8 +182,8 @@ func loadQwenConfig(ctx context.Context, client *etcdv3.Client, prefix string) Q
 	return config
 }
 
-// 监听配置变化
-func watch(ctx context.Context, client *etcdv3.Client, prefix string, keys map[string]struct{}) {
+// WatchConfig 监听配置变化
+func WatchConfig(ctx context.Context, client *etcdv3.Client, prefix string) {
 	ch := client.Watch(ctx, prefix, etcdv3.WithPrefix())
 	for resp := range ch {
 		for _, event := range resp.Events {
@@ -152,7 +191,7 @@ func watch(ctx context.Context, client *etcdv3.Client, prefix string, keys map[s
 			if event.Type == etcdv3.EventTypePut {
 				key := string(event.Kv.Key)
 				value := string(event.Kv.Value)
-				if _, exists := keys[key]; exists {
+				if _, exists := watchKeys[key]; exists {
 					slog.Info("Config Has Changed", "name", key, "change", value)
 				}
 			}
@@ -160,7 +199,8 @@ func watch(ctx context.Context, client *etcdv3.Client, prefix string, keys map[s
 	}
 }
 
-func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) RedisConfig {
+// LoadRedisConfig 加载 Redis 配置
+func LoadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) RedisConfig {
 	var config RedisConfig
 
 	// 获取地址
@@ -182,7 +222,8 @@ func loadRedisConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 	return config
 }
 
-func loadGithubConfig(ctx context.Context, client *etcdv3.Client, prefix string) GithubConfig {
+// LoadGithubConfig 加载 Github 配置
+func LoadGithubConfig(ctx context.Context, client *etcdv3.Client, prefix string) GithubConfig {
 	var config GithubConfig
 
 	// 获取地址
@@ -196,7 +237,8 @@ func loadGithubConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 	return config
 }
 
-func loadMilvusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MilvusConfig {
+// LoadMilvusConfig 加载 Milvus 配置
+func LoadMilvusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MilvusConfig {
 	var config MilvusConfig
 
 	// 获取地址
@@ -210,7 +252,8 @@ func loadMilvusConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 	return config
 }
 
-func loadPrometheusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MetricConfig {
+// LoadPrometheusConfig 加载 Prometheus 配置
+func LoadPrometheusConfig(ctx context.Context, client *etcdv3.Client, prefix string) MetricConfig {
 	var config MetricConfig
 
 	// 获取端口
@@ -224,7 +267,8 @@ func loadPrometheusConfig(ctx context.Context, client *etcdv3.Client, prefix str
 	return config
 }
 
-func loadJaegerConfig(ctx context.Context, client *etcdv3.Client, prefix string) JaegerConfig {
+// LoadJaegerConfig 加载 Jaeger 配置
+func LoadJaegerConfig(ctx context.Context, client *etcdv3.Client, prefix string) JaegerConfig {
 	var config JaegerConfig
 
 	// 获取地址
@@ -238,7 +282,8 @@ func loadJaegerConfig(ctx context.Context, client *etcdv3.Client, prefix string)
 	return config
 }
 
-func loadKafkaConfig(ctx context.Context, client *etcdv3.Client, prefix string) KafkaConfig {
+// LoadKafkaConfig 加载 Kafka 配置
+func LoadKafkaConfig(ctx context.Context, client *etcdv3.Client, prefix string) KafkaConfig {
 	var config KafkaConfig
 
 	// 获取地址
@@ -252,7 +297,8 @@ func loadKafkaConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 	return config
 }
 
-func loadRabbitMQConfig(ctx context.Context, client *etcdv3.Client, prefix string) RabbitMQConfig {
+// LoadRabbitMQConfig 加载 RabbitMQ 配置
+func LoadRabbitMQConfig(ctx context.Context, client *etcdv3.Client, prefix string) RabbitMQConfig {
 	var config RabbitMQConfig
 
 	// 获取 Addr
@@ -282,7 +328,8 @@ func loadRabbitMQConfig(ctx context.Context, client *etcdv3.Client, prefix strin
 	return config
 }
 
-func loadRocketMQConfig(ctx context.Context, client *etcdv3.Client, prefix string) RocketMQConfig {
+// LoadRocketMQConfig 加载 RocketMQ 配置
+func LoadRocketMQConfig(ctx context.Context, client *etcdv3.Client, prefix string) RocketMQConfig {
 	var config RocketMQConfig
 
 	// 获取 RocketMQ 端口
@@ -296,7 +343,8 @@ func loadRocketMQConfig(ctx context.Context, client *etcdv3.Client, prefix strin
 	return config
 }
 
-func loadMySQLConfig(ctx context.Context, client *etcdv3.Client, prefix string) MySQLConfig {
+// LoadMySQLConfig 加载 MySQL 配置
+func LoadMySQLConfig(ctx context.Context, client *etcdv3.Client, prefix string) MySQLConfig {
 	var config MySQLConfig
 
 	// 获取 Addr
@@ -350,7 +398,8 @@ func loadMySQLConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 	return config
 }
 
-func loadEmailConfig(ctx context.Context, client *etcdv3.Client, prefix string) EmailConfig {
+// LoadEmailConfig 加载邮件配置
+func LoadEmailConfig(ctx context.Context, client *etcdv3.Client, prefix string) EmailConfig {
 	var config EmailConfig
 
 	// 获取发信方
@@ -412,7 +461,8 @@ func loadEmailConfig(ctx context.Context, client *etcdv3.Client, prefix string) 
 	return config
 }
 
-func loadSMSConfig(ctx context.Context, client *etcdv3.Client, prefix string) SMSConfig {
+// LoadSMSConfig 加载短信配置
+func LoadSMSConfig(ctx context.Context, client *etcdv3.Client, prefix string) SMSConfig {
 	var config SMSConfig
 
 	// 获取 AccessKeyID
@@ -434,7 +484,8 @@ func loadSMSConfig(ctx context.Context, client *etcdv3.Client, prefix string) SM
 	return config
 }
 
-func loadLogConfig(ctx context.Context, client *etcdv3.Client, prefix string) LogConfig {
+// LoadLogConfig 加载日志配置
+func LoadLogConfig(ctx context.Context, client *etcdv3.Client, prefix string) LogConfig {
 	var config LogConfig
 
 	// 获取日志文件路径
@@ -448,7 +499,8 @@ func loadLogConfig(ctx context.Context, client *etcdv3.Client, prefix string) Lo
 	return config
 }
 
-func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) GrpcConfig {
+// LoadGRPCConfig 加载 gRPC 配置
+func LoadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) GrpcConfig {
 	var config GrpcConfig
 
 	// 获取 gRPC 端口
@@ -462,7 +514,8 @@ func loadGRPCConfig(ctx context.Context, client *etcdv3.Client, prefix string) G
 	return config
 }
 
-func loadServiceHubConfig(ctx context.Context, client *etcdv3.Client, prefix string) ServiceHubConfig {
+// LoadServiceHubConfig 加载服务注册配置
+func LoadServiceHubConfig(ctx context.Context, client *etcdv3.Client, prefix string) ServiceHubConfig {
 	var config ServiceHubConfig
 
 	// 获取心跳频率

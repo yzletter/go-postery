@@ -24,6 +24,7 @@ import (
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/sms"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	"github.com/yzletter/go-postery/backend/micro/code/config"
 	server "github.com/yzletter/go-postery/backend/micro/code/grpc"
 	"github.com/yzletter/go-postery/backend/micro/code/repository"
 	"github.com/yzletter/go-postery/backend/micro/code/repository/cache"
@@ -72,7 +73,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	CodeServiceConf := conf.LoadCodeServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	CodeServiceConf := config.LoadCodeServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// Infrastructure
 	infraSlog.InitSlog(CodeServiceConf.Log) // Init Slog

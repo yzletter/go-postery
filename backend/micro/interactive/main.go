@@ -24,6 +24,7 @@ import (
 	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	"github.com/yzletter/go-postery/backend/micro/interactive/config"
 	server "github.com/yzletter/go-postery/backend/micro/interactive/grpc"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/cache"
@@ -74,7 +75,7 @@ func main() {
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 
 	// 加载私有配置
-	InteractiveServiceConf := conf.LoadInteractiveServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	InteractiveServiceConf := config.LoadInteractiveServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(InteractiveServiceConf.Log)

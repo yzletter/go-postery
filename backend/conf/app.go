@@ -2,6 +2,11 @@ package conf
 
 import "time"
 
+const (
+	OutboxLockTime = 60
+	OutboxInterval = 5 * time.Second
+)
+
 // 限流配置
 const (
 	RateLimitInterval = time.Minute

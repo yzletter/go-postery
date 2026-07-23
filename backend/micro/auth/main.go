@@ -23,6 +23,7 @@ import (
 	"github.com/yzletter/go-postery/backend/infra/security"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	"github.com/yzletter/go-postery/backend/micro/auth/config"
 	server "github.com/yzletter/go-postery/backend/micro/auth/grpc"
 	"github.com/yzletter/go-postery/backend/micro/auth/repository"
 	"github.com/yzletter/go-postery/backend/micro/auth/repository/cache"
@@ -71,7 +72,7 @@ func main() {
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
 	// 加载私有配置
-	AuthServiceConf := conf.LoadAuthServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	AuthServiceConf := config.LoadAuthServiceConfig(ctx, etcdClient, Service+suffix+"/")
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(AuthServiceConf.Log) // Init Slog
