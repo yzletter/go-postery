@@ -79,8 +79,8 @@
 
 <a href="https://www.star-history.com/?repos=yzletter%2Fgo-postery&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&theme=dark&legend=top-left&sealed_token=KinK2RpMbu6ursHu-lZJESeMSIzWJpfC2u-9QP5MZRGY8MBQIVy0OWzwWKAPPob_Nm-BEf7wbXG62ZxgRVREzLbjyOG_o08g0JlLKAPhN3B0_ng7aCnx6f8UOjRqhmz6RJNjxsfkXvD2bhWmPsFPVLIwgFCc7h4BUF08YLsydu669RtMccrHm0L8Oke8" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&legend=top-left&sealed_token=KinK2RpMbu6ursHu-lZJESeMSIzWJpfC2u-9QP5MZRGY8MBQIVy0OWzwWKAPPob_Nm-BEf7wbXG62ZxgRVREzLbjyOG_o08g0JlLKAPhN3B0_ng7aCnx6f8UOjRqhmz6RJNjxsfkXvD2bhWmPsFPVLIwgFCc7h4BUF08YLsydu669RtMccrHm0L8Oke8" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&legend=top-left&sealed_token=KinK2RpMbu6ursHu-lZJESeMSIzWJpfC2u-9QP5MZRGY8MBQIVy0OWzwWKAPPob_Nm-BEf7wbXG62ZxgRVREzLbjyOG_o08g0JlLKAPhN3B0_ng7aCnx6f8UOjRqhmz6RJNjxsfkXvD2bhWmPsFPVLIwgFCc7h4BUF08YLsydu669RtMccrHm0L8Oke8" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&theme=dark&legend=top-left&sealed_token=Jaudz1QNMJl7-4RtOz2jM1AHnpAYgt3dzQ-J2i59cSZBEEX9wlPxqZRE-mJdUuZs8nMi9Q_18tnACismJvzGvMhX8Sl19w9nPUSYM-F2fQHkBhN8wJxZKs9Z4UWYYmfFL3H5gISldiRMDHtHF7THomgaIDQEfcZQKA-lEGTAlc2UbfiDtSNYpzhuwPRV" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&legend=top-left&sealed_token=Jaudz1QNMJl7-4RtOz2jM1AHnpAYgt3dzQ-J2i59cSZBEEX9wlPxqZRE-mJdUuZs8nMi9Q_18tnACismJvzGvMhX8Sl19w9nPUSYM-F2fQHkBhN8wJxZKs9Z4UWYYmfFL3H5gISldiRMDHtHF7THomgaIDQEfcZQKA-lEGTAlc2UbfiDtSNYpzhuwPRV" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=yzletter/go-postery&type=date&legend=top-left&sealed_token=Jaudz1QNMJl7-4RtOz2jM1AHnpAYgt3dzQ-J2i59cSZBEEX9wlPxqZRE-mJdUuZs8nMi9Q_18tnACismJvzGvMhX8Sl19w9nPUSYM-F2fQHkBhN8wJxZKs9Z4UWYYmfFL3H5gISldiRMDHtHF7THomgaIDQEfcZQKA-lEGTAlc2UbfiDtSNYpzhuwPRV" />
  </picture>
 </a>
