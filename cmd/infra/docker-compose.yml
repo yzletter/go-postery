@@ -1,0 +1,413 @@
+# Go Postery 开发/测试基础设施
+name: go-postery-infra
+
+services:
+  # 业务 etcd
+  etcd:
+    image: gcr.io/etcd-development/etcd:v3.7.1
+    container_name: go-postery-etcd
+    restart: unless-stopped
+
+    ports:
+      # Client API 与 Peer
+      - "${HOST_IP:-127.0.0.1}:2379:2379"
+      - "${HOST_IP:-127.0.0.1}:2380:2380"
+
+    volumes:
+      - etcd-data:/etcd-data
+
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd-1
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://${HOST_IP:-127.0.0.1}:2379
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-advertise-peer-urls=http://${HOST_IP:-127.0.0.1}:2380
+      - --initial-cluster=etcd-1=http://${HOST_IP:-127.0.0.1}:2380
+      - --initial-cluster-token=go-postery-etcd
+      - --initial-cluster-state=new
+
+    healthcheck:
+      test: ["CMD", "etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # 关系型数据库
+  mysql:
+    image: mysql:8.4
+    container_name: go-postery-mysql
+    restart: unless-stopped
+
+    environment:
+      # 仅适用于开发/测试环境
+      MYSQL_ROOT_PASSWORD: "123456"
+      TZ: "Asia/Shanghai"
+
+    ports:
+      - "${HOST_IP:-127.0.0.1}:3306:3306"
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # 缓存
+  redis:
+    image: redis:7.4-alpine
+    container_name: go-postery-redis
+    restart: unless-stopped
+
+    ports:
+      - "${HOST_IP:-127.0.0.1}:6379:6379"
+
+    volumes:
+      - redis-data:/data
+
+    command: ["redis-server", "--appendonly", "yes"]
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Milvus 元数据存储，仅供 Docker 内部访问
+  milvus-etcd:
+    image: quay.io/coreos/etcd:v3.5.25
+    container_name: go-postery-milvus-etcd
+    restart: unless-stopped
+
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+
+    volumes:
+      - milvus-etcd-data:/etcd
+
+    command:
+      - etcd
+      - --advertise-client-urls=http://milvus-etcd:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --data-dir=/etcd
+
+    healthcheck:
+      test: ["CMD", "etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+
+  # Milvus 对象存储
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    container_name: go-postery-minio
+    restart: unless-stopped
+
+    environment:
+      # 默认凭据仅适用于开发/测试环境
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+
+    ports:
+      # S3 API 与管理控制台
+      - "${HOST_IP:-127.0.0.1}:9000:9000"
+      - "${HOST_IP:-127.0.0.1}:9001:9001"
+
+    volumes:
+      - minio-data:/minio_data
+
+    command: ["server", "/minio_data", "--console-address", ":9001"]
+
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+
+  # Milvus Standalone；Woodpecker 以嵌入模式运行
+  milvus:
+    image: milvusdb/milvus:v3.0.0
+    container_name: go-postery-milvus
+    restart: unless-stopped
+
+    depends_on:
+      milvus-etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    security_opt:
+      - seccomp:unconfined
+
+    environment:
+      ETCD_ENDPOINTS: milvus-etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MINIO_ACCESS_KEY_ID: minioadmin
+      MINIO_SECRET_ACCESS_KEY: minioadmin
+      MINIO_REGION: us-east-1
+
+    ports:
+      # SDK/gRPC 与 WebUI/Health
+      - "${HOST_IP:-127.0.0.1}:19530:19530"
+      - "${HOST_IP:-127.0.0.1}:9091:9091"
+
+    volumes:
+      - milvus-data:/var/lib/milvus
+
+    command: ["milvus", "run", "standalone"]
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 90s
+
+  # Kafka 单节点 KRaft
+  kafka:
+    image: apache/kafka:4.3.1
+    hostname: kafka
+    container_name: go-postery-kafka
+    restart: unless-stopped
+
+    environment:
+      # 单节点同时承担 Broker 与 Controller
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
+
+      # INTERNAL 供 Docker 网络使用，EXTERNAL 供宿主机业务服务使用
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://${HOST_IP:-127.0.0.1}:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+
+      # 单节点内部 Topic 必须使用单副本
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+
+      KAFKA_NUM_PARTITIONS: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+
+    ports:
+      - "${HOST_IP:-127.0.0.1}:9092:9092"
+
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+    healthcheck:
+      # 使用内部 Listener，避免依赖宿主机网络回环
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # AMQP 消息队列与管理后台
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    container_name: go-postery-rabbitmq
+    restart: unless-stopped
+
+    environment:
+      # 默认账号仅适用于开发/测试环境
+      RABBITMQ_DEFAULT_USER: "go_postery"
+      RABBITMQ_DEFAULT_PASS: "123456"
+      TZ: "Asia/Shanghai"
+
+    ports:
+      # AMQP 与 Management Web UI
+      - "${HOST_IP:-127.0.0.1}:5672:5672"
+      - "${HOST_IP:-127.0.0.1}:15672:15672"
+
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # 分布式链路追踪
+  jaeger:
+    image: jaegertracing/jaeger:2.20.0
+    container_name: go-postery-jaeger
+    restart: unless-stopped
+
+    ports:
+      # OTLP gRPC、OTLP HTTP 与 Web UI
+      - "${HOST_IP:-127.0.0.1}:4317:4317"
+      - "${HOST_IP:-127.0.0.1}:4318:4318"
+      - "${HOST_IP:-127.0.0.1}:16686:16686"
+
+    volumes:
+      - ./jaeger/config.yml:/etc/jaeger/config.yml:ro
+      - jaeger-data:/tmp
+
+    command: ["--config", "/etc/jaeger/config.yml"]
+
+    healthcheck:
+      # 13133 仅供容器内部健康检查
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:13133/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # RocketMQ NameServer
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.5.0
+    container_name: go-postery-rocketmq-namesrv
+    restart: unless-stopped
+
+    environment:
+      HEAP_OPTS: "-Xms256m -Xmx256m -Xmn128m"
+      JAVA_OPT_EXT: "-Duser.home=/tmp"
+      TZ: "Asia/Shanghai"
+
+    ports:
+      - "${HOST_IP:-127.0.0.1}:9876:9876"
+
+    volumes:
+      - rocketmq-namesrv-logs:/tmp
+
+    command: ["sh", "mqnamesrv"]
+
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/9876"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # RocketMQ Broker
+  rocketmq-broker:
+    image: apache/rocketmq:5.5.0
+    container_name: go-postery-rocketmq-broker
+    restart: unless-stopped
+
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+      HEAP_OPTS: "-Xms512m -Xmx512m -Xmn256m -XX:MaxDirectMemorySize=512m"
+      JAVA_OPT_EXT: "-Duser.home=/tmp"
+      TZ: "Asia/Shanghai"
+
+    ports:
+      # Fast Remoting、主要 Remoting 与 HA
+      - "${HOST_IP:-127.0.0.1}:10909:10909"
+      - "${HOST_IP:-127.0.0.1}:10911:10911"
+      - "${HOST_IP:-127.0.0.1}:10912:10912"
+
+    volumes:
+      - rocketmq-broker-data:/tmp
+      - ./rocketmq/broker.conf:/home/rocketmq/rocketmq-5.5.0/conf/broker-custom.conf:ro
+
+    command: ["sh", "mqbroker", "-c", "/home/rocketmq/rocketmq-5.5.0/conf/broker-custom.conf"]
+
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/10911"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # RocketMQ Proxy；Go 5.x SDK 的接入层
+  rocketmq-proxy:
+    image: apache/rocketmq:5.5.0
+    container_name: go-postery-rocketmq-proxy
+    restart: unless-stopped
+
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+      rocketmq-broker:
+        condition: service_healthy
+
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+      HEAP_OPTS: "-Xms256m -Xmx256m -Xmn128m"
+      JAVA_OPT_EXT: "-Duser.home=/tmp"
+      TZ: "Asia/Shanghai"
+
+    ports:
+      # Remoting 与 gRPC
+      - "${HOST_IP:-127.0.0.1}:8080:8080"
+      - "${HOST_IP:-127.0.0.1}:8081:8081"
+
+    volumes:
+      - rocketmq-proxy-logs:/tmp
+      - ./rocketmq/rmq-proxy.json:/home/rocketmq/rocketmq-5.5.0/conf/rmq-proxy-custom.json:ro
+
+    command: ["sh", "mqproxy", "-pc", "/home/rocketmq/rocketmq-5.5.0/conf/rmq-proxy-custom.json"]
+
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/8081"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  etcd-data:
+    name: go-postery-etcd-data
+
+  mysql-data:
+    name: go-postery-mysql-data
+
+  redis-data:
+    name: go-postery-redis-data
+
+  milvus-etcd-data:
+    name: go-postery-milvus-etcd-data
+
+  minio-data:
+    name: go-postery-minio-data
+
+  milvus-data:
+    name: go-postery-milvus-data
+
+  kafka-data:
+    name: go-postery-kafka-data
+
+  rabbitmq-data:
+    name: go-postery-rabbitmq-data
+
+  jaeger-data:
+    name: go-postery-jaeger-data
+
+  rocketmq-namesrv-logs:
+    name: go-postery-rocketmq-namesrv-logs
+
+  rocketmq-broker-data:
+    name: go-postery-rocketmq-broker-data
+
+  rocketmq-proxy-logs:
+    name: go-postery-rocketmq-proxy-logs
