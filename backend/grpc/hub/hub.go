@@ -273,7 +273,7 @@ func (hub *ETCDServiceHub) getEndpoints(ctx context.Context, service string) []s
 
 // newPrefix 构造 etcd Key 的前缀
 func (hub *ETCDServiceHub) newPrefix(service string) string {
-	return hub.prefix + "/" + service + "/"
+	return hub.prefix + service + "/"
 }
 
 // getLock 获取锁

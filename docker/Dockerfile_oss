@@ -28,4 +28,6 @@ EXPOSE 9013 9113
 
 ENTRYPOINT ["/app/oss-service"]
 
-CMD ["-env=production"]
+# 默认连接宿主机 etcd（配合 --network host）；服务器部署时可在
+# docker run 末尾传入 -etcd=<IP>:2379 覆盖该地址。
+CMD ["-etcd=localhost:2379"]

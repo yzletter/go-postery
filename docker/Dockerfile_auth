@@ -39,12 +39,11 @@ COPY --from=builder /out/auth-service /app/auth-service
 
 # 声明 gRPC 和 Prometheus 指标端口。
 # 实际监听端口以 etcd 配置为准；EXPOSE 不会自动发布宿主机端口。
-EXPOSE 9001 9101
+EXPOSE 9002 9102
 
 # 使用 exec 形式启动，使 Go 进程直接接收 SIGTERM/SIGINT 等停止信号。
 ENTRYPOINT ["/app/auth-service"]
 
-# 默认使用生产环境配置；docker run 末尾传入参数可覆盖该默认值。
-CMD ["-env=production"]
-
-
+# 默认连接宿主机 etcd（配合 --network host）；服务器部署时可在
+# docker run 末尾传入 -etcd=<IP>:2379 覆盖该地址。
+CMD ["-etcd=localhost:2379"]

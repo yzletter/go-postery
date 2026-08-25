@@ -12,3 +12,6 @@ frontend/dist/
 *.log
 *.tmp
 .DS_Store
+
+# 本地 etcd 配置可能包含密钥，不提交到仓库
+/cmd/infra/etcd/config.local.conf

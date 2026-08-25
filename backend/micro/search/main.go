@@ -35,47 +35,38 @@ import (
 )
 
 const (
-	Service   = manager.SearchService // 微服务名
-	GoPostery = "go_postery"          // GoPostery 公共配置前缀
-)
-
-var (
-	suffix       = ""
-	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
+	Service           = manager.SearchService // 微服务名
+	GoPostery         = conf.GoPostery        // GoPostery
+	CommonConfPrefix  = GoPostery + "/conf/common_conf/"
+	ServiceConfPrefix = GoPostery + "/conf/service_conf/" + Service + "_conf/"
 )
 
 func main() {
-	// 启动参数, 默认线上环境
-	env := flag.String("env", "production", "运行环境: local/production")
+	// 启动参数, etcd 地址
+	etcdEndpoint := flag.String("etcd", "localhost:2379", "etcd 地址")
 	flag.Parse()
 
-	ip, err := utils.GetLocalIP() // 获取本地内网 IP
+	// 获取本地内网 IP
+	ip, err := utils.GetLocalIP()
 	if err != nil {
-		slog.Error("get local ip failed", "error", err)
+		slog.Error("get local IP failed", "error", err)
 		panic(err)
 	}
 
-	// 本地测试
-	if *env == "local" {
-		suffix = "_test"
-		ip = "localhost"
-		ETCDEndpoint = "localhost:12379"
-	}
-
+	// 全局 Context
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// 初始化远程配置中心
-	etcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // 初始化 Etcd
+	// Init Etcd
+	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, GoPostery+suffix+"/")
+	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, CommonConfPrefix)
 	// 加载私有配置
-	SearchServiceConf := config.LoadSearchServiceConfig(ctx, etcdClient, Service+suffix+"/")
+	SearchServiceConf := config.LoadSearchServiceConfig(ctx, etcdClient, ServiceConfPrefix)
 
 	// gRPC 公共基础设施
-	infraSlog.InitSlog(SearchServiceConf.Log) // 初始化 Slog
-	slog.Info("config loaded", "service", Service+suffix, "grpc_port", SearchServiceConf.GRPC.Port, "metric_port", SearchServiceConf.Metric.Port)
-	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service+suffix) // 初始化 JaegerTracer
+	infraSlog.InitSlog(SearchServiceConf.Log)                                      // 初始化 Slog
+	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service) // 初始化 JaegerTracer
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                           // 初始化 Redis
@@ -95,12 +86,12 @@ func main() {
 	go SearchService.StartConsumer(ctx) // 开启协程消费消息对新文章进行索引
 
 	RateLimitService := ratelimit.NewRateLimitService(RedisClient, time.Minute, 1000) // 注册限流服务
-	MetricService := pkg.NewMetricService(Service + suffix)                           // 注册 MetricService
+	MetricService := pkg.NewMetricService(Service)                                    // 注册 MetricService
 
 	// gRPC Server
 	SearchServiceServer := server.NewSearchServiceServer(SearchService)
 	ServiceRegistrar := grpc.NewServer(
-		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+suffix+":", RateLimitService).BuildLimiter),
+		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),                                                   // Jaeger
 	)
@@ -108,7 +99,6 @@ func main() {
 
 	// Prometheus
 	metricAddr := ip + ":" + SearchServiceConf.Metric.Port
-	slog.Info("metric server address resolved", "addr", metricAddr)
 	go func() {
 		mux := http.NewServeMux()
 		// 注册 Metric 路由
@@ -119,26 +109,27 @@ func main() {
 	}()
 
 	grpcAddr := ip + ":" + SearchServiceConf.GRPC.Port
-	slog.Info("grpc server address resolved", "addr", grpcAddr)
 	if lis, err := net.Listen("tcp", grpcAddr); err != nil {
 		panic(err)
 	} else {
 		go func() {
 			if err := ServiceRegistrar.Serve(lis); err != nil {
-				slog.Error("grpc server failed", "service", Service+suffix, "addr", grpcAddr, "error", err)
+				slog.Error("grpc server failed", "service", Service, "addr", grpcAddr, "error", err)
 				panic(err)
 			}
 		}()
 	}
 
-	// 向服务中心注册服务, 这里不加环境后缀
+	slog.Info("ready to register", "service", Service, "grpc_addr", grpcAddr, "metric_addr", metricAddr)
+
+	// 向服务发现中心注册服务
 	leaseID, err := ETCDServiceHub.Register(ctx, Service, grpcAddr, 0)
 	if err != nil {
 		slog.Error("register search service failed", "service", Service, "addr", grpcAddr, "error", err)
 		panic(err)
 	}
 
-	// 自动续约
+	// 向服务发现中心自动续约
 	go func() {
 		for {
 			leaseID, err = ETCDServiceHub.Register(ctx, Service, grpcAddr, leaseID)

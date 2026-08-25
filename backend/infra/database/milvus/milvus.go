@@ -2,6 +2,7 @@ package milvus
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 
 	milvusSDK "github.com/milvus-io/milvus-sdk-go/v2/client"
@@ -14,16 +15,15 @@ var (
 )
 
 func NewMilvusClient(ctx context.Context, config conf.MilvusConfig) milvusSDK.Client {
-	var err error
 	once.Do(func() {
+		var err error
 		client, err = milvusSDK.NewClient(ctx, milvusSDK.Config{
 			Address: config.Addr,
 		})
-
 		if err != nil {
+			slog.Error("init milvus failed ...", "error", err.Error())
 			return
 		}
-
 	})
 
 	return client

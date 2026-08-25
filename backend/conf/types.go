@@ -18,7 +18,6 @@ type AppConfig struct {
 
 type RedisConfig struct {
 	Addr string
-	DB   int
 }
 
 type MilvusConfig struct {
