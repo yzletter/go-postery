@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+# Prometheus 3.x 推荐在配置文件中声明 TSDB 保留策略。
+storage:
+  tsdb:
+    retention:
+      time: 15d
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+
+  # Grafana 默认在 /metrics 暴露自身运行指标。
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["grafana:3000"]
+
+  # 业务服务不在本 Compose 中运行时，使用服务器可达地址配置 targets。
+  # 示例：
+
+  # - job_name: "code_service"
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets: ["10.0.0.11:9101", "10.0.0.12:9101", "10.0.0.13:9101"]
+
+  # - job_name: "lottery_service"
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets: ["10.0.0.11:9103", "10.0.0.12:9103", "10.0.0.13:9103"]

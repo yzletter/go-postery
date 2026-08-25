@@ -375,6 +375,67 @@ services:
       retries: 10
       start_period: 30s
 
+  # 指标采集与时序数据库
+  prometheus:
+    image: prom/prometheus:v3.13.2
+    container_name: go-postery-prometheus
+    restart: unless-stopped
+
+    ports:
+      # Prometheus Web UI / HTTP API
+      - "${HOST_IP:-127.0.0.1}:9090:9090"
+
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # 允许通过 HTTP API 重新加载配置
+      - --web.enable-lifecycle
+
+    healthcheck:
+      # readiness 会等待 TSDB 和查询接口真正就绪
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # 指标可视化与监控面板
+  grafana:
+    image: grafana/grafana:13.2.0
+    container_name: go-postery-grafana
+    restart: unless-stopped
+
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+    environment:
+      # 默认账号仅适用于开发/测试环境
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "123456"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      TZ: "Asia/Shanghai"
+
+    ports:
+      # Grafana Web UI
+      - "${HOST_IP:-127.0.0.1}:3000:3000"
+
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 volumes:
   etcd-data:
     name: go-postery-etcd-data
@@ -411,3 +472,9 @@ volumes:
 
   rocketmq-proxy-logs:
     name: go-postery-rocketmq-proxy-logs
+
+  prometheus-data:
+    name: go-postery-prometheus-data
+
+  grafana-data:
+    name: go-postery-grafana-data
