@@ -11,7 +11,6 @@ import (
 type UserServiceConfig struct {
 	Log    conf.LogConfig
 	Metric conf.MetricConfig
-	OSS    conf.OSSConfig
 	GRPC   conf.GrpcConfig
 }
 
@@ -20,7 +19,6 @@ func LoadUserServiceConfig(ctx context.Context, client *etcdv3.Client, prefix st
 	config := UserServiceConfig{
 		Log:    conf.LoadLogConfig(ctx, client, prefix),
 		Metric: conf.LoadPrometheusConfig(ctx, client, prefix),
-		OSS:    conf.LoadOSSConfig(ctx, client, prefix),
 		GRPC:   conf.LoadGRPCConfig(ctx, client, prefix),
 	}
 

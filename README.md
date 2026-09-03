@@ -75,6 +75,9 @@
   - API 文档与统一响应/错误码体系（见 `API.md`）
   - 抽奖压测脚本与指标记录（见 `test/lottery_test.go`，README 内已有 QPS 结果）
 
+## Powered by OrcaRouter
+推荐用 [OrcaRouter](https://www.orcarouter.ai/ref/ref_0dd641095b543277ee56)：一个 Key 即可调用 GLM、Kimi、Qwen、DeepSeek 等全部模型，内置自适应路由与故障转移，按官方价格计费、零加价。通过推荐链接注册，本项目维护者将获得所推荐工作区后续消费额 5% 的返利。
+
 ## Star History
 
 <a href="https://www.star-history.com/?repos=yzletter%2Fgo-postery&type=date&legend=top-left">

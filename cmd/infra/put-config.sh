@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="${ETCD_CONFIG_FILE:-$SCRIPT_DIR/etcd/config.local.conf}"
+CONFIG_FILE="${ETCD_CONFIG_FILE:-$SCRIPT_DIR/etcd/config.example.conf}"
 ENDPOINT="${ETCD_ENDPOINT:-http://localhost:2379}"
 
 if [ ! -f "$CONFIG_FILE" ]; then
