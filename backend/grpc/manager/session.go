@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
+	session_grpc2 "github.com/yzletter/go-postery/backend/api/proto/session/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -26,7 +26,7 @@ func NewSessionManager(ctx context.Context, service string, hub ServiceHub) *Ses
 
 // NewConnection 建立与 WebSocket 同生命周期的消息消费 RPC。
 // 该调用不能设置固定超时；上游 WebSocket 断开时通过 ctx 取消。
-func (manager *SessionServiceManager) NewConnection(ctx context.Context, req *session_grpc.UserID) (*session_grpc.SessionEmptyResponse, error) {
+func (manager *SessionServiceManager) NewConnection(ctx context.Context, req *session_grpc2.UserID) (*session_grpc2.SessionEmptyResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -38,10 +38,10 @@ func (manager *SessionServiceManager) NewConnection(ctx context.Context, req *se
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn)
+		client := session_grpc2.NewSessionServiceClient(conn)
 
 		// 该 RPC 与 WebSocket 同生命周期，不能设置固定超时时间。
-		var resp *session_grpc.SessionEmptyResponse
+		var resp *session_grpc2.SessionEmptyResponse
 		resp, err = client.NewConnection(ctx, req)
 		if isEndpointFailure(err) {
 			endpoint.MarkFailed()
@@ -56,7 +56,7 @@ func (manager *SessionServiceManager) NewConnection(ctx context.Context, req *se
 }
 
 // Chat 将 WebSocket 收到的聊天消息转发给 Session 微服务。
-func (manager *SessionServiceManager) Chat(ctx context.Context, req *session_grpc.ChatRequest) (*session_grpc.SessionEmptyResponse, error) {
+func (manager *SessionServiceManager) Chat(ctx context.Context, req *session_grpc2.ChatRequest) (*session_grpc2.SessionEmptyResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1 // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -68,10 +68,10 @@ func (manager *SessionServiceManager) Chat(ctx context.Context, req *session_grp
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn)
+		client := session_grpc2.NewSessionServiceClient(conn)
 
 		callCtx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.SessionEmptyResponse
+		var resp *session_grpc2.SessionEmptyResponse
 		resp, err = client.Chat(callCtx, req)
 		cancel()
 
@@ -87,7 +87,7 @@ func (manager *SessionServiceManager) Chat(ctx context.Context, req *session_grp
 	return nil, err
 }
 
-func (manager *SessionServiceManager) ListByUID(ctx context.Context, req *session_grpc.UserID) (*session_grpc.Sessions, error) {
+func (manager *SessionServiceManager) ListByUID(ctx context.Context, req *session_grpc2.UserID) (*session_grpc2.Sessions, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -99,11 +99,11 @@ func (manager *SessionServiceManager) ListByUID(ctx context.Context, req *sessio
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.Sessions
+		var resp *session_grpc2.Sessions
 		resp, err = client.ListByUID(ctx, req) // 微服务调用
 		cancel()
 
@@ -120,7 +120,7 @@ func (manager *SessionServiceManager) ListByUID(ctx context.Context, req *sessio
 	return nil, err
 }
 
-func (manager *SessionServiceManager) GetSession(ctx context.Context, req *session_grpc.BothUserID) (*session_grpc.Session, error) {
+func (manager *SessionServiceManager) GetSession(ctx context.Context, req *session_grpc2.BothUserID) (*session_grpc2.Session, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -132,11 +132,11 @@ func (manager *SessionServiceManager) GetSession(ctx context.Context, req *sessi
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.Session
+		var resp *session_grpc2.Session
 		resp, err = client.GetSession(ctx, req) // 微服务调用
 		cancel()
 
@@ -153,7 +153,7 @@ func (manager *SessionServiceManager) GetSession(ctx context.Context, req *sessi
 	return nil, err
 }
 
-func (manager *SessionServiceManager) GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error) {
+func (manager *SessionServiceManager) GetHistoryMessagesByPage(ctx context.Context, req *session_grpc2.GetHistoryMessagesByPageRequest) (*session_grpc2.GetHistoryMessagesByPageResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -165,11 +165,11 @@ func (manager *SessionServiceManager) GetHistoryMessagesByPage(ctx context.Conte
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.GetHistoryMessagesByPageResponse
+		var resp *session_grpc2.GetHistoryMessagesByPageResponse
 		resp, err = client.GetHistoryMessagesByPage(ctx, req) // 微服务调用
 		cancel()
 
@@ -186,7 +186,7 @@ func (manager *SessionServiceManager) GetHistoryMessagesByPage(ctx context.Conte
 	return nil, err
 }
 
-func (manager *SessionServiceManager) Delete(ctx context.Context, req *session_grpc.DeleteRequest) (*session_grpc.SessionEmptyResponse, error) {
+func (manager *SessionServiceManager) Delete(ctx context.Context, req *session_grpc2.DeleteRequest) (*session_grpc2.SessionEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -198,11 +198,11 @@ func (manager *SessionServiceManager) Delete(ctx context.Context, req *session_g
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.SessionEmptyResponse
+		var resp *session_grpc2.SessionEmptyResponse
 		resp, err = client.Delete(ctx, req) // 微服务调用
 		cancel()
 
@@ -219,7 +219,7 @@ func (manager *SessionServiceManager) Delete(ctx context.Context, req *session_g
 	return nil, err
 }
 
-func (manager *SessionServiceManager) UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
+func (manager *SessionServiceManager) UpdateUnread(ctx context.Context, req *session_grpc2.UpdateUnreadRequest) (*session_grpc2.SessionEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -231,11 +231,11 @@ func (manager *SessionServiceManager) UpdateUnread(ctx context.Context, req *ses
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.SessionEmptyResponse
+		var resp *session_grpc2.SessionEmptyResponse
 		resp, err = client.UpdateUnread(ctx, req) // 微服务调用
 		cancel()
 
@@ -252,7 +252,7 @@ func (manager *SessionServiceManager) UpdateUnread(ctx context.Context, req *ses
 	return nil, err
 }
 
-func (manager *SessionServiceManager) ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error) {
+func (manager *SessionServiceManager) ClearUnread(ctx context.Context, req *session_grpc2.ClearUnreadRequest) (*session_grpc2.SessionEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -264,11 +264,11 @@ func (manager *SessionServiceManager) ClearUnread(ctx context.Context, req *sess
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.SessionEmptyResponse
+		var resp *session_grpc2.SessionEmptyResponse
 		resp, err = client.ClearUnread(ctx, req) // 微服务调用
 		cancel()
 
@@ -285,7 +285,7 @@ func (manager *SessionServiceManager) ClearUnread(ctx context.Context, req *sess
 	return nil, err
 }
 
-func (manager *SessionServiceManager) CreateMessage(ctx context.Context, req *session_grpc.Message) (*session_grpc.Message, error) {
+func (manager *SessionServiceManager) CreateMessage(ctx context.Context, req *session_grpc2.Message) (*session_grpc2.Message, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -297,11 +297,11 @@ func (manager *SessionServiceManager) CreateMessage(ctx context.Context, req *se
 		if conn == nil {
 			continue
 		}
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc.Message
+		var resp *session_grpc2.Message
 		resp, err = client.CreateMessage(ctx, req) // 微服务调用
 		cancel()
 
@@ -343,11 +343,11 @@ func (manager *SessionServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := session_grpc.NewSessionServiceClient(conn) // 建立 Client
+		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &session_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &session_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

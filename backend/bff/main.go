@@ -16,7 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
 	bffConfig "github.com/yzletter/go-postery/backend/bff/config"
 	"github.com/yzletter/go-postery/backend/bff/handler"
 	"github.com/yzletter/go-postery/backend/bff/middleware"

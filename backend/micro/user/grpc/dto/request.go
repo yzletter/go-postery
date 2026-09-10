@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 )
 
 // UpdateProfileRequestToMap user_grpc.UpdateProfileRequest 转更新字段

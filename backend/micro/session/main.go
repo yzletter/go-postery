@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/session/v1"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"

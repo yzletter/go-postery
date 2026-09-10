@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
+	post_grpc2 "github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"google.golang.org/grpc"
 )
@@ -25,7 +25,7 @@ func NewPostManager(ctx context.Context, service string, hub ServiceHub) *PostSe
 	return manager
 }
 
-func (manager *PostServiceManager) Create(ctx context.Context, req *post_grpc.CreatePostRequest) (*post_grpc.PostDetail, error) {
+func (manager *PostServiceManager) Create(ctx context.Context, req *post_grpc2.CreatePostRequest) (*post_grpc2.PostDetail, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -37,11 +37,11 @@ func (manager *PostServiceManager) Create(ctx context.Context, req *post_grpc.Cr
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostDetail
+		var resp *post_grpc2.PostDetail
 		resp, err = client.Create(ctx, req) // 微服务调用
 		cancel()
 
@@ -58,7 +58,7 @@ func (manager *PostServiceManager) Create(ctx context.Context, req *post_grpc.Cr
 	return nil, err
 }
 
-func (manager *PostServiceManager) GetDetailByID(ctx context.Context, req *post_grpc.GetDetailByIDRequest) (*post_grpc.PostDetail, error) {
+func (manager *PostServiceManager) GetDetailByID(ctx context.Context, req *post_grpc2.GetDetailByIDRequest) (*post_grpc2.PostDetail, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -70,11 +70,11 @@ func (manager *PostServiceManager) GetDetailByID(ctx context.Context, req *post_
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostDetail
+		var resp *post_grpc2.PostDetail
 		resp, err = client.GetDetailByID(ctx, req) // 微服务调用
 		cancel()
 
@@ -91,7 +91,7 @@ func (manager *PostServiceManager) GetDetailByID(ctx context.Context, req *post_
 	return nil, err
 }
 
-func (manager *PostServiceManager) GetBriefByID(ctx context.Context, req *post_grpc.GetBriefByIDRequest) (*post_grpc.PostBrief, error) {
+func (manager *PostServiceManager) GetBriefByID(ctx context.Context, req *post_grpc2.GetBriefByIDRequest) (*post_grpc2.PostBrief, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -103,11 +103,11 @@ func (manager *PostServiceManager) GetBriefByID(ctx context.Context, req *post_g
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostBrief
+		var resp *post_grpc2.PostBrief
 		resp, err = client.GetBriefByID(ctx, req) // 微服务调用
 		cancel()
 
@@ -124,7 +124,7 @@ func (manager *PostServiceManager) GetBriefByID(ctx context.Context, req *post_g
 	return nil, err
 }
 
-func (manager *PostServiceManager) Top(ctx context.Context, req *post_grpc.PostEmptyRequest) (*post_grpc.TopResponse, error) {
+func (manager *PostServiceManager) Top(ctx context.Context, req *post_grpc2.PostEmptyRequest) (*post_grpc2.TopResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -136,11 +136,11 @@ func (manager *PostServiceManager) Top(ctx context.Context, req *post_grpc.PostE
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.TopResponse
+		var resp *post_grpc2.TopResponse
 		resp, err = client.Top(ctx, req) // 微服务调用
 		cancel()
 
@@ -157,7 +157,7 @@ func (manager *PostServiceManager) Top(ctx context.Context, req *post_grpc.PostE
 	return nil, err
 }
 
-func (manager *PostServiceManager) GetPostByTime(ctx context.Context, req *post_grpc.GetPostByTimeRequest) (*post_grpc.PostIDs, error) {
+func (manager *PostServiceManager) GetPostByTime(ctx context.Context, req *post_grpc2.GetPostByTimeRequest) (*post_grpc2.PostIDs, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -169,11 +169,11 @@ func (manager *PostServiceManager) GetPostByTime(ctx context.Context, req *post_
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostIDs
+		var resp *post_grpc2.PostIDs
 		resp, err = client.GetPostByTime(ctx, req) // 微服务调用
 		cancel()
 
@@ -190,7 +190,7 @@ func (manager *PostServiceManager) GetPostByTime(ctx context.Context, req *post_
 	return nil, err
 }
 
-func (manager *PostServiceManager) Update(ctx context.Context, req *post_grpc.UpdateRequest) (*post_grpc.PostEmptyResponse, error) {
+func (manager *PostServiceManager) Update(ctx context.Context, req *post_grpc2.UpdateRequest) (*post_grpc2.PostEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -202,11 +202,11 @@ func (manager *PostServiceManager) Update(ctx context.Context, req *post_grpc.Up
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostEmptyResponse
+		var resp *post_grpc2.PostEmptyResponse
 		resp, err = client.Update(ctx, req) // 微服务调用
 		cancel()
 
@@ -223,7 +223,7 @@ func (manager *PostServiceManager) Update(ctx context.Context, req *post_grpc.Up
 	return nil, err
 }
 
-func (manager *PostServiceManager) ListByPage(ctx context.Context, req *post_grpc.ListByPageRequest) (*post_grpc.PostDetailsResponse, error) {
+func (manager *PostServiceManager) ListByPage(ctx context.Context, req *post_grpc2.ListByPageRequest) (*post_grpc2.PostDetailsResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -235,11 +235,11 @@ func (manager *PostServiceManager) ListByPage(ctx context.Context, req *post_grp
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostDetailsResponse
+		var resp *post_grpc2.PostDetailsResponse
 		resp, err = client.ListByPage(ctx, req) // 微服务调用
 		cancel()
 
@@ -256,7 +256,7 @@ func (manager *PostServiceManager) ListByPage(ctx context.Context, req *post_grp
 	return nil, err
 }
 
-func (manager *PostServiceManager) ListByPageAndUid(ctx context.Context, req *post_grpc.ListByPageAndUidRequest) (*post_grpc.PostBriefsResponse, error) {
+func (manager *PostServiceManager) ListByPageAndUid(ctx context.Context, req *post_grpc2.ListByPageAndUidRequest) (*post_grpc2.PostBriefsResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -268,11 +268,11 @@ func (manager *PostServiceManager) ListByPageAndUid(ctx context.Context, req *po
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostBriefsResponse
+		var resp *post_grpc2.PostBriefsResponse
 		resp, err = client.ListByPageAndUid(ctx, req) // 微服务调用
 		cancel()
 
@@ -289,7 +289,7 @@ func (manager *PostServiceManager) ListByPageAndUid(ctx context.Context, req *po
 	return nil, err
 }
 
-func (manager *PostServiceManager) ListByPageAndTag(ctx context.Context, req *post_grpc.ListByPageAndTagRequest) (*post_grpc.PostDetailsResponse, error) {
+func (manager *PostServiceManager) ListByPageAndTag(ctx context.Context, req *post_grpc2.ListByPageAndTagRequest) (*post_grpc2.PostDetailsResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -301,11 +301,11 @@ func (manager *PostServiceManager) ListByPageAndTag(ctx context.Context, req *po
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostDetailsResponse
+		var resp *post_grpc2.PostDetailsResponse
 		resp, err = client.ListByPageAndTag(ctx, req) // 微服务调用
 		cancel()
 
@@ -322,7 +322,7 @@ func (manager *PostServiceManager) ListByPageAndTag(ctx context.Context, req *po
 	return nil, err
 }
 
-func (manager *PostServiceManager) Belong(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.BelongResponse, error) {
+func (manager *PostServiceManager) Belong(ctx context.Context, req *post_grpc2.PostCommonRequest) (*post_grpc2.BelongResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -334,11 +334,11 @@ func (manager *PostServiceManager) Belong(ctx context.Context, req *post_grpc.Po
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.BelongResponse
+		var resp *post_grpc2.BelongResponse
 		resp, err = client.Belong(ctx, req) // 微服务调用
 		cancel()
 
@@ -355,7 +355,7 @@ func (manager *PostServiceManager) Belong(ctx context.Context, req *post_grpc.Po
 	return nil, err
 }
 
-func (manager *PostServiceManager) Delete(ctx context.Context, req *post_grpc.PostCommonRequest) (*post_grpc.PostEmptyResponse, error) {
+func (manager *PostServiceManager) Delete(ctx context.Context, req *post_grpc2.PostCommonRequest) (*post_grpc2.PostEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -367,11 +367,11 @@ func (manager *PostServiceManager) Delete(ctx context.Context, req *post_grpc.Po
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.PostEmptyResponse
+		var resp *post_grpc2.PostEmptyResponse
 		resp, err = client.Delete(ctx, req) // 微服务调用
 		cancel()
 
@@ -388,7 +388,7 @@ func (manager *PostServiceManager) Delete(ctx context.Context, req *post_grpc.Po
 	return nil, err
 }
 
-func (manager *PostServiceManager) ExistPost(ctx context.Context, req *post_grpc.ExistPostRequest, opts ...grpc.CallOption) (*post_grpc.ExistPostResponse, error) {
+func (manager *PostServiceManager) ExistPost(ctx context.Context, req *post_grpc2.ExistPostRequest, opts ...grpc.CallOption) (*post_grpc2.ExistPostResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -400,11 +400,11 @@ func (manager *PostServiceManager) ExistPost(ctx context.Context, req *post_grpc
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.ExistPostResponse
+		var resp *post_grpc2.ExistPostResponse
 		resp, err = client.ExistPost(ctx, req, opts...) // 微服务调用
 		cancel()
 
@@ -421,7 +421,7 @@ func (manager *PostServiceManager) ExistPost(ctx context.Context, req *post_grpc
 	return nil, err
 }
 
-func (manager *PostServiceManager) CheckPostAuth(ctx context.Context, req *post_grpc.CheckPostAuthRequest, opts ...grpc.CallOption) (*post_grpc.CheckPostAuthResponse, error) {
+func (manager *PostServiceManager) CheckPostAuth(ctx context.Context, req *post_grpc2.CheckPostAuthRequest, opts ...grpc.CallOption) (*post_grpc2.CheckPostAuthResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -433,11 +433,11 @@ func (manager *PostServiceManager) CheckPostAuth(ctx context.Context, req *post_
 		if conn == nil {
 			continue
 		}
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *post_grpc.CheckPostAuthResponse
+		var resp *post_grpc2.CheckPostAuthResponse
 		resp, err = client.CheckPostAuth(ctx, req, opts...) // 微服务调用
 		cancel()
 
@@ -479,11 +479,11 @@ func (manager *PostServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := post_grpc.NewPostServiceClient(conn) // 建立 Client
+		client := post_grpc2.NewPostServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &post_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &post_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

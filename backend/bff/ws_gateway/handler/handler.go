@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	interview_grpc "github.com/yzletter/go-postery/api/proto/interview/v1"
-	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/interview/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/session/v1"
 	session_dto "github.com/yzletter/go-postery/backend/bff/dto/session"
 	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
 	"github.com/yzletter/go-postery/backend/bff/ws_gateway/service"

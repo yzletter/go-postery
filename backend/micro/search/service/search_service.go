@@ -9,7 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
-	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"

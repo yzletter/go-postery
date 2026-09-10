@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	"github.com/yzletter/go-postery/backend/micro/user/domain"
 )
 

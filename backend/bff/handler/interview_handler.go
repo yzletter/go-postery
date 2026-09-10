@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	interview_grpc "github.com/yzletter/go-postery/api/proto/interview/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/interview/v1"
 	interview_dto "github.com/yzletter/go-postery/backend/bff/dto/interview"
 	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
-	oss_grpc "github.com/yzletter/go-postery/api/proto/oss/v1"
-	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/oss/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/user/domain"

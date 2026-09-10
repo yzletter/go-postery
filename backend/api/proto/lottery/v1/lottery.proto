@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package lottery.v1;
+
+option go_package = "github.com/yzletter/go-postery/backend/api/proto/lottery/v1;lottery_grpc";
+
+message EmptyRequest {}
+message EmptyResponse {}
+
+message UserID {
+  int64 UserID = 1;
+}
+
+message LotteryCommonRequest {
+  int64 UserID = 1;
+  int64 GiftID = 2;
+  int64 TempOrderID = 3;
+}
+
+message Order {
+  reserved 9;
+
+  int64 OrderID = 1;
+  int64 UserID = 2;
+  Gift Gift = 3;
+  int64 Count = 4;
+  string CreatedAt = 5;
+  int32 Status = 6;
+  string PaidAt = 7;
+  string ExpireAt = 8;
+}
+
+message Gift {
+  int64 ID = 1;
+  string Name = 2;
+  string Avatar = 3;
+  string Description = 4;
+  int64 Prize = 5;
+}
+
+message Gifts {
+  repeated Gift Gifts = 1;
+}
+
+message LotteryResponse {
+  Gift Gift = 1;
+  int64 TempOrderID = 2;
+  bool Success = 3;
+  string Description = 4;
+  int64 UserID = 5;
+}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service LotteryService {
+  // 获取索引奖品
+  rpc GetAllGifts(EmptyRequest) returns (Gifts);
+  // 进行抽奖
+  rpc Lottery(UserID) returns (LotteryResponse);
+  // 支付
+  rpc Pay(LotteryCommonRequest) returns (EmptyResponse);
+  // 放弃
+  rpc GiveUp(LotteryCommonRequest) returns (EmptyResponse);
+  // 查询结果
+  rpc Result(UserID) returns (Order);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+
+
+/*
+protoc \
+-I . \
+backend/api/proto/lottery/v1/lottery.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

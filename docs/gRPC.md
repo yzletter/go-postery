@@ -16,7 +16,7 @@ AVATAR_OBJECT=users/avatar/1/avatar-test.png
 
 grpcurl -plaintext \
   -import-path . \
-  -proto api/proto/user/v1/user.proto \
+  -proto backend/api/proto/user/v1/user.proto \
   -d "{\"UserID\":1,\"ObjectName\":\"${AVATAR_OBJECT}\"}" \
   "${USER_GRPC_ADDR}" \
   user.v1.UserService/UploadAvatarCallback
@@ -33,7 +33,7 @@ grpcurl -plaintext \
 ```bash
 grpcurl -plaintext \
   -import-path . \
-  -proto api/proto/user/v1/user.proto \
+  -proto backend/api/proto/user/v1/user.proto \
   -d '{"ID":1}' \
   "${USER_GRPC_ADDR}" \
   user.v1.UserService/GetProfileById

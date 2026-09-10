@@ -1,8 +1,8 @@
 package lottery
 
 import (
-	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	userdto "github.com/yzletter/go-postery/backend/bff/dto/user"
 )
 

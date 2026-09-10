@@ -42,7 +42,7 @@ type AuthService interface {
 ```
 
 ## 长短双 Token 机制
-![长短双 Token.png](../imgs/%E9%95%BF%E7%9F%AD%E5%8F%8C%20Token.png)
+![长短双 Token.png](imgs/%E9%95%BF%E7%9F%AD%E5%8F%8C%20Token.png)
 #### 用户信息
 
 主要包括 UserID，SSID，Role

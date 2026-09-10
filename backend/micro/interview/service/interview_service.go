@@ -15,7 +15,7 @@ import (
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
-	oss_grpc "github.com/yzletter/go-postery/api/proto/oss/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/oss/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/interview/dag"

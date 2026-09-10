@@ -11,7 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
-	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"

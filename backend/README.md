@@ -4,6 +4,7 @@
 
 ```
 ├── README.md
+├── api			// Proto 定义及生成代码
 ├── conf		// 微服务配置
 ├── errs		// 微服务错误
 ├── event		// 消息
@@ -12,7 +13,6 @@
 ├── micro		// 微服务模块
 ├── pkg			// 通用包
 ├── ports		// 微服务调用接口
-├── script	// 脚本
 └── utils		// 小工具
 ```
 

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	oss_grpc "github.com/yzletter/go-postery/api/proto/oss/v1"
+	oss_grpc2 "github.com/yzletter/go-postery/backend/api/proto/oss/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewOSSManager(ctx context.Context, service string, hub ServiceHub) *OSSServ
 	return manager
 }
 
-func (manager *OSSServiceManager) SignUpload(ctx context.Context, req *oss_grpc.SignUploadRequest) (*oss_grpc.SignUploadResponse, error) {
+func (manager *OSSServiceManager) SignUpload(ctx context.Context, req *oss_grpc2.SignUploadRequest) (*oss_grpc2.SignUploadResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 3
 	for try := 0; try < tryCnt; try++ {
@@ -36,10 +36,10 @@ func (manager *OSSServiceManager) SignUpload(ctx context.Context, req *oss_grpc.
 		if conn == nil {
 			continue
 		}
-		client := oss_grpc.NewOSSServiceClient(conn)
+		client := oss_grpc2.NewOSSServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *oss_grpc.SignUploadResponse
+		var resp *oss_grpc2.SignUploadResponse
 		resp, err = client.SignUpload(ctx, req)
 		cancel()
 
@@ -55,7 +55,7 @@ func (manager *OSSServiceManager) SignUpload(ctx context.Context, req *oss_grpc.
 	return nil, err
 }
 
-func (manager *OSSServiceManager) UploadCallback(ctx context.Context, req *oss_grpc.UploadCallbackRequest) (*oss_grpc.UploadCallbackResponse, error) {
+func (manager *OSSServiceManager) UploadCallback(ctx context.Context, req *oss_grpc2.UploadCallbackRequest) (*oss_grpc2.UploadCallbackResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -67,10 +67,10 @@ func (manager *OSSServiceManager) UploadCallback(ctx context.Context, req *oss_g
 		if conn == nil {
 			continue
 		}
-		client := oss_grpc.NewOSSServiceClient(conn)
+		client := oss_grpc2.NewOSSServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *oss_grpc.UploadCallbackResponse
+		var resp *oss_grpc2.UploadCallbackResponse
 		resp, err = client.UploadCallback(ctx, req)
 		cancel()
 
@@ -86,7 +86,7 @@ func (manager *OSSServiceManager) UploadCallback(ctx context.Context, req *oss_g
 	return nil, err
 }
 
-func (manager *OSSServiceManager) GetObjectURL(ctx context.Context, req *oss_grpc.GetObjectURLRequest) (*oss_grpc.GetObjectURLResponse, error) {
+func (manager *OSSServiceManager) GetObjectURL(ctx context.Context, req *oss_grpc2.GetObjectURLRequest) (*oss_grpc2.GetObjectURLResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 3
 	for try := 0; try < tryCnt; try++ {
@@ -98,10 +98,10 @@ func (manager *OSSServiceManager) GetObjectURL(ctx context.Context, req *oss_grp
 		if conn == nil {
 			continue
 		}
-		client := oss_grpc.NewOSSServiceClient(conn)
+		client := oss_grpc2.NewOSSServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *oss_grpc.GetObjectURLResponse
+		var resp *oss_grpc2.GetObjectURLResponse
 		resp, err = client.GetObjectURL(ctx, req)
 		cancel()
 
@@ -142,10 +142,10 @@ func (manager *OSSServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := oss_grpc.NewOSSServiceClient(conn)
+		client := oss_grpc2.NewOSSServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &oss_grpc.HealthCheckRequest{})
+		_, err := client.HealthCheck(ctx, &oss_grpc2.HealthCheckRequest{})
 		cancel()
 
 		if err != nil {

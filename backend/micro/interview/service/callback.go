@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/bytedance/sonic"
-	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/interview/agent"
 	"github.com/yzletter/go-postery/backend/micro/interview/dag/node"

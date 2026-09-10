@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
+	lottery_grpc2 "github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewLotteryManager(ctx context.Context, service string, hub ServiceHub) *Lot
 	return manager
 }
 
-func (manager *LotteryServiceManager) GetAllGifts(ctx context.Context, req *lottery_grpc.EmptyRequest) (*lottery_grpc.Gifts, error) {
+func (manager *LotteryServiceManager) GetAllGifts(ctx context.Context, req *lottery_grpc2.EmptyRequest) (*lottery_grpc2.Gifts, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -36,11 +36,11 @@ func (manager *LotteryServiceManager) GetAllGifts(ctx context.Context, req *lott
 		if conn == nil {
 			continue
 		}
-		client := lottery_grpc.NewLotteryServiceClient(conn) // 建立 Client
+		client := lottery_grpc2.NewLotteryServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *lottery_grpc.Gifts
+		var resp *lottery_grpc2.Gifts
 		resp, err = client.GetAllGifts(ctx, req) // 微服务调用
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *LotteryServiceManager) GetAllGifts(ctx context.Context, req *lott
 	return nil, err
 }
 
-func (manager *LotteryServiceManager) Lottery(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.LotteryResponse, error) {
+func (manager *LotteryServiceManager) Lottery(ctx context.Context, req *lottery_grpc2.UserID) (*lottery_grpc2.LotteryResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 抽奖有副作用, 不重试
 	for try := 0; try < tryCnt; try++ {
@@ -69,11 +69,11 @@ func (manager *LotteryServiceManager) Lottery(ctx context.Context, req *lottery_
 		if conn == nil {
 			continue
 		}
-		client := lottery_grpc.NewLotteryServiceClient(conn) // 建立 Client
+		client := lottery_grpc2.NewLotteryServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *lottery_grpc.LotteryResponse
+		var resp *lottery_grpc2.LotteryResponse
 		resp, err = client.Lottery(ctx, req) // 微服务调用
 		cancel()
 
@@ -90,7 +90,7 @@ func (manager *LotteryServiceManager) Lottery(ctx context.Context, req *lottery_
 	return nil, err
 }
 
-func (manager *LotteryServiceManager) Pay(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
+func (manager *LotteryServiceManager) Pay(ctx context.Context, req *lottery_grpc2.LotteryCommonRequest) (*lottery_grpc2.EmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 支付有副作用, 不重试
 	for try := 0; try < tryCnt; try++ {
@@ -102,11 +102,11 @@ func (manager *LotteryServiceManager) Pay(ctx context.Context, req *lottery_grpc
 		if conn == nil {
 			continue
 		}
-		client := lottery_grpc.NewLotteryServiceClient(conn) // 建立 Client
+		client := lottery_grpc2.NewLotteryServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *lottery_grpc.EmptyResponse
+		var resp *lottery_grpc2.EmptyResponse
 		resp, err = client.Pay(ctx, req) // 微服务调用
 		cancel()
 
@@ -123,7 +123,7 @@ func (manager *LotteryServiceManager) Pay(ctx context.Context, req *lottery_grpc
 	return nil, err
 }
 
-func (manager *LotteryServiceManager) GiveUp(ctx context.Context, req *lottery_grpc.LotteryCommonRequest) (*lottery_grpc.EmptyResponse, error) {
+func (manager *LotteryServiceManager) GiveUp(ctx context.Context, req *lottery_grpc2.LotteryCommonRequest) (*lottery_grpc2.EmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 放弃奖品有副作用, 不重试
 	for try := 0; try < tryCnt; try++ {
@@ -135,11 +135,11 @@ func (manager *LotteryServiceManager) GiveUp(ctx context.Context, req *lottery_g
 		if conn == nil {
 			continue
 		}
-		client := lottery_grpc.NewLotteryServiceClient(conn) // 建立 Client
+		client := lottery_grpc2.NewLotteryServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *lottery_grpc.EmptyResponse
+		var resp *lottery_grpc2.EmptyResponse
 		resp, err = client.GiveUp(ctx, req) // 微服务调用
 		cancel()
 
@@ -156,7 +156,7 @@ func (manager *LotteryServiceManager) GiveUp(ctx context.Context, req *lottery_g
 	return nil, err
 }
 
-func (manager *LotteryServiceManager) Result(ctx context.Context, req *lottery_grpc.UserID) (*lottery_grpc.Order, error) {
+func (manager *LotteryServiceManager) Result(ctx context.Context, req *lottery_grpc2.UserID) (*lottery_grpc2.Order, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -168,11 +168,11 @@ func (manager *LotteryServiceManager) Result(ctx context.Context, req *lottery_g
 		if conn == nil {
 			continue
 		}
-		client := lottery_grpc.NewLotteryServiceClient(conn) // 建立 Client
+		client := lottery_grpc2.NewLotteryServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *lottery_grpc.Order
+		var resp *lottery_grpc2.Order
 		resp, err = client.Result(ctx, req) // 微服务调用
 		cancel()
 
@@ -214,11 +214,11 @@ func (manager *LotteryServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := lottery_grpc.NewLotteryServiceClient(conn) // 建立 Client
+		client := lottery_grpc2.NewLotteryServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &lottery_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &lottery_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
-	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/event"
 	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"

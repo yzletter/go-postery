@@ -4,8 +4,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	session_grpc "github.com/yzletter/go-postery/api/proto/session/v1"
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/session/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	sessiondto "github.com/yzletter/go-postery/backend/bff/dto/session"
 	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"

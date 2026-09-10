@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
 )
 

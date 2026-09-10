@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	search_grpc "github.com/yzletter/go-postery/api/proto/search/v1"
+	search_grpc2 "github.com/yzletter/go-postery/backend/api/proto/search/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewSearchManager(ctx context.Context, service string, hub ServiceHub) *Sear
 	return manager
 }
 
-func (manager *SearchServiceManager) Search(ctx context.Context, req *search_grpc.SearchRequest) (*search_grpc.SearchResult, error) {
+func (manager *SearchServiceManager) Search(ctx context.Context, req *search_grpc2.SearchRequest) (*search_grpc2.SearchResult, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -36,11 +36,11 @@ func (manager *SearchServiceManager) Search(ctx context.Context, req *search_grp
 		if conn == nil {
 			continue
 		}
-		client := search_grpc.NewSearchServiceClient(conn) // 建立 Client
+		client := search_grpc2.NewSearchServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *search_grpc.SearchResult
+		var resp *search_grpc2.SearchResult
 		resp, err = client.Search(ctx, req) // 微服务调用
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *SearchServiceManager) Search(ctx context.Context, req *search_grp
 	return nil, err
 }
 
-func (manager *SearchServiceManager) DeleteDoc(ctx context.Context, req *search_grpc.DocID) (*search_grpc.AffectedCount, error) {
+func (manager *SearchServiceManager) DeleteDoc(ctx context.Context, req *search_grpc2.DocID) (*search_grpc2.AffectedCount, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -69,11 +69,11 @@ func (manager *SearchServiceManager) DeleteDoc(ctx context.Context, req *search_
 		if conn == nil {
 			continue
 		}
-		client := search_grpc.NewSearchServiceClient(conn) // 建立 Client
+		client := search_grpc2.NewSearchServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *search_grpc.AffectedCount
+		var resp *search_grpc2.AffectedCount
 		resp, err = client.DeleteDoc(ctx, req) // 微服务调用
 		cancel()
 
@@ -90,7 +90,7 @@ func (manager *SearchServiceManager) DeleteDoc(ctx context.Context, req *search_
 	return nil, err
 }
 
-func (manager *SearchServiceManager) AddDoc(ctx context.Context, req *search_grpc.Document) (*search_grpc.AffectedCount, error) {
+func (manager *SearchServiceManager) AddDoc(ctx context.Context, req *search_grpc2.Document) (*search_grpc2.AffectedCount, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -102,11 +102,11 @@ func (manager *SearchServiceManager) AddDoc(ctx context.Context, req *search_grp
 		if conn == nil {
 			continue
 		}
-		client := search_grpc.NewSearchServiceClient(conn) // 建立 Client
+		client := search_grpc2.NewSearchServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *search_grpc.AffectedCount
+		var resp *search_grpc2.AffectedCount
 		resp, err = client.AddDoc(ctx, req) // 微服务调用
 		cancel()
 
@@ -123,7 +123,7 @@ func (manager *SearchServiceManager) AddDoc(ctx context.Context, req *search_grp
 	return nil, err
 }
 
-func (manager *SearchServiceManager) Count(ctx context.Context, req *search_grpc.CountRequest) (*search_grpc.AffectedCount, error) {
+func (manager *SearchServiceManager) Count(ctx context.Context, req *search_grpc2.CountRequest) (*search_grpc2.AffectedCount, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -135,11 +135,11 @@ func (manager *SearchServiceManager) Count(ctx context.Context, req *search_grpc
 		if conn == nil {
 			continue
 		}
-		client := search_grpc.NewSearchServiceClient(conn) // 建立 Client
+		client := search_grpc2.NewSearchServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *search_grpc.AffectedCount
+		var resp *search_grpc2.AffectedCount
 		resp, err = client.Count(ctx, req) // 微服务调用
 		cancel()
 
@@ -181,11 +181,11 @@ func (manager *SearchServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := search_grpc.NewSearchServiceClient(conn) // 建立 Client
+		client := search_grpc2.NewSearchServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &search_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &search_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

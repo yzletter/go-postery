@@ -1,6 +1,8 @@
 package user
 
-import user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+import (
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
+)
 
 type OSSSignDTO struct {
 	Response string `json:"response"`

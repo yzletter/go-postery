@@ -10,7 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
 	"github.com/rs/xid"
-	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/code/v1"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/event"
 	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"

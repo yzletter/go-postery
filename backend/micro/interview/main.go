@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	interview_grpc "github.com/yzletter/go-postery/api/proto/interview/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/interview/v1"
 	"github.com/yzletter/go-postery/backend/conf"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"

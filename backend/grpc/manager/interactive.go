@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
+	interactive_grpc2 "github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewInteractiveManager(ctx context.Context, service string, hub ServiceHub) 
 	return manager
 }
 
-func (manager *InteractiveServiceManager) GetPostInteractive(ctx context.Context, req *interactive_grpc.PostIDRequest) (*interactive_grpc.PostInteractive, error) {
+func (manager *InteractiveServiceManager) GetPostInteractive(ctx context.Context, req *interactive_grpc2.PostIDRequest) (*interactive_grpc2.PostInteractive, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -36,11 +36,11 @@ func (manager *InteractiveServiceManager) GetPostInteractive(ctx context.Context
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.PostInteractive
+		var resp *interactive_grpc2.PostInteractive
 		resp, err = client.GetPostInteractive(ctx, req) // 微服务调用
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *InteractiveServiceManager) GetPostInteractive(ctx context.Context
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) GetUserInteractive(ctx context.Context, req *interactive_grpc.UserIDRequest) (*interactive_grpc.UserInteractive, error) {
+func (manager *InteractiveServiceManager) GetUserInteractive(ctx context.Context, req *interactive_grpc2.UserIDRequest) (*interactive_grpc2.UserInteractive, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -69,11 +69,11 @@ func (manager *InteractiveServiceManager) GetUserInteractive(ctx context.Context
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.UserInteractive
+		var resp *interactive_grpc2.UserInteractive
 		resp, err = client.GetUserInteractive(ctx, req) // 微服务调用
 		cancel()
 
@@ -90,7 +90,7 @@ func (manager *InteractiveServiceManager) GetUserInteractive(ctx context.Context
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) Like(ctx context.Context, req *interactive_grpc.LikeRequest) (*interactive_grpc.InteractiveEmptyResponse, error) {
+func (manager *InteractiveServiceManager) Like(ctx context.Context, req *interactive_grpc2.LikeRequest) (*interactive_grpc2.InteractiveEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -102,11 +102,11 @@ func (manager *InteractiveServiceManager) Like(ctx context.Context, req *interac
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.InteractiveEmptyResponse
+		var resp *interactive_grpc2.InteractiveEmptyResponse
 		resp, err = client.Like(ctx, req) // 微服务调用
 		cancel()
 
@@ -123,7 +123,7 @@ func (manager *InteractiveServiceManager) Like(ctx context.Context, req *interac
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) Unlike(ctx context.Context, req *interactive_grpc.LikeRequest) (*interactive_grpc.InteractiveEmptyResponse, error) {
+func (manager *InteractiveServiceManager) Unlike(ctx context.Context, req *interactive_grpc2.LikeRequest) (*interactive_grpc2.InteractiveEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -135,11 +135,11 @@ func (manager *InteractiveServiceManager) Unlike(ctx context.Context, req *inter
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.InteractiveEmptyResponse
+		var resp *interactive_grpc2.InteractiveEmptyResponse
 		resp, err = client.Unlike(ctx, req) // 微服务调用
 		cancel()
 
@@ -156,7 +156,7 @@ func (manager *InteractiveServiceManager) Unlike(ctx context.Context, req *inter
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) CheckLike(ctx context.Context, req *interactive_grpc.LikeRequest) (*interactive_grpc.CheckLikeResponse, error) {
+func (manager *InteractiveServiceManager) CheckLike(ctx context.Context, req *interactive_grpc2.LikeRequest) (*interactive_grpc2.CheckLikeResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -168,11 +168,11 @@ func (manager *InteractiveServiceManager) CheckLike(ctx context.Context, req *in
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.CheckLikeResponse
+		var resp *interactive_grpc2.CheckLikeResponse
 		resp, err = client.CheckLike(ctx, req) // 微服务调用
 		cancel()
 
@@ -189,7 +189,7 @@ func (manager *InteractiveServiceManager) CheckLike(ctx context.Context, req *in
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) Follow(ctx context.Context, req *interactive_grpc.FollowRequest) (*interactive_grpc.InteractiveEmptyResponse, error) {
+func (manager *InteractiveServiceManager) Follow(ctx context.Context, req *interactive_grpc2.FollowRequest) (*interactive_grpc2.InteractiveEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -201,11 +201,11 @@ func (manager *InteractiveServiceManager) Follow(ctx context.Context, req *inter
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.InteractiveEmptyResponse
+		var resp *interactive_grpc2.InteractiveEmptyResponse
 		resp, err = client.Follow(ctx, req) // 微服务调用
 		cancel()
 
@@ -222,7 +222,7 @@ func (manager *InteractiveServiceManager) Follow(ctx context.Context, req *inter
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) Unfollow(ctx context.Context, req *interactive_grpc.FollowRequest) (*interactive_grpc.InteractiveEmptyResponse, error) {
+func (manager *InteractiveServiceManager) Unfollow(ctx context.Context, req *interactive_grpc2.FollowRequest) (*interactive_grpc2.InteractiveEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -234,11 +234,11 @@ func (manager *InteractiveServiceManager) Unfollow(ctx context.Context, req *int
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.InteractiveEmptyResponse
+		var resp *interactive_grpc2.InteractiveEmptyResponse
 		resp, err = client.Unfollow(ctx, req) // 微服务调用
 		cancel()
 
@@ -255,7 +255,7 @@ func (manager *InteractiveServiceManager) Unfollow(ctx context.Context, req *int
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) IfFollow(ctx context.Context, req *interactive_grpc.FollowRequest) (*interactive_grpc.IfFollowResponse, error) {
+func (manager *InteractiveServiceManager) IfFollow(ctx context.Context, req *interactive_grpc2.FollowRequest) (*interactive_grpc2.IfFollowResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -267,11 +267,11 @@ func (manager *InteractiveServiceManager) IfFollow(ctx context.Context, req *int
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.IfFollowResponse
+		var resp *interactive_grpc2.IfFollowResponse
 		resp, err = client.IfFollow(ctx, req) // 微服务调用
 		cancel()
 
@@ -288,7 +288,7 @@ func (manager *InteractiveServiceManager) IfFollow(ctx context.Context, req *int
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) Comment(ctx context.Context, req *interactive_grpc.CreateCommentRequest) (*interactive_grpc.InteractiveComment, error) {
+func (manager *InteractiveServiceManager) Comment(ctx context.Context, req *interactive_grpc2.CreateCommentRequest) (*interactive_grpc2.InteractiveComment, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -300,11 +300,11 @@ func (manager *InteractiveServiceManager) Comment(ctx context.Context, req *inte
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.InteractiveComment
+		var resp *interactive_grpc2.InteractiveComment
 		resp, err = client.Comment(ctx, req) // 微服务调用
 		cancel()
 
@@ -321,7 +321,7 @@ func (manager *InteractiveServiceManager) Comment(ctx context.Context, req *inte
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) DelComment(ctx context.Context, req *interactive_grpc.DeleteCommentRequest) (*interactive_grpc.InteractiveEmptyResponse, error) {
+func (manager *InteractiveServiceManager) DelComment(ctx context.Context, req *interactive_grpc2.DeleteCommentRequest) (*interactive_grpc2.InteractiveEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -333,11 +333,11 @@ func (manager *InteractiveServiceManager) DelComment(ctx context.Context, req *i
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.InteractiveEmptyResponse
+		var resp *interactive_grpc2.InteractiveEmptyResponse
 		resp, err = client.DelComment(ctx, req) // 微服务调用
 		cancel()
 
@@ -354,7 +354,7 @@ func (manager *InteractiveServiceManager) DelComment(ctx context.Context, req *i
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) ListCommentByPage(ctx context.Context, req *interactive_grpc.ListCommentByPageRequest) (*interactive_grpc.CommentsResponse, error) {
+func (manager *InteractiveServiceManager) ListCommentByPage(ctx context.Context, req *interactive_grpc2.ListCommentByPageRequest) (*interactive_grpc2.CommentsResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -366,11 +366,11 @@ func (manager *InteractiveServiceManager) ListCommentByPage(ctx context.Context,
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.CommentsResponse
+		var resp *interactive_grpc2.CommentsResponse
 		resp, err = client.ListCommentByPage(ctx, req) // 微服务调用
 		cancel()
 
@@ -387,7 +387,7 @@ func (manager *InteractiveServiceManager) ListCommentByPage(ctx context.Context,
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) ListRepliesByPage(ctx context.Context, req *interactive_grpc.ListReplyByPageRequest) (*interactive_grpc.CommentsResponse, error) {
+func (manager *InteractiveServiceManager) ListRepliesByPage(ctx context.Context, req *interactive_grpc2.ListReplyByPageRequest) (*interactive_grpc2.CommentsResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -399,11 +399,11 @@ func (manager *InteractiveServiceManager) ListRepliesByPage(ctx context.Context,
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.CommentsResponse
+		var resp *interactive_grpc2.CommentsResponse
 		resp, err = client.ListRepliesByPage(ctx, req) // 微服务调用
 		cancel()
 
@@ -420,7 +420,7 @@ func (manager *InteractiveServiceManager) ListRepliesByPage(ctx context.Context,
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) CheckCommentDelAuth(ctx context.Context, req *interactive_grpc.CommentIDUserIDRequest) (*interactive_grpc.CheckCommentDelAuthResponse, error) {
+func (manager *InteractiveServiceManager) CheckCommentDelAuth(ctx context.Context, req *interactive_grpc2.CommentIDUserIDRequest) (*interactive_grpc2.CheckCommentDelAuthResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -432,11 +432,11 @@ func (manager *InteractiveServiceManager) CheckCommentDelAuth(ctx context.Contex
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.CheckCommentDelAuthResponse
+		var resp *interactive_grpc2.CheckCommentDelAuthResponse
 		resp, err = client.CheckCommentDelAuth(ctx, req) // 微服务调用
 		cancel()
 
@@ -453,7 +453,7 @@ func (manager *InteractiveServiceManager) CheckCommentDelAuth(ctx context.Contex
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) GetFollowers(ctx context.Context, req *interactive_grpc.ListFollowRequest) (*interactive_grpc.ListFollowResponse, error) {
+func (manager *InteractiveServiceManager) GetFollowers(ctx context.Context, req *interactive_grpc2.ListFollowRequest) (*interactive_grpc2.ListFollowResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -465,11 +465,11 @@ func (manager *InteractiveServiceManager) GetFollowers(ctx context.Context, req 
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.ListFollowResponse
+		var resp *interactive_grpc2.ListFollowResponse
 		resp, err = client.GetFollowers(ctx, req) // 微服务调用
 		cancel()
 
@@ -486,7 +486,7 @@ func (manager *InteractiveServiceManager) GetFollowers(ctx context.Context, req 
 	return nil, err
 }
 
-func (manager *InteractiveServiceManager) GetFollowees(ctx context.Context, req *interactive_grpc.ListFollowRequest) (*interactive_grpc.ListFollowResponse, error) {
+func (manager *InteractiveServiceManager) GetFollowees(ctx context.Context, req *interactive_grpc2.ListFollowRequest) (*interactive_grpc2.ListFollowResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -498,11 +498,11 @@ func (manager *InteractiveServiceManager) GetFollowees(ctx context.Context, req 
 		if conn == nil {
 			continue
 		}
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interactive_grpc.ListFollowResponse
+		var resp *interactive_grpc2.ListFollowResponse
 		resp, err = client.GetFollowees(ctx, req) // 微服务调用
 		cancel()
 
@@ -544,11 +544,11 @@ func (manager *InteractiveServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := interactive_grpc.NewInteractiveServiceClient(conn) // 建立 Client
+		client := interactive_grpc2.NewInteractiveServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &interactive_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &interactive_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

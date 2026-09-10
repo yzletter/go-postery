@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	interview_grpc "github.com/yzletter/go-postery/api/proto/interview/v1"
+	interview_grpc2 "github.com/yzletter/go-postery/backend/api/proto/interview/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -26,7 +26,7 @@ func NewInterviewManager(ctx context.Context, service string, hub ServiceHub) *I
 	return manager
 }
 
-func (manager *InterviewServiceManager) Chat(ctx context.Context, req *interview_grpc.ChatRequest) (*interview_grpc.ChatResponse, error) {
+func (manager *InterviewServiceManager) Chat(ctx context.Context, req *interview_grpc2.ChatRequest) (*interview_grpc2.ChatResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -38,10 +38,10 @@ func (manager *InterviewServiceManager) Chat(ctx context.Context, req *interview
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.ChatResponse
+		var resp *interview_grpc2.ChatResponse
 		resp, err = client.Chat(ctx, req)
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *InterviewServiceManager) Chat(ctx context.Context, req *interview
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) StartInterview(ctx context.Context, req *interview_grpc.StartInterviewRequest) (*interview_grpc.StartInterviewResponse, error) {
+func (manager *InterviewServiceManager) StartInterview(ctx context.Context, req *interview_grpc2.StartInterviewRequest) (*interview_grpc2.StartInterviewResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -69,10 +69,10 @@ func (manager *InterviewServiceManager) StartInterview(ctx context.Context, req 
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.StartInterviewResponse
+		var resp *interview_grpc2.StartInterviewResponse
 		resp, err = client.StartInterview(ctx, req)
 		cancel()
 
@@ -88,7 +88,7 @@ func (manager *InterviewServiceManager) StartInterview(ctx context.Context, req 
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) Answer(ctx context.Context, req *interview_grpc.AnswerRequest) (*interview_grpc.AnswerResponse, error) {
+func (manager *InterviewServiceManager) Answer(ctx context.Context, req *interview_grpc2.AnswerRequest) (*interview_grpc2.AnswerResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -100,10 +100,10 @@ func (manager *InterviewServiceManager) Answer(ctx context.Context, req *intervi
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.AnswerResponse
+		var resp *interview_grpc2.AnswerResponse
 		resp, err = client.Answer(ctx, req)
 		cancel()
 
@@ -119,7 +119,7 @@ func (manager *InterviewServiceManager) Answer(ctx context.Context, req *intervi
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) UploadQuestions(ctx context.Context, req *interview_grpc.UploadQuestionsRequest) (*interview_grpc.UploadQuestionsResponse, error) {
+func (manager *InterviewServiceManager) UploadQuestions(ctx context.Context, req *interview_grpc2.UploadQuestionsRequest) (*interview_grpc2.UploadQuestionsResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -131,10 +131,10 @@ func (manager *InterviewServiceManager) UploadQuestions(ctx context.Context, req
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.UploadQuestionsResponse
+		var resp *interview_grpc2.UploadQuestionsResponse
 		resp, err = client.UploadQuestions(ctx, req)
 		cancel()
 
@@ -150,7 +150,7 @@ func (manager *InterviewServiceManager) UploadQuestions(ctx context.Context, req
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) UploadQuestionsSign(ctx context.Context, req *interview_grpc.UploadQuestionsSignRequest) (*interview_grpc.UploadQuestionsSignResponse, error) {
+func (manager *InterviewServiceManager) UploadQuestionsSign(ctx context.Context, req *interview_grpc2.UploadQuestionsSignRequest) (*interview_grpc2.UploadQuestionsSignResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -162,10 +162,10 @@ func (manager *InterviewServiceManager) UploadQuestionsSign(ctx context.Context,
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *interview_grpc.UploadQuestionsSignResponse
+		var resp *interview_grpc2.UploadQuestionsSignResponse
 		resp, err = client.UploadQuestionsSign(ctx, req)
 		cancel()
 
@@ -181,7 +181,7 @@ func (manager *InterviewServiceManager) UploadQuestionsSign(ctx context.Context,
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) UploadQuestionsCallback(ctx context.Context, req *interview_grpc.UploadQuestionsCallbackRequest) (*interview_grpc.UploadQuestionsCallbackResponse, error) {
+func (manager *InterviewServiceManager) UploadQuestionsCallback(ctx context.Context, req *interview_grpc2.UploadQuestionsCallbackRequest) (*interview_grpc2.UploadQuestionsCallbackResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -193,10 +193,10 @@ func (manager *InterviewServiceManager) UploadQuestionsCallback(ctx context.Cont
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.UploadQuestionsCallbackResponse
+		var resp *interview_grpc2.UploadQuestionsCallbackResponse
 		resp, err = client.UploadQuestionsCallback(ctx, req)
 		cancel()
 
@@ -212,7 +212,7 @@ func (manager *InterviewServiceManager) UploadQuestionsCallback(ctx context.Cont
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) QuitInterview(ctx context.Context, req *interview_grpc.QuitInterviewRequest) (*interview_grpc.QuitInterviewResponse, error) {
+func (manager *InterviewServiceManager) QuitInterview(ctx context.Context, req *interview_grpc2.QuitInterviewRequest) (*interview_grpc2.QuitInterviewResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -224,10 +224,10 @@ func (manager *InterviewServiceManager) QuitInterview(ctx context.Context, req *
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.QuitInterviewResponse
+		var resp *interview_grpc2.QuitInterviewResponse
 		resp, err = client.QuitInterview(ctx, req)
 		cancel()
 
@@ -243,7 +243,7 @@ func (manager *InterviewServiceManager) QuitInterview(ctx context.Context, req *
 	return nil, err
 }
 
-func (manager *InterviewServiceManager) Evaluation(ctx context.Context, req *interview_grpc.EvaluationRequest) (*interview_grpc.EvaluationResponse, error) {
+func (manager *InterviewServiceManager) Evaluation(ctx context.Context, req *interview_grpc2.EvaluationRequest) (*interview_grpc2.EvaluationResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -255,10 +255,10 @@ func (manager *InterviewServiceManager) Evaluation(ctx context.Context, req *int
 		if conn == nil {
 			continue
 		}
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, interviewRPCTimeout)
-		var resp *interview_grpc.EvaluationResponse
+		var resp *interview_grpc2.EvaluationResponse
 		resp, err = client.Evaluation(ctx, req)
 		cancel()
 
@@ -299,10 +299,10 @@ func (manager *InterviewServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := interview_grpc.NewInterviewServiceClient(conn)
+		client := interview_grpc2.NewInterviewServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &interview_grpc.HealthCheckRequest{})
+		_, err := client.HealthCheck(ctx, &interview_grpc2.HealthCheckRequest{})
 		cancel()
 
 		if err != nil {

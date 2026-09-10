@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "github.com/yzletter/go-postery/backend/api/proto/user/v1;user_grpc";
+
+message ProfileBrief {
+  int64 UserID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+}
+
+message ProfileTop {
+  int64 UserID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+  int64 Score = 5;
+}
+
+message GetProfileByIdRequest {
+  int64 ID = 1;
+}
+
+message Profile {
+  int64 UserID = 1;
+  string Nickname = 2;
+  string Avatar = 3;
+  string Bio = 4;
+  int32 Gender = 5;
+  string Birthday = 6;
+  string Location = 7;
+  string Country = 8;
+  string LastLoginIP = 9;
+  string CreatedAt = 10;
+  string LastLoginAt = 11;
+}
+
+message UpdateProfileRequest {
+  int64 UserID = 1;
+  optional string Nickname = 2;
+  optional string Avatar = 3;
+  optional string Bio = 4;
+  optional int32 Gender = 5;
+  optional string Birthday = 6;
+  optional string Location = 7;
+  optional string Country = 8;
+}
+
+message UpdateProfileResponse {}
+
+message TopRequest {}
+
+message TopResponse {
+  repeated ProfileTop ProfileTops = 1;
+}
+
+message GetIDAfterTimeRequest {
+  string TimeAfter = 1;
+}
+
+message UserIDs {
+  repeated int64 IDs = 1;
+}
+
+message ListFollowRequest {
+  int64 UserID = 1;
+  uint32 PageNo = 2;
+  uint32 PageSize = 3;
+}
+
+message ListFollowResponse {
+  uint64 Count = 1;
+  repeated ProfileBrief ProfileBriefs = 2;
+}
+
+message UploadAvatarSignRequest {
+  int64 UserID = 1;
+}
+
+message UploadAvatarSignResponse {
+  string Response = 1;
+}
+
+message UploadAvatarCallbackRequest {
+  int64 UserID = 1;
+  string ObjectName = 2;
+}
+
+message UploadAvatarCallbackResponse {}
+
+message GetAvatarURLRequest {
+  string ObjectName = 1;
+}
+
+message GetAvatarURLResponse {
+  string URL = 1;
+}
+
+message HealthCheckRequest {}
+message HealthCheckResponse {}
+
+service UserService {
+  // 根据用户 ID 获取用户资料
+  rpc GetProfileById(GetProfileByIdRequest) returns (Profile);
+  // 更新用户资料
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  // 返回推荐用户
+  rpc Top(TopRequest) returns (TopResponse);
+  // 根据时间获取用户 IDs
+  rpc GetIDAfterTime(GetIDAfterTimeRequest) returns (UserIDs);
+  // 按页查找粉丝
+  rpc ListFollowersByPage(ListFollowRequest) returns (ListFollowResponse);
+  // 按页查找关注的人
+  rpc ListFolloweesByPage(ListFollowRequest) returns (ListFollowResponse);
+  // 获取上传头像 OSS 的签名
+  rpc UploadAvatarSign(UploadAvatarSignRequest) returns (UploadAvatarSignResponse);
+  // OSS 信息落库
+  rpc UploadAvatarCallback(UploadAvatarCallbackRequest) returns (UploadAvatarCallbackResponse);
+  // 获取头像预签名 URL
+  rpc GetAvatarURL(GetAvatarURLRequest) returns (GetAvatarURLResponse);
+  // 健康检查
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+/*
+protoc \
+-I . \
+backend/api/proto/user/v1/user.proto \
+--go_out=. \
+--go-grpc_out=. \
+--go_opt=paths=source_relative \
+--go-grpc_opt=paths=source_relative
+ */

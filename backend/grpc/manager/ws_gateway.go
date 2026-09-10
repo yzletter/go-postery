@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	ws_gateway_grpc "github.com/yzletter/go-postery/api/proto/ws_gateway/v1"
+	ws_gateway_grpc2 "github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewWSGatewayManager(ctx context.Context, service string, hub ServiceHub) *W
 	return manager
 }
 
-func (manager *WSGatewayServiceManager) Push(ctx context.Context, req *ws_gateway_grpc.PushRequest) (*ws_gateway_grpc.PushResponse, error) {
+func (manager *WSGatewayServiceManager) Push(ctx context.Context, req *ws_gateway_grpc2.PushRequest) (*ws_gateway_grpc2.PushResponse, error) {
 	var err = errs.ErrUnavailable
 	var tryCnt = 1
 	for try := 0; try < tryCnt; try++ {
@@ -36,10 +36,10 @@ func (manager *WSGatewayServiceManager) Push(ctx context.Context, req *ws_gatewa
 		if conn == nil {
 			continue
 		}
-		client := ws_gateway_grpc.NewWSGatewayServiceClient(conn)
+		client := ws_gateway_grpc2.NewWSGatewayServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *ws_gateway_grpc.PushResponse
+		var resp *ws_gateway_grpc2.PushResponse
 		resp, err = client.Push(ctx, req)
 		cancel()
 
@@ -80,10 +80,10 @@ func (manager *WSGatewayServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := ws_gateway_grpc.NewWSGatewayServiceClient(conn)
+		client := ws_gateway_grpc2.NewWSGatewayServiceClient(conn)
 
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &ws_gateway_grpc.HealthCheckRequest{})
+		_, err := client.HealthCheck(ctx, &ws_gateway_grpc2.HealthCheckRequest{})
 		cancel()
 
 		if err != nil {

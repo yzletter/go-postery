@@ -12,7 +12,7 @@ app/
 logs/
 frontend/node_modules/
 frontend/dist/
-imgs/
+docs/imgs/
 docs/
 
 # Local or sensitive files; inject these at runtime instead

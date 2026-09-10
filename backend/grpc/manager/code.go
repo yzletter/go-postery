@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	code_grpc "github.com/yzletter/go-postery/api/proto/code/v1"
+	code_grpc2 "github.com/yzletter/go-postery/backend/api/proto/code/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewCodeManager(ctx context.Context, service string, hub ServiceHub) *CodeSe
 	return manager
 }
 
-func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.SendCodeRequest) (*code_grpc.SendCodeResponse, error) {
+func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc2.SendCodeRequest) (*code_grpc2.SendCodeResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // Send 只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -36,11 +36,11 @@ func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.Send
 		if conn == nil {
 			continue
 		}
-		client := code_grpc.NewCodeServiceClient(conn) // 建立 Client
+		client := code_grpc2.NewCodeServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *code_grpc.SendCodeResponse
+		var resp *code_grpc2.SendCodeResponse
 		resp, err = client.Send(ctx, req) // 微服务调用
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *CodeServiceManager) Send(ctx context.Context, req *code_grpc.Send
 	return nil, err
 }
 
-func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.VerifyCodeRequest) (*code_grpc.VerifyCodeResponse, error) {
+func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc2.VerifyCodeRequest) (*code_grpc2.VerifyCodeResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // Verify 只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -69,11 +69,11 @@ func (manager *CodeServiceManager) Verify(ctx context.Context, req *code_grpc.Ve
 		if conn == nil {
 			continue
 		}
-		client := code_grpc.NewCodeServiceClient(conn) // 建立 Client
+		client := code_grpc2.NewCodeServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *code_grpc.VerifyCodeResponse
+		var resp *code_grpc2.VerifyCodeResponse
 		resp, err = client.Verify(ctx, req) // 微服务调用
 		cancel()
 
@@ -115,11 +115,11 @@ func (manager *CodeServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := code_grpc.NewCodeServiceClient(conn) // 建立 Client
+		client := code_grpc2.NewCodeServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &code_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &code_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

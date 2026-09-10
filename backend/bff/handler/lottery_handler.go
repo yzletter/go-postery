@@ -4,8 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	lottery_grpc "github.com/yzletter/go-postery/api/proto/lottery/v1"
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	lottery2 "github.com/yzletter/go-postery/backend/bff/dto/lottery"
 	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"

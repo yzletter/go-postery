@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	user_grpc2 "github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewUserManager(ctx context.Context, service string, hub ServiceHub) *UserSe
 	return manager
 }
 
-func (manager *UserServiceManager) GetProfile(ctx context.Context, req *user_grpc.GetProfileByIdRequest) (*user_grpc.Profile, error) {
+func (manager *UserServiceManager) GetProfile(ctx context.Context, req *user_grpc2.GetProfileByIdRequest) (*user_grpc2.Profile, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -36,11 +36,11 @@ func (manager *UserServiceManager) GetProfile(ctx context.Context, req *user_grp
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.Profile
+		var resp *user_grpc2.Profile
 		resp, err = client.GetProfileById(ctx, req) // 微服务调用
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *UserServiceManager) GetProfile(ctx context.Context, req *user_grp
 	return nil, err
 }
 
-func (manager *UserServiceManager) UpdateProfile(ctx context.Context, req *user_grpc.UpdateProfileRequest) (*user_grpc.UpdateProfileResponse, error) {
+func (manager *UserServiceManager) UpdateProfile(ctx context.Context, req *user_grpc2.UpdateProfileRequest) (*user_grpc2.UpdateProfileResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -69,11 +69,11 @@ func (manager *UserServiceManager) UpdateProfile(ctx context.Context, req *user_
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.UpdateProfileResponse
+		var resp *user_grpc2.UpdateProfileResponse
 		resp, err = client.UpdateProfile(ctx, req) // 微服务调用
 		cancel()
 
@@ -90,7 +90,7 @@ func (manager *UserServiceManager) UpdateProfile(ctx context.Context, req *user_
 	return nil, err
 }
 
-func (manager *UserServiceManager) Top(ctx context.Context, req *user_grpc.TopRequest) (*user_grpc.TopResponse, error) {
+func (manager *UserServiceManager) Top(ctx context.Context, req *user_grpc2.TopRequest) (*user_grpc2.TopResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -102,11 +102,11 @@ func (manager *UserServiceManager) Top(ctx context.Context, req *user_grpc.TopRe
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.TopResponse
+		var resp *user_grpc2.TopResponse
 		resp, err = client.Top(ctx, req) // 微服务调用
 		cancel()
 
@@ -123,7 +123,7 @@ func (manager *UserServiceManager) Top(ctx context.Context, req *user_grpc.TopRe
 	return nil, err
 }
 
-func (manager *UserServiceManager) GetIDAfterTime(ctx context.Context, req *user_grpc.GetIDAfterTimeRequest) (*user_grpc.UserIDs, error) {
+func (manager *UserServiceManager) GetIDAfterTime(ctx context.Context, req *user_grpc2.GetIDAfterTimeRequest) (*user_grpc2.UserIDs, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -135,11 +135,11 @@ func (manager *UserServiceManager) GetIDAfterTime(ctx context.Context, req *user
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.UserIDs
+		var resp *user_grpc2.UserIDs
 		resp, err = client.GetIDAfterTime(ctx, req) // 微服务调用
 		cancel()
 
@@ -156,7 +156,7 @@ func (manager *UserServiceManager) GetIDAfterTime(ctx context.Context, req *user
 	return nil, err
 }
 
-func (manager *UserServiceManager) ListFollowersByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error) {
+func (manager *UserServiceManager) ListFollowersByPage(ctx context.Context, req *user_grpc2.ListFollowRequest) (*user_grpc2.ListFollowResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -168,11 +168,11 @@ func (manager *UserServiceManager) ListFollowersByPage(ctx context.Context, req 
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.ListFollowResponse
+		var resp *user_grpc2.ListFollowResponse
 		resp, err = client.ListFollowersByPage(ctx, req) // 微服务调用
 		cancel()
 
@@ -189,7 +189,7 @@ func (manager *UserServiceManager) ListFollowersByPage(ctx context.Context, req 
 	return nil, err
 }
 
-func (manager *UserServiceManager) ListFolloweesByPage(ctx context.Context, req *user_grpc.ListFollowRequest) (*user_grpc.ListFollowResponse, error) {
+func (manager *UserServiceManager) ListFolloweesByPage(ctx context.Context, req *user_grpc2.ListFollowRequest) (*user_grpc2.ListFollowResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -201,11 +201,11 @@ func (manager *UserServiceManager) ListFolloweesByPage(ctx context.Context, req 
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.ListFollowResponse
+		var resp *user_grpc2.ListFollowResponse
 		resp, err = client.ListFolloweesByPage(ctx, req) // 微服务调用
 		cancel()
 
@@ -222,7 +222,7 @@ func (manager *UserServiceManager) ListFolloweesByPage(ctx context.Context, req 
 	return nil, err
 }
 
-func (manager *UserServiceManager) UploadAvatarSign(ctx context.Context, req *user_grpc.UploadAvatarSignRequest) (*user_grpc.UploadAvatarSignResponse, error) {
+func (manager *UserServiceManager) UploadAvatarSign(ctx context.Context, req *user_grpc2.UploadAvatarSignRequest) (*user_grpc2.UploadAvatarSignResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -234,11 +234,11 @@ func (manager *UserServiceManager) UploadAvatarSign(ctx context.Context, req *us
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.UploadAvatarSignResponse
+		var resp *user_grpc2.UploadAvatarSignResponse
 		resp, err = client.UploadAvatarSign(ctx, req) // 微服务调用
 		cancel()
 
@@ -255,7 +255,7 @@ func (manager *UserServiceManager) UploadAvatarSign(ctx context.Context, req *us
 	return nil, err
 }
 
-func (manager *UserServiceManager) UploadAvatarCallback(ctx context.Context, req *user_grpc.UploadAvatarCallbackRequest) (*user_grpc.UploadAvatarCallbackResponse, error) {
+func (manager *UserServiceManager) UploadAvatarCallback(ctx context.Context, req *user_grpc2.UploadAvatarCallbackRequest) (*user_grpc2.UploadAvatarCallbackResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -267,11 +267,11 @@ func (manager *UserServiceManager) UploadAvatarCallback(ctx context.Context, req
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.UploadAvatarCallbackResponse
+		var resp *user_grpc2.UploadAvatarCallbackResponse
 		resp, err = client.UploadAvatarCallback(ctx, req) // 微服务调用
 		cancel()
 
@@ -288,7 +288,7 @@ func (manager *UserServiceManager) UploadAvatarCallback(ctx context.Context, req
 	return nil, err
 }
 
-func (manager *UserServiceManager) GetAvatarURL(ctx context.Context, req *user_grpc.GetAvatarURLRequest) (*user_grpc.GetAvatarURLResponse, error) {
+func (manager *UserServiceManager) GetAvatarURL(ctx context.Context, req *user_grpc2.GetAvatarURLRequest) (*user_grpc2.GetAvatarURLResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -300,11 +300,11 @@ func (manager *UserServiceManager) GetAvatarURL(ctx context.Context, req *user_g
 		if conn == nil {
 			continue
 		}
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *user_grpc.GetAvatarURLResponse
+		var resp *user_grpc2.GetAvatarURLResponse
 		resp, err = client.GetAvatarURL(ctx, req) // 微服务调用
 		cancel()
 
@@ -346,11 +346,11 @@ func (manager *UserServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := user_grpc.NewUserServiceClient(conn) // 建立 Client
+		client := user_grpc2.NewUserServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &user_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &user_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	rank_grpc "github.com/yzletter/go-postery/api/proto/rank/v1"
+	rank_grpc2 "github.com/yzletter/go-postery/backend/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 )
 
@@ -24,7 +24,7 @@ func NewRankManager(ctx context.Context, service string, hub ServiceHub) *RankSe
 	return manager
 }
 
-func (manager *RankServiceManager) RankUser(ctx context.Context, req *rank_grpc.RankIDRequest) (*rank_grpc.RankEmptyResponse, error) {
+func (manager *RankServiceManager) RankUser(ctx context.Context, req *rank_grpc2.RankIDRequest) (*rank_grpc2.RankEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -36,11 +36,11 @@ func (manager *RankServiceManager) RankUser(ctx context.Context, req *rank_grpc.
 		if conn == nil {
 			continue
 		}
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *rank_grpc.RankEmptyResponse
+		var resp *rank_grpc2.RankEmptyResponse
 		resp, err = client.RankUser(ctx, req) // 微服务调用
 		cancel()
 
@@ -57,7 +57,7 @@ func (manager *RankServiceManager) RankUser(ctx context.Context, req *rank_grpc.
 	return nil, err
 }
 
-func (manager *RankServiceManager) RankPost(ctx context.Context, req *rank_grpc.RankIDRequest) (*rank_grpc.RankEmptyResponse, error) {
+func (manager *RankServiceManager) RankPost(ctx context.Context, req *rank_grpc2.RankIDRequest) (*rank_grpc2.RankEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -69,11 +69,11 @@ func (manager *RankServiceManager) RankPost(ctx context.Context, req *rank_grpc.
 		if conn == nil {
 			continue
 		}
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *rank_grpc.RankEmptyResponse
+		var resp *rank_grpc2.RankEmptyResponse
 		resp, err = client.RankPost(ctx, req) // 微服务调用
 		cancel()
 
@@ -90,7 +90,7 @@ func (manager *RankServiceManager) RankPost(ctx context.Context, req *rank_grpc.
 	return nil, err
 }
 
-func (manager *RankServiceManager) RankTopKUser(ctx context.Context, req *rank_grpc.RankEmptyRequest) (*rank_grpc.RankEmptyResponse, error) {
+func (manager *RankServiceManager) RankTopKUser(ctx context.Context, req *rank_grpc2.RankEmptyRequest) (*rank_grpc2.RankEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -102,11 +102,11 @@ func (manager *RankServiceManager) RankTopKUser(ctx context.Context, req *rank_g
 		if conn == nil {
 			continue
 		}
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *rank_grpc.RankEmptyResponse
+		var resp *rank_grpc2.RankEmptyResponse
 		resp, err = client.RankTopKUser(ctx, req) // 微服务调用
 		cancel()
 
@@ -123,7 +123,7 @@ func (manager *RankServiceManager) RankTopKUser(ctx context.Context, req *rank_g
 	return nil, err
 }
 
-func (manager *RankServiceManager) RankTopKPost(ctx context.Context, req *rank_grpc.RankEmptyRequest) (*rank_grpc.RankEmptyResponse, error) {
+func (manager *RankServiceManager) RankTopKPost(ctx context.Context, req *rank_grpc2.RankEmptyRequest) (*rank_grpc2.RankEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
 	for try := 0; try < tryCnt; try++ {
@@ -135,11 +135,11 @@ func (manager *RankServiceManager) RankTopKPost(ctx context.Context, req *rank_g
 		if conn == nil {
 			continue
 		}
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *rank_grpc.RankEmptyResponse
+		var resp *rank_grpc2.RankEmptyResponse
 		resp, err = client.RankTopKPost(ctx, req) // 微服务调用
 		cancel()
 
@@ -156,7 +156,7 @@ func (manager *RankServiceManager) RankTopKPost(ctx context.Context, req *rank_g
 	return nil, err
 }
 
-func (manager *RankServiceManager) TopKUser(ctx context.Context, req *rank_grpc.RankEmptyRequest) (*rank_grpc.TopKUserResponse, error) {
+func (manager *RankServiceManager) TopKUser(ctx context.Context, req *rank_grpc2.RankEmptyRequest) (*rank_grpc2.TopKUserResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -168,11 +168,11 @@ func (manager *RankServiceManager) TopKUser(ctx context.Context, req *rank_grpc.
 		if conn == nil {
 			continue
 		}
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *rank_grpc.TopKUserResponse
+		var resp *rank_grpc2.TopKUserResponse
 		resp, err = client.TopKUser(ctx, req) // 微服务调用
 		cancel()
 
@@ -189,7 +189,7 @@ func (manager *RankServiceManager) TopKUser(ctx context.Context, req *rank_grpc.
 	return nil, err
 }
 
-func (manager *RankServiceManager) TopKPost(ctx context.Context, req *rank_grpc.RankEmptyRequest) (*rank_grpc.TopKPostResponse, error) {
+func (manager *RankServiceManager) TopKPost(ctx context.Context, req *rank_grpc2.RankEmptyRequest) (*rank_grpc2.TopKPostResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 3                // 查询类调用可重试
 	for try := 0; try < tryCnt; try++ {
@@ -201,11 +201,11 @@ func (manager *RankServiceManager) TopKPost(ctx context.Context, req *rank_grpc.
 		if conn == nil {
 			continue
 		}
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *rank_grpc.TopKPostResponse
+		var resp *rank_grpc2.TopKPostResponse
 		resp, err = client.TopKPost(ctx, req) // 微服务调用
 		cancel()
 
@@ -247,11 +247,11 @@ func (manager *RankServiceManager) checkOnce(ctx context.Context) {
 			continue
 		}
 
-		client := rank_grpc.NewRankServiceClient(conn) // 建立 Client
+		client := rank_grpc2.NewRankServiceClient(conn) // 建立 Client
 
 		// 添加超时控制
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		_, err := client.HealthCheck(ctx, &rank_grpc.HealthCheckRequest{}) // 健康探测
+		_, err := client.HealthCheck(ctx, &rank_grpc2.HealthCheckRequest{}) // 健康探测
 		cancel()
 
 		if err != nil {

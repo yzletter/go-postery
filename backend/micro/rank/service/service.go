@@ -8,9 +8,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
-	inter_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
-	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	inter_grpc "github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"

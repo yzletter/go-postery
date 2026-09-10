@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	interactive_grpc "github.com/yzletter/go-postery/api/proto/interactive/v1"
-	post_grpc "github.com/yzletter/go-postery/api/proto/post/v1"
-	user_grpc "github.com/yzletter/go-postery/api/proto/user/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
+	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
 	post_dto "github.com/yzletter/go-postery/backend/bff/dto/post"
 	user_dto "github.com/yzletter/go-postery/backend/bff/dto/user"
 	"github.com/yzletter/go-postery/backend/bff/errno"
