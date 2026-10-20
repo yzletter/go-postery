@@ -7,6 +7,7 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
 )
 
+// LotteryService Lottery Service 接口
 type LotteryService interface {
 	// GetAllGifts 获取索引奖品
 	//

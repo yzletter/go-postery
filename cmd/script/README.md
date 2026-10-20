@@ -14,7 +14,7 @@
 
 ```bash
 cd cmd
-cp script/config.example.conf script/config.local.conf
+cp script/config.local.conf script/config.local.conf
 
 # 编辑配置，补充本文标记为“空”的账号、密钥和云资源信息
 vim script/config.local.conf
