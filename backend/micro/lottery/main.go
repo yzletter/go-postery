@@ -93,7 +93,7 @@ func main() {
 	LotteryService := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ, IDGenerator) // 注册 LotteryService
 	//LotteryService.InitCacheInventory(ctx)
 	go LotteryService.StartLotteryOrderConsumer(ctx) // 开启协程核查临时订单进行库存回流
-	go LotteryService.StartStockRollbackScanner(ctx) // 开启协程兜底扫描失败库存回补
+	go LotteryService.StartStockRollbackScanner(ctx) // 开启协程兜底扫描失败库存回补重试
 
 	// gRPC ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())

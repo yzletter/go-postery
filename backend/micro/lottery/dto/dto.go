@@ -1,10 +1,9 @@
 package dto
 
 import (
-	"time"
-
 	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
+	"github.com/yzletter/go-postery/backend/utils"
 )
 
 // ToGift model 转 lottery_grpc.Gift
@@ -21,6 +20,7 @@ func ToGift(gift *model.Gift) *lottery_grpc.Gift {
 	}
 }
 
+// ToLotteryResponse LotteryResult 转 lottery_grpc.LotteryResponse
 func ToLotteryResponse(result *LotteryResult) *lottery_grpc.LotteryResponse {
 	if result == nil {
 		return &lottery_grpc.LotteryResponse{}
@@ -47,23 +47,9 @@ func ToOrder(order *model.Order, gift *model.Gift) *lottery_grpc.Order {
 		UserID:    order.UserID,
 		Gift:      ToGift(gift),
 		Count:     int64(order.Count),
-		CreatedAt: formatTime(order.CreatedAt),
+		CreatedAt: utils.FormatTime(order.CreatedAt),
 		Status:    int32(order.Status),
-		PaidAt:    formatTimePtr(order.PaidAt),
-		ExpireAt:  formatTime(order.ExpireAt),
+		PaidAt:    utils.FormatTimePtr(order.PaidAt),
+		ExpireAt:  utils.FormatTime(order.ExpireAt),
 	}
-}
-
-func formatTime(t time.Time) string {
-	if t.IsZero() {
-		return ""
-	}
-	return t.Format(time.RFC3339)
-}
-
-func formatTimePtr(t *time.Time) string {
-	if t == nil {
-		return ""
-	}
-	return formatTime(*t)
 }

@@ -2,6 +2,22 @@ package model
 
 import "time"
 
+// 订单支付状态
+const (
+	OrderStatusPending   = iota // 订单待支付
+	OrderStatusPaid             // 订单已支付
+	OrderStatusCancelled        // 订单已取消
+	OrderStatusExpired          // 订单已超时
+)
+
+// 库存回补状态
+const (
+	StockRollbackStatusPending  = iota // 库存待回补
+	StockRollbackStatusDone            // 库存已回补
+	StockRollbackStatusUnneeded        // 库存无需回补
+	StockRollbackStatusFailed          // 库存回补失败
+)
+
 type Order struct {
 	ID                      int64      `gorm:"primaryKey"`                        // 订单 ID
 	UserID                  int64      `gorm:"column:user_id"`                    // 用户 ID
@@ -9,7 +25,7 @@ type Order struct {
 	Count                   int        `gorm:"column:count;default:1"`            // 购买数量
 	ExpireAt                time.Time  `gorm:"column:expire_at"`                  // 过期时间
 	PaidAt                  *time.Time `gorm:"column:paid_at"`                    // 支付时间
-	Status                  int        `gorm:"column:status"`                     // 订单状态 0 待支付，1 已支付，2 已放弃，3 已超时
+	Status                  int        `gorm:"column:status"`                     // 订单状态 0 待支付，1 已支付，2 已取消，3 已超时
 	StockRollbackStatus     int        `gorm:"column:stock_rollback_status"`      // 回补状态 0 待回补，1 已回补，2 无需回补，3 回补失败
 	StockRollbackRetryCount int        `gorm:"column:stock_rollback_retry_count"` // 已尝试回补次数
 	NextRollbackAt          *time.Time `gorm:"column:next_rollback_at"`           // 下次回补时间
@@ -17,20 +33,6 @@ type Order struct {
 	UpdatedAt               time.Time  `gorm:"column:updated_at"`                 // 更新时间
 	DeletedAt               *time.Time `gorm:"column:deleted_at"`                 // 逻辑删除时间
 }
-
-const (
-	OrderStatusPending = iota
-	OrderStatusPaid
-	OrderStatusCancelled
-	OrderStatusExpired
-)
-
-const (
-	StockRollbackStatusPending = iota
-	StockRollbackStatusDone
-	StockRollbackStatusUnneeded
-	StockRollbackStatusFailed
-)
 
 func (o Order) TableName() string {
 	return "orders"

@@ -43,6 +43,7 @@ func (repo *orderRepository) CancelTempOrder(ctx context.Context, orderID int64)
 	return nil
 }
 
+// GetTempOrder 获取临时订单
 func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*model.Order, error) {
 	if order, err := repo.dao.GetTempOrder(ctx, uid); err != nil {
 		return nil, toRepositoryErr(err)

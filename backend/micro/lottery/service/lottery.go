@@ -101,7 +101,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 			continue
 		}
 
-		// 扣减库存
+		// 尝试扣减库存
 		if err := svc.giftRepo.ReduceCacheInventory(ctx, gid); err != nil {
 			// 扣减失败
 			continue
@@ -134,7 +134,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 				return nil, errs.ErrInternal
 			}
 
-			//订单重复，获取已经存在的临时订单进行返回
+			// 订单重复，获取已经存在的临时订单进行返回
 			if result, exists, err := svc.getTempOrder(ctx, userID); err != nil {
 				slog.Error("get temp order result failed", "user_id", userID, "error", err)
 				return nil, errs.ErrInternal
@@ -164,6 +164,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 
 	// 未抽中奖品
 	slog.Info("lottery result empty", "user_id", userID)
+
 	return &dto.LotteryResult{
 		Success:     true,
 		Description: dto.DescriptionLotteryNothing,

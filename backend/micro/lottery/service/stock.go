@@ -80,7 +80,7 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 	}
 }
 
-// StartStockRollbackScanner 扫描失败库存回收
+// StartStockRollbackScanner 定时扫描库存回收失败，进行重试
 func (svc *lotteryService) StartStockRollbackScanner(ctx context.Context) {
 	ticker := time.NewTicker(stockRollbackScannerPeriod)
 	defer ticker.Stop()
