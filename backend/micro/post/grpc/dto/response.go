@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
-	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	"github.com/yzletter/go-postery/backend/micro/post/dto"
 )
 
-// ToPostDetail domain.Post 转 post_grpc.PostDetail
-func ToPostDetail(post domain.Post) *post_grpc.PostDetail {
+// ToPostDetail dto.Post 转 post_grpc.PostDetail
+func ToPostDetail(post dto.Post) *post_grpc.PostDetail {
 	return &post_grpc.PostDetail{
 		ID:           post.ID,
 		ViewCount:    uint64(post.ViewCount),
@@ -24,8 +24,8 @@ func ToPostDetail(post domain.Post) *post_grpc.PostDetail {
 
 }
 
-// ToPostBrief domain.PostBrief 转 post_grpc.PostBrief
-func ToPostBrief(post domain.PostBrief) *post_grpc.PostBrief {
+// ToPostBrief dto.PostBrief 转 post_grpc.PostBrief
+func ToPostBrief(post dto.PostBrief) *post_grpc.PostBrief {
 	return &post_grpc.PostBrief{
 		ID:        post.ID,
 		Title:     post.Title,
@@ -35,8 +35,8 @@ func ToPostBrief(post domain.PostBrief) *post_grpc.PostBrief {
 	}
 }
 
-// ToTopPost domain.PostBrief 转 post_grpc.TopPost
-func ToTopPost(post domain.PostBrief, score float64) *post_grpc.TopPost {
+// ToTopPost dto.PostBrief 转 post_grpc.TopPost
+func ToTopPost(post dto.PostBrief, score float64) *post_grpc.TopPost {
 	return &post_grpc.TopPost{
 		ID:    post.ID,
 		Title: post.Title,

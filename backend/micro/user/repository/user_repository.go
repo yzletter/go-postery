@@ -45,7 +45,7 @@ func (repo *userRepository) GetProfile(ctx context.Context, id int64) (domain.Pr
 		return domain.Profile{}, toRepositoryErr(err)
 	}
 
-	// model 转 domain
+	// model 转 dto
 	back := domain.ToDomainProfile(profile)
 
 	// 更新缓存

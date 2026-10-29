@@ -51,7 +51,7 @@ func (server *WSGatewayServiceServer) HealthCheck(ctx context.Context, req *ws_g
 	return &ws_gateway_grpc2.HealthCheckResponse{}, nil
 }
 
-// 将 grpc api 的常量转为 domain
+// 将 grpc api 的常量转为 dto
 func convert(biz ws_gateway_grpc2.ConnBiz) domain.ConnType {
 	switch biz {
 	case ws_gateway_grpc2.ConnBiz_CONNCECTION_Biz_Interview:

@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
-	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	event_model "github.com/yzletter/go-postery/backend/event/outbox/model"
+	"github.com/yzletter/go-postery/backend/micro/post/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"github.com/yzletter/go-postery/backend/micro/post/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/post/repository/dao"
@@ -25,9 +25,9 @@ func NewPostRepository(postDao dao.PostDAO, postCache cache.PostCache, idGen por
 }
 
 // Create 创建帖子
-func (repo *postRepository) Create(ctx context.Context, post domain.Post, events []*model2.OutboxEvent) error {
+func (repo *postRepository) Create(ctx context.Context, post dto.Post, events []*event_model.OutboxEvent) error {
 	// 构造 Post、Tag 和 PostTag
-	m := domain.ToModelPost(post)
+	m := dto.ToModelPost(post)
 	tags := make([]*model.Tag, 0, len(post.Tags))
 	postTags := make([]*model.PostTag, 0, len(post.Tags))
 	for _, tagName := range post.Tags {
@@ -56,7 +56,7 @@ func (repo *postRepository) Create(ctx context.Context, post domain.Post, events
 }
 
 // Delete 删除帖子
-func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID int64, events []*model2.OutboxEvent) error {
+func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID int64, events []*event_model.OutboxEvent) error {
 	if err := repo.dao.Delete(ctx, postID, events); err != nil {
 		return toRepositoryErr(err)
 	}
@@ -79,9 +79,9 @@ func (repo *postRepository) Delete(ctx context.Context, postID int64, authorID i
 }
 
 // Update 更新帖子
-func (repo *postRepository) Update(ctx context.Context, post domain.Post, events []*model2.OutboxEvent) error {
+func (repo *postRepository) Update(ctx context.Context, post dto.Post, events []*event_model.OutboxEvent) error {
 	// 构造 Post、Tag 和 PostTag
-	m := domain.ToModelPost(post)
+	m := dto.ToModelPost(post)
 	tags := make([]*model.Tag, 0, len(post.Tags))
 	postTags := make([]*model.PostTag, 0, len(post.Tags))
 	for _, tagName := range post.Tags {
@@ -114,16 +114,16 @@ func (repo *postRepository) Update(ctx context.Context, post domain.Post, events
 }
 
 // GetByID 根据帖子 ID 获取帖子
-func (repo *postRepository) GetByID(ctx context.Context, id int64) (domain.Post, error) {
+func (repo *postRepository) GetByID(ctx context.Context, id int64) (dto.Post, error) {
 	// 查缓存
 	if post, err := repo.cache.GetPost(ctx, id); err == nil {
-		return domain.ToDomainPost(post), nil
+		return dto.ToPost(post), nil
 	}
 
 	// 查数据库
 	post, err := repo.dao.GetByID(ctx, id)
 	if err != nil {
-		return domain.Post{}, toRepositoryErr(err)
+		return dto.Post{}, toRepositoryErr(err)
 	}
 
 	// 写帖子缓存
@@ -132,7 +132,7 @@ func (repo *postRepository) GetByID(ctx context.Context, id int64) (domain.Post,
 	}
 
 	// 返回结果
-	return domain.ToDomainPost(post), nil
+	return dto.ToPost(post), nil
 }
 
 // GetPostByTime 根据时间查找帖子 ID
@@ -145,10 +145,10 @@ func (repo *postRepository) GetPostByTime(ctx context.Context, timeAt time.Time)
 }
 
 // GetAuthorHomePage 获取用户首页帖子
-func (repo *postRepository) GetAuthorHomePage(ctx context.Context, userID int64) ([]domain.Post, error) {
+func (repo *postRepository) GetAuthorHomePage(ctx context.Context, userID int64) ([]dto.Post, error) {
 	// 查缓存
 	if posts, err := repo.cache.GetAuthorHomePage(ctx, userID); err == nil {
-		return domain.ToDomainPosts(posts), nil
+		return dto.ToPosts(posts), nil
 	}
 
 	// 查数据库
@@ -158,7 +158,7 @@ func (repo *postRepository) GetAuthorHomePage(ctx context.Context, userID int64)
 	}
 
 	// 更新作者首页缓存
-	if err := repo.cache.SetAuthorHomePage(ctx, userID, domain.ToModelPosts(posts)); err != nil {
+	if err := repo.cache.SetAuthorHomePage(ctx, userID, dto.ToModelPosts(posts)); err != nil {
 		slog.Warn("set author home page post cache failed", "author_id", userID, "error", err)
 	}
 
@@ -166,31 +166,31 @@ func (repo *postRepository) GetAuthorHomePage(ctx context.Context, userID int64)
 }
 
 // GetByAuthor 根据作者按页获取帖子
-func (repo *postRepository) GetByAuthor(ctx context.Context, id int64, pageNo, pageSize int) (int64, []domain.Post, error) {
+func (repo *postRepository) GetByAuthor(ctx context.Context, id int64, pageNo, pageSize int) (int64, []dto.Post, error) {
 	total, posts, err := repo.dao.GetByUid(ctx, id, pageNo, pageSize)
 	if err != nil {
 		return 0, nil, toRepositoryErr(err)
 	}
 
-	return total, domain.ToDomainPosts(posts), nil
+	return total, dto.ToPosts(posts), nil
 }
 
 // GetByPage 按页获取帖子
-func (repo *postRepository) GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []domain.Post, error) {
+func (repo *postRepository) GetByPage(ctx context.Context, pageNo, pageSize int) (int64, []dto.Post, error) {
 	total, posts, err := repo.dao.GetByPage(ctx, pageNo, pageSize)
 	if err != nil {
 		return 0, nil, toRepositoryErr(err)
 	}
 
-	return total, domain.ToDomainPosts(posts), nil
+	return total, dto.ToPosts(posts), nil
 }
 
 // GetByPageAndTag 按页 + Tag获取帖子
-func (repo *postRepository) GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []domain.Post, error) {
+func (repo *postRepository) GetByPageAndTag(ctx context.Context, tid int64, pageNo, pageSize int) (int64, []dto.Post, error) {
 	total, posts, err := repo.dao.GetByPageAndTag(ctx, tid, pageNo, pageSize)
 	if err != nil {
 		return 0, nil, toRepositoryErr(err)
 	}
 
-	return total, domain.ToDomainPosts(posts), nil
+	return total, dto.ToPosts(posts), nil
 }

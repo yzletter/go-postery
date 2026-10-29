@@ -10,7 +10,7 @@ package node
 //
 //	"github.com/yzletter/go-postery/backend/micro/interview/agent"
 //	"github.com/yzletter/go-postery/backend/micro/interview/dag/node/question_scheduler"
-//	"github.com/yzletter/go-postery/backend/micro/interview/domain"
+//	"github.com/yzletter/go-postery/backend/micro/interview/dto"
 //	"github.com/yzletter/go-postery/backend/micro/interview/memory"
 //)
 //
@@ -38,8 +38,8 @@ package node
 //	// 创建调度器
 //	questionScheduler := question_scheduler.NewQuestionScheduler(input.QuestionPlan.Questions,
 //		// 封装 QuestionPlannerAgent 的 AdjustDifficulty 注入
-//		func(cur domain.DifficultyLevel, consequentWrong int, consequentRight int) domain.DifficultyLevel {
-//			return builder.QuestionPlannerAgent.AdjustDifficulty(domain.InterviewState{
+//		func(cur dto.DifficultyLevel, consequentWrong int, consequentRight int) dto.DifficultyLevel {
+//			return builder.QuestionPlannerAgent.AdjustDifficulty(dto.InterviewState{
 //				CurrentDifficulty: cur,
 //				ConsecutiveRight:  consequentRight,
 //				ConsecutiveWrong:  consequentWrong,
@@ -50,7 +50,7 @@ package node
 //	builder.Callbacks.OnStageChange(ctx, input.UserID, StageInterviewStart, "面试正式开始！")
 //
 //	// 当前面试的情况
-//	input.InterviewState = &domain.InterviewState{
+//	input.InterviewState = &dto.InterviewState{
 //		SessionID:      input.ID,
 //		TotalQuestions: questionScheduler.Total(),
 //	}
@@ -109,7 +109,7 @@ package node
 //		input.InterviewState.CandidateProfile = profile
 //
 //		// 记录问答
-//		qa := domain.QAPair{
+//		qa := dto.QAPair{
 //			Question:   question,
 //			UserAnswer: answer,
 //			Score:      score.Score,
@@ -179,7 +179,7 @@ package node
 //
 //	if userQuit {
 //		// 用户主动退出
-//		input.Status = domain.StatusTerminated
+//		input.Status = dto.StatusTerminated
 //		input.UpdatedAt = time.Now()
 //		if len(input.InterviewState.QAHistory) == 0 {
 //			builder.Callbacks.OnStageChange(ctx, input.UserID, StageTerminated, "面试未作答即终止，不生成评估报告。")

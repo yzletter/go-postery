@@ -1,4 +1,4 @@
-package domain
+package dto
 
 import (
 	"strings"
@@ -59,7 +59,7 @@ type User struct {
 	Avatar   string
 }
 
-// ToModelPost domain.Post 转 model.Post
+// ToModelPost dto.Post 转 model.Post
 func ToModelPost(post Post) model.Post {
 	return model.Post{
 		ID:           post.ID,
@@ -76,7 +76,7 @@ func ToModelPost(post Post) model.Post {
 	}
 }
 
-// ToModelPosts []domain.Post 转 []*model.Post
+// ToModelPosts []dto.Post 转 []*model.Post
 func ToModelPosts(posts []Post) []*model.Post {
 	res := make([]*model.Post, 0, len(posts))
 	for _, post := range posts {
@@ -86,8 +86,8 @@ func ToModelPosts(posts []Post) []*model.Post {
 	return res
 }
 
-// ToDomainPost model.Post 转 domain.Post
-func ToDomainPost(post *model.Post) Post {
+// ToPost model.Post 转 dto.Post
+func ToPost(post *model.Post) Post {
 	return Post{
 		ID:           post.ID,
 		User:         User{UserID: post.UserID},
@@ -103,11 +103,11 @@ func ToDomainPost(post *model.Post) Post {
 	}
 }
 
-// ToDomainPosts []*model.Post 转 []domain.Post
-func ToDomainPosts(posts []*model.Post) []Post {
+// ToPosts []*model.Post 转 []dto.Post
+func ToPosts(posts []*model.Post) []Post {
 	res := make([]Post, 0, len(posts))
 	for _, post := range posts {
-		res = append(res, ToDomainPost(post))
+		res = append(res, ToPost(post))
 	}
 	return res
 }

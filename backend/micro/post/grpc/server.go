@@ -7,7 +7,7 @@ import (
 
 	post_grpc2 "github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
-	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	"github.com/yzletter/go-postery/backend/micro/post/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/grpc/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/service"
 )
@@ -24,8 +24,8 @@ func NewPostServiceServer(svc service.PostService) *PostServiceServer {
 }
 
 func (server *PostServiceServer) Create(ctx context.Context, req *post_grpc2.CreatePostRequest) (*post_grpc2.PostDetail, error) {
-	post, err := server.svc.Create(ctx, domain.Post{
-		User:        domain.User{UserID: req.UserID},
+	post, err := server.svc.Create(ctx, dto.Post{
+		User:        dto.User{UserID: req.UserID},
 		Title:       req.Title,
 		Content:     req.Content,
 		ContentType: int(req.ContentType),
@@ -82,9 +82,9 @@ func (server *PostServiceServer) GetPostByTime(ctx context.Context, req *post_gr
 }
 
 func (server *PostServiceServer) Update(ctx context.Context, req *post_grpc2.UpdateRequest) (*post_grpc2.PostEmptyResponse, error) {
-	if err := server.svc.Update(ctx, domain.Post{
+	if err := server.svc.Update(ctx, dto.Post{
 		ID:      req.PostID,
-		User:    domain.User{UserID: req.UserID},
+		User:    dto.User{UserID: req.UserID},
 		Title:   req.Title,
 		Content: req.Content,
 		Tags:    req.Tags,

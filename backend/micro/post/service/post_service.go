@@ -10,10 +10,10 @@ import (
 	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/event"
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
+	event_model "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
-	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	"github.com/yzletter/go-postery/backend/micro/post/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"github.com/yzletter/go-postery/backend/micro/post/repository"
 	"github.com/yzletter/go-postery/backend/ports"
@@ -41,14 +41,14 @@ func NewPostService(postRepo repository.PostRepository, tagRepo repository.TagRe
 }
 
 // Create 创建新帖子并通知其他微服务
-func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Post, error) {
+func (svc *postService) Create(ctx context.Context, post dto.Post) (dto.Post, error) {
 	post.ID = svc.idGen.NextID()
 	if post.Status == 0 {
 		post.Status = 1
 	}
 
 	// 构造 Outbox
-	events := make([]*model2.OutboxEvent, 0)
+	events := make([]*event_model.OutboxEvent, 0)
 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostCreate}
 
@@ -63,7 +63,7 @@ func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Po
 		} else {
 			slog.Error("create post failed", "id", post.ID, "error", err)
 		}
-		return domain.Post{}, errs.ErrInternal
+		return dto.Post{}, errs.ErrInternal
 	}
 
 	// 查询 MySQL 自动生成的时间
@@ -90,8 +90,8 @@ func (svc *postService) Create(ctx context.Context, post domain.Post) (domain.Po
 }
 
 // GetDetailByID 获取帖子详情，并选择是否增加浏览量
-func (svc *postService) GetDetailByID(ctx context.Context, postID int64, addViewCnt bool) (domain.Post, error) {
-	var post domain.Post
+func (svc *postService) GetDetailByID(ctx context.Context, postID int64, addViewCnt bool) (dto.Post, error) {
+	var post dto.Post
 	var tags []string
 	var err error
 	var viewCnt int64
@@ -143,7 +143,7 @@ func (svc *postService) GetDetailByID(ctx context.Context, postID int64, addView
 	})
 
 	if err = eg.Wait(); err != nil {
-		return domain.Post{}, err
+		return dto.Post{}, err
 	}
 
 	if addViewCnt {
@@ -168,15 +168,15 @@ func (svc *postService) GetDetailByID(ctx context.Context, postID int64, addView
 }
 
 // GetBriefByID 根据帖子 ID 获取帖子简要信息
-func (svc *postService) GetBriefByID(ctx context.Context, postID int64) (domain.PostBrief, error) {
+func (svc *postService) GetBriefByID(ctx context.Context, postID int64) (dto.PostBrief, error) {
 	post, err := svc.postRepo.GetByID(ctx, postID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Info("post not found", "id", postID)
-			return domain.PostBrief{}, errs.ErrNotFound
+			return dto.PostBrief{}, errs.ErrNotFound
 		}
 		slog.Error("get post brief by id failed", "id", postID, "error", err)
-		return domain.PostBrief{}, errs.ErrInternal
+		return dto.PostBrief{}, errs.ErrInternal
 	}
 	return post.Briefed(), nil
 }
@@ -191,7 +191,7 @@ func (svc *postService) GetPostByTime(ctx context.Context, timeAt time.Time) ([]
 	return ids, nil
 }
 
-func (svc *postService) Top(ctx context.Context) ([]domain.PostBrief, []float64, error) {
+func (svc *postService) Top(ctx context.Context) ([]dto.PostBrief, []float64, error) {
 	if svc.rankClient == nil {
 		return nil, nil, errs.ErrUnavailable
 	}
@@ -202,13 +202,13 @@ func (svc *postService) Top(ctx context.Context) ([]domain.PostBrief, []float64,
 		return nil, nil, errs.ErrInternal
 	}
 
-	posts := make([]domain.PostBrief, 0, len(resp.Posts))
+	posts := make([]dto.PostBrief, 0, len(resp.Posts))
 	scores := make([]float64, 0, len(resp.Posts))
 	for _, rankedPost := range resp.Posts {
 		postDetail, err := svc.GetBriefByID(ctx, rankedPost.ID)
 		if err != nil {
 			if errors.Is(err, errs.ErrNotFound) {
-				posts = append(posts, domain.PostBrief{
+				posts = append(posts, dto.PostBrief{
 					ID:    rankedPost.ID,
 					Title: "未知文章",
 				})
@@ -225,7 +225,7 @@ func (svc *postService) Top(ctx context.Context) ([]domain.PostBrief, []float64,
 }
 
 // Update 更新帖子
-func (svc *postService) Update(ctx context.Context, updatePost domain.Post) error {
+func (svc *postService) Update(ctx context.Context, updatePost dto.Post) error {
 	userID := updatePost.User.UserID
 	postID := updatePost.ID
 
@@ -244,7 +244,7 @@ func (svc *postService) Update(ctx context.Context, updatePost domain.Post) erro
 	}
 
 	// 构造 Outbox
-	events := make([]*model2.OutboxEvent, 0)
+	events := make([]*event_model.OutboxEvent, 0)
 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostUpdate}
 
@@ -265,7 +265,7 @@ func (svc *postService) Update(ctx context.Context, updatePost domain.Post) erro
 }
 
 // ListByPage 按页获取帖子列表
-func (svc *postService) ListByPage(ctx context.Context, pageNo int, pageSize int) (int64, []domain.Post, error) {
+func (svc *postService) ListByPage(ctx context.Context, pageNo int, pageSize int) (int64, []dto.Post, error) {
 	// 获取帖子总数和当前页帖子列表
 	total, posts, err := svc.postRepo.GetByPage(ctx, pageNo, pageSize)
 	if err != nil {
@@ -282,7 +282,7 @@ func (svc *postService) ListByPage(ctx context.Context, pageNo int, pageSize int
 }
 
 // ListByPageAndUid 根据作者 ID 获取帖子简要信息列表
-func (svc *postService) ListByPageAndUid(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []domain.Post, error) {
+func (svc *postService) ListByPageAndUid(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []dto.Post, error) {
 	total, posts, err := svc.postRepo.GetByAuthor(ctx, userID, pageNo, pageSize)
 	if err != nil {
 		slog.Error("get post by page and uid failed", "error", err, "user_id", userID, "page_no", pageNo, "page_size", pageSize)
@@ -293,7 +293,7 @@ func (svc *postService) ListByPageAndUid(ctx context.Context, userID int64, page
 }
 
 // ListByPageAndTag 根据 Tag 分页查找帖子
-func (svc *postService) ListByPageAndTag(ctx context.Context, tagName string, pageNo int, pageSize int) (int64, []domain.Post, error) {
+func (svc *postService) ListByPageAndTag(ctx context.Context, tagName string, pageNo int, pageSize int) (int64, []dto.Post, error) {
 	tag, err := svc.tagRepo.GetByName(ctx, tagName)
 	if err != nil {
 		slog.Info("list posts by tag skipped: tag not found", "tag", tagName)
@@ -352,7 +352,7 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 	}
 
 	// 构造 Outbox
-	events := make([]*model2.OutboxEvent, 0)
+	events := make([]*event_model.OutboxEvent, 0)
 
 	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostDelete}
 

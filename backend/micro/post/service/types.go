@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/yzletter/go-postery/backend/micro/post/domain"
+	"github.com/yzletter/go-postery/backend/micro/post/dto"
 )
 
 type PostService interface {
@@ -14,9 +14,9 @@ type PostService interface {
 	//	- post: 帖子
 	//
 	// Return:
-	//	- domain.Post: 帖子
+	//	- dto.Post: 帖子
 	//	- error: 可能返回的错误
-	Create(ctx context.Context, post domain.Post) (domain.Post, error)
+	Create(ctx context.Context, post dto.Post) (dto.Post, error)
 
 	// GetDetailByID 根据帖子 ID 查询帖子详情
 	//
@@ -25,9 +25,9 @@ type PostService interface {
 	//	- addViewCnt: 是否增加浏览数
 	//
 	// Return:
-	//	- domain.Post: 帖子详情
+	//	- dto.Post: 帖子详情
 	//	- error: 可能返回的错误
-	GetDetailByID(ctx context.Context, postID int64, addViewCnt bool) (domain.Post, error)
+	GetDetailByID(ctx context.Context, postID int64, addViewCnt bool) (dto.Post, error)
 
 	// GetBriefByID 根据帖子 ID 查询帖子摘要
 	//
@@ -35,9 +35,9 @@ type PostService interface {
 	//	- postID: 帖子 ID
 	//
 	// Return:
-	//	- domain.PostBrief: 帖子摘要
+	//	- dto.PostBrief: 帖子摘要
 	//	- error: 可能返回的错误
-	GetBriefByID(ctx context.Context, postID int64) (domain.PostBrief, error)
+	GetBriefByID(ctx context.Context, postID int64) (dto.PostBrief, error)
 
 	// GetPostByTime 根据时间获取帖子 ID
 	//
@@ -52,10 +52,10 @@ type PostService interface {
 	// Top 返回推荐帖子
 	//
 	// Return:
-	//	- []domain.PostBrief: 帖子摘要列表
+	//	- []dto.PostBrief: 帖子摘要列表
 	//	- []float64: 帖子分数列表
 	//	- error: 可能返回的错误
-	Top(ctx context.Context) ([]domain.PostBrief, []float64, error)
+	Top(ctx context.Context) ([]dto.PostBrief, []float64, error)
 
 	// Update 更新帖子和标签
 	//
@@ -64,7 +64,7 @@ type PostService interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	Update(ctx context.Context, post domain.Post) error
+	Update(ctx context.Context, post dto.Post) error
 
 	// ListByPage 按页查询帖子
 	//
@@ -74,9 +74,9 @@ type PostService interface {
 	//
 	// Return:
 	//	- int64: 帖子总数
-	//	- []domain.Post: 当前页的帖子
+	//	- []dto.Post: 当前页的帖子
 	//	- error: 可能返回的错误
-	ListByPage(ctx context.Context, pageNo int, pageSize int) (int64, []domain.Post, error)
+	ListByPage(ctx context.Context, pageNo int, pageSize int) (int64, []dto.Post, error)
 
 	// ListByPageAndUid 按页和用户 ID 查询用户发表的帖子
 	//
@@ -87,9 +87,9 @@ type PostService interface {
 	//
 	// Return:
 	//	- int64: 帖子总数
-	//	- []domain.Post: 当前页的帖子
+	//	- []dto.Post: 当前页的帖子
 	//	- error: 可能返回的错误
-	ListByPageAndUid(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []domain.Post, error)
+	ListByPageAndUid(ctx context.Context, userID int64, pageNo int, pageSize int) (int64, []dto.Post, error)
 
 	// ListByPageAndTag 按页和 Tag 查询帖子
 	//
@@ -100,9 +100,9 @@ type PostService interface {
 	//
 	// Return:
 	//	- int64: 帖子总数
-	//	- []domain.Post: 当前页的帖子
+	//	- []dto.Post: 当前页的帖子
 	//	- error: 可能返回的错误
-	ListByPageAndTag(ctx context.Context, tag string, pageNo int, pageSize int) (int64, []domain.Post, error)
+	ListByPageAndTag(ctx context.Context, tag string, pageNo int, pageSize int) (int64, []dto.Post, error)
 
 	// Belong 查询帖子是否属于用户
 	//

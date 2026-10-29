@@ -58,14 +58,14 @@ type RankService interface {
 	// TopKUser 返回用户榜单
 	//
 	// Return:
-	//	- []domain.User: 用户榜单
+	//	- []dto.User: 用户榜单
 	//	- error: 可能返回的错误
 	TopKUser(ctx context.Context) ([]domain.User, error)
 
 	// TopKPost 返回文章榜单
 	//
 	// Return:
-	//	- []domain.Post: 文章榜单
+	//	- []dto.Post: 文章榜单
 	//	- error: 可能返回的错误
 	TopKPost(ctx context.Context) ([]domain.Post, error)
 
