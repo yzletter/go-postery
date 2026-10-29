@@ -8,12 +8,11 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
-	"github.com/yzletter/go-postery/backend/event"
-	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/ports"
 )
 
@@ -121,7 +120,7 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 
 		switch msg.Topic {
 		// 阅读消息
-		case event.KafkaTopicInteractiveRead:
+		case model.KafkaTopicInteractiveRead:
 			// 积攒消息
 			readMsgs = append(readMsgs, msg)
 			if len(readMsgs) >= batch {
@@ -129,9 +128,9 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 				flush(ctx)
 			}
 		// 点赞消息
-		case event.KafkaTopicInteractiveLike:
+		case model.KafkaTopicInteractiveLike:
 			// 反序列化消息
-			var e event.NewLikeEventPayload
+			var e model.NewLikeEventPayload
 			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
 				slog.Warn("invalid like event, skip", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				// 脏消息 Commit 掉
@@ -141,13 +140,13 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 
 			// 判断 delta
 			delta := 1
-			if e.LikeType != event.Like {
+			if e.LikeType != model.Like {
 				delta = -1
 			}
 
 			processedEvent := &model.ProcessedEvent{
 				ID:       svc.idGen.NextID(),
-				Consumer: event.KafkaInteractiveGroup,
+				Consumer: model.KafkaInteractiveGroup,
 				EventID:  e.ID,
 				Topic:    msg.Topic,
 			}
@@ -165,9 +164,9 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 			}
 
 		// 关注消息
-		case event.KafkaTopicInteractiveFollow:
+		case model.KafkaTopicInteractiveFollow:
 			// 反序列化消息
-			var e event.NewFollowEventPayload
+			var e model.NewFollowEventPayload
 			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
 				slog.Warn("invalid follow event, skip", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				// 脏消息 Commit 掉
@@ -177,13 +176,13 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 
 			// 判断 delta
 			delta := 1
-			if e.FollowType != event.Follow {
+			if e.FollowType != model.Follow {
 				delta = -1
 			}
 
 			processedEvent := &model.ProcessedEvent{
 				ID:       svc.idGen.NextID(),
-				Consumer: event.KafkaInteractiveGroup,
+				Consumer: model.KafkaInteractiveGroup,
 				EventID:  e.ID,
 				Topic:    msg.Topic,
 			}
@@ -200,9 +199,9 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 				continue
 			}
 		// 评论消息
-		case event.KafkaTopicInteractiveComment:
+		case model.KafkaTopicInteractiveComment:
 			// 反序列化消息
-			var e event.NewCommentEventPayload
+			var e model.NewCommentEventPayload
 			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
 				slog.Warn("invalid comment event, skip", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				// 脏消息 Commit 掉
@@ -212,14 +211,14 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 
 			// 判断 delta
 			delta := e.Cnt
-			if e.CommentType != event.Create {
+			if e.CommentType != model.Create {
 				// 删评论
 				delta = -e.Cnt
 			}
 
 			processedEvent := model.ProcessedEvent{
 				ID:       svc.idGen.NextID(),
-				Consumer: event.KafkaInteractiveGroup,
+				Consumer: model.KafkaInteractiveGroup,
 				EventID:  e.ID,
 				Topic:    msg.Topic,
 			}
@@ -243,9 +242,9 @@ func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
 // 批量消费阅读消息
 func (svc *interactiveService) batchConsumeReadMessage(ctx context.Context, readMsgs []kafka.Message) error {
 	// 聚集 payloads
-	payloads := make([]*event.NewReadEventPayload, 0)
+	payloads := make([]*model.NewReadEventPayload, 0)
 	for _, readMsg := range readMsgs {
-		var e event.NewReadEventPayload
+		var e model.NewReadEventPayload
 		if err := sonic.Unmarshal(readMsg.Value, &e); err != nil {
 			slog.Warn("invalid read event, skip", "topic", readMsg.Topic, "partition", readMsg.Partition, "offset", readMsg.Offset, "error", err)
 			continue
@@ -254,7 +253,7 @@ func (svc *interactiveService) batchConsumeReadMessage(ctx context.Context, read
 	}
 
 	// 消费
-	if err := svc.interRepo.IncrReadCnt(ctx, event.KafkaInteractiveGroup, event.KafkaTopicInteractiveRead, payloads...); err != nil {
+	if err := svc.interRepo.IncrReadCnt(ctx, model.KafkaInteractiveGroup, model.KafkaTopicInteractiveRead, payloads...); err != nil {
 		return err
 	}
 

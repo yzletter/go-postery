@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/backend/api/proto/rank/v1"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -23,6 +22,7 @@ import (
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
 	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
+	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/rank/config"
 	server "github.com/yzletter/go-postery/backend/micro/rank/grpc"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository"
@@ -61,7 +61,7 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
 
 	// 加载私有配置
 	RankServiceConf := config.LoadRankServiceConfig(ctx, etcdClient, ServiceConfPrefix)
@@ -72,7 +72,7 @@ func main() {
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // Init Redis
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, event.KafkaTopicRankUpdateScore, event.KafkaRankGroup)
+	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, main2.KafkaTopicRankUpdateScore, main2.KafkaRankGroup)
 	Cron := crontab.NewCrontabBuilder() // init Crontab
 
 	// Cache 层

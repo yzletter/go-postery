@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event/outbox/model"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"gorm.io/gorm"
 )
 

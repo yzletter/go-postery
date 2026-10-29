@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/yzletter/go-postery/backend/event"
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/model"
+	model2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/ports"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -55,7 +54,7 @@ func (dao *gormInteractiveDAO) GetUserInteractive(ctx context.Context, userID in
 	return userInter, nil
 }
 
-func (dao *gormInteractiveDAO) IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*event.NewReadEventPayload) error {
+func (dao *gormInteractiveDAO) IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*model2.NewReadEventPayload) error {
 	if dao.idGen == nil || consumer == "" || topic == "" {
 		return ErrParamsInvalid
 	}

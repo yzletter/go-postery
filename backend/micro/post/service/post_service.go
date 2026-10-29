@@ -9,10 +9,9 @@ import (
 
 	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/rank/v1"
-	"github.com/yzletter/go-postery/backend/event"
-	event_model "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	event_model "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/post/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"github.com/yzletter/go-postery/backend/micro/post/repository"
@@ -50,10 +49,10 @@ func (svc *postService) Create(ctx context.Context, post dto.Post) (dto.Post, er
 	// 构造 Outbox
 	events := make([]*event_model.OutboxEvent, 0)
 
-	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostCreate}
+	payload := event_model.PostEventPayload{ID: post.ID, EventType: event_model.PostCreate}
 
 	// Search 事件
-	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
+	searchEvent := event_model.NewKafkaOutboxEvent(svc.idGen.NextID(), event_model.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
 	events = append(events, searchEvent)
 
 	// 创建帖子、绑定标签并写 Outbox
@@ -246,10 +245,10 @@ func (svc *postService) Update(ctx context.Context, updatePost dto.Post) error {
 	// 构造 Outbox
 	events := make([]*event_model.OutboxEvent, 0)
 
-	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostUpdate}
+	payload := event_model.PostEventPayload{ID: post.ID, EventType: event_model.PostUpdate}
 
 	// Search 事件
-	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
+	searchEvent := event_model.NewKafkaOutboxEvent(svc.idGen.NextID(), event_model.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
 	events = append(events, searchEvent)
 
 	if err := svc.postRepo.Update(ctx, updatePost, events); err != nil {
@@ -354,19 +353,19 @@ func (svc *postService) Delete(ctx context.Context, userID int64, postID int64) 
 	// 构造 Outbox
 	events := make([]*event_model.OutboxEvent, 0)
 
-	payload := event.PostEventPayload{ID: post.ID, EventType: event.PostDelete}
+	payload := event_model.PostEventPayload{ID: post.ID, EventType: event_model.PostDelete}
 
 	// Search 事件
-	searchEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
+	searchEvent := event_model.NewKafkaOutboxEvent(svc.idGen.NextID(), event_model.KafkaSearchTopic, strconv.FormatInt(post.ID, 10), payload)
 	events = append(events, searchEvent)
 
 	// Rank 事件
-	rankPayload := event.UpdateScoreEventPayload{
+	rankPayload := event_model.UpdateScoreEventPayload{
 		ID:    svc.idGen.NextID(),
-		Biz:   event.DeletePostScore,
+		Biz:   event_model.DeletePostScore,
 		BizID: post.ID,
 	}
-	rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(rankPayload.BizID, 10), rankPayload)
+	rankEvent := event_model.NewKafkaOutboxEvent(svc.idGen.NextID(), event_model.KafkaTopicRankUpdateScore, strconv.FormatInt(rankPayload.BizID, 10), rankPayload)
 	events = append(events, rankEvent)
 
 	// 删除帖子

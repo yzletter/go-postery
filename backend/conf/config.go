@@ -12,8 +12,8 @@ var (
 	watchKeys = make(map[string]struct{})
 )
 
-// LoadCommonMicroConf 加载微服务公共配置
-func LoadCommonMicroConf(ctx context.Context, client *etcdv3.Client, prefix string) CommonMicroConf {
+// LoadCommonConf 加载微服务公共配置
+func LoadCommonConf(ctx context.Context, client *etcdv3.Client, prefix string) CommonMicroConf {
 	conf := CommonMicroConf{
 		// 数据库
 		MySQL: LoadMySQLConfig(ctx, client, prefix),

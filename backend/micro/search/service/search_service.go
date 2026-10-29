@@ -10,9 +10,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
-	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 	model2 "github.com/yzletter/go-postery/backend/micro/search/model"
 	"github.com/yzletter/go-postery/backend/micro/search/service/index_service"
 	"github.com/yzletter/go-postery/backend/ports"
@@ -133,7 +133,7 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 			backoff = time.Second // 重置
 
 			// 解析 JSON
-			var payload event.PostEventPayload
+			var payload model.PostEventPayload
 			if err = sonic.Unmarshal(message.Value, &payload); err != nil {
 				slog.Warn("invalid search index event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				// 脏消息 Commit 掉
@@ -145,19 +145,19 @@ func (svc *searchService) StartConsumer(ctx context.Context) {
 
 			// 消费消息
 			switch payload.EventType {
-			case event.PostCreate:
+			case model.PostCreate:
 				if err = svc.Index(ctx, payload.ID); err != nil {
 					slog.Error("index post failed", "post_id", payload.ID, "error", err)
 					time.Sleep(time.Second) // 最小退避，避免打爆
 					continue                // 不 commit -> 重试
 				}
-			case event.PostDelete:
+			case model.PostDelete:
 				if _, err = svc.DeleteDoc(ctx, strconv.FormatInt(payload.ID, 10)); err != nil {
 					slog.Error("delete post index failed", "post_id", payload.ID, "error", err)
 					time.Sleep(time.Second) // 最小退避，避免打爆
 					continue                // 不 commit -> 重试
 				}
-			case event.PostUpdate:
+			case model.PostUpdate:
 				// 删除旧文档
 				_, err = svc.DeleteDoc(ctx, strconv.FormatInt(payload.ID, 10))
 				// 添加新文档

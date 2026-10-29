@@ -70,7 +70,7 @@ func main() {
 	EtcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // Init Etcd
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, EtcdClient, GoPostery+suffix+"/")
+	CommonMicroConf := conf.LoadCommonConf(ctx, EtcdClient, GoPostery+suffix+"/")
 	fmt.Printf("%s Init Common Config Success %+v\n", ServiceName+suffix, CommonMicroConf)
 	// 加载私有配置
 	BFFServiceConf := bffConfig.LoadBFFServiceConfig(ctx, EtcdClient, ServiceName+suffix+"/")

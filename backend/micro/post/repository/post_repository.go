@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	event_model "github.com/yzletter/go-postery/backend/event/outbox/model"
+	event_model "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/post/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"github.com/yzletter/go-postery/backend/micro/post/repository/cache"

@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event/outbox/model"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 )
 
 const (

@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
-	"github.com/yzletter/go-postery/backend/event"
-	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 )
 
 // Comment 评论
@@ -78,23 +77,23 @@ func (svc *interactiveService) Comment(ctx context.Context, postID int64, parent
 		Content:  content,
 	}
 
-	e := event.NewCommentEventPayload{
+	e := model.NewCommentEventPayload{
 		ID:          svc.idGen.NextID(),
 		UserID:      userID,
 		PostID:      postID,
 		Cnt:         1,
-		CommentType: event.Create,
+		CommentType: model.Create,
 		EventAt:     now,
 	}
 
-	ee := event.UpdateScoreEventPayload{
+	ee := model.UpdateScoreEventPayload{
 		ID:    svc.idGen.NextID(),
-		Biz:   event.UpdatePostScore,
+		Biz:   model.UpdatePostScore,
 		BizID: comment.PostID,
 	}
 	if comment, err = svc.interRepo.CreateComment(ctx, comment,
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, strconv.FormatInt(e.PostID, 10), e),
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
+		model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicInteractiveComment, strconv.FormatInt(e.PostID, 10), e),
+		model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 	); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			slog.Warn("create comment id conflict", "comment_id", comment.ID, "post_id", postID, "error", err)
@@ -136,25 +135,25 @@ func (svc *interactiveService) DelComment(ctx context.Context, commentID int64, 
 
 	now := time.Now()
 
-	ee := event.UpdateScoreEventPayload{
+	ee := model.UpdateScoreEventPayload{
 		ID:    svc.idGen.NextID(),
-		Biz:   event.UpdatePostScore,
+		Biz:   model.UpdatePostScore,
 		BizID: comment.PostID,
 	}
 
 	buildEventsFunc := func(cnt int) []*model.OutboxEvent {
-		e := event.NewCommentEventPayload{
+		e := model.NewCommentEventPayload{
 			ID:          svc.idGen.NextID(),
 			UserID:      userID,
 			PostID:      comment.PostID,
 			Cnt:         cnt,
-			CommentType: event.Del,
+			CommentType: model.Del,
 			EventAt:     now,
 		}
 
 		return []*model.OutboxEvent{
-			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveComment, strconv.FormatInt(e.PostID, 10), e),
-			event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
+			model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicInteractiveComment, strconv.FormatInt(e.PostID, 10), e),
+			model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 		}
 	}
 

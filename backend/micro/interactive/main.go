@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -30,6 +29,7 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/dao"
 	"github.com/yzletter/go-postery/backend/micro/interactive/service"
+	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/pkg"
 	"github.com/yzletter/go-postery/backend/pkg/ratelimit"
 	"github.com/yzletter/go-postery/backend/utils"
@@ -63,7 +63,7 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
 
 	// 加载私有配置
 	InteractiveServiceConf := config.LoadInteractiveServiceConfig(ctx, etcdClient, ServiceConfPrefix)
@@ -76,9 +76,9 @@ func main() {
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis)
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL)
 	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka,
-		event.KafkaTopicInteractiveLike,                                                                        // topic
-		event.KafkaInteractiveGroup,                                                                            // group
-		event.KafkaTopicInteractiveFollow, event.KafkaTopicInteractiveComment, event.KafkaTopicInteractiveRead, // topic
+		main2.KafkaTopicInteractiveLike,                                                                        // topic
+		main2.KafkaInteractiveGroup,                                                                            // group
+		main2.KafkaTopicInteractiveFollow, main2.KafkaTopicInteractiveComment, main2.KafkaTopicInteractiveRead, // topic
 	)
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)
 

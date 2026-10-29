@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 )
 
 // Follow 关注用户
@@ -36,22 +36,22 @@ func (svc *interactiveService) Follow(ctx context.Context, follower int64, follo
 		FolloweeID: followee,
 	}
 
-	e := event.NewFollowEventPayload{
+	e := model.NewFollowEventPayload{
 		ID:         svc.idGen.NextID(),
 		Follower:   follower,
 		Followee:   followee,
-		FollowType: event.Follow,
+		FollowType: model.Follow,
 		EventAt:    now,
 	}
 
-	ee := event.UpdateScoreEventPayload{
+	ee := model.UpdateScoreEventPayload{
 		ID:    svc.idGen.NextID(),
-		Biz:   event.UpdateUserScore,
+		Biz:   model.UpdateUserScore,
 		BizID: followee,
 	}
 	if err = svc.interRepo.CreateFollow(ctx, follow,
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveFollow, strconv.FormatInt(e.Followee, 10), e),
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
+		model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicInteractiveFollow, strconv.FormatInt(e.Followee, 10), e),
+		model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 	); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) { // 检查过仍冲突
 			slog.Info("follow skipped: already followed", "follower", follower, "followee", followee)
@@ -82,24 +82,24 @@ func (svc *interactiveService) Unfollow(ctx context.Context, follower int64, fol
 
 	now := time.Now()
 
-	e := event.NewFollowEventPayload{
+	e := model.NewFollowEventPayload{
 		ID:         svc.idGen.NextID(),
 		Follower:   follower,
 		Followee:   followee,
-		FollowType: event.Unfollow,
+		FollowType: model.Unfollow,
 		EventAt:    now,
 	}
 
-	ee := event.UpdateScoreEventPayload{
+	ee := model.UpdateScoreEventPayload{
 		ID:    svc.idGen.NextID(),
-		Biz:   event.UpdateUserScore,
+		Biz:   model.UpdateUserScore,
 		BizID: followee,
 	}
 
 	// 删除关注关系
 	if err := svc.interRepo.DelFollow(ctx, follower, followee,
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicInteractiveFollow, strconv.FormatInt(e.Followee, 10), e),
-		event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
+		model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicInteractiveFollow, strconv.FormatInt(e.Followee, 10), e),
+		model.NewKafkaOutboxEvent(svc.idGen.NextID(), model.KafkaTopicRankUpdateScore, strconv.FormatInt(ee.BizID, 10), ee),
 	); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Info("unfollow skipped: not followed", "follower", follower, "followee", followee)

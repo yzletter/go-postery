@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/backend/api/proto/search/v1"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -24,6 +23,7 @@ import (
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	"github.com/yzletter/go-postery/backend/infra/tokenizer"
+	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/search/config"
 	server "github.com/yzletter/go-postery/backend/micro/search/grpc"
 	"github.com/yzletter/go-postery/backend/micro/search/service"
@@ -60,7 +60,7 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
 	// 加载私有配置
 	SearchServiceConf := config.LoadSearchServiceConfig(ctx, etcdClient, ServiceConfPrefix)
 
@@ -70,7 +70,7 @@ func main() {
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                           // 初始化 Redis
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, event.KafkaSearchTopic, event.KafkaSearchGroup) // 初始化 KafkaConsumer
+	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, main2.KafkaSearchTopic, main2.KafkaSearchGroup) // 初始化 KafkaConsumer
 	//Tokenizer := tokenizer.NewJiebaTokenizer()                                                                    // 初始化分词器
 	Tokenizer := tokenizer.NewSegoTokenizer()           // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法

@@ -22,7 +22,7 @@ func TestRetrieve(t *testing.T) {
 	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, "go_postery_test"+"/")
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, "go_postery_test"+"/")
 	// 加载私有配置
 	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"_test/")
 

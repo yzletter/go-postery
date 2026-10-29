@@ -169,5 +169,5 @@ build-macos:
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/post_service ./backend/micro/post
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/user_service ./backend/micro/user
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/session_service ./backend/micro/session
-	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/outbox_service ./backend/event/outbox
+	@GOOS=darwin GOARCH=arm64 go build -o ./backend/app/macos/outbox_service ./backend/micro/outbox
 	@GOOS=darwin GOARCH=arm64 go build -o ./app/macos/bff_service ./backend/bff

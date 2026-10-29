@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/backend/api/proto/session/v1"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event"
 	my_grpc "github.com/yzletter/go-postery/backend/grpc"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -25,6 +24,7 @@ import (
 	infraRabbitMQ "github.com/yzletter/go-postery/backend/infra/mq/rabbitmq"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
+	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/session/config"
 	server "github.com/yzletter/go-postery/backend/micro/session/grpc"
 	"github.com/yzletter/go-postery/backend/micro/session/repository"
@@ -63,7 +63,7 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
 	// 加载私有配置
 	SessionServiceConf := config.LoadSessionServiceConfig(ctx, etcdClient, ServiceConfPrefix)
 
@@ -76,7 +76,7 @@ func main() {
 	RabbitMQ := infraRabbitMQ.Init(CommonMicroConf.RabbitMQ) // 初始化 RabbitMQ
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL)    // 初始化 MySQL
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)      // 初始化 雪花算法
-	SessionKafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, event.KafkaSessionTopic, event.KafkaSessionGroup)
+	SessionKafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, main2.KafkaSessionTopic, main2.KafkaSessionGroup)
 
 	// DAO 层
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)

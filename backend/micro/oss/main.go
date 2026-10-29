@@ -56,7 +56,7 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonMicroConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
 	// 加载私有配置
 	OSSServiceConf := config.LoadOSSServiceConfig(ctx, etcdClient, ServiceConfPrefix)
 

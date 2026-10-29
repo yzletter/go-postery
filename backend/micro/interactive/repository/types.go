@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event"
-	"github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 )
 
 type InteractiveRepository interface {
@@ -43,7 +42,7 @@ type InteractiveRepository interface {
 	// 	- error: 可能返回的错误
 	//		- ErrServerInternal: 系统内部错误
 	//		- ErrRecordNotFound: 帖子找不到
-	IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*event.NewReadEventPayload) error
+	IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*model.NewReadEventPayload) error
 
 	// ChangeInteractiveCntWithOutbox 更改互动信息并事务写消费表
 	//

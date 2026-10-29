@@ -1,5 +1,12 @@
 package conf
 
+const (
+	// CommonConfPrefix 公共配置前缀
+	CommonConfPrefix = "go_postery/conf/common_conf/"
+	// ServiceConfPrefix 私有配置前置
+	ServiceConfPrefix = "go_postery/conf/service_conf/"
+)
+
 type CommonMicroConf struct {
 	MySQL      MySQLConfig
 	Redis      RedisConfig

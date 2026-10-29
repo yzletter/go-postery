@@ -6,12 +6,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/yzletter/go-postery/backend/event"
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/dao"
+	model2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 )
 
 type interactiveRepository struct {
@@ -87,7 +86,7 @@ func (repo *interactiveRepository) GetUserInteractive(ctx context.Context, id in
 }
 
 // IncrReadCnt 增加帖子阅读数
-func (repo *interactiveRepository) IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*event.NewReadEventPayload) error {
+func (repo *interactiveRepository) IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*model2.NewReadEventPayload) error {
 	// 写数据库
 	err := repo.dao.IncrReadCnt(ctx, consumer, topic, readEventPayloads...)
 	if err != nil {

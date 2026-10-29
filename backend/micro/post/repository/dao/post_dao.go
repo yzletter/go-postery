@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
+	model2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/post/model"
 	"gorm.io/gorm"
 )

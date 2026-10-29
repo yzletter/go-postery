@@ -1,8 +1,7 @@
-package event
+package model
 
 import (
 	"github.com/bytedance/sonic"
-	"github.com/yzletter/go-postery/backend/event/outbox/model"
 )
 
 const (
@@ -41,7 +40,7 @@ const (
 	KafkaRankGroup = "rank"
 )
 
-func NewKafkaOutboxEvent(id int64, topic string, key string, payload any) *model.OutboxEvent {
+func NewKafkaOutboxEvent(id int64, topic string, key string, payload any) *OutboxEvent {
 	value := ""
 	switch v := payload.(type) {
 	case string:
@@ -52,7 +51,7 @@ func NewKafkaOutboxEvent(id int64, topic string, key string, payload any) *model
 		value, _ = sonic.MarshalString(v)
 	}
 
-	return &model.OutboxEvent{
+	return &OutboxEvent{
 		ID:           id,
 		Topic:        topic,
 		MessageKey:   key,

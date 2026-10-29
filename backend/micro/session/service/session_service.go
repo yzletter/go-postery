@@ -12,9 +12,9 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
-	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/session/domain"
 	session_bff_dto "github.com/yzletter/go-postery/backend/micro/session/dto"
 	repository "github.com/yzletter/go-postery/backend/micro/session/repository"
@@ -244,7 +244,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 			}
 
 			backoff = time.Second
-			var payload event.NewUserEventPayload
+			var payload model.NewUserEventPayload
 			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
 				// 脏消息
 				slog.Warn("invalid session register event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)

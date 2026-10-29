@@ -12,12 +12,11 @@ import (
 	"github.com/rs/xid"
 	"github.com/yzletter/go-postery/backend/api/proto/code/v1"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/event"
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/auth/model"
 	"github.com/yzletter/go-postery/backend/micro/auth/repository"
+	model2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/ports"
 )
 
@@ -125,17 +124,17 @@ func (svc *authService) LoginByPhone(ctx context.Context, phone string, code str
 			events := make([]*model2.OutboxEvent, 0)
 
 			// 注册聊天功能 Event
-			value, _ := sonic.MarshalString(event.NewUserEventPayload{ID: uid})
-			sessionEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaSessionTopic, strconv.FormatInt(uid, 10), value)
+			value, _ := sonic.MarshalString(model2.NewUserEventPayload{ID: uid})
+			sessionEvent := model2.NewKafkaOutboxEvent(svc.idGen.NextID(), model2.KafkaSessionTopic, strconv.FormatInt(uid, 10), value)
 			events = append(events, sessionEvent)
 
 			// 初始化用户分数 Event
-			value2, _ := sonic.MarshalString(event.UpdateScoreEventPayload{
+			value2, _ := sonic.MarshalString(model2.UpdateScoreEventPayload{
 				ID:    svc.idGen.NextID(),
-				Biz:   event.UpdateUserScore, // 更新用户分数
+				Biz:   model2.UpdateUserScore, // 更新用户分数
 				BizID: uid,
 			})
-			rankEvent := event.NewKafkaOutboxEvent(svc.idGen.NextID(), event.KafkaTopicRankUpdateScore, strconv.FormatInt(uid, 10), value2)
+			rankEvent := model2.NewKafkaOutboxEvent(svc.idGen.NextID(), model2.KafkaTopicRankUpdateScore, strconv.FormatInt(uid, 10), value2)
 			events = append(events, rankEvent)
 
 			// 聚合信息

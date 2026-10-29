@@ -4,11 +4,6 @@ import (
 	"context"
 )
 
-const (
-	ETCDEndpoint      = "172.16.131.223:2379"
-	LocalETCDEndpoint = "localhost:12379"
-)
-
 type ServiceHub interface {
 	LoadEndpoints(ctx context.Context, service string)                                           // 从服务注册中心初始化所有可用连接
 	AddEndpoint(ctx context.Context, service string, addr string)                                // 建立新连接

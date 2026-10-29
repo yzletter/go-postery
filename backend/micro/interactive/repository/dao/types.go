@@ -3,10 +3,9 @@ package dao
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/backend/event"
-	model2 "github.com/yzletter/go-postery/backend/event/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/model"
+	model2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
 )
 
 // InteractiveDAO 定义互动模块的数据访问能力
@@ -39,7 +38,7 @@ type InteractiveDAO interface {
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*event.NewReadEventPayload) error
+	IncrReadCnt(ctx context.Context, consumer string, topic string, readEventPayloads ...*model2.NewReadEventPayload) error
 
 	// ChangeInteractiveCnt 修改互动数据
 	//

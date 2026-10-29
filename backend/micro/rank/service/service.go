@@ -11,9 +11,9 @@ import (
 	inter_grpc "github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	"github.com/yzletter/go-postery/backend/event"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/outbox/model"
 	"github.com/yzletter/go-postery/backend/micro/rank/domain"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository"
 	"golang.org/x/sync/errgroup"
@@ -257,7 +257,7 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 			backoff = time.Second
 
 			// 反序列化消息
-			var e event.UpdateScoreEventPayload
+			var e model.UpdateScoreEventPayload
 			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
 				slog.Warn("unmarshal rank event failed", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
 				// 脏消息 Commit 掉
@@ -267,13 +267,13 @@ func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
 
 			// 判断类型, 计算分数
 			switch e.Biz {
-			case event.UpdateUserScore:
+			case model.UpdateUserScore:
 				_ = svc.RankUser(ctx, e.BizID)
-			case event.UpdatePostScore:
+			case model.UpdatePostScore:
 				_ = svc.RankPost(ctx, e.BizID)
-			case event.DeleteUserScore:
+			case model.DeleteUserScore:
 				_ = svc.DeleteUserScore(ctx, e.BizID)
-			case event.DeletePostScore:
+			case model.DeletePostScore:
 				_ = svc.DeletePostScore(ctx, e.BizID)
 			default:
 				slog.Warn("unknown rank event biz", "biz", e.Biz, "biz_id", e.BizID)
