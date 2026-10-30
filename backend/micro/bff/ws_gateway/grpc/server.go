@@ -6,9 +6,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	ws_gateway_grpc2 "github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/domain"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/service"
 )
 
 type WSGatewayServiceServer struct {

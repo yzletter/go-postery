@@ -4,7 +4,7 @@ import (
 	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	userdto "github.com/yzletter/go-postery/backend/bff/dto/user"
+	userdto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
 )
 
 type DetailDTO struct {
@@ -40,7 +40,7 @@ func ToDetailDTO(post *post_grpc.PostDetail, user *user_grpc.Profile) DetailDTO 
 		Title:        post.Title,
 		Content:      post.Content,
 		CreatedAt:    post.CreatedAt,
-		Author:       userdto.ToBriefDTO(user),
+		Author:       user.ToBriefDTO(user),
 		ContentType:  int(post.ContentType),
 		ViewCount:    int(post.ViewCount),
 		CommentCount: int(post.CommentCount),
@@ -55,7 +55,7 @@ func ToBriefDTO(post *post_grpc.PostBrief, user *user_grpc.Profile) BriefDTO {
 		Title:     post.Title,
 		Abstract:  post.Abstract,
 		CreatedAt: post.CreatedAt,
-		Author:    userdto.ToBriefDTO(user),
+		Author:    user.ToBriefDTO(user),
 	}
 }
 
@@ -85,6 +85,6 @@ func ToInteractiveCommentDTO(comment *interactive_grpc.InteractiveComment, user 
 		ReplyID:   comment.ReplyID,
 		Content:   comment.Content,
 		CreatedAt: comment.CreatedAt,
-		Author:    userdto.ToBriefDTO(user),
+		Author:    user.ToBriefDTO(user),
 	}
 }

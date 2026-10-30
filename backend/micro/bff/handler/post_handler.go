@@ -8,10 +8,10 @@ import (
 	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	"github.com/yzletter/go-postery/backend/bff/dto/post"
-	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
+	post2 "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
+	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
@@ -76,7 +76,7 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"posts":   []post.DetailDTO{},
+			"posts":   []post2.DetailDTO{},
 			"total":   0,
 			"hasMore": false,
 		})
@@ -95,9 +95,9 @@ func (hdl *PostHandler) List(ctx *gin.Context) {
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	posts := make([]post.DetailDTO, 0, len(resp.PostDetails))
+	posts := make([]post2.DetailDTO, 0, len(resp.PostDetails))
 	for k := range resp.PostDetails {
-		posts = append(posts, post.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
+		posts = append(posts, post2.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
 	}
 
 	// 返回
@@ -128,7 +128,7 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"posts":   []post.DetailDTO{},
+			"posts":   []post2.DetailDTO{},
 			"total":   0,
 			"hasMore": false,
 		})
@@ -147,9 +147,9 @@ func (hdl *PostHandler) ListByTagAndPage(ctx *gin.Context) {
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	posts := make([]post.DetailDTO, 0, len(resp.PostDetails))
+	posts := make([]post2.DetailDTO, 0, len(resp.PostDetails))
 	for k := range resp.PostDetails {
-		posts = append(posts, post.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
+		posts = append(posts, post2.ToDetailDTO(resp.PostDetails[k], userDetails[k]))
 	}
 
 	// 返回
@@ -176,7 +176,7 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal), post.DetailDTO{})
+		}, errno.ErrServerInternal), post2.DetailDTO{})
 		return
 	}
 
@@ -186,11 +186,11 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal), post.DetailDTO{})
+		}, errno.ErrServerInternal), post2.DetailDTO{})
 		return
 	}
 
-	response.Success(ctx, "获取帖子详情成功", post.ToDetailDTO(postDetail, userDetail))
+	response.Success(ctx, "获取帖子详情成功", post2.ToDetailDTO(postDetail, userDetail))
 }
 
 // CreatePost 创建帖子
@@ -203,7 +203,7 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var createRequest post.CreatePostRequest
+	var createRequest post2.CreatePostRequest
 	if err = ctx.ShouldBindJSON(&createRequest); err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -219,7 +219,7 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		Tags:        createRequest.Tags,
 	})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), post.DetailDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), post2.DetailDTO{})
 		return
 	}
 
@@ -229,11 +229,11 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal), post.DetailDTO{})
+		}, errno.ErrServerInternal), post2.DetailDTO{})
 		return
 	}
 
-	response.Success(ctx, "帖子创建成功", post.ToDetailDTO(postDetail, userDetail))
+	response.Success(ctx, "帖子创建成功", post2.ToDetailDTO(postDetail, userDetail))
 }
 
 // DeletePost 删除帖子
@@ -282,7 +282,7 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 	}
 
 	// 参数绑定
-	var updateRequest post.UpdateRequest
+	var updateRequest post2.UpdateRequest
 	err = ctx.ShouldBindJSON(&updateRequest)
 
 	if err != nil {
@@ -367,7 +367,7 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"posts":   []post.BriefDTO{},
+			"posts":   []post2.BriefDTO{},
 			"total":   0,
 			"hasMore": false,
 		})
@@ -386,9 +386,9 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 	// 计算是否还有帖子 = 判断已经加载的帖子数是否小于总帖子数
 	hasMore := pageNo*pageSize < int(resp.Count)
 
-	posts := make([]post.BriefDTO, 0, len(resp.PostBriefs))
+	posts := make([]post2.BriefDTO, 0, len(resp.PostBriefs))
 	for k := range resp.PostBriefs {
-		posts = append(posts, post.ToBriefDTO(resp.PostBriefs[k], userDetails[k]))
+		posts = append(posts, post2.ToBriefDTO(resp.PostBriefs[k], userDetails[k]))
 	}
 
 	// 返回
@@ -478,13 +478,13 @@ func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 func (hdl *PostHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.postSvc.Top(ctx, &post_grpc.PostEmptyRequest{})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []post.TopDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []post2.TopDTO{})
 		return
 	}
 
-	res := make([]post.TopDTO, 0, len(resp.TopPosts))
+	res := make([]post2.TopDTO, 0, len(resp.TopPosts))
 	for _, topPost := range resp.TopPosts {
-		res = append(res, post.ToTopDTO(topPost))
+		res = append(res, post2.ToTopDTO(topPost))
 	}
 
 	response.Success(ctx, "获取热门帖子榜单成功", res)
@@ -506,7 +506,7 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	}
 
 	// 获取参数并校验
-	var createReq post.CreateCommentRequest
+	var createReq post2.CreateCommentRequest
 	if err := ctx.ShouldBindJSON(&createReq); err != nil || createReq.ParentID < 0 {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
@@ -524,7 +524,7 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrPostNotFound,
-		}, errno.ErrServerInternal), post.CommentDTO{})
+		}, errno.ErrServerInternal), post2.CommentDTO{})
 		return
 	}
 
@@ -593,7 +593,7 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"comments": []post.CommentDTO{},
+			"comments": []post2.CommentDTO{},
 			"total":    0,
 			"hasMore":  false,
 		})
@@ -611,9 +611,9 @@ func (hdl *PostHandler) ListCommentByPage(ctx *gin.Context) {
 		userDetails[k] = userDetail
 	}
 
-	comments := make([]post.CommentDTO, 0, len(resp.Comments))
+	comments := make([]post2.CommentDTO, 0, len(resp.Comments))
 	for k := range resp.Comments {
-		comments = append(comments, post.ToInteractiveCommentDTO(resp.Comments[k], userDetails[k]))
+		comments = append(comments, post2.ToInteractiveCommentDTO(resp.Comments[k], userDetails[k]))
 	}
 
 	response.Success(ctx, "获取评论列表成功", gin.H{
@@ -657,7 +657,7 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrCommentNotFound,
 		}, errno.ErrServerInternal), gin.H{
-			"comments": []post.CommentDTO{},
+			"comments": []post2.CommentDTO{},
 			"total":    0,
 			"hasMore":  false,
 		})
@@ -675,9 +675,9 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 		userDetails[k] = userDetail
 	}
 
-	comments := make([]post.CommentDTO, 0, len(resp.Comments))
+	comments := make([]post2.CommentDTO, 0, len(resp.Comments))
 	for k := range resp.Comments {
-		comments = append(comments, post.ToInteractiveCommentDTO(resp.Comments[k], userDetails[k]))
+		comments = append(comments, post2.ToInteractiveCommentDTO(resp.Comments[k], userDetails[k]))
 	}
 
 	response.Success(ctx, "获取评论回复列表成功", gin.H{

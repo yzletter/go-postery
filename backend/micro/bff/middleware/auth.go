@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/backend/api/proto/auth/v1"
-	"github.com/yzletter/go-postery/backend/bff/handler"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/bff/handler"
 	"github.com/yzletter/go-postery/backend/utils"
 )
 

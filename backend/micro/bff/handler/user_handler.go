@@ -9,11 +9,11 @@ import (
 	"github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	post_dto "github.com/yzletter/go-postery/backend/bff/dto/post"
-	user_dto "github.com/yzletter/go-postery/backend/bff/dto/user"
-	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	post_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/post"
+	"github.com/yzletter/go-postery/backend/micro/bff/dto/user"
+	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
@@ -76,11 +76,11 @@ func (hdl *UserHandler) Profile(ctx *gin.Context) {
 				codes.InvalidArgument: errno.ErrInvalidParam,
 				codes.NotFound:        errno.ErrUserNotFound,
 			},
-			errno.ErrServerInternal), user_dto.DetailDTO{})
+			errno.ErrServerInternal), user.DetailDTO{})
 		return
 	}
 
-	response.Success(ctx, "获取个人资料成功", user_dto.ToDetailDTO(profile))
+	response.Success(ctx, "获取个人资料成功", user.ToDetailDTO(profile))
 }
 
 // Posts 按页获取用户发布的帖子
@@ -121,11 +121,11 @@ func (hdl *UserHandler) Posts(ctx *gin.Context) {
 
 	postsBack := make([]post_dto.BriefDTO, 0, len(resp.PostBriefs))
 	for _, post := range resp.PostBriefs {
-		postsBack = append(postsBack, post_dto.BriefDTO{
+		postsBack = append(postsBack, post.BriefDTO{
 			ID:        post.ID,
 			Title:     post.Title,
 			CreatedAt: post.CreatedAt,
-			Author: user_dto.BriefDTO{
+			Author: user.BriefDTO{
 				ID:       profileResp.UserID,
 				Nickname: profileResp.Nickname,
 				Avatar:   profileResp.Avatar,
@@ -143,7 +143,7 @@ func (hdl *UserHandler) Posts(ctx *gin.Context) {
 
 // ModifyProfile 修改个人资料
 func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
-	var modifyProfileReq user_dto.ModifyProfileRequest
+	var modifyProfileReq user.ModifyProfileRequest
 	// 将请求参数绑定到结构体
 	if err := ctx.ShouldBindJSON(&modifyProfileReq); err != nil {
 		// 参数绑定失败
@@ -203,13 +203,13 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 func (hdl *UserHandler) Top(ctx *gin.Context) {
 	resp, err := hdl.userSvc.Top(ctx, &user_grpc.TopRequest{})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []user_dto.TopDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), []user.TopDTO{})
 		return
 	}
 
-	res := make([]user_dto.TopDTO, 0, len(resp.ProfileTops))
+	res := make([]user.TopDTO, 0, len(resp.ProfileTops))
 	for _, u := range resp.ProfileTops {
-		top := user_dto.ToTopDTO(u)
+		top := user.ToTopDTO(u)
 		res = append(res, top)
 	}
 
@@ -328,7 +328,7 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 		}, errno.ErrServerInternal), gin.H{
-			"followers": []user_dto.BriefDTO{},
+			"followers": []user.BriefDTO{},
 			"total":     0,
 			"hasMore":   false,
 		})
@@ -339,7 +339,7 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 
 	response.Success(ctx, "获取粉丝列表成功",
 		gin.H{
-			"followers": user_dto.BriefsToDTO(resp.ProfileBriefs),
+			"followers": user.BriefsToDTO(resp.ProfileBriefs),
 			"total":     resp.Count,
 			"hasMore":   hasMore,
 		})
@@ -366,7 +366,7 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 		}, errno.ErrServerInternal), gin.H{
-			"followers": []user_dto.BriefDTO{},
+			"followers": []user.BriefDTO{},
 			"total":     0,
 			"hasMore":   false,
 		})
@@ -377,7 +377,7 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 	response.Success(ctx, "获取关注列表成功",
 		gin.H{
-			"followers": user_dto.BriefsToDTO(resp.ProfileBriefs),
+			"followers": user.BriefsToDTO(resp.ProfileBriefs),
 			"total":     resp.Count,
 			"hasMore":   hasMore,
 		})
@@ -385,7 +385,7 @@ func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 
 // GetAvatarURL 预签名
 func (hdl *UserHandler) GetAvatarURL(ctx *gin.Context) {
-	var req user_dto.GetAvatarURLRequest
+	var req user.GetAvatarURLRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		// 参数绑定失败
 		slog.Warn("bind request failed", "error", utils.BindErrMsg(err))
@@ -421,7 +421,7 @@ func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
 	}
 
 	// Body 绑定结构体
-	var uploadCallbackReq user_dto.UploadCallbackRequest
+	var uploadCallbackReq user.UploadCallbackRequest
 	if err := ctx.ShouldBindJSON(&uploadCallbackReq); err != nil {
 		// 参数绑定失败
 		slog.Warn("bind request failed", "error", utils.BindErrMsg(err))
@@ -476,13 +476,13 @@ func (hdl *UserHandler) UploadAvatarSign(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 		}, errno.ErrServerInternal),
-			user_dto.OSSSignDTO{
+			user.OSSSignDTO{
 				Response: "",
 			})
 		return
 	}
 
-	response.Success(ctx, "获取签名成功", user_dto.OSSSignDTO{
+	response.Success(ctx, "获取签名成功", user.OSSSignDTO{
 		Response: resp.Response,
 	})
 }

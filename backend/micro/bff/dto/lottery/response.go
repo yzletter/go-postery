@@ -3,7 +3,7 @@ package lottery
 import (
 	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	userdto "github.com/yzletter/go-postery/backend/bff/dto/user"
+	userdto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
 )
 
 type GiftDTO struct {
@@ -81,7 +81,7 @@ type OrderDTO struct {
 func ToOrderDTO(order *lottery_grpc.Order, user *user_grpc.Profile) OrderDTO {
 	return OrderDTO{
 		ID:        order.OrderID,
-		User:      userdto.ToBriefDTO(user),
+		User:      user.ToBriefDTO(user),
 		Gift:      ToGiftDTO(order.Gift),
 		Count:     int(order.Count),
 		CreatedAt: order.CreatedAt,

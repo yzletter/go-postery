@@ -13,9 +13,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/yzletter/go-postery/backend/bff/errno"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
 	"github.com/yzletter/go-postery/backend/conf"
+	"github.com/yzletter/go-postery/backend/micro/bff/errno"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/domain"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 )

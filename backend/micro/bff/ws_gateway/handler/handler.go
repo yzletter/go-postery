@@ -9,11 +9,11 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/yzletter/go-postery/backend/api/proto/interview/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/session/v1"
-	session_dto "github.com/yzletter/go-postery/backend/bff/dto/session"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	session_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/session"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/domain"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/service"
 )
 
 // Handler 统一处理 WebSocket 中的面试和聊天消息。

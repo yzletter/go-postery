@@ -7,10 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/backend/api/proto/interview/v1"
-	interview_dto "github.com/yzletter/go-postery/backend/bff/dto/interview"
-	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/bff/dto/interview"
+	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
@@ -53,7 +53,7 @@ func (hdl *InterviewHandler) UploadQuestionsSign(ctx *gin.Context) {
 		return
 	}
 
-	response.Success(ctx, "获取签名成功", interview_dto.OSSSignDTO{Response: resp.Response})
+	response.Success(ctx, "获取签名成功", interview.OSSSignDTO{Response: resp.Response})
 }
 
 // UploadQuestionsCallback 处理 OSS 题库上传回调
@@ -66,7 +66,7 @@ func (hdl *InterviewHandler) UploadQuestionsCallback(ctx *gin.Context) {
 	}
 
 	// Body 绑定结构体
-	var req interview_dto.UploadCallbackRequest
+	var req interview.UploadCallbackRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		slog.Warn("bind request failed", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)

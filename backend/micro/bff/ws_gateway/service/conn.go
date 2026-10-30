@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/gorilla/websocket"
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/domain"
 )
 
 const (

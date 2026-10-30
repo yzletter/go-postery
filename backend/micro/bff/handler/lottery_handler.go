@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	lottery2 "github.com/yzletter/go-postery/backend/bff/dto/lottery"
-	"github.com/yzletter/go-postery/backend/bff/errno"
 	"github.com/yzletter/go-postery/backend/conf"
 	grpcclient "github.com/yzletter/go-postery/backend/grpc/manager"
+	"github.com/yzletter/go-postery/backend/micro/bff/dto/lottery"
+	"github.com/yzletter/go-postery/backend/micro/bff/errno"
 	"github.com/yzletter/go-postery/backend/utils"
 	"github.com/yzletter/go-postery/backend/utils/response"
 	"google.golang.org/grpc/codes"
@@ -45,13 +45,13 @@ func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrGiftNotFound,
-		}, errno.ErrServerInternal), []lottery2.GiftDTO{})
+		}, errno.ErrServerInternal), []lottery.GiftDTO{})
 		return
 	}
 
-	gifts := make([]lottery2.GiftDTO, 0, len(resp.Gifts))
+	gifts := make([]lottery.GiftDTO, 0, len(resp.Gifts))
 	for _, gift := range resp.Gifts {
-		gifts = append(gifts, lottery2.ToGiftDTO(gift))
+		gifts = append(gifts, lottery.ToGiftDTO(gift))
 	}
 
 	response.Success(ctx, "获取全部奖品成功", gifts)
@@ -66,11 +66,11 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 
 	result, err := hdl.lotterySvc.Lottery(ctx, &lottery_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), lottery2.LotteryResultDTO{})
+		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), lottery.LotteryResultDTO{})
 		return
 	}
 
-	resultDTO := lottery2.ToLotteryResultDTO(result)
+	resultDTO := lottery.ToLotteryResultDTO(result)
 	message := resultDTO.ResultDescription
 	if message == "" {
 		message = "抽奖成功"
@@ -85,7 +85,7 @@ func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
 		return
 	}
 
-	var giveReq lottery2.GiveUpRequest
+	var giveReq lottery.GiveUpRequest
 	if err := ctx.ShouldBindJSON(&giveReq); err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
@@ -118,7 +118,7 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 		return
 	}
 
-	var payReq lottery2.PayRequest
+	var payReq lottery.PayRequest
 
 	if err := ctx.ShouldBindJSON(&payReq); err != nil {
 		// 参数绑定失败
@@ -160,7 +160,7 @@ func (hdl *LotteryHandler) Result(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.NotFound: errno.ErrOrderNotFound,
-		}, errno.ErrServerInternal), lottery2.OrderDTO{})
+		}, errno.ErrServerInternal), lottery.OrderDTO{})
 		return
 	}
 
@@ -175,9 +175,9 @@ func (hdl *LotteryHandler) Result(ctx *gin.Context) {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
 			codes.NotFound:        errno.ErrUserNotFound,
-		}, errno.ErrServerInternal), lottery2.OrderDTO{})
+		}, errno.ErrServerInternal), lottery.OrderDTO{})
 		return
 	}
 
-	response.Success(ctx, "获取结果成功", lottery2.ToOrderDTO(order, user))
+	response.Success(ctx, "获取结果成功", lottery.ToOrderDTO(order, user))
 }

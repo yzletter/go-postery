@@ -17,13 +17,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/yzletter/go-postery/backend/api/proto/ws_gateway/v1"
-	bffConfig "github.com/yzletter/go-postery/backend/bff/config"
-	"github.com/yzletter/go-postery/backend/bff/handler"
-	"github.com/yzletter/go-postery/backend/bff/middleware"
-	wsGatewayConfig "github.com/yzletter/go-postery/backend/bff/ws_gateway/config"
-	ws_gateway_grpc_server "github.com/yzletter/go-postery/backend/bff/ws_gateway/grpc"
-	ws_gateway_handler "github.com/yzletter/go-postery/backend/bff/ws_gateway/handler"
-	service2 "github.com/yzletter/go-postery/backend/bff/ws_gateway/service"
 	"github.com/yzletter/go-postery/backend/conf"
 	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
@@ -32,6 +25,13 @@ import (
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
+	bffConfig "github.com/yzletter/go-postery/backend/micro/bff/config"
+	handler2 "github.com/yzletter/go-postery/backend/micro/bff/handler"
+	middleware2 "github.com/yzletter/go-postery/backend/micro/bff/middleware"
+	wsGatewayConfig "github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/config"
+	ws_gateway_grpc_server "github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/grpc"
+	ws_gateway_handler "github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/handler"
+	service2 "github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/service"
 	"github.com/yzletter/go-postery/backend/pkg"
 	"github.com/yzletter/go-postery/backend/pkg/ratelimit"
 	"github.com/yzletter/go-postery/backend/utils"
@@ -106,19 +106,19 @@ func main() {
 	RateLimitSvc := ratelimit.NewRateLimitService(RedisClient, conf.RateLimitInterval, conf.RateLimitRate) // 注册 RateLimitService
 
 	// Handler 层
-	PostHdl := handler.NewPostHandler(PostServiceClient, UserServiceClient, InteractiveServiceClient) // 注册 PostHandler
-	AuthHdl := handler.NewAuthHandler(AuthServiceClient, CodeServiceClient, UserServiceClient)        // 注册 AuthHandler
-	UserHdl := handler.NewUserHandler(UserServiceClient, PostServiceClient, InteractiveServiceClient) // 注册 UserHandler
-	SearchHdl := handler.NewSearchHandler(SearchServiceClient, PostServiceClient, UserServiceClient)  // 注册 SearchHandler
-	InterviewHdl := handler.NewInterviewHandler(InterviewServiceClient)                               // 注册 InterviewHandler
-	LotteryHdl := handler.NewLotteryHandler(LotteryServiceClient, UserServiceClient)                  // 注册 LotteryHandler
-	SessionHdl := handler.NewSessionHandler(SessionServiceClient, UserServiceClient)                  // 注册 SessionHandler
+	PostHdl := handler2.NewPostHandler(PostServiceClient, UserServiceClient, InteractiveServiceClient) // 注册 PostHandler
+	AuthHdl := handler2.NewAuthHandler(AuthServiceClient, CodeServiceClient, UserServiceClient)        // 注册 AuthHandler
+	UserHdl := handler2.NewUserHandler(UserServiceClient, PostServiceClient, InteractiveServiceClient) // 注册 UserHandler
+	SearchHdl := handler2.NewSearchHandler(SearchServiceClient, PostServiceClient, UserServiceClient)  // 注册 SearchHandler
+	InterviewHdl := handler2.NewInterviewHandler(InterviewServiceClient)                               // 注册 InterviewHandler
+	LotteryHdl := handler2.NewLotteryHandler(LotteryServiceClient, UserServiceClient)                  // 注册 LotteryHandler
+	SessionHdl := handler2.NewSessionHandler(SessionServiceClient, UserServiceClient)                  // 注册 SessionHandler
 
 	// 中间件层
-	AuthRequiredMdl := middleware.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
-	MetricMdl := middleware.MetricMiddleware(MetricSvc)                     // MetricMdl 用于 Prometheus 监控中间件
-	RateLimitMdl := middleware.RateLimitMiddleware(RateLimitSvc)            // RateLimitMdl 限流中间件
-	CorsMdl := cors.New(cors.Config{                                        // CorsMdl 跨域中间件
+	AuthRequiredMdl := middleware2.AuthRequiredMiddleware(AuthServiceClient) // AuthRequiredMdl 强制登录中间件
+	MetricMdl := middleware2.MetricMiddleware(MetricSvc)                     // MetricMdl 用于 Prometheus 监控中间件
+	RateLimitMdl := middleware2.RateLimitMiddleware(RateLimitSvc)            // RateLimitMdl 限流中间件
+	CorsMdl := cors.New(cors.Config{                                         // CorsMdl 跨域中间件
 		AllowOrigins:     []string{"http://" + BFFServiceConf.App.FrontendAddr}, // 允许域名跨域
 		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "traceparent", "tracestate", "baggage"},
@@ -206,7 +206,7 @@ func main() {
 
 	// 注册全局中间件
 	engine.Use(
-		middleware.TracingMiddleware(ServiceName+suffix), // OpenTelemetry tracing 中间件
+		middleware2.TracingMiddleware(ServiceName+suffix), // OpenTelemetry tracing 中间件
 		CorsMdl,      // CorsMdl 跨域中间件
 		MetricMdl,    // Prometheus 监控中间件
 		RateLimitMdl, // 限流中间件

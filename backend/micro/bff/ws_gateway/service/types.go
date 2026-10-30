@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/yzletter/go-postery/backend/bff/ws_gateway/domain"
+	"github.com/yzletter/go-postery/backend/micro/bff/ws_gateway/domain"
 )
 
 // WSMessageHandler 用来处理客户端发来的业务消息
