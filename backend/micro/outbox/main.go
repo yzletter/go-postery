@@ -18,7 +18,6 @@ import (
 const (
 	Service       = "outbox_service" // 微服务名
 	ServicePrefix = Service + "/"    // 微服务配置前缀
-
 )
 
 func main() {

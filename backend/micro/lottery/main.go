@@ -37,15 +37,13 @@ import (
 )
 
 const (
-	Service           = manager.LotteryService // 微服务名
-	GoPostery         = conf.GoPostery         // GoPostery
-	CommonConfPrefix  = GoPostery + "/conf/common_conf/"
-	ServiceConfPrefix = GoPostery + "/conf/service_conf/" + Service + "_conf/"
+	Service       = manager.LotteryService // 微服务名
+	ServicePrefix = Service + "/"          // 微服务配置前缀
 )
 
 func main() {
-	// 启动参数, etcd 地址
-	etcdEndpoint := flag.String("etcd", "localhost:2379", "etcd 地址")
+	// 启动时指定远程配置中心地址
+	etcdEndpoint := flag.String("etcd", "localhost:2379", "远程配置中心地址，默认为本地")
 	flag.Parse()
 
 	// 获取本地内网 IP
@@ -62,9 +60,9 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, conf.CommonConfPrefix)
 	// 加载私有配置
-	LotteryServiceConf := config.LoadLotteryServiceConfig(ctx, etcdClient, ServiceConfPrefix)
+	LotteryServiceConf := config.LoadLotteryServiceConfig(ctx, etcdClient, conf.ServiceConfPrefix+ServicePrefix)
 
 	// gRPC Common Infrastructure
 	infraSlog.InitSlog(LotteryServiceConf.Log)                                     // Init Slog
@@ -80,9 +78,11 @@ func main() {
 	// Cache 层
 	GiftCache := cache.NewGiftCache(RedisClient)
 	OrderCache := cache.NewOrderCache(RedisClient)
+
 	// DAO 层
 	GiftDAO := dao.NewGiftDAO(MySQLGormDB)
 	OrderDAO := dao.NewOrderDAO(MySQLGormDB)
+
 	// Repository 层
 	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)
 	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)
@@ -91,9 +91,6 @@ func main() {
 	MetricService := pkg.NewMetricService(Service)
 	RateLimitService := ratelimit.NewRateLimitService(RedisClient, 5*time.Second, 5*5000)
 	LotteryService := service.NewLotteryService(OrderRepo, GiftRepo, RocketMQ, IDGenerator) // 注册 LotteryService
-	//LotteryService.InitCacheInventory(ctx)
-	go LotteryService.StartLotteryOrderConsumer(ctx) // 开启协程核查临时订单进行库存回流
-	go LotteryService.StartStockRollbackScanner(ctx) // 开启协程兜底扫描失败库存回补重试
 
 	// gRPC ServiceHub
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
@@ -149,6 +146,11 @@ func main() {
 			time.Sleep(time.Duration(CommonMicroConf.ServiceHub.HeartbeatFrequency)*time.Second - 200*time.Millisecond)
 		}
 	}()
+
+	// 业务
+	LotteryService.InitCacheInventory(ctx)           // 预热库存
+	go LotteryService.StartLotteryOrderConsumer(ctx) // 开启协程核查临时订单进行库存回流
+	go LotteryService.StartStockRollbackScanner(ctx) // 开启协程兜底扫描失败库存回补重试
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).

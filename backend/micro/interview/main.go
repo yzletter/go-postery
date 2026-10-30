@@ -44,15 +44,13 @@ import (
 )
 
 const (
-	Service           = manager.InterviewService // 微服务名
-	GoPostery         = conf.GoPostery           // GoPostery
-	CommonConfPrefix  = GoPostery + "/conf/common_conf/"
-	ServiceConfPrefix = GoPostery + "/conf/service_conf/" + Service + "_conf/"
+	Service       = manager.InterviewService // 微服务名
+	ServicePrefix = Service + "/"            // 微服务配置前缀
 )
 
 func main() {
-	// 启动参数, etcd 地址
-	etcdEndpoint := flag.String("etcd", "localhost:2379", "etcd 地址")
+	// 启动时指定远程配置中心地址
+	etcdEndpoint := flag.String("etcd", "localhost:2379", "远程配置中心地址，默认为本地")
 	evaluation := flag.Bool("evaluation", false, "运行 RAG 离线评估")
 	flag.Parse()
 
@@ -76,9 +74,9 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, conf.CommonConfPrefix)
 	// 加载私有配置
-	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, ServiceConfPrefix)
+	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, conf.ServiceConfPrefix+ServicePrefix)
 
 	infraSlog.InitSlog(InterviewServiceConf.Log) // Init Slog
 

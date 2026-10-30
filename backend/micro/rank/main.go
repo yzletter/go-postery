@@ -36,15 +36,13 @@ import (
 )
 
 const (
-	Service           = manager.RankService // 微服务名
-	GoPostery         = conf.GoPostery      // GoPostery
-	CommonConfPrefix  = GoPostery + "/conf/common_conf/"
-	ServiceConfPrefix = GoPostery + "/conf/service_conf/" + Service + "_conf/"
+	Service       = manager.RankService // 微服务名
+	ServicePrefix = Service + "/"       // 微服务配置前缀
 )
 
 func main() {
-	// 启动参数, etcd 地址
-	etcdEndpoint := flag.String("etcd", "localhost:2379", "etcd 地址")
+	// 启动时指定远程配置中心地址
+	etcdEndpoint := flag.String("etcd", "localhost:2379", "远程配置中心地址，默认为本地")
 	flag.Parse()
 
 	// 获取本地内网 IP
@@ -61,10 +59,10 @@ func main() {
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, CommonConfPrefix)
+	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, conf.CommonConfPrefix)
 
 	// 加载私有配置
-	RankServiceConf := config.LoadRankServiceConfig(ctx, etcdClient, ServiceConfPrefix)
+	RankServiceConf := config.LoadRankServiceConfig(ctx, etcdClient, conf.ServiceConfPrefix+ServicePrefix)
 
 	// gRPC Common Infrastructures
 	infraSlog.InitSlog(RankServiceConf.Log)                                        // Init Slog

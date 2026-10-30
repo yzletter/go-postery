@@ -40,15 +40,14 @@ import (
 )
 
 var (
-	ServiceName  = manager.BFFService // 微服务名
-	GoPostery    = "go_postery"       // GoPostery 公共配置前缀
-	suffix       = ""
-	ETCDEndpoint = hub.ETCDEndpoint // etcd 地址
+	ServiceName = manager.BFFService // 微服务名
+	suffix      = ""
 )
 
 func main() {
 	// 启动参数, 默认线上环境
 	env := flag.String("env", "production", "运行环境: local/production")
+	etcdEndpoint := flag.String("etcd", "localhost:2379", "远程配置中心地址，默认为本地")
 	flag.Parse()
 
 	ip, err := utils.GetLocalIP()
@@ -61,22 +60,21 @@ func main() {
 	if *env == "local" {
 		suffix = "_test"
 		ip = "localhost"
-		ETCDEndpoint = hub.LocalETCDEndpoint
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Remote Config Center
-	EtcdClient := infraEtcd.Init([]string{ETCDEndpoint}) // Init Etcd
+	EtcdClient := infraEtcd.Init([]string{*etcdEndpoint}) // Init Etcd
 
 	// 加载公共配置
-	CommonMicroConf := conf.LoadCommonConf(ctx, EtcdClient, GoPostery+suffix+"/")
+	CommonMicroConf := conf.LoadCommonConf(ctx, EtcdClient, conf.CommonConfPrefix)
 	fmt.Printf("%s Init Common Config Success %+v\n", ServiceName+suffix, CommonMicroConf)
 	// 加载私有配置
-	BFFServiceConf := bffConfig.LoadBFFServiceConfig(ctx, EtcdClient, ServiceName+suffix+"/")
+	BFFServiceConf := bffConfig.LoadBFFServiceConfig(ctx, EtcdClient, conf.ServiceConfPrefix+ServiceName+"/")
 	fmt.Printf("%s Init BFFService Config Success %+v\n", ServiceName+suffix, BFFServiceConf)
 	// 加载 Websocket 网关配置
-	WSGatewayServiceConf := wsGatewayConfig.LoadWSGatewayServiceConfig(ctx, EtcdClient, manager.WSGatewayService+suffix+"/")
+	WSGatewayServiceConf := wsGatewayConfig.LoadWSGatewayServiceConfig(ctx, EtcdClient, conf.ServiceConfPrefix+manager.WSGatewayService+"/")
 	fmt.Printf("%s Init WSGatewayService Config Success %+v\n", manager.WSGatewayService+suffix, WSGatewayServiceConf)
 
 	// gRPC Common Infrastructure
