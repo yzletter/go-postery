@@ -43,7 +43,7 @@ func (hdl *SearchHandler) RegisterRouter(engine *gin.RouterGroup, authMiddleware
 
 func (hdl *SearchHandler) Search(ctx *gin.Context) {
 	// 校验登录态
-	if _, err := utils2.GetUidFromCTX(ctx, conf.UserIDInContext); err != nil {
+	if utils2.GetUidFromCTX(ctx, conf.UserIDInContext) == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

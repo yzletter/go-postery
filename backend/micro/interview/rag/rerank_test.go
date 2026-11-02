@@ -8,7 +8,6 @@ import (
 	"github.com/cloudwego/eino/components/retriever"
 	"github.com/cloudwego/eino/schema"
 	"github.com/yzletter/go-postery/backend/conf"
-	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraMilvus "github.com/yzletter/go-postery/backend/infra/database/milvus"
@@ -23,7 +22,7 @@ const TopK = 5
 func TestRerank(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
-	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
+	etcdClient := infraEtcd.Init([]string{"localhost:2379"})
 
 	// 加载公共配置
 	CommonMicroConf := conf.LoadCommonConf(ctx, etcdClient, "go_postery_test"+"/")

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/yzletter/go-postery/backend/grpc/hub"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraLLM "github.com/yzletter/go-postery/backend/infra/llm"
@@ -19,7 +18,7 @@ import (
 func TestAgent(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
-	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
+	etcdClient := infraEtcd.Init([]string{"localhost:2379"})
 	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
@@ -66,7 +65,7 @@ func TestAgent(t *testing.T) {
 func TestResumeAgent(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
-	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
+	etcdClient := infraEtcd.Init([]string{"localhost:2379"})
 	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
@@ -104,7 +103,7 @@ func TestResumeAgent(t *testing.T) {
 func TestQuestionPlanner(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
-	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
+	etcdClient := infraEtcd.Init([]string{"localhost:2379"})
 	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
@@ -143,7 +142,7 @@ func TestQuestionPlanner(t *testing.T) {
 func TestEvaluator(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
-	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
+	etcdClient := infraEtcd.Init([]string{"localhost:2379"})
 	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 
@@ -178,7 +177,7 @@ func TestEvaluator(t *testing.T) {
 func TestReview(t *testing.T) {
 	ctx := context.Background()
 	// 读取配置
-	etcdClient := infraEtcd.Init([]string{hub.LocalETCDEndpoint})
+	etcdClient := infraEtcd.Init([]string{"localhost:2379"})
 	InterviewServiceConf := config.LoadInterviewServiceConfig(ctx, etcdClient, manager.InterviewService+"/")
 	fmt.Println(InterviewServiceConf)
 

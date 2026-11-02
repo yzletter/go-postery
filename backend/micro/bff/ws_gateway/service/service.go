@@ -48,8 +48,8 @@ func NewWebsocketGateway(handler WSMessageHandler) *WebsocketGateway {
 // NewSessionConnectionGin 新建 Session Websocket 连接 gin HandlerFunc
 func (gate *WebsocketGateway) NewSessionConnectionGin(ctx *gin.Context) {
 	// 获取用户 ID
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}
@@ -62,8 +62,8 @@ func (gate *WebsocketGateway) NewSessionConnectionGin(ctx *gin.Context) {
 // NewInterviewConnectionGin gin HandlerFunc
 func (gate *WebsocketGateway) NewInterviewConnectionGin(ctx *gin.Context) {
 	// 获取用户 ID
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}

@@ -121,7 +121,7 @@ func (hdl *UserHandler) Posts(ctx *gin.Context) {
 
 	postsBack := make([]post_dto.BriefDTO, 0, len(resp.PostBriefs))
 	for _, post := range resp.PostBriefs {
-		postsBack = append(postsBack, post.BriefDTO{
+		postsBack = append(postsBack, post_dto.BriefDTO{
 			ID:        post.ID,
 			Title:     post.Title,
 			CreatedAt: post.CreatedAt,
@@ -153,8 +153,8 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -185,7 +185,7 @@ func (hdl *UserHandler) ModifyProfile(ctx *gin.Context) {
 		updateReq.Country = modifyProfileReq.Country
 	}
 
-	_, err = hdl.userSvc.UpdateProfile(ctx, updateReq)
+	_, err := hdl.userSvc.UpdateProfile(ctx, updateReq)
 	if err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrInvalidParam,
@@ -218,8 +218,8 @@ func (hdl *UserHandler) Top(ctx *gin.Context) {
 
 func (hdl *UserHandler) Follow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -249,8 +249,8 @@ func (hdl *UserHandler) Follow(ctx *gin.Context) {
 
 func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -280,8 +280,8 @@ func (hdl *UserHandler) UnFollow(ctx *gin.Context) {
 
 func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -310,8 +310,8 @@ func (hdl *UserHandler) IfFollow(ctx *gin.Context) {
 // ListFollowers 返回关注我的人
 func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -348,8 +348,8 @@ func (hdl *UserHandler) ListFollowers(ctx *gin.Context) {
 // ListFollowees 返回我关注的人
 func (hdl *UserHandler) ListFollowees(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -465,8 +465,8 @@ func (hdl *UserHandler) UploadAvatarCallback(ctx *gin.Context) {
 // UploadAvatarSign 上传头像
 func (hdl *UserHandler) UploadAvatarSign(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

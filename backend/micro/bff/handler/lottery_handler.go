@@ -58,8 +58,8 @@ func (hdl *LotteryHandler) GetAllGifts(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}
@@ -79,8 +79,8 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}
@@ -112,8 +112,8 @@ func (hdl *LotteryHandler) GiveUp(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}
@@ -149,8 +149,8 @@ func (hdl *LotteryHandler) Pay(ctx *gin.Context) {
 }
 
 func (hdl *LotteryHandler) Result(ctx *gin.Context) {
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUnauthorized)
 		return
 	}

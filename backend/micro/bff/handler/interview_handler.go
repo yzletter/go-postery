@@ -39,8 +39,8 @@ func (hdl *InterviewHandler) RegisterRouter(engine *gin.RouterGroup, authMiddlew
 // UploadQuestionsSign 获取上传题库 OSS 签名
 func (hdl *InterviewHandler) UploadQuestionsSign(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

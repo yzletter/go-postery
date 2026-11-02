@@ -196,15 +196,15 @@ func (hdl *PostHandler) Detail(ctx *gin.Context) {
 // CreatePost 创建帖子
 func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
 	// 参数绑定
 	var createRequest post2.CreatePostRequest
-	if err = ctx.ShouldBindJSON(&createRequest); err != nil {
+	if err := ctx.ShouldBindJSON(&createRequest); err != nil {
 		slog.Error("参数绑定失败", "error", utils.BindErrMsg(err))
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
@@ -239,8 +239,8 @@ func (hdl *PostHandler) CreatePost(ctx *gin.Context) {
 // DeletePost 删除帖子
 func (hdl *PostHandler) DeletePost(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -268,8 +268,8 @@ func (hdl *PostHandler) DeletePost(ctx *gin.Context) {
 // Update 修改帖子
 func (hdl *PostHandler) Update(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -313,8 +313,8 @@ func (hdl *PostHandler) Update(ctx *gin.Context) {
 // Belong 查询帖子作者是否为当前登录用户
 func (hdl *PostHandler) Belong(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -401,8 +401,8 @@ func (hdl *PostHandler) ListByPageAndUid(ctx *gin.Context) {
 
 func (hdl *PostHandler) Like(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -427,8 +427,8 @@ func (hdl *PostHandler) Like(ctx *gin.Context) {
 
 func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -453,8 +453,8 @@ func (hdl *PostHandler) Unlike(ctx *gin.Context) {
 
 func (hdl *PostHandler) IfLike(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -492,8 +492,8 @@ func (hdl *PostHandler) Top(ctx *gin.Context) {
 
 func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -533,14 +533,14 @@ func (hdl *PostHandler) CreateComment(ctx *gin.Context) {
 
 func (hdl *PostHandler) DeleteComment(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
 	// 获取帖子 id
-	_, err = strconv.ParseInt(ctx.Param("id"), 10, 64)
+	_, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		response.Error(ctx, errno.ErrInvalidParam)
 		return
@@ -689,8 +689,8 @@ func (hdl *PostHandler) ListReplies(ctx *gin.Context) {
 
 func (hdl *PostHandler) CheckCommentDeleteAuth(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

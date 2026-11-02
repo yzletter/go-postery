@@ -219,13 +219,13 @@ func (hdl *AuthHandler) UpdatePassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
 
-	if _, err = hdl.authSvc.UpdatePassword(ctx, &auth_grpc.UpdatePasswordRequest{
+	if _, err := hdl.authSvc.UpdatePassword(ctx, &auth_grpc.UpdatePasswordRequest{
 		UserID: uid, NewPassword: req.NewPass, OldPassword: req.OldPass}); err != nil {
 		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
 			codes.InvalidArgument: errno.ErrOldPasswordInvalid,
@@ -250,8 +250,8 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 	}
 
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -270,8 +270,8 @@ func (hdl *AuthHandler) SetPassword(ctx *gin.Context) {
 // HasPassword 查询密码状态
 func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -290,8 +290,8 @@ func (hdl *AuthHandler) HasPassword(ctx *gin.Context) {
 // GetAuthIdentity 获取用户身份认证
 func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -312,9 +312,8 @@ func (hdl *AuthHandler) GetAuthIdentity(ctx *gin.Context) {
 // Logout 退出登录
 func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	_, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
-		slog.Error("Get Uid From CTX Failed", "error", err)
+	if utils.GetUidFromCTX(ctx, conf.UserIDInContext) == 0 {
+		slog.Error("Get Uid From CTX Failed")
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -339,7 +338,7 @@ func (hdl *AuthHandler) Logout(ctx *gin.Context) {
 // Status 检查登录状态
 func (hdl *AuthHandler) Status(ctx *gin.Context) {
 	// 由于前面有 Auth 中间件, 能走到这里默认上下文里已经被 Auth 塞了 uid, 直接拿即可
-	if _, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext); err != nil {
+	if utils.GetUidFromCTX(ctx, conf.UserIDInContext) == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

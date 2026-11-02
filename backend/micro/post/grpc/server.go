@@ -8,7 +8,6 @@ import (
 	post_grpc2 "github.com/yzletter/go-postery/backend/api/proto/post/v1"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/micro/post/dto"
-	"github.com/yzletter/go-postery/backend/micro/post/grpc/dto"
 	"github.com/yzletter/go-postery/backend/micro/post/service"
 )
 

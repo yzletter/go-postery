@@ -47,8 +47,8 @@ func (hdl *SessionHandler) RegisterRouter(engine *gin.RouterGroup, authMiddlewar
 // List 列出会话列表
 func (hdl *SessionHandler) List(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -75,8 +75,8 @@ func (hdl *SessionHandler) List(ctx *gin.Context) {
 
 func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -107,8 +107,8 @@ func (hdl *SessionHandler) GetSession(ctx *gin.Context) {
 
 func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}
@@ -136,8 +136,8 @@ func (hdl *SessionHandler) Delete(ctx *gin.Context) {
 // GetHistoryMessage 获取历史消息
 func (hdl *SessionHandler) GetHistoryMessage(ctx *gin.Context) {
 	// 取当前登录用户 uid
-	uid, err := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
-	if err != nil {
+	uid := utils.GetUidFromCTX(ctx, conf.UserIDInContext)
+	if uid == 0 {
 		response.Error(ctx, errno.ErrUserNotLogin)
 		return
 	}

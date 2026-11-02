@@ -3,7 +3,7 @@ package lottery
 import (
 	"github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/user/v1"
-	userdto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
+	user_dto "github.com/yzletter/go-postery/backend/micro/bff/dto/user"
 )
 
 type GiftDTO struct {
@@ -68,20 +68,20 @@ func lotteryResultName(description string) string {
 }
 
 type OrderDTO struct {
-	ID        int64            `json:"id,string"` // 订单 ID
-	User      userdto.BriefDTO `json:"user"`
-	Gift      GiftDTO          `json:"gift"`
-	Count     int              `json:"count"`      // 购买数量
-	CreatedAt string           `json:"created_at"` // 创建时间
-	Status    int32            `json:"status"`     // 订单状态 0 待支付，1 已支付，2 已放弃，3 已超时
-	PaidAt    string           `json:"paid_at"`    // 支付时间
-	ExpireAt  string           `json:"expire_at"`  // 过期时间
+	ID        int64             `json:"id,string"` // 订单 ID
+	User      user_dto.BriefDTO `json:"user"`
+	Gift      GiftDTO           `json:"gift"`
+	Count     int               `json:"count"`      // 购买数量
+	CreatedAt string            `json:"created_at"` // 创建时间
+	Status    int32             `json:"status"`     // 订单状态 0 待支付，1 已支付，2 已放弃，3 已超时
+	PaidAt    string            `json:"paid_at"`    // 支付时间
+	ExpireAt  string            `json:"expire_at"`  // 过期时间
 }
 
 func ToOrderDTO(order *lottery_grpc.Order, user *user_grpc.Profile) OrderDTO {
 	return OrderDTO{
 		ID:        order.OrderID,
-		User:      user.ToBriefDTO(user),
+		User:      user_dto.ToBriefDTO(user),
 		Gift:      ToGiftDTO(order.Gift),
 		Count:     int(order.Count),
 		CreatedAt: order.CreatedAt,
