@@ -1,0 +1,540 @@
+[
+  {
+    "id": "eval_001",
+    "query": "我把一个服务放到几台机器上一起处理请求，这样的系统跟单机相比有什么特点？",
+    "relevant_doc_ids": [
+      "-1"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注多节点协作、对外提供统一服务及其收益和代价。"
+  },
+  {
+    "id": "eval_002",
+    "query": "同一份任务会被好几个服务实例抢到，想用 Redis 保证一次只有一个实例执行，锁应该怎么写？",
+    "relevant_doc_ids": [
+      "-5",
+      "-303"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 Redis 分布式锁的加锁和释放流程；仅解释锁的某个条件不算完整回答。"
+  },
+  {
+    "id": "eval_003",
+    "query": "业务还没跑完 Redis 锁就过期了，旧请求结束时怎么避免把别人的锁给删了？",
+    "relevant_doc_ids": [
+      "-9",
+      "-7",
+      "-5",
+      "-281",
+      "-303"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注锁过期后所有权变化和安全解锁；唯一标识校验及原子解锁的相关答案均纳入。"
+  },
+  {
+    "id": "eval_004",
+    "query": "订单号直接用 UUID，再拿它当 MySQL 主键，会不会有什么坑？",
+    "relevant_doc_ids": [
+      "-13",
+      "-12"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注 UUID 生成便利性和作为主键的局限；不要求展开其他全局 ID 方案。"
+  },
+  {
+    "id": "eval_005",
+    "query": "订单和库存拆成不同服务以后，为什么以前一个数据库事务的做法就不够了？",
+    "relevant_doc_ids": [
+      "-17"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注本地事务的管理边界和跨服务操作的一致性需求，不要求给出完整解决方案。"
+  },
+  {
+    "id": "eval_006",
+    "query": "TCC 要给每个业务写几套操作，这些操作是怎么配合起来完成一次事务的？",
+    "relevant_doc_ids": [
+      "-21",
+      "-18"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注 TCC 各阶段的职责及成功、失败时的配合方式。"
+  },
+  {
+    "id": "eval_007",
+    "query": "项目接入 Seata 后，它是怎么把几个服务里的数据库操作当成一个事务处理的？",
+    "relevant_doc_ids": [
+      "-25"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 Seata 的全局事务协调方式，尤其是 AT 模式中的提交和回滚。"
+  },
+  {
+    "id": "eval_008",
+    "query": "团队说服务拆分后要引入 ZooKeeper，它到底能帮我们解决哪些事情？",
+    "relevant_doc_ids": [
+      "-29"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 ZooKeeper 的典型应用；仅讨论某个一致性协议不算完整回答。"
+  },
+  {
+    "id": "eval_009",
+    "query": "限流设成每秒 100 次，在前一秒末尾和后一秒开头一起发请求，好像还能放过很多，这是为什么，怎么改？",
+    "relevant_doc_ids": [
+      "-33",
+      "-31"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注固定计数窗口的边界问题及改进方法；只解释问题而不涉及改进的题目未列入。"
+  },
+  {
+    "id": "eval_010",
+    "query": "看 Paxos 一直没看懂，几个节点意见不一样时，到底怎么选出大家都接受的结果？",
+    "relevant_doc_ids": [
+      "-37",
+      "-38"
+    ],
+    "topic": "分布式系统",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注 Paxos 的提案及达成共识过程；只解释 Raft 的题目不列入。"
+  },
+  {
+    "id": "eval_011",
+    "query": "我们准备做一个后端服务，选择 Go 有什么实际好处？",
+    "relevant_doc_ids": [
+      "-41"
+    ],
+    "topic": "Go",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注 Go 在开发效率和运行特性上的综合优势，而非单个语言机制。"
+  },
+  {
+    "id": "eval_012",
+    "query": "Go 代码里有个 struct{}，里面什么都没有，这样的值到底占不占内存？",
+    "relevant_doc_ids": [
+      "-52",
+      "-53"
+    ],
+    "topic": "Go",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注空结构体的大小；用途题的答案也明确说明了零大小特性。"
+  },
+  {
+    "id": "eval_013",
+    "query": "Go 里一个 slice 变量本身存的是什么，和里面那些元素是一回事吗？",
+    "relevant_doc_ids": [
+      "-63",
+      "-45"
+    ],
+    "topic": "Go",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注切片描述信息与底层数组的关系，不要求讨论切片扩容算法。"
+  },
+  {
+    "id": "eval_014",
+    "query": "Go 的 map 越放越大时，原来已经放进去的键值对会怎么处理？",
+    "relevant_doc_ids": [
+      "-74"
+    ],
+    "topic": "Go",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注普通 map 扩容时已有数据的迁移；不把 sync.Map 的读写流程混入。"
+  },
+  {
+    "id": "eval_015",
+    "query": "一个 goroutine 把 channel 关了，另一个还在往里面发数据，会发生什么？",
+    "relevant_doc_ids": [
+      "-85",
+      "-80"
+    ],
+    "topic": "Go",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注向已关闭通道发送数据的结果；发送流程题的答案明确涵盖这一情况。"
+  },
+  {
+    "id": "eval_016",
+    "query": "很多 goroutine 都要用同一份配置，怎么保证初始化函数只跑一遍？",
+    "relevant_doc_ids": [
+      "-96"
+    ],
+    "topic": "Go",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注并发环境中只执行一次的初始化；普通互斥锁或原子操作介绍不自动算相关。"
+  },
+  {
+    "id": "eval_017",
+    "query": "Go 的 interface{} 和自己定义了方法的接口，底层用的是同一种结构吗？",
+    "relevant_doc_ids": [
+      "-107",
+      "-106"
+    ],
+    "topic": "Go",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注空接口和非空接口的内部表示差异，不要求解释类型转换语法。"
+  },
+  {
+    "id": "eval_018",
+    "query": "Go 协程因为等数据或等锁停住了，运行时一般会在什么情况下调度别的协程？",
+    "relevant_doc_ids": [
+      "-118"
+    ],
+    "topic": "Go",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注阻塞等待引起的调度时机；仅介绍长时间运行后的抢占策略不足以回答此问。"
+  },
+  {
+    "id": "eval_019",
+    "query": "Go 已经有垃圾回收了，为什么服务跑久了还是会内存泄漏？",
+    "relevant_doc_ids": [
+      "-129",
+      "-142"
+    ],
+    "topic": "Go",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注引用未释放及协程泄漏等原因，不把仅介绍内存逃逸的题目列入。"
+  },
+  {
+    "id": "eval_020",
+    "query": "Go 的 GC 是什么时候开始工作的？我能不能在代码里让它执行一次？",
+    "relevant_doc_ids": [
+      "-140"
+    ],
+    "topic": "Go",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注垃圾回收的自动触发条件和主动触发方式，而不是回收阶段本身。"
+  },
+  {
+    "id": "eval_021",
+    "query": "两个服务之间用了 MQ，消息从发出去到被业务处理，中间到底是怎么走的？",
+    "relevant_doc_ids": [
+      "-154",
+      "-167"
+    ],
+    "topic": "消息队列",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注生产者、消息服务和消费者之间的基本流程；系统设计题也描述了该流程。"
+  },
+  {
+    "id": "eval_022",
+    "query": "项目想引入消息队列，Kafka、RocketMQ、RabbitMQ 这么多，该从哪些方面选？",
+    "relevant_doc_ids": [
+      "-158",
+      "-159"
+    ],
+    "topic": "消息队列",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注消息中间件的比较维度和适用场景，不把单个产品的局部机制视作完整选型回答。"
+  },
+  {
+    "id": "eval_023",
+    "query": "同一条支付消息可能收到两次，怎么保证不会给用户重复扣款？",
+    "relevant_doc_ids": [
+      "-162",
+      "-161",
+      "-188"
+    ],
+    "topic": "消息队列",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注重复投递下消费端的业务幂等；消息丢失和消费顺序不属于本题目标。"
+  },
+  {
+    "id": "eval_024",
+    "query": "如果消息队列有一台机器突然宕了，怎样让业务还能继续发消息和消费？",
+    "relevant_doc_ids": [
+      "-166",
+      "-177",
+      "-195",
+      "-167"
+    ],
+    "topic": "消息队列",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注故障后服务连续性；通用设计和具体产品中描述副本接替的答案均纳入。"
+  },
+  {
+    "id": "eval_025",
+    "query": "Kafka 经常被用在日志系统里，它到底有什么特点，还适合哪些场景？",
+    "relevant_doc_ids": [
+      "-170",
+      "-159"
+    ],
+    "topic": "消息队列",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 Kafka 的主要特征和适用业务；多产品对比题也直接涵盖 Kafka 的这一部分。"
+  },
+  {
+    "id": "eval_026",
+    "query": "Kafka 的一个 topic 想让多个消费者一起处理，消息是怎么分给它们的？",
+    "relevant_doc_ids": [
+      "-174"
+    ],
+    "topic": "消息队列",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注同一消费组内的分区分工，不把推拉模型或 offset 提交机制列为相同问题。"
+  },
+  {
+    "id": "eval_027",
+    "query": "Kafka 里同一个订单的几条状态消息，怎么才能按先后顺序处理？",
+    "relevant_doc_ids": [
+      "-178",
+      "-165"
+    ],
+    "topic": "消息队列",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 Kafka 的业务局部顺序；通用顺序消费题以 Kafka 为例给出了对应做法。"
+  },
+  {
+    "id": "eval_028",
+    "query": "做订单和支付这类业务，选择 RocketMQ 的理由是什么？跟其他队列比有什么优势？",
+    "relevant_doc_ids": [
+      "-182",
+      "-158",
+      "-159",
+      "-183"
+    ],
+    "topic": "消息队列",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注 RocketMQ 的业务适配和产品比较；不要求实现某一种具体消息机制。"
+  },
+  {
+    "id": "eval_029",
+    "query": "用 RocketMQ 发了下单、付款、发货三个事件，消费时怎样保证不乱序？",
+    "relevant_doc_ids": [
+      "-186"
+    ],
+    "topic": "消息队列",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 RocketMQ 生产和消费两端保障同一业务消息顺序的方式。"
+  },
+  {
+    "id": "eval_030",
+    "query": "RabbitMQ 文档里总提到 AMQP，这是另一个中间件吗？跟 RabbitMQ 是什么关系？",
+    "relevant_doc_ids": [
+      "-190"
+    ],
+    "topic": "消息队列",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注协议规范和具体产品的关系，而非交换机类型列表。"
+  },
+  {
+    "id": "eval_031",
+    "query": "设计 MySQL 表时大家说要满足三范式，具体要检查什么？",
+    "relevant_doc_ids": [
+      "-199"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注三范式各自约束；索引设计和分库分表不属于此问。"
+  },
+  {
+    "id": "eval_032",
+    "query": "MySQL 我只想清空表里的数据，有人用 delete、有人用 truncate，这跟 drop 有什么区别？",
+    "relevant_doc_ids": [
+      "-205"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注删除数据和删除表结构的语义及操作差异。"
+  },
+  {
+    "id": "eval_033",
+    "query": "转账要先扣一个账户再给另一个加钱，数据库怎么避免只做成一半？",
+    "relevant_doc_ids": [
+      "-211",
+      "-212"
+    ],
+    "topic": "MySQL",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注数据库事务及原子性；事务定义和 ACID 中的原子性说明均能回答。"
+  },
+  {
+    "id": "eval_034",
+    "query": "MySQL 直接 select 和 select for update，读到的数据、加的锁有什么区别？",
+    "relevant_doc_ids": [
+      "-217"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注普通查询和加锁查询的读语义；仅介绍 MVCC 数据结构不算完整回答。"
+  },
+  {
+    "id": "eval_035",
+    "query": "InnoDB 按主键查一行和按普通索引查一行，底层找数据的路径有什么不同？",
+    "relevant_doc_ids": [
+      "-223",
+      "-208",
+      "-227"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注主键索引、二级索引及需要完整记录时的回表路径；覆盖索引题也解释了该路径。"
+  },
+  {
+    "id": "eval_036",
+    "query": "MySQL 用联合索引过滤数据时，索引下推到底省掉了哪部分开销？",
+    "relevant_doc_ids": [
+      "-229"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注索引下推的过滤位置和收益；不把覆盖索引直接等同于索引下推。"
+  },
+  {
+    "id": "eval_037",
+    "query": "MySQL 两个事务都读一行会互相挡住吗？一个读一个写呢？想弄清楚 S 锁和 X 锁。",
+    "relevant_doc_ids": [
+      "-235",
+      "-232"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注共享锁与排他锁的兼容关系，不把锁粒度介绍当成相同问题。"
+  },
+  {
+    "id": "eval_038",
+    "query": "MySQL 的 redo log 文件大小是固定的，那写到头以后怎么办？",
+    "relevant_doc_ids": [
+      "-241"
+    ],
+    "topic": "MySQL",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注重做日志文件空间的循环使用，不要求解释全部刷盘时机。"
+  },
+  {
+    "id": "eval_039",
+    "query": "MySQL 更新时 redo log 已经写了、binlog 还没写就宕机，会有什么后果？反过来呢？",
+    "relevant_doc_ids": [
+      "-247",
+      "-246"
+    ],
+    "topic": "MySQL",
+    "difficulty": "hard",
+    "note": "模拟用户提问，非线上日志。关注两种日志提交不一致的风险及两阶段提交的必要性。"
+  },
+  {
+    "id": "eval_040",
+    "query": "MySQL 从库越来越跟不上主库了，通常要先排查哪些原因？",
+    "relevant_doc_ids": [
+      "-253"
+    ],
+    "topic": "MySQL",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注复制延迟的成因；不把所有主从数据不一致问题都混入此问。"
+  },
+  {
+    "id": "eval_041",
+    "query": "Redis 这么多数据类型，实际业务里该怎么选，有没有常见的使用例子？",
+    "relevant_doc_ids": [
+      "-265"
+    ],
+    "topic": "Redis",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注不同数据类型与业务需求的对应关系，而非某个单独底层结构的实现。"
+  },
+  {
+    "id": "eval_042",
+    "query": "Redis 的跳表节点为什么有的层数多、有的少？插入新节点时层数怎么定？",
+    "relevant_doc_ids": [
+      "-269"
+    ],
+    "topic": "Redis",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注跳表节点层高的确定方式；仅解释多层链表查找过程不算完整回答。"
+  },
+  {
+    "id": "eval_043",
+    "query": "Redis 的哈希表扩容要搬很多数据，会不会一下把服务卡住？旧数据是怎么搬的？",
+    "relevant_doc_ids": [
+      "-273"
+    ],
+    "topic": "Redis",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注哈希表迁移过程如何分摊工作；只解释迁移期间读取路径不算完整回答。"
+  },
+  {
+    "id": "eval_044",
+    "query": "Redis 为什么能把请求处理得这么快，主要快在哪些地方？",
+    "relevant_doc_ids": [
+      "-277",
+      "-298"
+    ],
+    "topic": "Redis",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注 Redis 的性能来源；与 MySQL 对比的答案也说明了内存、结构和线程模型因素。"
+  },
+  {
+    "id": "eval_045",
+    "query": "Redis 我想连续改几个 key，又不想让别的请求插进来，该怎么做？",
+    "relevant_doc_ids": [
+      "-281",
+      "-302",
+      "-282"
+    ],
+    "topic": "Redis",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注多个命令执行期间不被其他请求穿插；不要求关系型数据库式的失败回滚保证。"
+  },
+  {
+    "id": "eval_046",
+    "query": "想给 Redis 做一份当前数据的快照，它是怎么生成和保存的，会阻塞请求吗？",
+    "relevant_doc_ids": [
+      "-285",
+      "-283"
+    ],
+    "topic": "Redis",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注快照持久化及主线程影响；持久化方式对比题也包含子进程生成快照的说明。"
+  },
+  {
+    "id": "eval_047",
+    "query": "Redis 的 key 设了过期时间，到期会马上从内存删掉吗？具体什么时候清理？",
+    "relevant_doc_ids": [
+      "-289",
+      "-290"
+    ],
+    "topic": "Redis",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注到期后的删除时机和策略，不把内存不足时的淘汰机制混入。"
+  },
+  {
+    "id": "eval_048",
+    "query": "Redis 主库挂了以后，哨兵怎么发现故障、决定让哪个从库接替？",
+    "relevant_doc_ids": [
+      "-293",
+      "-294"
+    ],
+    "topic": "Redis",
+    "difficulty": "medium",
+    "note": "模拟用户提问，非线上日志。关注 Sentinel 故障检测和故障转移；不要求解释 Redis Cluster 的分片路由。"
+  },
+  {
+    "id": "eval_049",
+    "query": "数据库读请求太多扛不住，在前面加 Redis 缓存为什么能改善性能？",
+    "relevant_doc_ids": [
+      "-297"
+    ],
+    "topic": "Redis",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注缓存热点查询对数据库压力和访问性能的收益，不要求讨论缓存一致性方案。"
+  },
+  {
+    "id": "eval_050",
+    "query": "Redis 我只拿来当缓存用过，还有哪些常见的业务用途？",
+    "relevant_doc_ids": [
+      "-301",
+      "-265"
+    ],
+    "topic": "Redis",
+    "difficulty": "easy",
+    "note": "模拟用户提问，非线上日志。关注缓存之外的业务用途；数据类型题的答案也给出了多种业务场景。"
+  }
+]

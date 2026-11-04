@@ -97,21 +97,25 @@ Jaeger 使用项目当前的 OTLP HTTP 导出器，因此配置端口为 `4318`�
 | `go_postery/conf/service_conf/interactive_service_conf/prometheus/port` | `9110` |
 | `go_postery/conf/service_conf/interactive_service_conf/grpc/port` | `9010` |
 
-## Interview 服务（11 个）
+## Interview 服务（13 个）
 
 | Key | 默认值 |
 | --- | --- |
-| `go_postery/conf/service_conf/interview_service_conf/log/filepath` | `./logs/interview_service.log` |
-| `go_postery/conf/service_conf/interview_service_conf/prometheus/port` | `9111` |
-| `go_postery/conf/service_conf/interview_service_conf/grpc/port` | `9011` |
-| `go_postery/conf/service_conf/interview_service_conf/ark/embedder_model` | `doubao-embedding-vision-251215` |
-| `go_postery/conf/service_conf/interview_service_conf/ark/llm_model` | `doubao-seed-2-1-turbo-260628` |
-| `go_postery/conf/service_conf/interview_service_conf/ark/api_key` | （空） |
-| `go_postery/conf/service_conf/interview_service_conf/qwen/embedder_model` | `text-embedding-v3` |
-| `go_postery/conf/service_conf/interview_service_conf/qwen/base_url` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
-| `go_postery/conf/service_conf/interview_service_conf/qwen/llm_model` | `qwen-plus` |
-| `go_postery/conf/service_conf/interview_service_conf/qwen/api_key` | （空） |
-| `go_postery/conf/service_conf/interview_service_conf/github/token` | （空） |
+| `go_postery/conf/service_conf/interview_service/log/filepath` | `./logs/interview_service.log` |
+| `go_postery/conf/service_conf/interview_service/prometheus/port` | `9111` |
+| `go_postery/conf/service_conf/interview_service/grpc/port` | `9011` |
+| `go_postery/conf/service_conf/interview_service/ark/embedder_model` | `doubao-embedding-vision-251215` |
+| `go_postery/conf/service_conf/interview_service/ark/llm_model` | `doubao-seed-2-1-turbo-260628` |
+| `go_postery/conf/service_conf/interview_service/ark/api_key` | （空） |
+| `go_postery/conf/service_conf/interview_service/qwen/embedder_model` | `text-embedding-v3` |
+| `go_postery/conf/service_conf/interview_service/qwen/llm_base_url` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `go_postery/conf/service_conf/interview_service/qwen/embedder_base_url` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `go_postery/conf/service_conf/interview_service/qwen/llm_model` | `qwen-plus` |
+| `go_postery/conf/service_conf/interview_service/qwen/llm_api_key` | （空） |
+| `go_postery/conf/service_conf/interview_service/qwen/embedder_api_key` | （空） |
+| `go_postery/conf/service_conf/interview_service/github/token` | （空） |
+
+Qwen 的 API Key 和 Base URL 分别用于 LLM 和 Embedding，不再读取旧的 `qwen/api_key` 和 `qwen/base_url`。更新已有配置文件时需使用上述新键；写入 etcd 后，重启 Interview 服务以加载新配置。
 
 ## Lottery 服务（3 个）
 
@@ -175,10 +179,10 @@ Jaeger 使用项目当前的 OTLP HTTP 导出器，因此配置端口为 `4318`�
 | `go_postery/conf/service_conf/user_service_conf/prometheus/port` | `9107` |
 | `go_postery/conf/service_conf/user_service_conf/grpc/port` | `9007` |
 
-## 当前需要自行填写的 14 个 Key
+## 当前需要自行填写的 15 个 Key
 
 - Code：发件邮箱、邮箱授权码、公司地址、短信 AccessKey ID 和 Secret。
-- Interview：Ark API Key、Qwen API Key、GitHub Token。
+- Interview：Ark API Key、Qwen LLM API Key、Qwen Embedding API Key、GitHub Token。
 - OSS：AccessKey ID、AccessKey Secret、ARN、Region、Bucket 和 Callback URL。
 
 填写 `config.local.conf` 并启动基础设施后，运行 `./init-data.sh` 导入全部配置和初始化数据。

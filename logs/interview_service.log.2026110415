@@ -1,0 +1,25 @@
+{"time":"2026-11-04 15:00:03.396","level":"INFO","msg":"[Eval] (49/50) sample=eval_049 query=\"数据库读请求太多扛不住，在前面加 Redis 缓存为什么能改善性能？\""}
+{"time":"2026-11-04 15:00:29.312","level":"INFO","msg":"[Eval] (28/50) sample=eval_028 query=\"做订单和支付这类业务，选择 RocketMQ 的理由是什么？跟其他队列比有什么优势？\""}
+{"time":"2026-11-04 15:00:33.194","level":"INFO","msg":"[Eval] (50/50) sample=eval_050 query=\"Redis 我只拿来当缓存用过，还有哪些常见的业务用途？\""}
+{"time":"2026-11-04 15:00:46.196","level":"INFO","msg":"[Eval] (29/50) sample=eval_029 query=\"用 RocketMQ 发了下单、付款、发货三个事件，消费时怎样保证不乱序？\""}
+{"time":"2026-11-04 15:01:42.512","level":"INFO","msg":"[Eval] (30/50) sample=eval_030 query=\"RabbitMQ 文档里总提到 AMQP，这是另一个中间件吗？跟 RabbitMQ 是什么关系？\""}
+{"time":"2026-11-04 15:01:59.280","level":"INFO","msg":"[Eval] (31/50) sample=eval_031 query=\"设计 MySQL 表时大家说要满足三范式，具体要检查什么？\""}
+{"time":"2026-11-04 15:02:46.834","level":"INFO","msg":"[Eval] (32/50) sample=eval_032 query=\"MySQL 我只想清空表里的数据，有人用 delete、有人用 truncate，这跟 drop 有什么区别？\""}
+{"time":"2026-11-04 15:03:44.691","level":"INFO","msg":"[Eval] (33/50) sample=eval_033 query=\"转账要先扣一个账户再给另一个加钱，数据库怎么避免只做成一半？\""}
+{"time":"2026-11-04 15:04:47.101","level":"INFO","msg":"[Eval] (34/50) sample=eval_034 query=\"MySQL 直接 select 和 select for update，读到的数据、加的锁有什么区别？\""}
+{"time":"2026-11-04 15:05:49.449","level":"INFO","msg":"[Eval] (35/50) sample=eval_035 query=\"InnoDB 按主键查一行和按普通索引查一行，底层找数据的路径有什么不同？\""}
+{"time":"2026-11-04 15:06:32.507","level":"INFO","msg":"[Eval] (36/50) sample=eval_036 query=\"MySQL 用联合索引过滤数据时，索引下推到底省掉了哪部分开销？\""}
+{"time":"2026-11-04 15:06:53.248","level":"INFO","msg":"[Eval] (37/50) sample=eval_037 query=\"MySQL 两个事务都读一行会互相挡住吗？一个读一个写呢？想弄清楚 S 锁和 X 锁。\""}
+{"time":"2026-11-04 15:08:05.518","level":"INFO","msg":"[Eval] (38/50) sample=eval_038 query=\"MySQL 的 redo log 文件大小是固定的，那写到头以后怎么办？\""}
+{"time":"2026-11-04 15:09:00.362","level":"INFO","msg":"[Eval] (39/50) sample=eval_039 query=\"MySQL 更新时 redo log 已经写了、binlog 还没写就宕机，会有什么后果？反过来呢？\""}
+{"time":"2026-11-04 15:09:52.910","level":"INFO","msg":"[Eval] (40/50) sample=eval_040 query=\"MySQL 从库越来越跟不上主库了，通常要先排查哪些原因？\""}
+{"time":"2026-11-04 15:10:23.420","level":"INFO","msg":"[Eval] (41/50) sample=eval_041 query=\"Redis 这么多数据类型，实际业务里该怎么选，有没有常见的使用例子？\""}
+{"time":"2026-11-04 15:11:36.630","level":"INFO","msg":"[Eval] (42/50) sample=eval_042 query=\"Redis 的跳表节点为什么有的层数多、有的少？插入新节点时层数怎么定？\""}
+{"time":"2026-11-04 15:12:30.195","level":"INFO","msg":"[Eval] (43/50) sample=eval_043 query=\"Redis 的哈希表扩容要搬很多数据，会不会一下把服务卡住？旧数据是怎么搬的？\""}
+{"time":"2026-11-04 15:13:13.704","level":"INFO","msg":"[Eval] (44/50) sample=eval_044 query=\"Redis 为什么能把请求处理得这么快，主要快在哪些地方？\""}
+{"time":"2026-11-04 15:14:08.540","level":"INFO","msg":"[Eval] (45/50) sample=eval_045 query=\"Redis 我想连续改几个 key，又不想让别的请求插进来，该怎么做？\""}
+{"time":"2026-11-04 15:14:55.879","level":"INFO","msg":"[Eval] (46/50) sample=eval_046 query=\"想给 Redis 做一份当前数据的快照，它是怎么生成和保存的，会阻塞请求吗？\""}
+{"time":"2026-11-04 15:15:38.949","level":"INFO","msg":"[Eval] (47/50) sample=eval_047 query=\"Redis 的 key 设了过期时间，到期会马上从内存删掉吗？具体什么时候清理？\""}
+{"time":"2026-11-04 15:16:07.163","level":"INFO","msg":"[Eval] (48/50) sample=eval_048 query=\"Redis 主库挂了以后，哨兵怎么发现故障、决定让哪个从库接替？\""}
+{"time":"2026-11-04 15:16:48.651","level":"INFO","msg":"[Eval] (49/50) sample=eval_049 query=\"数据库读请求太多扛不住，在前面加 Redis 缓存为什么能改善性能？\""}
+{"time":"2026-11-04 15:18:10.977","level":"INFO","msg":"[Eval] (50/50) sample=eval_050 query=\"Redis 我只拿来当缓存用过，还有哪些常见的业务用途？\""}

@@ -1,0 +1,11 @@
+{"time":"2026-11-04 11:00:14.558","level":"INFO","msg":"[Eval] (40/50) sample=eval_040 query=\"线上 MySQL 主从数据不一致且从库持续落后 排查哪些原因\""}
+{"time":"2026-11-04 11:00:45.283","level":"INFO","msg":"[Eval] (41/50) sample=eval_041 query=\"Redis 常用的数据类型分别可以用在什么地方\""}
+{"time":"2026-11-04 11:01:25.332","level":"INFO","msg":"[Eval] (42/50) sample=eval_042 query=\"Redis 有序集合底层的多层链表如何决定节点索引高度\""}
+{"time":"2026-11-04 11:02:03.748","level":"INFO","msg":"[Eval] (43/50) sample=eval_043 query=\"Redis 字典扩容期间如何处理旧数据\""}
+{"time":"2026-11-04 11:03:34.269","level":"INFO","msg":"[Eval] (44/50) sample=eval_044 query=\"Redis 为什么能提供较低的访问延迟\""}
+{"time":"2026-11-04 11:04:10.277","level":"INFO","msg":"[Eval] (45/50) sample=eval_045 query=\"Redis 多个命令作为一个整体执行如何防止并发干扰\""}
+{"time":"2026-11-04 11:04:49.916","level":"INFO","msg":"[Eval] (46/50) sample=eval_046 query=\"Redis 如何将内存数据保存为快照文件\""}
+{"time":"2026-11-04 11:05:54.202","level":"INFO","msg":"[Eval] (47/50) sample=eval_047 query=\"Redis 中带过期时间的数据到期后如何清理\""}
+{"time":"2026-11-04 11:06:29.537","level":"INFO","msg":"[Eval] (48/50) sample=eval_048 query=\"Redis 主节点故障后如何自动完成主从切换\""}
+{"time":"2026-11-04 11:08:01.211","level":"INFO","msg":"[Eval] (49/50) sample=eval_049 query=\"数据库承受大量热点查询时引入 Redis 有什么收益\""}
+{"time":"2026-11-04 11:08:52.459","level":"INFO","msg":"[Eval] (50/50) sample=eval_050 query=\"Redis 除了缓存还能在业务系统中做什么\""}

@@ -1,8 +1,3 @@
-/**
- * @author: 公众号：IT杨秀才
- * @doc:后端，AI Agent知识进阶，后端、AI大模型、场景题面试大全：https://golangstar.cn/
- */
-
 package skill
 
 // SkillRegistry Skill 注册中心，管理所有已注册的 Skill 并提供意图匹配

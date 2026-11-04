@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"syscall"
 	"time"
 
@@ -48,10 +50,39 @@ const (
 	ServicePrefix = Service + "/"            // 微服务配置前缀
 )
 
+func runEval(args []string) {
+	fs := flag.NewFlagSet("eval", flag.ExitOnError)
+	prepare := fs.Bool("prepare", false, "准备评估环境：解析 MD 题库写入 Milvus/BM25，导出 manifest.json")
+	genDataset := fs.Bool("gen-dataset", false, "基于 manifest 自动生成评估数据集（需先运行 --prepare）")
+	datasetPath := fs.String("dataset", "data/eval/dataset_v1.json", "评估数据集路径")
+	outDir := fs.String("out", "data/eval/reports", "报告输出目录")
+	note := fs.String("note", "", "实验备注，写入报告 Config.Note，便于 A/B 对比")
+	skipRerank := fs.Bool("skip-rerank", false, "跳过 LLM Rerank 阶段（用于 A/B 对比）")
+	questionsDir := fs.String("questions", "data/questions", "题库 MD 文件目录（仅 --prepare 模式使用）")
+	manifestPath := fs.String("manifest", "data/eval/manifest.json", "manifest 输出/读取路径")
+	sampleCount := fs.Int("sample-count", 50, "自动生成数据集的样本数量（仅 --gen-dataset 使用）")
+	if err := fs.Parse(args); err != nil {
+		log.Fatalf("解析参数失败: %v", err)
+	}
+
+	if *prepare {
+		runEvalPrepare(*questionsDir, *manifestPath)
+	} else if *genDataset {
+		runEvalGenDataset(*manifestPath, *datasetPath, *sampleCount)
+	} else {
+		runEvalExecute(*datasetPath, *outDir, *note, *skipRerank, *manifestPath)
+	}
+}
+
 func main() {
+	// RAG 评估
+	if len(os.Args) > 1 && os.Args[1] == "eval" {
+		runEval(os.Args[2:])
+		return
+	}
+
 	// 启动时指定远程配置中心地址
 	etcdEndpoint := flag.String("etcd", "localhost:2379", "远程配置中心地址，默认为本地")
-	evaluation := flag.Bool("evaluation", false, "运行 RAG 离线评估")
 	flag.Parse()
 
 	// 获取本地内网 IP
@@ -63,12 +94,6 @@ func main() {
 
 	// 全局 Context
 	ctx, cancel := context.WithCancel(context.Background())
-
-	// RAG 离线评估
-	if *evaluation {
-		//evaluation.RunEval(ctx)
-		return
-	}
 
 	// Init Etcd
 	etcdClient := infraEtcd.Init([]string{*etcdEndpoint})

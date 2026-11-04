@@ -1,8 +1,3 @@
-/**
- * @author: 公众号：IT杨秀才
- * @doc:后端，AI Agent知识进阶，后端、AI大模型、场景题面试大全：https://golangstar.cn/
- */
-
 // Package skill 定义 Skill 技能系统的核心接口和数据类型
 // Skill 是介于 Tool（MCP 无状态工具）和 Agent（DAG 预编排流程）之间的能力层级：
 // 有状态、多轮交互、用户意图动态触发、可插拔

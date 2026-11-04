@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"strconv"
+	"strings"
 
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
@@ -149,19 +150,34 @@ func LoadArkConfig(ctx context.Context, client *etcdv3.Client, prefix string) Ar
 
 // LoadQwenConfig 加载 Qwen 配置
 func LoadQwenConfig(ctx context.Context, client *etcdv3.Client, prefix string) QwenConfig {
+	return loadQwenConfig(ctx, client, prefix)
+}
+
+type qwenConfigReader interface {
+	Get(ctx context.Context, key string, opts ...etcdv3.OpOption) (*etcdv3.GetResponse, error)
+}
+
+func loadQwenConfig(ctx context.Context, client qwenConfigReader, prefix string) QwenConfig {
 	var config QwenConfig
 
 	if resp, err := client.Get(ctx, prefix+"qwen/embedder_model"); err == nil {
 		if len(resp.Kvs) > 0 {
 			config.EmbedderModel = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"ark/embedder_model"] = struct{}{}
+			watchKeys[prefix+"qwen/embedder_model"] = struct{}{}
 		}
 	}
 
-	if resp, err := client.Get(ctx, prefix+"qwen/base_url"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"qwen/llm_base_url"); err == nil {
 		if len(resp.Kvs) > 0 {
-			config.BaseURL = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"qwen/base_url"] = struct{}{}
+			config.LLMBaseURL = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qwen/llm_base_url"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"qwen/embedder_base_url"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.EmbedderBaseURL = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qwen/embedder_base_url"] = struct{}{}
 		}
 	}
 
@@ -172,10 +188,17 @@ func LoadQwenConfig(ctx context.Context, client *etcdv3.Client, prefix string) Q
 		}
 	}
 
-	if resp, err := client.Get(ctx, prefix+"qwen/api_key"); err == nil {
+	if resp, err := client.Get(ctx, prefix+"qwen/llm_api_key"); err == nil {
 		if len(resp.Kvs) > 0 {
-			config.APIKey = string(resp.Kvs[0].Value)
-			watchKeys[prefix+"qwen/api_key"] = struct{}{}
+			config.LLMAPIKey = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qwen/llm_api_key"] = struct{}{}
+		}
+	}
+
+	if resp, err := client.Get(ctx, prefix+"qwen/embedder_api_key"); err == nil {
+		if len(resp.Kvs) > 0 {
+			config.EmbedderAPIKey = string(resp.Kvs[0].Value)
+			watchKeys[prefix+"qwen/embedder_api_key"] = struct{}{}
 		}
 	}
 
@@ -190,9 +213,12 @@ func WatchConfig(ctx context.Context, client *etcdv3.Client, prefix string) {
 			// 只关心 PUT 即数据更新
 			if event.Type == etcdv3.EventTypePut {
 				key := string(event.Kv.Key)
-				value := string(event.Kv.Value)
 				if _, exists := watchKeys[key]; exists {
-					slog.Info("Config Has Changed", "name", key, "change", value)
+					if strings.HasSuffix(key, "/qwen/llm_api_key") || strings.HasSuffix(key, "/qwen/embedder_api_key") {
+						slog.Info("Config Has Changed", "name", key)
+					} else {
+						slog.Info("Config Has Changed", "name", key, "change", string(event.Kv.Value))
+					}
 				}
 			}
 		}

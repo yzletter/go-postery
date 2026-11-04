@@ -86,7 +86,7 @@ func TestRerank(t *testing.T) {
 	printRes(fusedRes)
 
 	// 重排
-	crossEncoderReranker := NewCrossEncoderReranker(InterviewServiceConf.Qwen.APIKey, "qwen3-vl-rerank", TopK)
+	crossEncoderReranker := NewCrossEncoderReranker(InterviewServiceConf.Qwen.LLMAPIKey, "qwen3-vl-rerank", TopK)
 	res, err := crossEncoderReranker.Rerank(ctx, query, fusedRes)
 	if err != nil {
 		fmt.Println("CrossEncoderReranker 重排失败")

@@ -1,0 +1,221 @@
+{"time":"2026-11-03 21:21:44.685","level":"INFO","source":{"function":"github.com/yzletter/go-postery/backend/infra/llm.NewQwenEmbedder","file":"/Users/yzletter/go_project/go-postery/backend/infra/llm/embedder.go","line":152},"msg":"Init QwenEmbedder Success"}
+{"time":"2026-11-03 21:21:44.705","level":"INFO","msg":"载入sego词典 /var/folders/93/fh0k1rc964d1vqkcvwrjg6040000gn/T/go-postery-sego-dictionary-25ef44e4fa1ffda3.txt"}
+{"time":"2026-11-03 21:21:45.656","level":"INFO","msg":"sego词典载入完毕"}
+{"time":"2026-11-03 21:21:45.709","level":"INFO","msg":"[BM25] 从 manifest 加载完成: 312 篇文档 (userID=0)"}
+{"time":"2026-11-03 21:21:45.709","level":"INFO","msg":"[Eval] (1/50) sample=eval_001 query=\"多台计算机协作完成任务的系统是什么\""}
+{"time":"2026-11-03 21:21:53.025","level":"INFO","source":{"function":"github.com/yzletter/go-postery/backend/infra/llm.NewQwenEmbedder","file":"/Users/yzletter/go_project/go-postery/backend/infra/llm/embedder.go","line":152},"msg":"Init QwenEmbedder Success"}
+{"time":"2026-11-03 21:21:53.040","level":"INFO","msg":"载入sego词典 /var/folders/93/fh0k1rc964d1vqkcvwrjg6040000gn/T/go-postery-sego-dictionary-25ef44e4fa1ffda3.txt"}
+{"time":"2026-11-03 21:21:53.973","level":"INFO","msg":"sego词典载入完毕"}
+{"time":"2026-11-03 21:21:54.018","level":"INFO","msg":"[BM25] 从 manifest 加载完成: 312 篇文档 (userID=0)"}
+{"time":"2026-11-03 21:21:54.018","level":"INFO","msg":"[Eval] (1/50) sample=eval_001 query=\"多台计算机协作完成任务的系统是什么\""}
+{"time":"2026-11-03 21:22:06.221","level":"INFO","msg":"[Eval] (2/50) sample=eval_002 query=\"多个服务实例争抢同一资源 Redis 锁如何实现\""}
+{"time":"2026-11-03 21:22:25.309","level":"INFO","msg":"[Eval] (3/50) sample=eval_003 query=\"Redis 锁过期后被别人拿到 原持有者如何安全解锁\""}
+{"time":"2026-11-03 21:22:43.127","level":"INFO","msg":"[Eval] (4/50) sample=eval_004 query=\"订单表主键使用 UUID 有哪些取舍\""}
+{"time":"2026-11-03 21:22:59.546","level":"INFO","source":{"function":"github.com/yzletter/go-postery/backend/infra/llm.NewQwenEmbedder","file":"/Users/yzletter/go_project/go-postery/backend/infra/llm/embedder.go","line":152},"msg":"Init QwenEmbedder Success"}
+{"time":"2026-11-03 21:22:59.567","level":"INFO","msg":"载入sego词典 /var/folders/93/fh0k1rc964d1vqkcvwrjg6040000gn/T/go-postery-sego-dictionary-25ef44e4fa1ffda3.txt"}
+{"time":"2026-11-03 21:23:00.466","level":"INFO","msg":"sego词典载入完毕"}
+{"time":"2026-11-03 21:23:00.517","level":"INFO","msg":"[BM25] 从 manifest 加载完成: 312 篇文档 (userID=0)"}
+{"time":"2026-11-03 21:23:00.517","level":"INFO","msg":"[Eval] (1/50) sample=eval_001 query=\"多台计算机协作完成任务的系统是什么\""}
+{"time":"2026-11-03 21:23:00.645","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:00.807","level":"INFO","msg":"[Eval] (2/50) sample=eval_002 query=\"多个服务实例争抢同一资源 Redis 锁如何实现\""}
+{"time":"2026-11-03 21:23:00.850","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:00.937","level":"INFO","msg":"[Eval] (3/50) sample=eval_003 query=\"Redis 锁过期后被别人拿到 原持有者如何安全解锁\""}
+{"time":"2026-11-03 21:23:00.979","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.066","level":"INFO","msg":"[Eval] (4/50) sample=eval_004 query=\"订单表主键使用 UUID 有哪些取舍\""}
+{"time":"2026-11-03 21:23:01.108","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.195","level":"INFO","msg":"[Eval] (5/50) sample=eval_005 query=\"订单和库存分属不同服务 怎样保证一次业务操作一致\""}
+{"time":"2026-11-03 21:23:01.235","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.320","level":"INFO","msg":"[Eval] (6/50) sample=eval_006 query=\"分布式事务中业务补偿方案 TCC\""}
+{"time":"2026-11-03 21:23:01.360","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.446","level":"INFO","msg":"[Eval] (7/50) sample=eval_007 query=\"Seata 如何处理跨服务事务\""}
+{"time":"2026-11-03 21:23:01.486","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.575","level":"INFO","msg":"[Eval] (8/50) sample=eval_008 query=\"ZooKeeper 在微服务架构中有哪些用途\""}
+{"time":"2026-11-03 21:23:01.619","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.707","level":"INFO","msg":"[Eval] (9/50) sample=eval_009 query=\"如何避免计数限流在时间边界出现流量突刺\""}
+{"time":"2026-11-03 21:23:01.750","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.836","level":"INFO","msg":"[Eval] (10/50) sample=eval_010 query=\"多个节点如何通过 Paxos 对某个值达成共识\""}
+{"time":"2026-11-03 21:23:01.878","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:01.964","level":"INFO","msg":"[Eval] (11/50) sample=eval_011 query=\"选择 Go 作为后端开发语言有哪些优点\""}
+{"time":"2026-11-03 21:23:02.024","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.109","level":"INFO","msg":"[Eval] (12/50) sample=eval_012 query=\"Go 声明没有成员的结构体会占多少内存\""}
+{"time":"2026-11-03 21:23:02.149","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.234","level":"INFO","msg":"[Eval] (13/50) sample=eval_013 query=\"Go 切片包含哪些运行时信息\""}
+{"time":"2026-11-03 21:23:02.275","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.360","level":"INFO","msg":"[Eval] (14/50) sample=eval_014 query=\"Go map 容量不足时数据如何转移\""}
+{"time":"2026-11-03 21:23:02.403","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.490","level":"INFO","msg":"[Eval] (15/50) sample=eval_015 query=\"已经关闭的 Go channel 还能发送数据吗\""}
+{"time":"2026-11-03 21:23:02.531","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.616","level":"INFO","msg":"[Eval] (16/50) sample=eval_016 query=\"多个 goroutine 同时初始化配置 如何保证只做一次\""}
+{"time":"2026-11-03 21:23:02.659","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.746","level":"INFO","msg":"[Eval] (17/50) sample=eval_017 query=\"Go 有方法的接口和空接口在内部表示上有什么区别\""}
+{"time":"2026-11-03 21:23:02.788","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:02.874","level":"INFO","msg":"[Eval] (18/50) sample=eval_018 query=\"Go 运行时在什么情况下会切换 goroutine\""}
+{"time":"2026-11-03 21:23:02.916","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.002","level":"INFO","msg":"[Eval] (19/50) sample=eval_019 query=\"Go 程序有 GC 为什么内存仍可能持续增长\""}
+{"time":"2026-11-03 21:23:03.047","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.132","level":"INFO","msg":"[Eval] (20/50) sample=eval_020 query=\"Go 服务运行过程中 GC 在哪些条件下会启动\""}
+{"time":"2026-11-03 21:23:03.175","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.259","level":"INFO","msg":"[Eval] (21/50) sample=eval_021 query=\"消息队列的基本概念和工作过程\""}
+{"time":"2026-11-03 21:23:03.303","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.388","level":"INFO","msg":"[Eval] (22/50) sample=eval_022 query=\"为业务系统选择消息队列需要考虑哪些因素\""}
+{"time":"2026-11-03 21:23:03.428","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.516","level":"INFO","msg":"[Eval] (23/50) sample=eval_023 query=\"消费同一条消息多次 如何防止订单被重复处理\""}
+{"time":"2026-11-03 21:23:03.559","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.645","level":"INFO","msg":"[Eval] (24/50) sample=eval_024 query=\"消息中间件出现节点故障后如何继续提供服务\""}
+{"time":"2026-11-03 21:23:03.684","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.770","level":"INFO","msg":"[Eval] (25/50) sample=eval_025 query=\"Kafka 适合做什么 有哪些主要特征\""}
+{"time":"2026-11-03 21:23:03.813","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:03.900","level":"INFO","msg":"[Eval] (26/50) sample=eval_026 query=\"Kafka 一个 topic 如何由多个消费者分工处理\""}
+{"time":"2026-11-03 21:23:03.942","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.029","level":"INFO","msg":"[Eval] (27/50) sample=eval_027 query=\"Kafka 消息需要按照业务顺序被消费 怎么设计\""}
+{"time":"2026-11-03 21:23:04.071","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.157","level":"INFO","msg":"[Eval] (28/50) sample=eval_028 query=\"电商系统为什么选 RocketMQ 而不是其他消息队列\""}
+{"time":"2026-11-03 21:23:04.201","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.285","level":"INFO","msg":"[Eval] (29/50) sample=eval_029 query=\"订单状态变更事件进入 RocketMQ 后怎样避免消费顺序错乱\""}
+{"time":"2026-11-03 21:23:04.325","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.410","level":"INFO","msg":"[Eval] (30/50) sample=eval_030 query=\"RabbitMQ 使用的 AMQP 是产品还是通信规范\""}
+{"time":"2026-11-03 21:23:04.452","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.539","level":"INFO","msg":"[Eval] (31/50) sample=eval_031 query=\"数据库表结构设计中三大范式的作用\""}
+{"time":"2026-11-03 21:23:04.581","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.671","level":"INFO","msg":"[Eval] (32/50) sample=eval_032 query=\"MySQL 清空表数据和删除整张表有哪些方式\""}
+{"time":"2026-11-03 21:23:04.711","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.798","level":"INFO","msg":"[Eval] (33/50) sample=eval_033 query=\"数据库如何让一组操作一起成功或一起失败\""}
+{"time":"2026-11-03 21:23:04.840","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:04.933","level":"INFO","msg":"[Eval] (34/50) sample=eval_034 query=\"MySQL 事务读取数据时普通查询和加锁查询有何区别\""}
+{"time":"2026-11-03 21:23:04.975","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.061","level":"INFO","msg":"[Eval] (35/50) sample=eval_035 query=\"MySQL 主键索引和普通索引的存储组织方式\""}
+{"time":"2026-11-03 21:23:05.101","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.142","level":"INFO","source":{"function":"github.com/yzletter/go-postery/backend/infra/llm.NewQwenEmbedder","file":"/Users/yzletter/go_project/go-postery/backend/infra/llm/embedder.go","line":152},"msg":"Init QwenEmbedder Success"}
+{"time":"2026-11-03 21:23:05.157","level":"INFO","msg":"载入sego词典 /var/folders/93/fh0k1rc964d1vqkcvwrjg6040000gn/T/go-postery-sego-dictionary-25ef44e4fa1ffda3.txt"}
+{"time":"2026-11-03 21:23:05.194","level":"INFO","msg":"[Eval] (36/50) sample=eval_036 query=\"MySQL 如何利用索引条件减少读取完整记录的次数\""}
+{"time":"2026-11-03 21:23:05.237","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.324","level":"INFO","msg":"[Eval] (37/50) sample=eval_037 query=\"MySQL 多个事务同时读写时 S 锁和 X 锁如何互斥\""}
+{"time":"2026-11-03 21:23:05.367","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.451","level":"INFO","msg":"[Eval] (38/50) sample=eval_038 query=\"InnoDB redo 日志文件写满后怎样继续使用\""}
+{"time":"2026-11-03 21:23:05.492","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.579","level":"INFO","msg":"[Eval] (39/50) sample=eval_039 query=\"数据库更新时 redo log 和 binlog 不一致会带来什么问题\""}
+{"time":"2026-11-03 21:23:05.621","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.706","level":"INFO","msg":"[Eval] (40/50) sample=eval_040 query=\"线上 MySQL 主从数据不一致且从库持续落后 排查哪些原因\""}
+{"time":"2026-11-03 21:23:05.748","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.834","level":"INFO","msg":"[Eval] (41/50) sample=eval_041 query=\"Redis 常用的数据类型分别可以用在什么地方\""}
+{"time":"2026-11-03 21:23:05.878","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:05.965","level":"INFO","msg":"[Eval] (42/50) sample=eval_042 query=\"Redis 有序集合底层的多层链表如何决定节点索引高度\""}
+{"time":"2026-11-03 21:23:05.995","level":"INFO","msg":"sego词典载入完毕"}
+{"time":"2026-11-03 21:23:06.007","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.035","level":"INFO","msg":"[BM25] 从 manifest 加载完成: 312 篇文档 (userID=0)"}
+{"time":"2026-11-03 21:23:06.035","level":"INFO","msg":"[Eval] (1/50) sample=eval_001 query=\"多台计算机协作完成任务的系统是什么\""}
+{"time":"2026-11-03 21:23:06.101","level":"INFO","msg":"[Eval] (43/50) sample=eval_043 query=\"Redis 字典扩容期间如何处理旧数据\""}
+{"time":"2026-11-03 21:23:06.141","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.162","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.226","level":"INFO","msg":"[Eval] (44/50) sample=eval_044 query=\"Redis 为什么能提供较低的访问延迟\""}
+{"time":"2026-11-03 21:23:06.267","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.332","level":"INFO","msg":"[Eval] (2/50) sample=eval_002 query=\"多个服务实例争抢同一资源 Redis 锁如何实现\""}
+{"time":"2026-11-03 21:23:06.351","level":"INFO","msg":"[Eval] (45/50) sample=eval_045 query=\"Redis 多个命令作为一个整体执行如何防止并发干扰\""}
+{"time":"2026-11-03 21:23:06.373","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.390","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.463","level":"INFO","msg":"[Eval] (3/50) sample=eval_003 query=\"Redis 锁过期后被别人拿到 原持有者如何安全解锁\""}
+{"time":"2026-11-03 21:23:06.475","level":"INFO","msg":"[Eval] (46/50) sample=eval_046 query=\"Redis 如何将内存数据保存为快照文件\""}
+{"time":"2026-11-03 21:23:06.514","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.518","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.605","level":"INFO","msg":"[Eval] (4/50) sample=eval_004 query=\"订单表主键使用 UUID 有哪些取舍\""}
+{"time":"2026-11-03 21:23:06.606","level":"INFO","msg":"[Eval] (47/50) sample=eval_047 query=\"Redis 中带过期时间的数据到期后如何清理\""}
+{"time":"2026-11-03 21:23:06.649","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.654","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.736","level":"INFO","msg":"[Eval] (48/50) sample=eval_048 query=\"Redis 主节点故障后如何自动完成主从切换\""}
+{"time":"2026-11-03 21:23:06.743","level":"INFO","msg":"[Eval] (5/50) sample=eval_005 query=\"订单和库存分属不同服务 怎样保证一次业务操作一致\""}
+{"time":"2026-11-03 21:23:06.779","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.787","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.864","level":"INFO","msg":"[Eval] (49/50) sample=eval_049 query=\"数据库承受大量热点查询时引入 Redis 有什么收益\""}
+{"time":"2026-11-03 21:23:06.874","level":"INFO","msg":"[Eval] (6/50) sample=eval_006 query=\"分布式事务中业务补偿方案 TCC\""}
+{"time":"2026-11-03 21:23:06.906","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.914","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:06.990","level":"INFO","msg":"[Eval] (50/50) sample=eval_050 query=\"Redis 除了缓存还能在业务系统中做什么\""}
+{"time":"2026-11-03 21:23:07.003","level":"INFO","msg":"[Eval] (7/50) sample=eval_007 query=\"Seata 如何处理跨服务事务\""}
+{"time":"2026-11-03 21:23:07.030","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.047","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.137","level":"INFO","msg":"[Eval] (8/50) sample=eval_008 query=\"ZooKeeper 在微服务架构中有哪些用途\""}
+{"time":"2026-11-03 21:23:07.182","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.268","level":"INFO","msg":"[Eval] (9/50) sample=eval_009 query=\"如何避免计数限流在时间边界出现流量突刺\""}
+{"time":"2026-11-03 21:23:07.311","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.402","level":"INFO","msg":"[Eval] (10/50) sample=eval_010 query=\"多个节点如何通过 Paxos 对某个值达成共识\""}
+{"time":"2026-11-03 21:23:07.446","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.534","level":"INFO","msg":"[Eval] (11/50) sample=eval_011 query=\"选择 Go 作为后端开发语言有哪些优点\""}
+{"time":"2026-11-03 21:23:07.570","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.658","level":"INFO","msg":"[Eval] (12/50) sample=eval_012 query=\"Go 声明没有成员的结构体会占多少内存\""}
+{"time":"2026-11-03 21:23:07.700","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.788","level":"INFO","msg":"[Eval] (13/50) sample=eval_013 query=\"Go 切片包含哪些运行时信息\""}
+{"time":"2026-11-03 21:23:07.830","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:07.918","level":"INFO","msg":"[Eval] (14/50) sample=eval_014 query=\"Go map 容量不足时数据如何转移\""}
+{"time":"2026-11-03 21:23:07.957","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:08.048","level":"INFO","msg":"[Eval] (15/50) sample=eval_015 query=\"已经关闭的 Go channel 还能发送数据吗\""}
+{"time":"2026-11-03 21:23:08.091","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:08.186","level":"INFO","msg":"[Eval] (16/50) sample=eval_016 query=\"多个 goroutine 同时初始化配置 如何保证只做一次\""}
+{"time":"2026-11-03 21:23:08.238","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:08.335","level":"INFO","msg":"[Eval] (17/50) sample=eval_017 query=\"Go 有方法的接口和空接口在内部表示上有什么区别\""}
+{"time":"2026-11-03 21:23:08.487","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:08.581","level":"INFO","msg":"[Eval] (18/50) sample=eval_018 query=\"Go 运行时在什么情况下会切换 goroutine\""}
+{"time":"2026-11-03 21:23:08.631","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:08.717","level":"INFO","msg":"[Eval] (19/50) sample=eval_019 query=\"Go 程序有 GC 为什么内存仍可能持续增长\""}
+{"time":"2026-11-03 21:23:08.754","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:08.842","level":"INFO","msg":"[Eval] (20/50) sample=eval_020 query=\"Go 服务运行过程中 GC 在哪些条件下会启动\""}
+{"time":"2026-11-03 21:23:08.882","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.020","level":"INFO","msg":"[Eval] (21/50) sample=eval_021 query=\"消息队列的基本概念和工作过程\""}
+{"time":"2026-11-03 21:23:09.131","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.244","level":"INFO","msg":"[Eval] (22/50) sample=eval_022 query=\"为业务系统选择消息队列需要考虑哪些因素\""}
+{"time":"2026-11-03 21:23:09.282","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.371","level":"INFO","msg":"[Eval] (23/50) sample=eval_023 query=\"消费同一条消息多次 如何防止订单被重复处理\""}
+{"time":"2026-11-03 21:23:09.420","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.514","level":"INFO","msg":"[Eval] (24/50) sample=eval_024 query=\"消息中间件出现节点故障后如何继续提供服务\""}
+{"time":"2026-11-03 21:23:09.553","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.644","level":"INFO","msg":"[Eval] (25/50) sample=eval_025 query=\"Kafka 适合做什么 有哪些主要特征\""}
+{"time":"2026-11-03 21:23:09.687","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.773","level":"INFO","msg":"[Eval] (26/50) sample=eval_026 query=\"Kafka 一个 topic 如何由多个消费者分工处理\""}
+{"time":"2026-11-03 21:23:09.815","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:09.900","level":"INFO","msg":"[Eval] (27/50) sample=eval_027 query=\"Kafka 消息需要按照业务顺序被消费 怎么设计\""}
+{"time":"2026-11-03 21:23:09.942","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.030","level":"INFO","msg":"[Eval] (28/50) sample=eval_028 query=\"电商系统为什么选 RocketMQ 而不是其他消息队列\""}
+{"time":"2026-11-03 21:23:10.073","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.160","level":"INFO","msg":"[Eval] (29/50) sample=eval_029 query=\"订单状态变更事件进入 RocketMQ 后怎样避免消费顺序错乱\""}
+{"time":"2026-11-03 21:23:10.199","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.286","level":"INFO","msg":"[Eval] (30/50) sample=eval_030 query=\"RabbitMQ 使用的 AMQP 是产品还是通信规范\""}
+{"time":"2026-11-03 21:23:10.326","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.416","level":"INFO","msg":"[Eval] (31/50) sample=eval_031 query=\"数据库表结构设计中三大范式的作用\""}
+{"time":"2026-11-03 21:23:10.454","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.543","level":"INFO","msg":"[Eval] (32/50) sample=eval_032 query=\"MySQL 清空表数据和删除整张表有哪些方式\""}
+{"time":"2026-11-03 21:23:10.581","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.668","level":"INFO","msg":"[Eval] (33/50) sample=eval_033 query=\"数据库如何让一组操作一起成功或一起失败\""}
+{"time":"2026-11-03 21:23:10.707","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.795","level":"INFO","msg":"[Eval] (34/50) sample=eval_034 query=\"MySQL 事务读取数据时普通查询和加锁查询有何区别\""}
+{"time":"2026-11-03 21:23:10.834","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:10.921","level":"INFO","msg":"[Eval] (35/50) sample=eval_035 query=\"MySQL 主键索引和普通索引的存储组织方式\""}
+{"time":"2026-11-03 21:23:10.965","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.052","level":"INFO","msg":"[Eval] (36/50) sample=eval_036 query=\"MySQL 如何利用索引条件减少读取完整记录的次数\""}
+{"time":"2026-11-03 21:23:11.093","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.181","level":"INFO","msg":"[Eval] (37/50) sample=eval_037 query=\"MySQL 多个事务同时读写时 S 锁和 X 锁如何互斥\""}
+{"time":"2026-11-03 21:23:11.227","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.318","level":"INFO","msg":"[Eval] (38/50) sample=eval_038 query=\"InnoDB redo 日志文件写满后怎样继续使用\""}
+{"time":"2026-11-03 21:23:11.363","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.448","level":"INFO","msg":"[Eval] (39/50) sample=eval_039 query=\"数据库更新时 redo log 和 binlog 不一致会带来什么问题\""}
+{"time":"2026-11-03 21:23:11.490","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.579","level":"INFO","msg":"[Eval] (40/50) sample=eval_040 query=\"线上 MySQL 主从数据不一致且从库持续落后 排查哪些原因\""}
+{"time":"2026-11-03 21:23:11.620","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.709","level":"INFO","msg":"[Eval] (41/50) sample=eval_041 query=\"Redis 常用的数据类型分别可以用在什么地方\""}
+{"time":"2026-11-03 21:23:11.753","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.838","level":"INFO","msg":"[Eval] (42/50) sample=eval_042 query=\"Redis 有序集合底层的多层链表如何决定节点索引高度\""}
+{"time":"2026-11-03 21:23:11.882","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:11.971","level":"INFO","msg":"[Eval] (43/50) sample=eval_043 query=\"Redis 字典扩容期间如何处理旧数据\""}
+{"time":"2026-11-03 21:23:12.013","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.101","level":"INFO","msg":"[Eval] (44/50) sample=eval_044 query=\"Redis 为什么能提供较低的访问延迟\""}
+{"time":"2026-11-03 21:23:12.140","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.228","level":"INFO","msg":"[Eval] (45/50) sample=eval_045 query=\"Redis 多个命令作为一个整体执行如何防止并发干扰\""}
+{"time":"2026-11-03 21:23:12.270","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.360","level":"INFO","msg":"[Eval] (46/50) sample=eval_046 query=\"Redis 如何将内存数据保存为快照文件\""}
+{"time":"2026-11-03 21:23:12.400","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.487","level":"INFO","msg":"[Eval] (47/50) sample=eval_047 query=\"Redis 中带过期时间的数据到期后如何清理\""}
+{"time":"2026-11-03 21:23:12.527","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.615","level":"INFO","msg":"[Eval] (48/50) sample=eval_048 query=\"Redis 主节点故障后如何自动完成主从切换\""}
+{"time":"2026-11-03 21:23:12.664","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.753","level":"INFO","msg":"[Eval] (49/50) sample=eval_049 query=\"数据库承受大量热点查询时引入 Redis 有什么收益\""}
+{"time":"2026-11-03 21:23:12.792","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}
+{"time":"2026-11-03 21:23:12.883","level":"INFO","msg":"[Eval] (50/50) sample=eval_050 query=\"Redis 除了缓存还能在业务系统中做什么\""}
+{"time":"2026-11-03 21:23:12.930","level":"INFO","msg":"[Eval] Milvus retrieve err: [milvus retriever] embedding has error: embedding failed"}

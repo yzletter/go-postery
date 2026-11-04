@@ -74,10 +74,12 @@ type GithubConfig struct {
 }
 
 type QwenConfig struct {
-	BaseURL       string
-	EmbedderModel string
-	LLMModel      string
-	APIKey        string
+	LLMBaseURL      string
+	EmbedderBaseURL string
+	EmbedderModel   string
+	LLMModel        string
+	LLMAPIKey       string
+	EmbedderAPIKey  string
 }
 
 type MetricConfig struct {

@@ -5,10 +5,11 @@ import (
 	"errors"
 	"log/slog"
 	"math"
+	"net/http"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
-	"github.com/cloudwego/eino-ext/components/embedding/dashscope"
+	"github.com/cloudwego/eino-ext/libs/acl/openai"
 	"github.com/cloudwego/eino/components/embedding"
 	"github.com/yzletter/go-postery/backend/conf"
 )
@@ -131,18 +132,28 @@ func (e *ArkEmbedder) AvgOfVector(vectors [][]float64) ([]float64, error) {
 }
 
 type QwenEmbedder struct {
-	embedder *dashscope.Embedder
+	embedder *openai.EmbeddingClient
 }
 
 func NewQwenEmbedder(ctx context.Context, config conf.QwenConfig) *QwenEmbedder {
-	timeout := 3 * time.Second
-	dimensions := 1024
+	return newQwenEmbedder(ctx, config, &http.Client{Timeout: 3 * time.Second})
+}
 
-	embedder, err := dashscope.NewEmbedder(ctx, &dashscope.EmbeddingConfig{
-		APIKey:     config.APIKey,
-		Timeout:    timeout,
-		Model:      config.EmbedderModel,
-		Dimensions: &dimensions,
+func newQwenEmbedder(ctx context.Context, config conf.QwenConfig, client *http.Client) *QwenEmbedder {
+	if config.EmbedderBaseURL == "" {
+		slog.Error("Init QwenEmbedder Failed", "error", "embedding base URL is empty")
+		return nil
+	}
+	dimensions := 1024
+	format := openai.EmbeddingEncodingFormatFloat
+
+	embedder, err := openai.NewEmbeddingClient(ctx, &openai.EmbeddingConfig{
+		APIKey:         config.EmbedderAPIKey,
+		BaseURL:        config.EmbedderBaseURL,
+		HTTPClient:     client,
+		Model:          config.EmbedderModel,
+		EncodingFormat: &format,
+		Dimensions:     &dimensions,
 	})
 	if err != nil {
 		slog.Info("Init QwenEmbedder Failed", "error", err)
@@ -153,7 +164,7 @@ func NewQwenEmbedder(ctx context.Context, config conf.QwenConfig) *QwenEmbedder 
 	return &QwenEmbedder{embedder: embedder}
 }
 
-func (e *QwenEmbedder) GetInternal() *dashscope.Embedder {
+func (e *QwenEmbedder) GetInternal() *openai.EmbeddingClient {
 	if e == nil {
 		return nil
 	}

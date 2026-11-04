@@ -39,8 +39,8 @@ func NewQwenLLMModel(ctx context.Context, config conf.QwenConfig) *qwen.ChatMode
 	qwenOnce.Do(func() {
 		var err error
 		qwenModel, err = qwen.NewChatModel(ctx, &qwen.ChatModelConfig{
-			APIKey:      config.APIKey,
-			BaseURL:     config.BaseURL,
+			APIKey:      config.LLMAPIKey,
+			BaseURL:     config.LLMBaseURL,
 			Model:       config.LLMModel,
 			Temperature: &temperature, // 模型温度
 		})

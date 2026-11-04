@@ -62,8 +62,8 @@ func (reranker *LLMReranker) Rerank(ctx context.Context, query string, docs []*s
 		docMap[id] = doc
 		// 截取前 200 字符避免 prompt 过长
 		content := doc.Content
-		if len(content) > 200 {
-			content = content[:200] + "..."
+		if len(content) > 2000 {
+			content = content[:2000] + "..."
 		}
 		docsText += fmt.Sprintf("[%s] %s\n", id, content)
 	}

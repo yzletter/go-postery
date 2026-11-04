@@ -1,0 +1,1858 @@
+{
+  "dataset_version": "v1",
+  "dataset_path": "backend/micro/interview/data/eval/dataset_v1.json",
+  "sample_count": 50,
+  "run_at": "2026-11-04T15:02:20.244702+08:00",
+  "duration": "25m56.987854041s",
+  "config": {
+    "embedding_model": "qwen3.7-text-embedding-flash",
+    "vector_dim": 1024,
+    "vector_top_k": 10,
+    "bm25_top_k": 10,
+    "bm25_k1": 1.5,
+    "bm25_b": 0.75,
+    "reranker_type": "llm",
+    "rerank_top_n": 10,
+    "note": "TOP 10"
+  },
+  "overall": {
+    "count": 50,
+    "recall_at_10": 0.9743,
+    "recall_at_20": 0.9743,
+    "mrr": 0.975
+  },
+  "topic_metrics": {
+    "Go": {
+      "count": 10,
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1
+    },
+    "MySQL": {
+      "count": 10,
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1
+    },
+    "Redis": {
+      "count": 10,
+      "recall_at_10": 0.9667,
+      "recall_at_20": 0.9667,
+      "mrr": 1
+    },
+    "分布式系统": {
+      "count": 10,
+      "recall_at_10": 0.98,
+      "recall_at_20": 0.98,
+      "mrr": 0.95
+    },
+    "消息队列": {
+      "count": 10,
+      "recall_at_10": 0.925,
+      "recall_at_20": 0.925,
+      "mrr": 0.925
+    }
+  },
+  "difficulty_metrics": {
+    "easy": {
+      "count": 14,
+      "recall_at_10": 0.9405,
+      "recall_at_20": 0.9405,
+      "mrr": 0.9464
+    },
+    "hard": {
+      "count": 8,
+      "recall_at_10": 0.9438,
+      "recall_at_20": 0.9438,
+      "mrr": 1
+    },
+    "medium": {
+      "count": 28,
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 0.9821
+    }
+  },
+  "sample_results": [
+    {
+      "sample_id": "eval_001",
+      "query": "我把一个服务放到几台机器上一起处理请求，这样的系统跟单机相比有什么特点？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-1",
+        "-2",
+        "-166",
+        "-195",
+        "-170",
+        "-297",
+        "-28",
+        "-22",
+        "-16",
+        "-35"
+      ],
+      "relevant_ids": [
+        "-1"
+      ],
+      "hit_ids": [
+        "-1"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_002",
+      "query": "同一份任务会被好几个服务实例抢到，想用 Redis 保证一次只有一个实例执行，锁应该怎么写？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-5",
+        "-303",
+        "-6",
+        "-9",
+        "-7",
+        "-8",
+        "-281",
+        "-302",
+        "-301",
+        "-162"
+      ],
+      "relevant_ids": [
+        "-5",
+        "-303"
+      ],
+      "hit_ids": [
+        "-5",
+        "-303"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_003",
+      "query": "业务还没跑完 Redis 锁就过期了，旧请求结束时怎么避免把别人的锁给删了？",
+      "topic": "分布式系统",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-7",
+        "-5",
+        "-9",
+        "-303",
+        "-6",
+        "-8",
+        "-10",
+        "-236",
+        "-311",
+        "-289"
+      ],
+      "relevant_ids": [
+        "-9",
+        "-7",
+        "-5",
+        "-281",
+        "-303"
+      ],
+      "hit_ids": [
+        "-7",
+        "-5",
+        "-9",
+        "-303"
+      ],
+      "recall_at_10": 0.8,
+      "recall_at_20": 0.8,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_004",
+      "query": "订单号直接用 UUID，再拿它当 MySQL 主键，会不会有什么坑？",
+      "topic": "分布式系统",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-13",
+        "-231",
+        "-12",
+        "-11",
+        "-223",
+        "-208",
+        "-227",
+        "-258",
+        "-229",
+        "-15"
+      ],
+      "relevant_ids": [
+        "-13",
+        "-12"
+      ],
+      "hit_ids": [
+        "-13",
+        "-12"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_005",
+      "query": "订单和库存拆成不同服务以后，为什么以前一个数据库事务的做法就不够了？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-17",
+        "-261",
+        "-263",
+        "-211",
+        "-259",
+        "-2",
+        "-18",
+        "-21",
+        "-22",
+        "-24"
+      ],
+      "relevant_ids": [
+        "-17"
+      ],
+      "hit_ids": [
+        "-17"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_006",
+      "query": "TCC 要给每个业务写几套操作，这些操作是怎么配合起来完成一次事务的？",
+      "topic": "分布式系统",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-21",
+        "-18",
+        "-25",
+        "-22",
+        "-263",
+        "-17",
+        "-261",
+        "-162",
+        "-19",
+        "-24"
+      ],
+      "relevant_ids": [
+        "-21",
+        "-18"
+      ],
+      "hit_ids": [
+        "-21",
+        "-18"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_007",
+      "query": "项目接入 Seata 后，它是怎么把几个服务里的数据库操作当成一个事务处理的？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-25",
+        "-263",
+        "-17",
+        "-261",
+        "-22",
+        "-23",
+        "-24",
+        "-185",
+        "-169",
+        "-2"
+      ],
+      "relevant_ids": [
+        "-25"
+      ],
+      "hit_ids": [
+        "-25"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_008",
+      "query": "团队说服务拆分后要引入 ZooKeeper，它到底能帮我们解决哪些事情？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-29",
+        "-10",
+        "-30",
+        "-40",
+        "-3",
+        "-2",
+        "-177",
+        "-261",
+        "-27",
+        "-155"
+      ],
+      "relevant_ids": [
+        "-29"
+      ],
+      "hit_ids": [
+        "-29"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_009",
+      "query": "限流设成每秒 100 次，在前一秒末尾和后一秒开头一起发请求，好像还能放过很多，这是为什么，怎么改？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-32",
+        "-33",
+        "-31",
+        "-35",
+        "-34",
+        "-312",
+        "-302",
+        "-311",
+        "-289",
+        "-176"
+      ],
+      "relevant_ids": [
+        "-33",
+        "-31"
+      ],
+      "hit_ids": [
+        "-33",
+        "-31"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 0.5,
+      "first_hit_rank": 2
+    },
+    {
+      "sample_id": "eval_010",
+      "query": "看 Paxos 一直没看懂，几个节点意见不一样时，到底怎么选出大家都接受的结果？",
+      "topic": "分布式系统",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-37",
+        "-38",
+        "-36",
+        "-40",
+        "-30",
+        "-3",
+        "-19",
+        "-177",
+        "-166",
+        "-26"
+      ],
+      "relevant_ids": [
+        "-37",
+        "-38"
+      ],
+      "hit_ids": [
+        "-37",
+        "-38"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_011",
+      "query": "我们准备做一个后端服务，选择 Go 有什么实际好处？",
+      "topic": "Go",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-41",
+        "-103",
+        "-109",
+        "-132",
+        "-86",
+        "-59",
+        "-50",
+        "-123",
+        "-113",
+        "-112"
+      ],
+      "relevant_ids": [
+        "-41"
+      ],
+      "hit_ids": [
+        "-41"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_012",
+      "query": "Go 代码里有个 struct{}，里面什么都没有，这样的值到底占不占内存？",
+      "topic": "Go",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-52",
+        "-53",
+        "-125",
+        "-58",
+        "-147",
+        "-67",
+        "-98",
+        "-132",
+        "-134",
+        "-59"
+      ],
+      "relevant_ids": [
+        "-52",
+        "-53"
+      ],
+      "hit_ids": [
+        "-52",
+        "-53"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_013",
+      "query": "Go 里一个 slice 变量本身存的是什么，和里面那些元素是一回事吗？",
+      "topic": "Go",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-63",
+        "-45",
+        "-66",
+        "-65",
+        "-64",
+        "-46",
+        "-57",
+        "-44",
+        "-129",
+        "-134"
+      ],
+      "relevant_ids": [
+        "-63",
+        "-45"
+      ],
+      "hit_ids": [
+        "-63",
+        "-45"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_014",
+      "query": "Go 的 map 越放越大时，原来已经放进去的键值对会怎么处理？",
+      "topic": "Go",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-74",
+        "-73",
+        "-67",
+        "-69",
+        "-75",
+        "-76",
+        "-68",
+        "-72",
+        "-70",
+        "-46"
+      ],
+      "relevant_ids": [
+        "-74"
+      ],
+      "hit_ids": [
+        "-74"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_015",
+      "query": "一个 goroutine 把 channel 关了，另一个还在往里面发数据，会发生什么？",
+      "topic": "Go",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-85",
+        "-80",
+        "-84",
+        "-79",
+        "-81",
+        "-82",
+        "-88",
+        "-87",
+        "-102",
+        "-130"
+      ],
+      "relevant_ids": [
+        "-85",
+        "-80"
+      ],
+      "hit_ids": [
+        "-85",
+        "-80"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_016",
+      "query": "很多 goroutine 都要用同一份配置，怎么保证初始化函数只跑一遍？",
+      "topic": "Go",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-96",
+        "-54",
+        "-60",
+        "-94",
+        "-153",
+        "-146",
+        "-122",
+        "-121",
+        "-44",
+        "-161"
+      ],
+      "relevant_ids": [
+        "-96"
+      ],
+      "hit_ids": [
+        "-96"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_017",
+      "query": "Go 的 interface{} 和自己定义了方法的接口，底层用的是同一种结构吗？",
+      "topic": "Go",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-106",
+        "-107",
+        "-112",
+        "-55",
+        "-110",
+        "-109",
+        "-56",
+        "-102",
+        "-113",
+        "-114"
+      ],
+      "relevant_ids": [
+        "-107",
+        "-106"
+      ],
+      "hit_ids": [
+        "-106",
+        "-107"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_018",
+      "query": "Go 协程因为等数据或等锁停住了，运行时一般会在什么情况下调度别的协程？",
+      "topic": "Go",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-118",
+        "-80",
+        "-88",
+        "-95",
+        "-116",
+        "-123",
+        "-87",
+        "-115",
+        "-117",
+        "-124"
+      ],
+      "relevant_ids": [
+        "-118"
+      ],
+      "hit_ids": [
+        "-118"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_019",
+      "query": "Go 已经有垃圾回收了，为什么服务跑久了还是会内存泄漏？",
+      "topic": "Go",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-142",
+        "-129",
+        "-130",
+        "-83",
+        "-134",
+        "-140",
+        "-127",
+        "-126",
+        "-132",
+        "-137"
+      ],
+      "relevant_ids": [
+        "-129",
+        "-142"
+      ],
+      "hit_ids": [
+        "-142",
+        "-129"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_020",
+      "query": "Go 的 GC 是什么时候开始工作的？我能不能在代码里让它执行一次？",
+      "topic": "Go",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-140",
+        "-143",
+        "-144",
+        "-139",
+        "-132",
+        "-134",
+        "-133",
+        "-137",
+        "-122",
+        "-123"
+      ],
+      "relevant_ids": [
+        "-140"
+      ],
+      "hit_ids": [
+        "-140"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_021",
+      "query": "两个服务之间用了 MQ，消息从发出去到被业务处理，中间到底是怎么走的？",
+      "topic": "消息队列",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-23",
+        "-185",
+        "-181",
+        "-154",
+        "-24",
+        "-161",
+        "-188",
+        "-184",
+        "-156",
+        "-166"
+      ],
+      "relevant_ids": [
+        "-154",
+        "-167"
+      ],
+      "hit_ids": [
+        "-154"
+      ],
+      "recall_at_10": 0.5,
+      "recall_at_20": 0.5,
+      "mrr": 0.25,
+      "first_hit_rank": 4
+    },
+    {
+      "sample_id": "eval_022",
+      "query": "项目想引入消息队列，Kafka、RocketMQ、RabbitMQ 这么多，该从哪些方面选？",
+      "topic": "消息队列",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-158",
+        "-159",
+        "-183",
+        "-182",
+        "-166",
+        "-181",
+        "-156",
+        "-163",
+        "-195",
+        "-194"
+      ],
+      "relevant_ids": [
+        "-158",
+        "-159"
+      ],
+      "hit_ids": [
+        "-158",
+        "-159"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_023",
+      "query": "同一条支付消息可能收到两次，怎么保证不会给用户重复扣款？",
+      "topic": "消息队列",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-161",
+        "-188",
+        "-162",
+        "-24",
+        "-169",
+        "-181",
+        "-164",
+        "-21",
+        "-155",
+        "-163"
+      ],
+      "relevant_ids": [
+        "-162",
+        "-161",
+        "-188"
+      ],
+      "hit_ids": [
+        "-161",
+        "-188",
+        "-162"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_024",
+      "query": "如果消息队列有一台机器突然宕了，怎样让业务还能继续发消息和消费？",
+      "topic": "消息队列",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-166",
+        "-167",
+        "-195",
+        "-163",
+        "-164",
+        "-194",
+        "-181",
+        "-161",
+        "-188",
+        "-23"
+      ],
+      "relevant_ids": [
+        "-166",
+        "-177",
+        "-195",
+        "-167"
+      ],
+      "hit_ids": [
+        "-166",
+        "-167",
+        "-195"
+      ],
+      "recall_at_10": 0.75,
+      "recall_at_20": 0.75,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_025",
+      "query": "Kafka 经常被用在日志系统里，它到底有什么特点，还适合哪些场景？",
+      "topic": "消息队列",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-170",
+        "-159",
+        "-183",
+        "-158",
+        "-172",
+        "-173",
+        "-175",
+        "-176",
+        "-177",
+        "-178"
+      ],
+      "relevant_ids": [
+        "-170",
+        "-159"
+      ],
+      "hit_ids": [
+        "-170",
+        "-159"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_026",
+      "query": "Kafka 的一个 topic 想让多个消费者一起处理，消息是怎么分给它们的？",
+      "topic": "消息队列",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-174",
+        "-179",
+        "-168",
+        "-170",
+        "-178",
+        "-165",
+        "-180",
+        "-173",
+        "-176",
+        "-187"
+      ],
+      "relevant_ids": [
+        "-174"
+      ],
+      "hit_ids": [
+        "-174"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_027",
+      "query": "Kafka 里同一个订单的几条状态消息，怎么才能按先后顺序处理？",
+      "topic": "消息队列",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-165",
+        "-178",
+        "-174",
+        "-173",
+        "-186",
+        "-179",
+        "-158",
+        "-180",
+        "-181",
+        "-176"
+      ],
+      "relevant_ids": [
+        "-178",
+        "-165"
+      ],
+      "hit_ids": [
+        "-165",
+        "-178"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_028",
+      "query": "做订单和支付这类业务，选择 RocketMQ 的理由是什么？跟其他队列比有什么优势？",
+      "topic": "消息队列",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-182",
+        "-183",
+        "-158",
+        "-159",
+        "-23",
+        "-181",
+        "-188",
+        "-186",
+        "-155",
+        "-198"
+      ],
+      "relevant_ids": [
+        "-182",
+        "-158",
+        "-159",
+        "-183"
+      ],
+      "hit_ids": [
+        "-182",
+        "-183",
+        "-158",
+        "-159"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_029",
+      "query": "用 RocketMQ 发了下单、付款、发货三个事件，消费时怎样保证不乱序？",
+      "topic": "消息队列",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-186",
+        "-165",
+        "-178",
+        "-181",
+        "-188",
+        "-185",
+        "-169",
+        "-23",
+        "-183",
+        "-187"
+      ],
+      "relevant_ids": [
+        "-186"
+      ],
+      "hit_ids": [
+        "-186"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_030",
+      "query": "RabbitMQ 文档里总提到 AMQP，这是另一个中间件吗？跟 RabbitMQ 是什么关系？",
+      "topic": "消息队列",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-190",
+        "-159",
+        "-189",
+        "-192",
+        "-191",
+        "-154",
+        "-158",
+        "-197",
+        "-196",
+        "-194"
+      ],
+      "relevant_ids": [
+        "-190"
+      ],
+      "hit_ids": [
+        "-190"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_031",
+      "query": "设计 MySQL 表时大家说要满足三范式，具体要检查什么？",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-199",
+        "-209",
+        "-257",
+        "-201",
+        "-213",
+        "-218",
+        "-232",
+        "-224",
+        "-256",
+        "-229"
+      ],
+      "relevant_ids": [
+        "-199"
+      ],
+      "hit_ids": [
+        "-199"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_032",
+      "query": "MySQL 我只想清空表里的数据，有人用 delete、有人用 truncate，这跟 drop 有什么区别？",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-205",
+        "-238",
+        "-244",
+        "-233",
+        "-235",
+        "-217",
+        "-201",
+        "-207",
+        "-209",
+        "-220"
+      ],
+      "relevant_ids": [
+        "-205"
+      ],
+      "hit_ids": [
+        "-205"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_033",
+      "query": "转账要先扣一个账户再给另一个加钱，数据库怎么避免只做成一半？",
+      "topic": "MySQL",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-211",
+        "-212",
+        "-249",
+        "-246",
+        "-247",
+        "-17",
+        "-19",
+        "-21",
+        "-4",
+        "-218"
+      ],
+      "relevant_ids": [
+        "-211",
+        "-212"
+      ],
+      "hit_ids": [
+        "-211",
+        "-212"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_034",
+      "query": "MySQL 直接 select 和 select for update，读到的数据、加的锁有什么区别？",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-217",
+        "-235",
+        "-218",
+        "-234",
+        "-236",
+        "-232",
+        "-213",
+        "-312",
+        "-237",
+        "-233"
+      ],
+      "relevant_ids": [
+        "-217"
+      ],
+      "hit_ids": [
+        "-217"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_035",
+      "query": "InnoDB 按主键查一行和按普通索引查一行，底层找数据的路径有什么不同？",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-223",
+        "-208",
+        "-227",
+        "-229",
+        "-220",
+        "-224",
+        "-225",
+        "-201",
+        "-216",
+        "-13"
+      ],
+      "relevant_ids": [
+        "-223",
+        "-208",
+        "-227"
+      ],
+      "hit_ids": [
+        "-223",
+        "-208",
+        "-227"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_036",
+      "query": "MySQL 用联合索引过滤数据时，索引下推到底省掉了哪部分开销？",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-229",
+        "-227",
+        "-255",
+        "-228",
+        "-226",
+        "-225",
+        "-256",
+        "-257",
+        "-221",
+        "-219"
+      ],
+      "relevant_ids": [
+        "-229"
+      ],
+      "hit_ids": [
+        "-229"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_037",
+      "query": "MySQL 两个事务都读一行会互相挡住吗？一个读一个写呢？想弄清楚 S 锁和 X 锁。",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-235",
+        "-232",
+        "-217",
+        "-234",
+        "-233",
+        "-218",
+        "-213",
+        "-214",
+        "-249",
+        "-201"
+      ],
+      "relevant_ids": [
+        "-235",
+        "-232"
+      ],
+      "hit_ids": [
+        "-235",
+        "-232"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_038",
+      "query": "MySQL 的 redo log 文件大小是固定的，那写到头以后怎么办？",
+      "topic": "MySQL",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-241",
+        "-244",
+        "-242",
+        "-239",
+        "-238",
+        "-246",
+        "-247",
+        "-243",
+        "-249",
+        "-254"
+      ],
+      "relevant_ids": [
+        "-241"
+      ],
+      "hit_ids": [
+        "-241"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_039",
+      "query": "MySQL 更新时 redo log 已经写了、binlog 还没写就宕机，会有什么后果？反过来呢？",
+      "topic": "MySQL",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-247",
+        "-246",
+        "-243",
+        "-239",
+        "-238",
+        "-244",
+        "-242",
+        "-248",
+        "-241",
+        "-245"
+      ],
+      "relevant_ids": [
+        "-247",
+        "-246"
+      ],
+      "hit_ids": [
+        "-247",
+        "-246"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_040",
+      "query": "MySQL 从库越来越跟不上主库了，通常要先排查哪些原因？",
+      "topic": "MySQL",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-253",
+        "-254",
+        "-250",
+        "-252",
+        "-251",
+        "-247",
+        "-237",
+        "-256",
+        "-258",
+        "-210"
+      ],
+      "relevant_ids": [
+        "-253"
+      ],
+      "hit_ids": [
+        "-253"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_041",
+      "query": "Redis 这么多数据类型，实际业务里该怎么选，有没有常见的使用例子？",
+      "topic": "Redis",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-265",
+        "-301",
+        "-297",
+        "-303",
+        "-267",
+        "-270",
+        "-305",
+        "-302",
+        "-280",
+        "-283"
+      ],
+      "relevant_ids": [
+        "-265"
+      ],
+      "hit_ids": [
+        "-265"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_042",
+      "query": "Redis 的跳表节点为什么有的层数多、有的少？插入新节点时层数怎么定？",
+      "topic": "Redis",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-269",
+        "-268",
+        "-267",
+        "-270",
+        "-271",
+        "-272",
+        "-273",
+        "-231",
+        "-293",
+        "-295"
+      ],
+      "relevant_ids": [
+        "-269"
+      ],
+      "hit_ids": [
+        "-269"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_043",
+      "query": "Redis 的哈希表扩容要搬很多数据，会不会一下把服务卡住？旧数据是怎么搬的？",
+      "topic": "Redis",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-273",
+        "-274",
+        "-74",
+        "-298",
+        "-307",
+        "-304",
+        "-295",
+        "-296",
+        "-297",
+        "-272"
+      ],
+      "relevant_ids": [
+        "-273"
+      ],
+      "hit_ids": [
+        "-273"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_044",
+      "query": "Redis 为什么能把请求处理得这么快，主要快在哪些地方？",
+      "topic": "Redis",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-277",
+        "-298",
+        "-297",
+        "-280",
+        "-279",
+        "-278",
+        "-302",
+        "-290",
+        "-15",
+        "-285"
+      ],
+      "relevant_ids": [
+        "-277",
+        "-298"
+      ],
+      "hit_ids": [
+        "-277",
+        "-298"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_045",
+      "query": "Redis 我想连续改几个 key，又不想让别的请求插进来，该怎么做？",
+      "topic": "Redis",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-302",
+        "-281",
+        "-5",
+        "-6",
+        "-7",
+        "-312",
+        "-235",
+        "-207",
+        "-249",
+        "-15"
+      ],
+      "relevant_ids": [
+        "-281",
+        "-302",
+        "-282"
+      ],
+      "hit_ids": [
+        "-302",
+        "-281"
+      ],
+      "recall_at_10": 0.6666666666666666,
+      "recall_at_20": 0.6666666666666666,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_046",
+      "query": "想给 Redis 做一份当前数据的快照，它是怎么生成和保存的，会阻塞请求吗？",
+      "topic": "Redis",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-285",
+        "-283",
+        "-286",
+        "-291",
+        "-284",
+        "-15",
+        "-297",
+        "-295",
+        "-273",
+        "-271"
+      ],
+      "relevant_ids": [
+        "-285",
+        "-283"
+      ],
+      "hit_ids": [
+        "-285",
+        "-283"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_047",
+      "query": "Redis 的 key 设了过期时间，到期会马上从内存删掉吗？具体什么时候清理？",
+      "topic": "Redis",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-290",
+        "-289",
+        "-287",
+        "-288",
+        "-307",
+        "-311",
+        "-310",
+        "-8",
+        "-5",
+        "-7"
+      ],
+      "relevant_ids": [
+        "-289",
+        "-290"
+      ],
+      "hit_ids": [
+        "-290",
+        "-289"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_048",
+      "query": "Redis 主库挂了以后，哨兵怎么发现故障、决定让哪个从库接替？",
+      "topic": "Redis",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-294",
+        "-293",
+        "-291",
+        "-251",
+        "-292",
+        "-296",
+        "-166",
+        "-177",
+        "-195",
+        "-250"
+      ],
+      "relevant_ids": [
+        "-293",
+        "-294"
+      ],
+      "hit_ids": [
+        "-294",
+        "-293"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_049",
+      "query": "数据库读请求太多扛不住，在前面加 Redis 缓存为什么能改善性能？",
+      "topic": "Redis",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-297",
+        "-300",
+        "-298",
+        "-277",
+        "-310",
+        "-311",
+        "-312",
+        "-299",
+        "-215",
+        "-280"
+      ],
+      "relevant_ids": [
+        "-297"
+      ],
+      "hit_ids": [
+        "-297"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_050",
+      "query": "Redis 我只拿来当缓存用过，还有哪些常见的业务用途？",
+      "topic": "Redis",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-301",
+        "-265",
+        "-276",
+        "-303",
+        "-12",
+        "-10",
+        "-188",
+        "-161",
+        "-299",
+        "-297"
+      ],
+      "relevant_ids": [
+        "-301",
+        "-265"
+      ],
+      "hit_ids": [
+        "-301",
+        "-265"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    }
+  ],
+  "worst_samples": [
+    {
+      "sample_id": "eval_021",
+      "query": "两个服务之间用了 MQ，消息从发出去到被业务处理，中间到底是怎么走的？",
+      "topic": "消息队列",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-23",
+        "-185",
+        "-181",
+        "-154",
+        "-24",
+        "-161",
+        "-188",
+        "-184",
+        "-156",
+        "-166"
+      ],
+      "relevant_ids": [
+        "-154",
+        "-167"
+      ],
+      "hit_ids": [
+        "-154"
+      ],
+      "recall_at_10": 0.5,
+      "recall_at_20": 0.5,
+      "mrr": 0.25,
+      "first_hit_rank": 4
+    },
+    {
+      "sample_id": "eval_045",
+      "query": "Redis 我想连续改几个 key，又不想让别的请求插进来，该怎么做？",
+      "topic": "Redis",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-302",
+        "-281",
+        "-5",
+        "-6",
+        "-7",
+        "-312",
+        "-235",
+        "-207",
+        "-249",
+        "-15"
+      ],
+      "relevant_ids": [
+        "-281",
+        "-302",
+        "-282"
+      ],
+      "hit_ids": [
+        "-302",
+        "-281"
+      ],
+      "recall_at_10": 0.6666666666666666,
+      "recall_at_20": 0.6666666666666666,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_024",
+      "query": "如果消息队列有一台机器突然宕了，怎样让业务还能继续发消息和消费？",
+      "topic": "消息队列",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-166",
+        "-167",
+        "-195",
+        "-163",
+        "-164",
+        "-194",
+        "-181",
+        "-161",
+        "-188",
+        "-23"
+      ],
+      "relevant_ids": [
+        "-166",
+        "-177",
+        "-195",
+        "-167"
+      ],
+      "hit_ids": [
+        "-166",
+        "-167",
+        "-195"
+      ],
+      "recall_at_10": 0.75,
+      "recall_at_20": 0.75,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_003",
+      "query": "业务还没跑完 Redis 锁就过期了，旧请求结束时怎么避免把别人的锁给删了？",
+      "topic": "分布式系统",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-7",
+        "-5",
+        "-9",
+        "-303",
+        "-6",
+        "-8",
+        "-10",
+        "-236",
+        "-311",
+        "-289"
+      ],
+      "relevant_ids": [
+        "-9",
+        "-7",
+        "-5",
+        "-281",
+        "-303"
+      ],
+      "hit_ids": [
+        "-7",
+        "-5",
+        "-9",
+        "-303"
+      ],
+      "recall_at_10": 0.8,
+      "recall_at_20": 0.8,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_009",
+      "query": "限流设成每秒 100 次，在前一秒末尾和后一秒开头一起发请求，好像还能放过很多，这是为什么，怎么改？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-32",
+        "-33",
+        "-31",
+        "-35",
+        "-34",
+        "-312",
+        "-302",
+        "-311",
+        "-289",
+        "-176"
+      ],
+      "relevant_ids": [
+        "-33",
+        "-31"
+      ],
+      "hit_ids": [
+        "-33",
+        "-31"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 0.5,
+      "first_hit_rank": 2
+    },
+    {
+      "sample_id": "eval_023",
+      "query": "同一条支付消息可能收到两次，怎么保证不会给用户重复扣款？",
+      "topic": "消息队列",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-161",
+        "-188",
+        "-162",
+        "-24",
+        "-169",
+        "-181",
+        "-164",
+        "-21",
+        "-155",
+        "-163"
+      ],
+      "relevant_ids": [
+        "-162",
+        "-161",
+        "-188"
+      ],
+      "hit_ids": [
+        "-161",
+        "-188",
+        "-162"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_018",
+      "query": "Go 协程因为等数据或等锁停住了，运行时一般会在什么情况下调度别的协程？",
+      "topic": "Go",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-118",
+        "-80",
+        "-88",
+        "-95",
+        "-116",
+        "-123",
+        "-87",
+        "-115",
+        "-117",
+        "-124"
+      ],
+      "relevant_ids": [
+        "-118"
+      ],
+      "hit_ids": [
+        "-118"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_004",
+      "query": "订单号直接用 UUID，再拿它当 MySQL 主键，会不会有什么坑？",
+      "topic": "分布式系统",
+      "difficulty": "easy",
+      "retrieved_ids": [
+        "-13",
+        "-231",
+        "-12",
+        "-11",
+        "-223",
+        "-208",
+        "-227",
+        "-258",
+        "-229",
+        "-15"
+      ],
+      "relevant_ids": [
+        "-13",
+        "-12"
+      ],
+      "hit_ids": [
+        "-13",
+        "-12"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_005",
+      "query": "订单和库存拆成不同服务以后，为什么以前一个数据库事务的做法就不够了？",
+      "topic": "分布式系统",
+      "difficulty": "medium",
+      "retrieved_ids": [
+        "-17",
+        "-261",
+        "-263",
+        "-211",
+        "-259",
+        "-2",
+        "-18",
+        "-21",
+        "-22",
+        "-24"
+      ],
+      "relevant_ids": [
+        "-17"
+      ],
+      "hit_ids": [
+        "-17"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    },
+    {
+      "sample_id": "eval_006",
+      "query": "TCC 要给每个业务写几套操作，这些操作是怎么配合起来完成一次事务的？",
+      "topic": "分布式系统",
+      "difficulty": "hard",
+      "retrieved_ids": [
+        "-21",
+        "-18",
+        "-25",
+        "-22",
+        "-263",
+        "-17",
+        "-261",
+        "-162",
+        "-19",
+        "-24"
+      ],
+      "relevant_ids": [
+        "-21",
+        "-18"
+      ],
+      "hit_ids": [
+        "-21",
+        "-18"
+      ],
+      "recall_at_10": 1,
+      "recall_at_20": 1,
+      "mrr": 1,
+      "first_hit_rank": 1
+    }
+  ]
+}

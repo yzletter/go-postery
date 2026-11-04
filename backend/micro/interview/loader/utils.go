@@ -90,7 +90,7 @@ var (
 // ParseQuestionBank 解析非结构化题库文本为结构化题目
 // 超过 maxSegmentLen 的文本会按段落边界分段，逐段调用 LLM 解析后合并结果
 func (parser *QuestionParser) ParseQuestionBank(ctx context.Context, chatModel model.ToolCallingChatModel, rawText string) (*ParseResult, error) {
-	const maxSegmentLen = 25000 // 单段最大字符数，留足 prompt 模板和 LLM 输出空间
+	const maxSegmentLen = 50000 // 单段最大字符数，留足 prompt 模板和 LLM 输出空间
 
 	var allRaw []ParsedQuestion
 
@@ -105,7 +105,7 @@ func (parser *QuestionParser) ParseQuestionBank(ctx context.Context, chatModel m
 		log.Printf("[question_parser] 文本过长（%d 字符），拆分为 %d 段分别解析", len(rawText), len(segments))
 		for i, seg := range segments {
 			log.Printf("[question_parser] 解析第 %d/%d 段（%d 字符）...", i+1, len(segments), len(seg))
-			segCtx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+			segCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 			parsed, err := parseSegment(segCtx, chatModel, seg)
 			cancel()
 			if err != nil {
