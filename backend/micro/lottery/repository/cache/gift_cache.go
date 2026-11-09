@@ -102,3 +102,7 @@ func (cache *redisGiftCache) RollbackInventory(ctx context.Context, orderID, gid
 func stockRollbackKey(orderID int64) string {
 	return stockRollbackPrefix + strconv.FormatInt(orderID, 10)
 }
+
+func giftKey(gid int64) string {
+	return lotteryGiftPrefix + strconv.FormatInt(gid, 10)
+}

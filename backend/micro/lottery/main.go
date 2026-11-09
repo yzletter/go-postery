@@ -77,7 +77,6 @@ func main() {
 
 	// Cache 层
 	GiftCache := cache.NewGiftCache(RedisClient)
-	OrderCache := cache.NewOrderCache(RedisClient)
 
 	// DAO 层
 	GiftDAO := dao.NewGiftDAO(MySQLGormDB)
@@ -85,7 +84,7 @@ func main() {
 
 	// Repository 层
 	GiftRepo := repository.NewGiftRepository(GiftDAO, GiftCache)
-	OrderRepo := repository.NewOrderRepository(OrderDAO, OrderCache)
+	OrderRepo := repository.NewOrderRepository(OrderDAO)
 
 	// Service 层
 	MetricService := pkg.NewMetricService(Service)

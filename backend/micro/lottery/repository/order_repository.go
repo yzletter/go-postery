@@ -5,19 +5,16 @@ import (
 	"time"
 
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
-	"github.com/yzletter/go-postery/backend/micro/lottery/repository/cache"
 	"github.com/yzletter/go-postery/backend/micro/lottery/repository/dao"
 )
 
 type orderRepository struct {
-	dao   dao.OrderDAO
-	cache cache.OrderCache
+	dao dao.OrderDAO
 }
 
-func NewOrderRepository(dao dao.OrderDAO, cache cache.OrderCache) OrderRepository {
+func NewOrderRepository(dao dao.OrderDAO) OrderRepository {
 	return &orderRepository{
-		dao:   dao,
-		cache: cache,
+		dao: dao,
 	}
 }
 
