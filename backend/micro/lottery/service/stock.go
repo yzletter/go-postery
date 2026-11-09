@@ -114,20 +114,25 @@ func (svc *lotteryService) StartStockRollbackScanner(ctx context.Context) {
 	}
 }
 
-// rollbackStock 进行库存回收并返回是否成功
+// rollbackStock 进行库存回收并返回补偿记录是否成功落库
 func (svc *lotteryService) rollbackStock(ctx context.Context, order *model.Order) bool {
 	if err := svc.giftRepo.RollbackCacheInventory(ctx, order.ID, order.GiftID); err != nil {
+		// 库存回收失败
 		slog.Error("rollback gift cache inventory failed", "error", err, "order_id", order.ID, "gift_id", order.GiftID)
 		if markErr := svc.orderRepo.MarkRollbackFailed(ctx, order.ID, time.Now().Add(stockRollbackRetryDelay)); markErr != nil {
 			slog.Error("mark stock rollback failed status failed", "error", markErr, "order_id", order.ID)
-			return false
+			return false // 库存回收失败, 记录落库也失败, 不能 ACK
 		}
-		return true
+
+		return true // 库存回收失败, 但是记录落库成功，可以 ACK, 交由扫表回补
 	}
 
+	// 库存回补成功
 	if err := svc.orderRepo.MarkRollbackDone(ctx, order.ID); err != nil {
 		slog.Error("mark stock rollback done failed", "error", err, "order_id", order.ID)
-		return false
+		return false // 库存回补成功, 但是记录落库不成功，不能 ACK
 	}
+
+	// 库存回补成功, 记录落库也成功
 	return true
 }

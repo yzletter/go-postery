@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	lotteryGiftPrefix      = "lottery:gift:"
-	stockRollbackPrefix    = "lottery:stock_rollback:"
-	stockRollbackMarkerTTL = 0
+	lotteryGiftPrefix   = "lottery:gift:"
+	stockRollbackPrefix = "lottery:stock_rollback:"
 )
 
 //go:embed lua/decrease_inventory_script.lua
@@ -90,7 +89,7 @@ func (cache *redisGiftCache) IncreaseInventory(ctx context.Context, gid int64) e
 }
 
 func (cache *redisGiftCache) RollbackInventory(ctx context.Context, orderID, gid int64) error {
-	result, err := cache.client.Eval(ctx, luaRollbackInventoryScript, []string{giftKey(gid), stockRollbackKey(orderID)}, stockRollbackMarkerTTL).Int()
+	result, err := cache.client.Eval(ctx, luaRollbackInventoryScript, []string{giftKey(gid), stockRollbackKey(orderID)}).Int()
 	if err != nil {
 		return err
 	}
