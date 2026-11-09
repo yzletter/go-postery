@@ -49,9 +49,11 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 				continue
 			}
 
+			// 遍历 Message
 			for _, message := range messages {
-				var tempOrder model.Order
-				if err := sonic.Unmarshal(message.GetBody(), &tempOrder); err != nil {
+				var order model.Order
+				// 反序列化消息
+				if err := sonic.Unmarshal(message.GetBody(), &order); err != nil {
 					// 毒消息进行 Ack 避免恶性循环
 					slog.Warn("invalid lottery temp order message, skip", "error", err, "message_id", message.GetMessageId(), "topic", message.GetTopic())
 					// 毒消息 Ack 失败
@@ -61,12 +63,20 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 					continue
 				}
 
-				// 判断是否需要进行库存回收
-				if needRollback, err := svc.orderRepo.RecycleTempOrder(ctx, tempOrder.UserID, tempOrder.ID); err != nil {
-					slog.Error("recycle temp order failed", "error", err, "order_id", tempOrder.ID, "user_id", tempOrder.UserID)
+				// 进行库存回收
+				// 情况 1. 需要回收
+				//		情况 1.1 需要回收, 回收成功, ACK
+				//		情况 1.2 需要回收, 回收失败
+				// 			情况 1.2.1 需要回收, 回收失败, 但库存状态落库成功, 即订单状态为回补失败, ACK
+				// 			情况 1.2.2 需要回收, 回收失败, 但库存状态落库失败, 即订单状态仍为待回补, 不 ACK
+				// 情况 2. 不需要回收, ACK
+				// 情况 3. 其他错误, 不 ACK
+				if ack, err := svc.Recycle(ctx, order.UserID, order.ID, order.GiftID); err != nil {
+					slog.Error("recycle temp order failed", "error", err, "order_id", order.ID, "user_id", order.UserID)
+					// 发生错误
 					continue
-				} else if needRollback && !svc.rollbackStock(ctx, &tempOrder) {
-					// 需要回收但回收失败，不 ACK 消息
+				} else if !ack {
+					// 回补状态未成功更新
 					continue
 				}
 
@@ -78,6 +88,21 @@ func (svc *lotteryService) StartLotteryOrderConsumer(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (svc *lotteryService) Recycle(ctx context.Context, uid int64, orderID int64, giftID int64) (bool, error) {
+	needRollback, err := svc.orderRepo.HandleTempOrder(ctx, uid, orderID)
+	if err != nil {
+		slog.Error("handle temp order failed", "error", err, "order_id", orderID, "user_id", uid)
+		return false, err
+	}
+
+	if needRollback && !svc.rollbackStock(ctx, orderID, giftID) {
+		// 需要回收但回收失败，不 ACK 消息
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // StartStockRollbackScanner 定时扫描库存回收失败，进行重试
@@ -103,36 +128,37 @@ func (svc *lotteryService) StartStockRollbackScanner(ctx context.Context) {
 				}
 
 				// 是否需要回收
-				if needRollback, err := svc.orderRepo.RecycleTempOrder(ctx, order.UserID, order.ID); err != nil {
+				if needRollback, err := svc.orderRepo.HandleTempOrder(ctx, order.UserID, order.ID); err != nil {
 					slog.Error("recycle rollback due order failed", "error", err, "order_id", order.ID, "user_id", order.UserID)
 					continue
 				} else if needRollback {
-					_ = svc.rollbackStock(ctx, order)
+					_ = svc.rollbackStock(ctx, order.ID, order.GiftID)
 				}
 			}
 		}
 	}
 }
 
-// rollbackStock 进行库存回收并返回补偿记录是否成功落库
-func (svc *lotteryService) rollbackStock(ctx context.Context, order *model.Order) bool {
-	if err := svc.giftRepo.RollbackCacheInventory(ctx, order.ID, order.GiftID); err != nil {
+// rollbackStock 进行库存回收并返回补偿状态是否更新成功
+func (svc *lotteryService) rollbackStock(ctx context.Context, orderID int64, giftID int64) bool {
+	if err := svc.giftRepo.RollbackCacheInventory(ctx, orderID, giftID); err != nil {
 		// 库存回收失败
-		slog.Error("rollback gift cache inventory failed", "error", err, "order_id", order.ID, "gift_id", order.GiftID)
-		if markErr := svc.orderRepo.MarkRollbackFailed(ctx, order.ID, time.Now().Add(stockRollbackRetryDelay)); markErr != nil {
-			slog.Error("mark stock rollback failed status failed", "error", markErr, "order_id", order.ID)
-			return false // 库存回收失败, 记录落库也失败, 不能 ACK
+		slog.Error("rollback gift cache inventory failed", "error", err, "order_id", orderID, "gift_id", giftID)
+		// 标记库存回补失败
+		if markErr := svc.orderRepo.MarkRollbackFailed(ctx, orderID, time.Now().Add(stockRollbackRetryDelay)); markErr != nil {
+			slog.Error("mark stock rollback failed status failed", "error", markErr, "order_id", orderID)
+			return false // 库存回收失败, 库存回补状态也更新失败, 不能 ACK
 		}
 
-		return true // 库存回收失败, 但是记录落库成功，可以 ACK, 交由扫表回补
+		return true // 库存回收失败, 库存回补状态更新成功，可以 ACK, 交由扫表回补
 	}
 
 	// 库存回补成功
-	if err := svc.orderRepo.MarkRollbackDone(ctx, order.ID); err != nil {
-		slog.Error("mark stock rollback done failed", "error", err, "order_id", order.ID)
-		return false // 库存回补成功, 但是记录落库不成功，不能 ACK
+	if err := svc.orderRepo.MarkRollbackDone(ctx, orderID); err != nil {
+		slog.Error("mark stock rollback done failed", "error", err, "order_id", orderID)
+		return false // 库存回补成功, 但是回补状态更新不成功，不能 ACK
 	}
 
-	// 库存回补成功, 记录落库也成功
+	// 库存回补成功, 回补状态更新也成功
 	return true
 }

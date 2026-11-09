@@ -8,15 +8,6 @@ import (
 )
 
 type OrderDAO interface {
-	// Create 创建订单
-	//
-	// Parameter:
-	//	- order: 订单
-	//
-	// Return:
-	//	- error: 可能返回的错误
-	Create(ctx context.Context, order *model.Order) error
-
 	// Get 获取订单
 	//
 	// Parameter:

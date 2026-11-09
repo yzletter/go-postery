@@ -4,12 +4,6 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
 )
 
-type Order struct {
-	ID     int64 `json:"id,string"`
-	UserID int64 `json:"user_id,string"`
-	GiftID int64 `json:"gift_id,string"`
-}
-
 type LotteryResult struct {
 	Success     bool   `json:"success"`
 	Description string `json:"description"`

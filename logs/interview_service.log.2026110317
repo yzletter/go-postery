@@ -1,9 +1,0 @@
-{"time":"2026-11-03 17:00:30.987","level":"INFO","msg":"[Eval] (42/50) sample=eval_042 query=\"跳表是怎么设置层高的\""}
-{"time":"2026-11-03 17:01:22.580","level":"INFO","msg":"[Eval] (43/50) sample=eval_043 query=\"哈希表是怎么扩容的\""}
-{"time":"2026-11-03 17:02:20.660","level":"INFO","msg":"[Eval] (44/50) sample=eval_044 query=\"Redis 为什么快\""}
-{"time":"2026-11-03 17:03:25.737","level":"INFO","msg":"[Eval] (45/50) sample=eval_045 query=\"如何实现 Redis 原子性\""}
-{"time":"2026-11-03 17:04:06.121","level":"INFO","msg":"[Eval] (46/50) sample=eval_046 query=\"RDB 快照是如何实现的\""}
-{"time":"2026-11-03 17:05:21.827","level":"INFO","msg":"[Eval] (47/50) sample=eval_047 query=\"介绍一下 Redis 过期删除策略\""}
-{"time":"2026-11-03 17:05:49.234","level":"INFO","msg":"[Eval] (48/50) sample=eval_048 query=\"哨兵机制原理是什么\""}
-{"time":"2026-11-03 17:06:54.753","level":"INFO","msg":"[Eval] (49/50) sample=eval_049 query=\"为什么使用 Redis\""}
-{"time":"2026-11-03 17:07:51.332","level":"INFO","msg":"[Eval] (50/50) sample=eval_050 query=\"7.5 Redis 有哪些应用场景\""}

@@ -17,14 +17,14 @@ type OrderRepository interface {
 	//	- error: 可能返回的错误
 	CreateTempOrder(ctx context.Context, order *model.Order) error
 
-	// PayTempOrder 支付订单
+	// Pay 支付订单
 	//
 	// Parameter:
 	//	- orderID: 订单 ID
 	//
 	// Return:
 	//	- error: 可能返回的错误
-	PayTempOrder(ctx context.Context, orderID int64) error
+	Pay(ctx context.Context, orderID int64) error
 
 	// CancelTempOrder 取消临时订单
 	//
@@ -35,7 +35,7 @@ type OrderRepository interface {
 	//	- error: 可能返回的错误
 	CancelTempOrder(ctx context.Context, orderID int64) error
 
-	// RecycleTempOrder 回收临时订单
+	// HandleTempOrder 回收临时订单
 	//
 	// Parameter:
 	//	- uid: 用户 ID
@@ -44,7 +44,7 @@ type OrderRepository interface {
 	// Return:
 	//	- bool: 是否需要回补库存
 	//	- error: 可能返回的错误
-	RecycleTempOrder(ctx context.Context, uid int64, orderID int64) (bool, error)
+	HandleTempOrder(ctx context.Context, uid int64, orderID int64) (bool, error)
 
 	// MarkRollbackDone 标记库存回滚完成
 	//

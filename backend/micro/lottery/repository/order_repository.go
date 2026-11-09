@@ -26,7 +26,7 @@ func (repo *orderRepository) CreateTempOrder(ctx context.Context, order *model.O
 	return nil
 }
 
-func (repo *orderRepository) PayTempOrder(ctx context.Context, orderID int64) error {
+func (repo *orderRepository) Pay(ctx context.Context, orderID int64) error {
 	if err := repo.dao.PayTempOrder(ctx, orderID); err != nil {
 		return toRepositoryErr(err)
 	}
@@ -49,7 +49,7 @@ func (repo *orderRepository) GetTempOrder(ctx context.Context, uid int64) (*mode
 	}
 }
 
-func (repo *orderRepository) RecycleTempOrder(ctx context.Context, uid, tempOrderID int64) (bool, error) {
+func (repo *orderRepository) HandleTempOrder(ctx context.Context, uid, tempOrderID int64) (bool, error) {
 	if ok, err := repo.dao.RecycleTempOrder(ctx, uid, tempOrderID); err != nil {
 		return false, toRepositoryErr(err)
 	} else {

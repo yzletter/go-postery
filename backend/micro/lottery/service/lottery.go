@@ -116,18 +116,23 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 			continue
 		}
 
+		// 生成订单
 		lotteryTime := time.Now() // 抽奖时间
 		order := &model.Order{
-			ID:       svc.idGen.NextID(),
-			UserID:   userID,
-			GiftID:   gid,
-			Count:    1,
-			ExpireAt: lotteryTime.Add(conf.RocketLotteryPayDelay * time.Second),
+			ID:                  svc.idGen.NextID(),
+			UserID:              userID,
+			GiftID:              gid,
+			Count:               1,
+			ExpireAt:            lotteryTime.Add(conf.RocketLotteryPayDelay * time.Second),
+			Status:              model.OrderStatusPending,         // 订单待支付
+			StockRollbackStatus: model.StockRollbackStatusPending, // 库存待回补
 		}
 
-		// 创建临时订单
+		// MySQL 落库订单
 		if err := svc.orderRepo.CreateTempOrder(ctx, order); err != nil {
+			// MySQL 落库订单失败, 尝试回补库存, 这里回补失败会导致库存流失
 			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
+
 			if !errors.Is(err, repository.ErrUniqueKey) {
 				// 如果不是订单重复, 报错
 				slog.Error("create temp order failed", "user_id", userID, "gift_id", gid, "error", err)
@@ -147,7 +152,7 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 
 		// 发送延迟消息
 		if err = svc.produce(ctx, order, conf.RocketLotteryPayDelay); err != nil {
-			// 延迟消息发送失败, 最多导致超时订单无法回收库存，导致库存流失, 但不会超卖
+			// 延迟消息发送失败, 最多导致无法通过 RocketMQ 的延迟消息回收库存, 导致库存流失, 但不会超卖
 			// 定时扫订单表进行兜底
 			slog.Error("produce temp order failed", "order_id", order.ID, "user_id", userID, "gift_id", gid, "error", err)
 		}
@@ -183,8 +188,8 @@ func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID in
 
 	// todo 接支付链路
 
-	// 正式订单落库 + 扣减实际库存
-	if err := svc.orderRepo.PayTempOrder(ctx, tempOrder.ID); err != nil {
+	// MySQL 事务完成修改订单状态为 + 扣减实际库存
+	if err := svc.orderRepo.Pay(ctx, tempOrder.ID); err != nil {
 		if errors.Is(err, repository.ErrUniqueKey) {
 			slog.Info("pay skipped: order already created", "user_id", userID, "temp_order_id", tempOrderID)
 			return errs.ErrAlreadyExits
@@ -205,7 +210,7 @@ func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, tempOrderID
 		return errs.ErrNotFound
 	}
 
-	// 取消临时订单
+	// 取消临时订单 Pending -> Cancelled
 	if err = svc.orderRepo.CancelTempOrder(ctx, tempOrder.ID); err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			slog.Info("give up skipped: order not found", "user_id", userID, "temp_order_id", tempOrderID)
@@ -215,8 +220,9 @@ func (svc *lotteryService) GiveUp(ctx context.Context, userID int64, tempOrderID
 		return errs.ErrInternal
 	}
 
-	if !svc.rollbackStock(ctx, tempOrder) {
-		return errs.ErrInternal
+	if !svc.rollbackStock(ctx, tempOrder.ID, tempOrder.GiftID) {
+		slog.Info("roll back failed", "temp_order_id", tempOrder.ID)
+		return nil
 	}
 
 	return nil
@@ -246,8 +252,8 @@ func lottery(ids []int64, stocks []float64) int64 {
 		return -1
 	}
 
-	sum := 0.0
-	acc := make([]float64, len(stocks))
+	// 累加概率
+	sum, acc := 0.0, make([]float64, len(stocks))
 	for i, prob := range stocks {
 		sum += prob
 		acc[i] = sum
