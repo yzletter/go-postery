@@ -7,6 +7,7 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
 )
 
+// OrderDAO 订单 DAO 接口
 type OrderDAO interface {
 	// Get 获取订单
 	//
@@ -28,14 +29,15 @@ type OrderDAO interface {
 	//	- error: 可能返回的错误
 	GetTempOrder(ctx context.Context, uid int64) (*model.Order, error)
 
-	// CreateTempOrder 创建临时订单
+	// CreateOrder 创建订单，已存在时返回已有订单
 	//
 	// Parameter:
 	//	- order: 订单
 	//
 	// Return:
+	//	- *model.Order: 新建或已有的订单
 	//	- error: 可能返回的错误
-	CreateTempOrder(ctx context.Context, order *model.Order) error
+	CreateOrder(ctx context.Context, order *model.Order) (*model.Order, error)
 
 	// RecycleTempOrder 回收临时订单
 	//
@@ -94,9 +96,9 @@ type OrderDAO interface {
 	// Return:
 	//	- error: 可能返回的错误
 	CancelTempOrder(ctx context.Context, orderID int64) error
-	//GetTempOrder(ctx context.Context, uid int64) (*model.Order, error)
 }
 
+// GiftDAO 奖品 DAO 接口
 type GiftDAO interface {
 	// GetAll 获取所有奖品
 	//

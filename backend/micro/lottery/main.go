@@ -95,7 +95,7 @@ func main() {
 	ETCDServiceHub := hub.NewEtcdServiceHub(CommonMicroConf.ServiceHub.HeartbeatFrequency, CommonMicroConf.ServiceHub.ServiceRegisterPrefix, etcdClient, hub.NewRoundRobinLoadBalancer())
 
 	// gRPC Server
-	LotteryServiceServer := server.NewLotteryServiceServer(LotteryService)
+	LotteryServiceServer := server.NewLotteryServiceServer(LotteryService, IDGenerator)
 	ServiceRegistrar := grpc.NewServer(
 		grpc.UnaryInterceptor(my_grpc.NewGrpcLimitInterceptor(Service+":", RateLimitService).BuildLimiter),
 		grpc.ChainUnaryInterceptor(MetricService.CounterInterceptor(), MetricService.TimerInterceptor()), // Prometheus
@@ -147,9 +147,10 @@ func main() {
 	}()
 
 	// 业务
-	LotteryService.InitCacheInventory(ctx)           // 预热库存
-	go LotteryService.StartLotteryOrderConsumer(ctx) // 开启协程核查临时订单进行库存回流
-	go LotteryService.StartStockRollbackScanner(ctx) // 开启协程兜底扫描失败库存回补重试
+	LotteryService.InitCacheInventory(ctx)               // 预热库存
+	go LotteryService.StartLotteryOrderConsumer(ctx)     // 开启协程核查临时订单进行库存回流
+	go LotteryService.StartStockRollbackScanner(ctx)     // 开启协程兜底扫描失败库存回补重试
+	go LotteryService.StartLotteryOrderRetryScanner(ctx) // 开启协程扫描预占记录，重试订单落库
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).

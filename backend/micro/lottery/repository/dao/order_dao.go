@@ -8,6 +8,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type gormOrderDAO struct {
@@ -42,22 +43,50 @@ func (dao *gormOrderDAO) GetTempOrder(ctx context.Context, uid int64) (*model.Or
 	return order, nil
 }
 
-// CreateTempOrder 创建临时订单
-func (dao *gormOrderDAO) CreateTempOrder(ctx context.Context, order *model.Order) error {
+// CreateOrder 创建订单
+func (dao *gormOrderDAO) CreateOrder(ctx context.Context, order *model.Order) (*model.Order, error) {
 	// 兜底
 	if order.Status != model.OrderStatusPending {
 		order.Status = model.OrderStatusPending
 	}
 
-	if result := dao.db.WithContext(ctx).Model(&model.Order{}).Create(order); result.Error != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
-			return ErrUniqueKey
+	var savedOrder model.Order
+	ok := false
+	err := dao.db.WithContext(ctx).Transaction(
+		func(tx *gorm.DB) error {
+			// 1. 查询是否已有订单
+			if err := tx.Where("user_id = ? AND deleted_at IS NULL", order.UserID).First(&savedOrder).Error; err == nil {
+				ok = true
+				return nil
+			}
+
+			// 2. 创建订单
+			if result := tx.Model(&model.Order{}).Create(order); result.Error != nil {
+				var mysqlErr *mysql.MySQLError
+				if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == 1062 {
+					return ErrUniqueKey
+				}
+				// 系统层面错误
+				return ErrServerInternal
+			}
+			return nil
+		})
+	if err != nil {
+		if errors.Is(err, ErrUniqueKey) {
+			// 并发请求已创建订单, 重新查询并返回
+			savedOrder, getErr := dao.Get(ctx, order.UserID)
+			if getErr != nil {
+				return nil, ErrServerInternal
+			}
+			return savedOrder, nil
 		}
-		// 系统层面错误
-		return ErrServerInternal
+		return nil, err
 	}
-	return nil
+
+	if ok {
+		return &savedOrder, nil
+	}
+	return order, nil
 }
 
 // RecycleTempOrder 回收超时订单，返回是否需要回补缓存库存。
@@ -225,10 +254,13 @@ func isRollbackOrderStatus(status int) bool {
 func (dao *gormOrderDAO) PayTempOrder(ctx context.Context, orderID int64) error {
 	err := dao.db.WithContext(ctx).Transaction(
 		func(tx *gorm.DB) error {
-			// 1. 查询订单
+			// 1. 加锁查询订单，串行处理同一订单的支付请求
 			var order model.Order
-			if err := tx.Where("id = ? AND deleted_at IS NULL", orderID).First(&order).Error; err != nil {
-				return ErrRecordNotFound
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ? AND deleted_at IS NULL", orderID).First(&order).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return ErrRecordNotFound
+				}
+				return ErrServerInternal
 			}
 
 			// 支付回调幂等：已经支付过，直接成功

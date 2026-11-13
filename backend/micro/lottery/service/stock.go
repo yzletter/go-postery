@@ -23,6 +23,9 @@ const (
 	stockRollbackScannerPeriod     = 10 * time.Second // 回滚扫描间隔
 	stockRollbackScanBatchLimit    = 100              // 回滚失败订单扫描每批订单数
 	lotteryOrderConsumerBatchLimit = 10               // 消息扫描每批消息数
+	lotteryOrderRetryScannerPeriod = 10 * time.Second // 订单落库重试扫描间隔
+	lotteryRecordScanCount         = 100              // 预占记录扫描数量提示
+	lotteryOrderRetryTimeout       = 3 * time.Second  // 单次订单落库重试超时
 )
 
 // InitCacheInventory 初始化抽奖库存
@@ -139,6 +142,56 @@ func (svc *lotteryService) StartStockRollbackScanner(ctx context.Context) {
 	}
 }
 
+// StartLotteryOrderRetryScanner 定时扫描预占记录，重试订单落库
+func (svc *lotteryService) StartLotteryOrderRetryScanner(ctx context.Context) {
+	ticker := time.NewTicker(lotteryOrderRetryScannerPeriod)
+	defer ticker.Stop()
+
+	var cursor uint64
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("close lottery order retry scanner success")
+			return
+		case <-ticker.C:
+			cursor = svc.retryLotteryOrders(ctx, cursor)
+		}
+	}
+}
+
+func (svc *lotteryService) retryLotteryOrders(ctx context.Context, cursor uint64) uint64 {
+	records, nextCursor, err := svc.giftRepo.ScanLotteryRecords(ctx, cursor, lotteryRecordScanCount)
+	if err != nil {
+		slog.Error("scan lottery records failed", "error", err)
+		return cursor
+	}
+
+	for _, record := range records {
+		if ctx.Err() != nil {
+			return cursor
+		}
+
+		order := &model.Order{
+			ID:                  svc.idGen.NextID(),
+			UserID:              record.UserID,
+			GiftID:              record.GiftID,
+			Count:               1,
+			ExpireAt:            time.Now().Add(conf.RocketLotteryPayDelay * time.Second),
+			Status:              model.OrderStatusPending,
+			StockRollbackStatus: model.StockRollbackStatusPending,
+		}
+
+		retryCtx, cancel := context.WithTimeout(ctx, lotteryOrderRetryTimeout)
+		_, err := svc.orderRepo.CreateOrder(retryCtx, order)
+		cancel()
+		if err != nil {
+			slog.Error("retry create lottery order failed", "user_id", record.UserID, "request_id", record.RequestID, "error", err)
+		}
+	}
+
+	return nextCursor
+}
+
 // rollbackStock 进行库存回收并返回补偿状态是否更新成功
 func (svc *lotteryService) rollbackStock(ctx context.Context, orderID int64, giftID int64) bool {
 	if err := svc.giftRepo.RollbackCacheInventory(ctx, orderID, giftID); err != nil {
@@ -149,7 +202,6 @@ func (svc *lotteryService) rollbackStock(ctx context.Context, orderID int64, gif
 			slog.Error("mark stock rollback failed status failed", "error", markErr, "order_id", orderID)
 			return false // 库存回收失败, 库存回补状态也更新失败, 不能 ACK
 		}
-
 		return true // 库存回收失败, 库存回补状态更新成功，可以 ACK, 交由扫表回补
 	}
 

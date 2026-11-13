@@ -7,15 +7,17 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/lottery/model"
 )
 
+// OrderRepository 订单 Repository 接口
 type OrderRepository interface {
-	// CreateTempOrder 创建临时订单
+	// CreateOrder 创建订单，已存在时返回已有订单
 	//
 	// Parameter:
 	//	- order: 订单
 	//
 	// Return:
+	//	- *model.Order: 新建或已有的订单
 	//	- error: 可能返回的错误
-	CreateTempOrder(ctx context.Context, order *model.Order) error
+	CreateOrder(ctx context.Context, order *model.Order) (*model.Order, error)
 
 	// Pay 支付订单
 	//
@@ -96,6 +98,7 @@ type OrderRepository interface {
 	GetOrder(ctx context.Context, uid int64) (*model.Order, error)
 }
 
+// GiftRepository 奖品 Repository 接口
 type GiftRepository interface {
 	// GetAllGifts 获取所有奖品
 	//
@@ -121,23 +124,42 @@ type GiftRepository interface {
 	//	- error: 可能返回的错误
 	GetByID(ctx context.Context, gid int64) (*model.Gift, error)
 
-	// ReduceCacheInventory 减少缓存库存
+	// Lottery 预扣缓存库存并保存或复用抽奖预占记录
 	//
 	// Parameter:
-	//	- gid: 奖品 ID
+	//	- requestID: 请求 ID
+	//	- userID: 用户 ID
+	//	- giftID: 奖品 ID
 	//
 	// Return:
+	//	- int64: 实际预占请求 ID
+	//	- int64: 实际预占奖品 ID
 	//	- error: 可能返回的错误
-	ReduceCacheInventory(ctx context.Context, gid int64) error
+	Lottery(ctx context.Context, requestID int64, userID int64, giftID int64) (int64, int64, error)
 
-	// IncreaseCacheInventory 增加缓存库存
+	// Reuse 复用已有抽奖预占记录
 	//
 	// Parameter:
-	//	- gid: 奖品 ID
+	//	- requestID: 请求 ID
+	//	- userID: 用户 ID
 	//
 	// Return:
+	//	- int64: 实际预占请求 ID
+	//	- int64: 实际预占奖品 ID
 	//	- error: 可能返回的错误
-	IncreaseCacheInventory(ctx context.Context, gid int64) error
+	Reuse(ctx context.Context, requestID int64, userID int64) (int64, int64, error)
+
+	// ScanLotteryRecords 分页读取抽奖预占记录
+	//
+	// Parameter:
+	//	- cursor: 当前扫描游标，首次扫描传 0
+	//	- count: 每次扫描的数量提示
+	//
+	// Return:
+	//	- []*model.LotteryRecord: 抽奖预占记录列表
+	//	- uint64: 下次扫描游标，0 表示本轮扫描结束
+	//	- error: 可能返回的错误
+	ScanLotteryRecords(ctx context.Context, cursor uint64, count int64) ([]*model.LotteryRecord, uint64, error)
 
 	// RollbackCacheInventory 回滚缓存库存
 	//

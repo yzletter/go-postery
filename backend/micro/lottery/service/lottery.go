@@ -56,27 +56,20 @@ func (svc *lotteryService) GetAllGifts(ctx context.Context) ([]*model.Gift, erro
 }
 
 // Lottery 抽奖接口
-func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.LotteryResult, error) {
-	// 尝试获取临时订单查看是否抽过奖
-	if result, exists, err := svc.getTempOrder(ctx, userID); err != nil {
-		slog.Error("get temp order result failed", "user_id", userID, "error", err)
-		return nil, errs.ErrInternal
-	} else if exists {
-		return result, nil
-	}
-
-	// 进行十次抽奖尝试
-	const maxTry = 10
-
+func (svc *lotteryService) Lottery(ctx context.Context, userID int64, requestID int64) (*dto.LotteryResult, error) {
+	const maxTry = 10 // 进行十次抽奖尝试
+	backup := requestID
 	for try := 1; try <= maxTry; try++ {
-		// 获取商品库存
+		requestID = backup
+
+		// 获取预热好的商品
 		gifts, err := svc.giftRepo.GetCacheInventory(ctx)
 		if err != nil {
 			slog.Error("get cache inventory failed", "error", err)
 			return nil, errs.ErrInternal
 		}
 
-		// 获取商品 ID 和库存
+		// 记录商品 ID 和库存
 		giftIDs, giftStocks := make([]int64, 0, len(gifts)), make([]float64, 0, len(gifts))
 		for _, gift := range gifts {
 			// 只保留 > 0 的部分
@@ -86,82 +79,99 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 			}
 		}
 
+		giftID := int64(0)
+		needLottery := true
+
 		// 所有奖品已抽完
 		if len(giftStocks) == 0 {
-			return &dto.LotteryResult{
-				Success:     false,
-				Description: dto.DescriptionNoGifts,
-				UserID:      userID,
-			}, nil
+			// 若当前请求为并发请求, 尝试复用其他请求走后续流程
+			requestID, giftID, err = svc.giftRepo.Reuse(ctx, requestID, userID)
+			if err != nil {
+				// 明确没有可复用的预占记录, 结束本次抽奖
+				if errors.Is(err, repository.ErrRecordNotFound) {
+					break
+				}
+				// 查询结果可能未知, 不能视为未中奖
+				slog.Error("reuse lottery request failed", "user_id", userID, "request_id", requestID, "error", err)
+				return nil, errs.ErrUnavailable
+			}
+
+			needLottery = false
 		}
 
-		// 进行抽奖
-		gid := lottery(giftIDs, giftStocks)
-		if gid == -1 {
-			continue
+		if needLottery {
+			// 计算选出的 ID
+			giftID = lottery(giftIDs, giftStocks)
+			if giftID == -1 {
+				continue
+			}
+
+			// 尝试进行抽奖: 验证抽奖资格 + 扣减库存 + 保存扣减记录
+			requestID, giftID, err = svc.giftRepo.Lottery(ctx, requestID, userID, giftID)
+			switch {
+			case err == nil:
+				// 扣减成功, 继续创建订单
+			case errors.Is(err, repository.ErrInsufficientStock):
+				// 明确没有扣成功, 进入下一轮循环
+				continue
+			case errors.Is(err, repository.ErrResourceConflict):
+				// 预扣过, 复用
+			default:
+				// 其他错误
+				return nil, errs.ErrUnavailable // TODO 区分没有抽奖资格和其他错误
+			}
 		}
 
-		// 尝试扣减库存
-		if err := svc.giftRepo.ReduceCacheInventory(ctx, gid); err != nil {
-			// 扣减失败
-			continue
-		}
-
-		// 获取商品详情
-		gift, err := svc.giftRepo.GetByID(ctx, gid)
-		if err != nil {
-			// 获取不到详情
-			slog.Warn("get gift after stock reduce failed", "gift_id", gid, "error", err)
-			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-			continue
-		}
-
-		// 生成订单
+		// 构造订单结构体
 		lotteryTime := time.Now() // 抽奖时间
 		order := &model.Order{
 			ID:                  svc.idGen.NextID(),
 			UserID:              userID,
-			GiftID:              gid,
+			GiftID:              giftID,
 			Count:               1,
-			ExpireAt:            lotteryTime.Add(conf.RocketLotteryPayDelay * time.Second),
-			Status:              model.OrderStatusPending,         // 订单待支付
-			StockRollbackStatus: model.StockRollbackStatusPending, // 库存待回补
+			ExpireAt:            lotteryTime.Add(conf.RocketLotteryPayDelay * time.Second), // 支付超时时间
+			Status:              model.OrderStatusPending,                                  // 订单待支付
+			StockRollbackStatus: model.StockRollbackStatusPending,                          // 库存待回补
 		}
 
-		// MySQL 落库订单
-		if err := svc.orderRepo.CreateTempOrder(ctx, order); err != nil {
-			// MySQL 落库订单失败, 尝试回补库存, 这里回补失败会导致库存流失
-			_ = svc.giftRepo.IncreaseCacheInventory(ctx, gid)
-
-			if !errors.Is(err, repository.ErrUniqueKey) {
-				// 如果不是订单重复, 报错
-				slog.Error("create temp order failed", "user_id", userID, "gift_id", gid, "error", err)
-				return nil, errs.ErrInternal
-			}
-
-			// 订单重复，获取已经存在的临时订单进行返回
-			if result, exists, err := svc.getTempOrder(ctx, userID); err != nil {
-				slog.Error("get temp order result failed", "user_id", userID, "error", err)
-				return nil, errs.ErrInternal
-			} else if exists {
-				return result, nil
-			}
-
-			continue
+		// 尝试订单落库并返回, 若已存在订单会直接返回
+		savedOrder, err := svc.orderRepo.CreateOrder(ctx, order)
+		if err != nil || savedOrder == nil {
+			slog.Error("create order failed", "user_id", userID, "request_id", requestID, "error", err)
+			return nil, errs.ErrInternal
 		}
 
-		// 发送延迟消息
-		if err = svc.produce(ctx, order, conf.RocketLotteryPayDelay); err != nil {
-			// 延迟消息发送失败, 最多导致无法通过 RocketMQ 的延迟消息回收库存, 导致库存流失, 但不会超卖
-			// 定时扫订单表进行兜底
-			slog.Error("produce temp order failed", "order_id", order.ID, "user_id", userID, "gift_id", gid, "error", err)
+		// 只有支付期限内的待支付订单可以继续返回中奖结果
+		if savedOrder.Status == model.OrderStatusPaid {
+			return nil, errs.ErrAlreadyExits
+		}
+		if savedOrder.Status != model.OrderStatusPending || !savedOrder.ExpireAt.After(time.Now()) {
+			return nil, errs.ErrNotFound
+		}
+
+		// 尝试发送延迟消息
+		if err = svc.produce(ctx, savedOrder, conf.RocketLotteryPayDelay); err != nil {
+			// 延迟消息发送失败, 导致无法通过 RocketMQ 的延迟消息回收库存
+			// 最多会导致库存流失, 但不会超卖, 通过定时扫订单表进行兜底
+			slog.Error("produce temp order failed", "order_id", savedOrder.ID, "user_id", userID, "gift_id", savedOrder.GiftID, "error", err)
+		}
+
+		// 获取商品详情, 这里应该用返回的 order 的 giftID
+		gift, err := svc.giftRepo.GetByID(ctx, savedOrder.GiftID)
+		if err != nil {
+			// 降级
+			slog.Warn("get gift detail failed", "gift_id", giftID, "error", err)
+			gift = &model.Gift{
+				ID:   savedOrder.GiftID,
+				Name: "未知商品",
+			}
 		}
 
 		// 返回数据
 		return &dto.LotteryResult{
 			Success:     true,
 			Description: dto.DescriptionLotterySuccess,
-			OrderID:     order.ID,
+			OrderID:     savedOrder.ID,
 			UserID:      userID,
 			Gift:        gift,
 		}, nil
@@ -179,20 +189,33 @@ func (svc *lotteryService) Lottery(ctx context.Context, userID int64) (*dto.Lott
 
 // Pay 支付接口
 func (svc *lotteryService) Pay(ctx context.Context, userID int64, tempOrderID int64, giftID int64) error {
-	// 获取临时订单
-	tempOrder, err := svc.orderRepo.GetTempOrder(ctx, userID)
-	if err != nil || tempOrder == nil || tempOrder.ID != tempOrderID || tempOrder.GiftID != giftID {
-		slog.Info("pay rejected: no available order", "user_id", userID, "temp_order_id", tempOrderID, "gift_id", giftID, "error", err)
+	// 获取订单，包含已支付订单
+	order, err := svc.orderRepo.GetOrder(ctx, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errs.ErrNotFound
+		}
+		slog.Error("get order before pay failed", "user_id", userID, "error", err)
+		return errs.ErrInternal
+	}
+
+	// 校验订单归属和请求参数
+	if order == nil || order.UserID != userID || order.ID != tempOrderID || order.GiftID != giftID {
+		slog.Info("pay rejected: no available order", "user_id", userID, "temp_order_id", tempOrderID, "gift_id", giftID)
 		return errs.ErrNotFound
+	}
+
+	// 支付重试幂等：已经支付过，直接成功
+	if order.Status == model.OrderStatusPaid {
+		return nil
 	}
 
 	// todo 接支付链路
 
-	// MySQL 事务完成修改订单状态为 + 扣减实际库存
-	if err := svc.orderRepo.Pay(ctx, tempOrder.ID); err != nil {
-		if errors.Is(err, repository.ErrUniqueKey) {
-			slog.Info("pay skipped: order already created", "user_id", userID, "temp_order_id", tempOrderID)
-			return errs.ErrAlreadyExits
+	// MySQL 事务内校验支付状态和有效期，更新订单状态并扣减实际库存
+	if err := svc.orderRepo.Pay(ctx, order.ID); err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			return errs.ErrNotFound
 		}
 		slog.Error("pay temp order failed", "user_id", userID, "temp_order_id", tempOrderID, "error", err)
 		return errs.ErrInternal
@@ -233,8 +256,12 @@ func (svc *lotteryService) Result(ctx context.Context, userID int64) (*model.Ord
 	// 获取订单
 	order, err := svc.orderRepo.GetOrder(ctx, userID)
 	if err != nil {
-		slog.Info("lottery result not found", "user_id", userID, "error", err)
-		return nil, nil, errs.ErrNotFound
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			slog.Info("lottery result not found", "user_id", userID)
+			return nil, nil, errs.ErrNotFound
+		}
+		slog.Error("get lottery result failed", "user_id", userID, "error", err)
+		return nil, nil, errs.ErrInternal
 	}
 
 	// 获取 Gift
@@ -313,7 +340,7 @@ func (svc *lotteryService) getTempOrder(ctx context.Context, userID int64) (*dto
 		// 降级
 		gift = &model.Gift{
 			ID:   tempOrder.GiftID,
-			Name: "奖品查询失败",
+			Name: "未知商品",
 		}
 	}
 

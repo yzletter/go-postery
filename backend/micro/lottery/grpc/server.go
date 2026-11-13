@@ -6,16 +6,19 @@ import (
 	lottery_grpc "github.com/yzletter/go-postery/backend/api/proto/lottery/v1"
 	"github.com/yzletter/go-postery/backend/micro/lottery/dto"
 	"github.com/yzletter/go-postery/backend/micro/lottery/service"
+	"github.com/yzletter/go-postery/backend/ports"
 )
 
 type LotteryServiceServer struct {
-	svc service.LotteryService
+	svc   service.LotteryService
+	idGen ports.IDGenerator
 	lottery_grpc.UnimplementedLotteryServiceServer
 }
 
-func NewLotteryServiceServer(svc service.LotteryService) *LotteryServiceServer {
+func NewLotteryServiceServer(svc service.LotteryService, idGen ports.IDGenerator) *LotteryServiceServer {
 	return &LotteryServiceServer{
-		svc: svc,
+		svc:   svc,
+		idGen: idGen,
 	}
 }
 
@@ -37,7 +40,7 @@ func (server *LotteryServiceServer) GetAllGifts(ctx context.Context, request *lo
 
 func (server *LotteryServiceServer) Lottery(ctx context.Context, id *lottery_grpc.UserID) (*lottery_grpc.LotteryResponse, error) {
 	// 调用 Service
-	result, err := server.svc.Lottery(ctx, id.UserID)
+	result, err := server.svc.Lottery(ctx, id.UserID, server.idGen.NextID())
 	if err != nil {
 		return &lottery_grpc.LotteryResponse{}, err
 	}

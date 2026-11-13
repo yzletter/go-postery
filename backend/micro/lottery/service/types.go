@@ -9,7 +9,7 @@ import (
 
 // LotteryService Lottery Service 接口
 type LotteryService interface {
-	// GetAllGifts 获取索引奖品
+	// GetAllGifts 获取所有奖品
 	//
 	// Return:
 	//	- []*model.Gift: 奖品列表
@@ -20,11 +20,12 @@ type LotteryService interface {
 	//
 	// Parameter:
 	//	- userID: 用户 ID
+	//	- requestID: 请求 ID
 	//
 	// Return:
 	//	- *dto.LotteryResult: 抽奖结果
 	//	- error: 可能返回的错误
-	Lottery(ctx context.Context, userID int64) (*dto.LotteryResult, error)
+	Lottery(ctx context.Context, userID int64, requestID int64) (*dto.LotteryResult, error)
 
 	// Pay 支付
 	//
@@ -70,6 +71,12 @@ type LotteryService interface {
 	// Parameter:
 	//	- ctx: 上下文
 	StartStockRollbackScanner(ctx context.Context)
+
+	// StartLotteryOrderRetryScanner 开启协程扫描预占记录，重试订单落库
+	//
+	// Parameter:
+	//	- ctx: 上下文
+	StartLotteryOrderRetryScanner(ctx context.Context)
 
 	// InitCacheInventory 初始化库存
 	//

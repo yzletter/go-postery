@@ -18,12 +18,12 @@ func NewOrderRepository(dao dao.OrderDAO) OrderRepository {
 	}
 }
 
-// CreateTempOrder 创建临时订单
-func (repo *orderRepository) CreateTempOrder(ctx context.Context, order *model.Order) error {
-	if err := repo.dao.CreateTempOrder(ctx, order); err != nil {
-		return toRepositoryErr(err)
+func (repo *orderRepository) CreateOrder(ctx context.Context, order *model.Order) (*model.Order, error) {
+	savedOrder, err := repo.dao.CreateOrder(ctx, order)
+	if err != nil {
+		return nil, toRepositoryErr(err)
 	}
-	return nil
+	return savedOrder, nil
 }
 
 func (repo *orderRepository) Pay(ctx context.Context, orderID int64) error {
@@ -82,7 +82,7 @@ func (repo *orderRepository) ListRollbackDueOrders(ctx context.Context, limit in
 func (repo *orderRepository) GetOrder(ctx context.Context, uid int64) (*model.Order, error) {
 	order, err := repo.dao.Get(ctx, uid)
 	if err != nil {
-		return nil, ErrRecordNotFound
+		return nil, toRepositoryErr(err)
 	}
 	return order, nil
 }
