@@ -66,7 +66,10 @@ func (hdl *LotteryHandler) Lottery(ctx *gin.Context) {
 
 	result, err := hdl.lotterySvc.Lottery(ctx, &lottery_grpc.UserID{UserID: uid})
 	if err != nil {
-		response.Error(ctx, mapGRPCErr(err, nil, errno.ErrServerInternal), lottery.LotteryResultDTO{})
+		response.Error(ctx, mapGRPCErr(err, map[codes.Code]*errno.Error{
+			codes.NotFound:      errno.ErrLotteryEnded,
+			codes.AlreadyExists: errno.ErrLotteryAlreadyPaid,
+		}, errno.ErrServerInternal), lottery.LotteryResultDTO{})
 		return
 	}
 

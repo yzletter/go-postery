@@ -60,10 +60,12 @@ var (
 
 // Lottery 错误
 var (
-	ErrGiftNotFound  = &Error{40001, 404, "奖品不存在"}
-	ErrNotLottery    = &Error{40002, 404, "没有抢到该商品，或支付时限已过"}
-	ErrOrderNotFound = &Error{40003, 404, "订单不存在"}
-	ErrLotteryNoting = &Error{40004, 404, "没有抽到奖品"}
+	ErrGiftNotFound       = &Error{40001, 404, "奖品不存在"}
+	ErrNotLottery         = &Error{40002, 404, "没有抢到该商品，或支付时限已过"}
+	ErrOrderNotFound      = &Error{40003, 404, "订单不存在"}
+	ErrLotteryNoting      = &Error{40004, 404, "没有抽到奖品"}
+	ErrLotteryEnded       = &Error{40005, 409, "本次抽奖已结束，无法再次抽奖"}
+	ErrLotteryAlreadyPaid = &Error{40006, 409, "已确认领取，请查看中奖结果"}
 )
 
 func GetGRPCErrCode(err error) codes.Code {

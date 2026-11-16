@@ -13,11 +13,13 @@ export const AUTH_API_BASE_URL = ensureApiPrefix(import.meta.env.VITE_AUTH_API_U
 
 export class ApiError extends Error {
   status: number
+  code?: number
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: number) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
@@ -152,7 +154,7 @@ export async function apiRequest<T>(
   const isSuccess = response.ok && payload && (payload.code === 0 || payload.code === undefined)
   if (!isSuccess || !payload) {
     const message = payload?.msg || `请求失败: ${response.status} ${response.statusText}`
-    throw new ApiError(message, response.status)
+    throw new ApiError(message, response.status, payload?.code)
   }
 
   return payload
