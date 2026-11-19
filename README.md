@@ -48,13 +48,14 @@
 
 ## 项目演示
 
-|               ![首页.png](docs/imgs/%E9%A6%96%E9%A1%B5.png)               | ![帖子详情.png](docs/imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png)                     |
-|:------------------------------------------------------------------:|--------------------------------------------------------------------------------|
-|          ![评论区.png](docs/imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)          | ![发布帖子.png](docs/imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png)                     |
-|     ![关注页面.png](docs/imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png)     | ![修改个人资料.png](docs/imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png) |
-|     ![个人主页.png](docs/imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)     | ![个人主页.png](docs/imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png)                     |
-|                   ![链路追踪.png](docs/imgs/Jaeger1.png)                    | ![链路追踪.png](docs/imgs/Jaeger2.png)                                                  |
-|             ![观测.png](docs/imgs/%E8%A7%82%E6%B5%8B.png)                 | ![抽奖.png](docs/imgs/lottery.png)                                                    |
+|        ![首页.png](docs/imgs/%E9%A6%96%E9%A1%B5.png)         | ![帖子详情.png](docs/imgs/%E5%B8%96%E5%AD%90%E8%AF%A6%E6%83%85.png) |
+| :----------------------------------------------------------: | ------------------------------------------------------------ |
+|   ![评论区.png](docs/imgs/%E8%AF%84%E8%AE%BA%E5%8C%BA.png)   | ![发布帖子.png](docs/imgs/%E5%8F%91%E5%B8%83%E5%B8%96%E5%AD%90.png) |
+| ![关注页面.png](docs/imgs/%E5%85%B3%E6%B3%A8%E9%A1%B5%E9%9D%A2.png) | ![修改个人资料.png](docs/imgs/%E4%BF%AE%E6%94%B9%E4%B8%AA%E4%BA%BA%E8%B5%84%E6%96%99.png) |
+| ![个人主页.png](docs/imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png) | ![个人主页.png](docs/imgs/%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5.png) |
+|            ![链路追踪.png](docs/imgs/Jaeger1.png)            | ![链路追踪.png](docs/imgs/Jaeger2.png)                       |
+|        ![观测.png](docs/imgs/%E8%A7%82%E6%B5%8B.png)         | ![抽奖.png](docs/imgs/lottery.png)                           |
+|          ![远程配置中心.png](docs/imgs/远程配置中心.png)          |                                                              |
 
 ## 项目难点
 

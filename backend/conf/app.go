@@ -3,10 +3,6 @@ package conf
 import "time"
 
 const (
-	GoPostery = "go_postery"
-)
-
-const (
 	OutboxLockTime = 60
 	OutboxInterval = 5 * time.Second
 )

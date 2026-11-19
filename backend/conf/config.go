@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"strconv"
-	"strings"
 
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
@@ -13,18 +12,38 @@ var (
 	watchKeys = make(map[string]struct{})
 )
 
+// WatchConfig 监听配置变化
+func WatchConfig(ctx context.Context, client *etcdv3.Client, prefix string) {
+	// 根据前缀监听
+	ch := client.Watch(ctx, prefix, etcdv3.WithPrefix())
+
+	// 循环读取 channel
+	for resp := range ch {
+		for _, event := range resp.Events {
+			// 只关心 PUT 即数据更新
+			if event.Type == etcdv3.EventTypePut {
+				key := string(event.Kv.Key)
+				if _, exists := watchKeys[key]; exists {
+					// 不输出具体变化值, 脱敏
+					slog.Info("Config Has Changed", "name", key)
+				}
+			}
+		}
+	}
+}
+
 // LoadCommonConf 加载微服务公共配置
 func LoadCommonConf(ctx context.Context, client *etcdv3.Client, prefix string) CommonMicroConf {
 	conf := CommonMicroConf{
 		// 数据库
-		MySQL: LoadMySQLConfig(ctx, client, prefix),
+		MySQL:  LoadMySQLConfig(ctx, client, prefix),
+		Milvus: LoadMilvusConfig(ctx, client, prefix),
 		// 缓存
 		Redis: LoadRedisConfig(ctx, client, prefix),
 		// 消息队列
 		Kafka:    LoadKafkaConfig(ctx, client, prefix),
 		RabbitMQ: LoadRabbitMQConfig(ctx, client, prefix),
 		RocketMQ: LoadRocketMQConfig(ctx, client, prefix),
-		Milvus:   LoadMilvusConfig(ctx, client, prefix),
 		// 链路追踪
 		Jaeger: LoadJaegerConfig(ctx, client, prefix),
 		// 服务发现
@@ -203,26 +222,6 @@ func loadQwenConfig(ctx context.Context, client qwenConfigReader, prefix string)
 	}
 
 	return config
-}
-
-// WatchConfig 监听配置变化
-func WatchConfig(ctx context.Context, client *etcdv3.Client, prefix string) {
-	ch := client.Watch(ctx, prefix, etcdv3.WithPrefix())
-	for resp := range ch {
-		for _, event := range resp.Events {
-			// 只关心 PUT 即数据更新
-			if event.Type == etcdv3.EventTypePut {
-				key := string(event.Kv.Key)
-				if _, exists := watchKeys[key]; exists {
-					if strings.HasSuffix(key, "/qwen/llm_api_key") || strings.HasSuffix(key, "/qwen/embedder_api_key") {
-						slog.Info("Config Has Changed", "name", key)
-					} else {
-						slog.Info("Config Has Changed", "name", key, "change", string(event.Kv.Value))
-					}
-				}
-			}
-		}
-	}
 }
 
 // LoadRedisConfig 加载 Redis 配置

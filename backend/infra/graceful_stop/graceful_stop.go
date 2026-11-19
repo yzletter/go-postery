@@ -1,100 +1,69 @@
 package graceful_stop
 
 import (
-	"log/slog"
 	"os"
 	"os/signal"
 )
 
+// GracefulStopBuilder 优雅退出 —— 构造器模式
 type GracefulStopBuilder struct {
-	signals []os.Signal // 监听的信号
-	funcs   []func()    // 退出前要执行的函数
+	signals   []os.Signal // 监听的信号
+	functions []func()    // 退出前要执行的函数
 }
 
 func NewGracefulStopBuilder() *GracefulStopBuilder {
 	signals := make([]os.Signal, 0)
-	funcs := make([]func(), 0)
+	functions := make([]func(), 0)
 	return &GracefulStopBuilder{
-		signals: signals,
-		funcs:   funcs,
+		signals:   signals,
+		functions: functions,
 	}
 }
 
+// NotifySignal 注册信号
 func (builder *GracefulStopBuilder) NotifySignal(signal os.Signal) *GracefulStopBuilder {
 	builder.signals = append(builder.signals, signal)
 	return builder
 }
 
+// AddFunc 添加函数
 func (builder *GracefulStopBuilder) AddFunc(f func()) *GracefulStopBuilder {
-	builder.funcs = append(builder.funcs, f)
+	builder.functions = append(builder.functions, f)
 	return builder
 }
 
+// Build 非阻塞型
 func (builder *GracefulStopBuilder) Build() {
-	var listen func()
-
-	// 监听函数
-	listen = func() {
-		if len(builder.signals) == 0 {
-			return
-		}
-
-		ch := make(chan os.Signal, 1)
-
-		// 注册信号
-		signal.Notify(ch, builder.signals...)
-
-		// 阻塞, 直到信号到来
-		s := <-ch
-
-		slog.Info("信号 " + s.String() + " 成功监听, 开始优雅退出")
-
-		// 退出前具体要做的工作
-		for _, _func := range builder.funcs {
-			_func()
-		}
-
-		slog.Info("退出前所有任务完成")
-
-		// 退出所有进程
-		os.Exit(0)
-	}
-
 	// 开始监听信号
-	go listen()
+	go builder.build()()
 }
 
 // BuildBlock 阻塞型
 func (builder *GracefulStopBuilder) BuildBlock() {
-	var listen func()
+	// 开始监听信号
+	builder.build()()
+}
 
-	// 监听函数
-	listen = func() {
+func (builder *GracefulStopBuilder) build() func() {
+	listen := func() {
 		if len(builder.signals) == 0 {
 			return
 		}
 
 		ch := make(chan os.Signal, 1)
 
-		// 注册信号
+		// 监听全部信号
 		signal.Notify(ch, builder.signals...)
 
-		// 阻塞, 直到信号到来
-		s := <-ch
+		<-ch
 
-		slog.Info("信号 " + s.String() + " 成功监听, 开始优雅退出")
-
-		// 退出前具体要做的工作
-		for _, _func := range builder.funcs {
+		// 执行退出前所有任务
+		for _, _func := range builder.functions {
 			_func()
 		}
 
-		slog.Info("退出前所有任务完成")
-
-		// 退出所有进程
+		// 退出进程
 		os.Exit(0)
 	}
-
-	// 开始监听信号
-	listen()
+	return listen
 }
