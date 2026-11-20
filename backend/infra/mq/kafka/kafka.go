@@ -29,6 +29,24 @@ func InitProducer(brokers []string) *kafka.Writer {
 	return producer
 }
 
+func InitBatchProducer(brokers []string) *kafka.Writer {
+	ponce.Do(func() {
+		producer = &kafka.Writer{
+			Addr:                   kafka.TCP(brokers...),
+			Balancer:               &kafka.Hash{},
+			MaxAttempts:            3,
+			BatchSize:              100,
+			BatchTimeout:           10 * time.Millisecond,
+			ReadTimeout:            10 * time.Second,
+			WriteTimeout:           5 * time.Second,
+			RequiredAcks:           kafka.RequireAll,
+			Async:                  false,
+			AllowAutoTopicCreation: true,
+		}
+	})
+	return producer
+}
+
 func InitConsumer(config conf.KafkaConfig, topic string, group string, topics ...string) *kafka.Reader {
 	readerConfig := kafka.ReaderConfig{
 		Brokers:        []string{config.Addr},

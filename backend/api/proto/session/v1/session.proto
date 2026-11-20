@@ -65,15 +65,6 @@ message ChatRequest {
   Message Message = 2;
 }
 
-message UpdateUnreadRequest {
-  int64 UserID = 1;
-  int64 SessionID = 2;
-  int64 LastMessageID = 3;
-  string LastMessage = 4;
-  google.protobuf.Timestamp LastMessageTime = 5;
-  int64 Delta = 6;
-}
-
 message ClearUnreadRequest {
   int64 UserID = 1;
   int64 SessionID = 2;
@@ -91,9 +82,7 @@ service SessionService {
   rpc GetSession(BothUserID) returns (Session);
   rpc GetHistoryMessagesByPage(GetHistoryMessagesByPageRequest) returns (GetHistoryMessagesByPageResponse);
   rpc Delete(DeleteRequest) returns (SessionEmptyResponse);
-  rpc UpdateUnread(UpdateUnreadRequest) returns (SessionEmptyResponse);
   rpc ClearUnread(ClearUnreadRequest) returns (SessionEmptyResponse);
-  rpc CreateMessage(Message) returns (Message);
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 

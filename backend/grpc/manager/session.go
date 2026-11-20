@@ -219,39 +219,6 @@ func (manager *SessionServiceManager) Delete(ctx context.Context, req *session_g
 	return nil, err
 }
 
-func (manager *SessionServiceManager) UpdateUnread(ctx context.Context, req *session_grpc2.UpdateUnreadRequest) (*session_grpc2.SessionEmptyResponse, error) {
-	var err = errs.ErrUnavailable // 暴露错误
-	var tryCnt = 1                // 写入类调用只适合一次
-	for try := 0; try < tryCnt; try++ {
-		endpoint := manager.hub.Take(ctx, manager.service)
-		if endpoint == nil {
-			continue
-		}
-		conn := endpoint.ClientConn()
-		if conn == nil {
-			continue
-		}
-		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
-
-		// 添加超时控制
-		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc2.SessionEmptyResponse
-		resp, err = client.UpdateUnread(ctx, req) // 微服务调用
-		cancel()
-
-		if isEndpointFailure(err) {
-			endpoint.MarkFailed()
-			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
-			continue
-		}
-		endpoint.MarkSuccess()
-		return resp, err // 返回 grpc 错误
-	}
-
-	// 默认会返回服务调用失败
-	return nil, err
-}
-
 func (manager *SessionServiceManager) ClearUnread(ctx context.Context, req *session_grpc2.ClearUnreadRequest) (*session_grpc2.SessionEmptyResponse, error) {
 	var err = errs.ErrUnavailable // 暴露错误
 	var tryCnt = 1                // 写入类调用只适合一次
@@ -270,39 +237,6 @@ func (manager *SessionServiceManager) ClearUnread(ctx context.Context, req *sess
 		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		var resp *session_grpc2.SessionEmptyResponse
 		resp, err = client.ClearUnread(ctx, req) // 微服务调用
-		cancel()
-
-		if isEndpointFailure(err) {
-			endpoint.MarkFailed()
-			slog.Error("gRPC Error", "error", err, "service", manager.service, "endpoint", endpoint.Addr)
-			continue
-		}
-		endpoint.MarkSuccess()
-		return resp, err // 返回 grpc 错误
-	}
-
-	// 默认会返回服务调用失败
-	return nil, err
-}
-
-func (manager *SessionServiceManager) CreateMessage(ctx context.Context, req *session_grpc2.Message) (*session_grpc2.Message, error) {
-	var err = errs.ErrUnavailable // 暴露错误
-	var tryCnt = 1                // 写入类调用只适合一次
-	for try := 0; try < tryCnt; try++ {
-		endpoint := manager.hub.Take(ctx, manager.service)
-		if endpoint == nil {
-			continue
-		}
-		conn := endpoint.ClientConn()
-		if conn == nil {
-			continue
-		}
-		client := session_grpc2.NewSessionServiceClient(conn) // 建立 Client
-
-		// 添加超时控制
-		ctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
-		var resp *session_grpc2.Message
-		resp, err = client.CreateMessage(ctx, req) // 微服务调用
 		cancel()
 
 		if isEndpointFailure(err) {

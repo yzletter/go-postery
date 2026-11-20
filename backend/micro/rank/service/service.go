@@ -140,7 +140,7 @@ func (svc *rankService) RankPost(ctx context.Context, id int64) error {
 	return nil
 }
 
-// RankTopKUser 计算用户榜单
+// RankTopKUser 完整重新计算用户榜单
 func (svc *rankService) RankTopKUser(ctx context.Context) error {
 	// 获取七天内用户 ID
 	resp, err := svc.userClient.GetIDAfterTime(ctx, &user_grpc.GetIDAfterTimeRequest{
@@ -162,7 +162,7 @@ func (svc *rankService) RankTopKUser(ctx context.Context) error {
 	return nil
 }
 
-// RankTopKPost 计算文章榜单
+// RankTopKPost 完整重新计算文章榜单
 func (svc *rankService) RankTopKPost(ctx context.Context) error {
 	// 获取七天内文章 ID
 	resp, err := svc.postClient.GetPostByTime(ctx, &post_grpc.GetPostByTimeRequest{
@@ -181,6 +181,7 @@ func (svc *rankService) RankTopKPost(ctx context.Context) error {
 	for _, id := range resp.IDs {
 		_ = svc.RankPost(ctx, id)
 	}
+
 	return nil
 }
 

@@ -124,6 +124,7 @@ func (svc *sessionService) Chat(ctx context.Context, uid int64, message domain.M
 		return errs.ErrUnauthenticated
 	}
 
+	// 获取会话
 	session, err := svc.GetSession(ctx, uid, message.MessageTo)
 	if err != nil {
 		return err
@@ -134,7 +135,7 @@ func (svc *sessionService) Chat(ctx context.Context, uid int64, message domain.M
 	}
 
 	// 消息落库
-	message, err = svc.CreateMessage(ctx, message)
+	message, err = svc.createMessage(ctx, message)
 	if err != nil {
 		return err
 	}
@@ -146,7 +147,7 @@ func (svc *sessionService) Chat(ctx context.Context, uid int64, message domain.M
 	}
 
 	// 更新对方会话信息, 增加未读
-	if err := svc.UpdateUnread(ctx, message.MessageTo, message.SessionID, domain.UpdateUnread{
+	if err := svc.updateUnread(ctx, message.MessageTo, message.SessionID, domain.UpdateUnread{
 		Updates: domain.Updates{
 			LastMessageID:   message.ID,
 			LastMessage:     string(contentBrief),
@@ -158,13 +159,13 @@ func (svc *sessionService) Chat(ctx context.Context, uid int64, message domain.M
 	}
 
 	// 更新己方会话信息，不增加未读数。
-	if err := svc.UpdateUnread(ctx, message.MessageFrom, message.SessionID, domain.UpdateUnread{
+	if err := svc.updateUnread(ctx, message.MessageFrom, message.SessionID, domain.UpdateUnread{
 		Updates: domain.Updates{
 			LastMessageID:   message.ID,
 			LastMessage:     string(contentBrief),
 			LastMessageTime: message.CreatedAt,
 		},
-		Delta: 0,
+		Delta: 0, // 不增加未读数
 	}); err != nil {
 		slog.Error("Update Unread Failed", "user_id", message.MessageFrom, "error", err)
 	}
@@ -255,7 +256,7 @@ func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
 			slog.Info("session register event received", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "uid", payload.ID)
 
 			// 进行注册, 幂等
-			if err := svc.register(ctx, payload.ID); err != nil {
+			if err := svc.register(payload.ID); err != nil {
 				slog.Error("register session queue failed", "uid", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
 				time.Sleep(time.Second) // 最小退避，避免打爆
 				continue                // 不 commit -> 重试
@@ -358,7 +359,7 @@ func (svc *sessionService) GetSession(ctx context.Context, userID int64, targetI
 }
 
 // register 注册用户的 Exchange 和 Queue
-func (svc *sessionService) register(ctx context.Context, uid int64) error {
+func (svc *sessionService) register(uid int64) error {
 
 	// 定义 Exchange 和 Queue 名称
 	exchangeName := fmt.Sprintf("%d_exchange", uid)
@@ -461,7 +462,8 @@ func (svc *sessionService) Delete(ctx context.Context, userID int64, sessionID i
 	return nil
 }
 
-func (svc *sessionService) UpdateUnread(ctx context.Context, userID int64, sessionID int64, updates domain.UpdateUnread) error {
+// updateUnread 更新指定用户的会话摘要和未读数。
+func (svc *sessionService) updateUnread(ctx context.Context, userID int64, sessionID int64, updates domain.UpdateUnread) error {
 	if err := svc.sessionRepo.UpdateUnread(ctx, userID, sessionID, updates); err != nil {
 		slog.Error("update unread failed", "user_id", userID, "session_id", sessionID, "error", err)
 		return errs.ErrInternal
@@ -477,7 +479,8 @@ func (svc *sessionService) ClearUnread(ctx context.Context, userID int64, sessio
 	return nil
 }
 
-func (svc *sessionService) CreateMessage(ctx context.Context, message domain.Message) (domain.Message, error) {
+// createMessage 补齐消息 ID 和时间并持久化消息。
+func (svc *sessionService) createMessage(ctx context.Context, message domain.Message) (domain.Message, error) {
 	now := time.Now()
 	messageModel := domain.Message{
 		ID:          svc.idGen.NextID(), // 补充 ID

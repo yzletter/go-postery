@@ -155,9 +155,7 @@ type SessionClient interface {
 	GetSession(ctx context.Context, req *session_grpc.BothUserID) (*session_grpc.Session, error)
 	GetHistoryMessagesByPage(ctx context.Context, req *session_grpc.GetHistoryMessagesByPageRequest) (*session_grpc.GetHistoryMessagesByPageResponse, error)
 	Delete(ctx context.Context, req *session_grpc.DeleteRequest) (*session_grpc.SessionEmptyResponse, error)
-	UpdateUnread(ctx context.Context, req *session_grpc.UpdateUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
 	ClearUnread(ctx context.Context, req *session_grpc.ClearUnreadRequest) (*session_grpc.SessionEmptyResponse, error)
-	CreateMessage(ctx context.Context, req *session_grpc.Message) (*session_grpc.Message, error)
 }
 
 type InteractiveClient interface {

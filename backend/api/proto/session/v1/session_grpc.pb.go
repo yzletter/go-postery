@@ -25,9 +25,7 @@ const (
 	SessionService_GetSession_FullMethodName               = "/session.v1.SessionService/GetSession"
 	SessionService_GetHistoryMessagesByPage_FullMethodName = "/session.v1.SessionService/GetHistoryMessagesByPage"
 	SessionService_Delete_FullMethodName                   = "/session.v1.SessionService/Delete"
-	SessionService_UpdateUnread_FullMethodName             = "/session.v1.SessionService/UpdateUnread"
 	SessionService_ClearUnread_FullMethodName              = "/session.v1.SessionService/ClearUnread"
-	SessionService_CreateMessage_FullMethodName            = "/session.v1.SessionService/CreateMessage"
 	SessionService_HealthCheck_FullMethodName              = "/session.v1.SessionService/HealthCheck"
 )
 
@@ -43,9 +41,7 @@ type SessionServiceClient interface {
 	GetSession(ctx context.Context, in *BothUserID, opts ...grpc.CallOption) (*Session, error)
 	GetHistoryMessagesByPage(ctx context.Context, in *GetHistoryMessagesByPageRequest, opts ...grpc.CallOption) (*GetHistoryMessagesByPageResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
-	UpdateUnread(ctx context.Context, in *UpdateUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
 	ClearUnread(ctx context.Context, in *ClearUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error)
-	CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
@@ -117,30 +113,10 @@ func (c *sessionServiceClient) Delete(ctx context.Context, in *DeleteRequest, op
 	return out, nil
 }
 
-func (c *sessionServiceClient) UpdateUnread(ctx context.Context, in *UpdateUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SessionEmptyResponse)
-	err := c.cc.Invoke(ctx, SessionService_UpdateUnread_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *sessionServiceClient) ClearUnread(ctx context.Context, in *ClearUnreadRequest, opts ...grpc.CallOption) (*SessionEmptyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SessionEmptyResponse)
 	err := c.cc.Invoke(ctx, SessionService_ClearUnread_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sessionServiceClient) CreateMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Message)
-	err := c.cc.Invoke(ctx, SessionService_CreateMessage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,9 +145,7 @@ type SessionServiceServer interface {
 	GetSession(context.Context, *BothUserID) (*Session, error)
 	GetHistoryMessagesByPage(context.Context, *GetHistoryMessagesByPageRequest) (*GetHistoryMessagesByPageResponse, error)
 	Delete(context.Context, *DeleteRequest) (*SessionEmptyResponse, error)
-	UpdateUnread(context.Context, *UpdateUnreadRequest) (*SessionEmptyResponse, error)
 	ClearUnread(context.Context, *ClearUnreadRequest) (*SessionEmptyResponse, error)
-	CreateMessage(context.Context, *Message) (*Message, error)
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedSessionServiceServer()
 }
@@ -201,14 +175,8 @@ func (UnimplementedSessionServiceServer) GetHistoryMessagesByPage(context.Contex
 func (UnimplementedSessionServiceServer) Delete(context.Context, *DeleteRequest) (*SessionEmptyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedSessionServiceServer) UpdateUnread(context.Context, *UpdateUnreadRequest) (*SessionEmptyResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdateUnread not implemented")
-}
 func (UnimplementedSessionServiceServer) ClearUnread(context.Context, *ClearUnreadRequest) (*SessionEmptyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ClearUnread not implemented")
-}
-func (UnimplementedSessionServiceServer) CreateMessage(context.Context, *Message) (*Message, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateMessage not implemented")
 }
 func (UnimplementedSessionServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HealthCheck not implemented")
@@ -342,24 +310,6 @@ func _SessionService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SessionService_UpdateUnread_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateUnreadRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SessionServiceServer).UpdateUnread(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SessionService_UpdateUnread_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SessionServiceServer).UpdateUnread(ctx, req.(*UpdateUnreadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SessionService_ClearUnread_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClearUnreadRequest)
 	if err := dec(in); err != nil {
@@ -374,24 +324,6 @@ func _SessionService_ClearUnread_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SessionServiceServer).ClearUnread(ctx, req.(*ClearUnreadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SessionService_CreateMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SessionServiceServer).CreateMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SessionService_CreateMessage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SessionServiceServer).CreateMessage(ctx, req.(*Message))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -446,16 +378,8 @@ var SessionService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SessionService_Delete_Handler,
 		},
 		{
-			MethodName: "UpdateUnread",
-			Handler:    _SessionService_UpdateUnread_Handler,
-		},
-		{
 			MethodName: "ClearUnread",
 			Handler:    _SessionService_ClearUnread_Handler,
-		},
-		{
-			MethodName: "CreateMessage",
-			Handler:    _SessionService_CreateMessage_Handler,
 		},
 		{
 			MethodName: "HealthCheck",

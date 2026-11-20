@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -12,7 +13,11 @@ import (
 	"gorm.io/gorm"
 )
 
-const lockBatch = 100
+const (
+	lockBatch    = 100
+	batchTimeout = 40 * time.Second // 整轮处理必须在租约过期前结束
+	sendTimeout  = 20 * time.Second // 给状态回填留出时间
+)
 
 func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 	interval := conf.OutboxInterval
@@ -31,6 +36,9 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			logger.Info("outbox scanner stopped", "reason", ctx.Err())
 			return
 		case <-ticker.C:
+			batchCtx, cancelBatch := context.WithTimeout(ctx, batchTimeout)
+			batchDB := db.WithContext(batchCtx)
+
 			// 加锁
 			lockOwner := uuid.New().String() // 本轮加锁者
 			updates := map[string]any{
@@ -40,24 +48,26 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			}
 
 			// 第一部分：没有发送过, 或需要重试
-			pendingOrRetry := db.
+			pendingOrRetry := batchDB.
 				Where("status IN (?, ?)", model.OutboxEventStatusPending, model.OutboxEventStatusRetry). // 等待发送 或 需要重试
 				Where("next_retry_at IS NULL OR next_retry_at <= NOW()").
 				Where("lock_owner IS NULL OR locked_until IS NULL OR locked_until <= NOW()")
 
 			// 第二部分：发送中, 但锁已过期
-			processingExpired := db.Where("status = ? AND (locked_until IS NULL OR locked_until <= NOW())", model.OutboxEventStatusProcessing)
+			processingExpired := batchDB.Where("status = ? AND (locked_until IS NULL OR locked_until <= NOW())", model.OutboxEventStatusProcessing)
 
 			// 进行加锁
-			result := db.Model(&model.OutboxEvent{}).
+			result := batchDB.Model(&model.OutboxEvent{}).
 				Where(pendingOrRetry).Or(processingExpired).
 				Order("created_at ASC").
 				Limit(lockBatch).Updates(updates)
 			if result.Error != nil {
+				cancelBatch()
 				logger.Error("lock outbox events failed", "error", result.Error, "lock_owner", lockOwner)
 				continue
 			}
 			if result.RowsAffected == 0 {
+				cancelBatch()
 				logger.Debug("no outbox events ready")
 				continue
 			}
@@ -65,13 +75,14 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 
 			// 查哪些 Event 抢到了锁
 			var events []*model.OutboxEvent
-			result = db.Model(&model.OutboxEvent{}).
-				Where("status = ? AND lock_owner = ?", model.OutboxEventStatusProcessing, lockOwner).
+			result = batchDB.Model(&model.OutboxEvent{}).
+				Where("status = ? AND lock_owner = ? AND locked_until > NOW()", model.OutboxEventStatusProcessing, lockOwner).
 				Order("created_at ASC").
 				Limit(lockBatch).Find(&events)
 
 			// 扫表失败
 			if result.Error != nil {
+				cancelBatch()
 				logger.Error("get locked outbox events failed", "error", result.Error, "lock_owner", lockOwner, "backoff", backoff)
 				select {
 				case <-ctx.Done():
@@ -90,30 +101,55 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			backoff = time.Second
 
 			if len(events) == 0 {
+				cancelBatch()
 				logger.Warn("locked outbox events not found", "lock_owner", lockOwner, "locked_rows", lockedRows)
 				continue
 			}
 
-			var sentCnt, retryCnt, failedCnt, updateFailedCnt int
-
-			// Kafka 发消息
-			for _, e := range events {
-				// 发送消息
-				err := producer.WriteMessages(ctx, kafka.Message{
+			// 同步批量发送，等 Kafka 返回后再回填状态
+			messages := make([]kafka.Message, len(events))
+			for i, e := range events {
+				messages[i] = kafka.Message{
 					Topic: e.Topic,
-					Key:   []byte(e.MessageKey), Value: []byte(e.MessageValue),
-				})
+					Key:   []byte(e.MessageKey),
+					Value: []byte(e.MessageValue),
+				}
+			}
+			sendCtx, cancelSend := context.WithTimeout(batchCtx, sendTimeout)
+			sendErr := producer.WriteMessages(sendCtx, messages...)
+			cancelSend()
 
-				// 发送失败回填表释放锁
+			// Kafka 可能只确认一部分消息，逐条按发送结果回填
+			var writeErrors kafka.WriteErrors
+			hasWriteErrors := errors.As(sendErr, &writeErrors) && len(writeErrors) == len(events)
+			var sentCnt, retryCnt, failedCnt, updateFailedCnt, leaseLostCnt int
+
+			for i, e := range events {
+				if err := batchCtx.Err(); err != nil {
+					logger.Warn("outbox batch interrupted", "error", err, "lock_owner", lockOwner, "remaining", len(events)-i)
+					break
+				}
+
+				err := sendErr
+				if hasWriteErrors {
+					err = writeErrors[i]
+				}
+
+				status := model.OutboxEventStatusSent
+				updates := map[string]any{
+					"lock_owner":    nil,
+					"locked_until":  nil,
+					"next_retry_at": nil,
+				}
+				// 发送失败，或超时后无法确认结果，保留原事件供重试
 				if err != nil {
-					status := model.OutboxEventStatusRetry
-					// 超过五次重试的消息标记为失败
+					status = model.OutboxEventStatusRetry
 					if e.RetryCnt >= 5 {
 						status = model.OutboxEventStatusFailed
-						failedCnt++
 					} else {
-						retryCnt++
+						updates["next_retry_at"] = gorm.Expr("DATE_ADD(NOW(), INTERVAL ? SECOND)", 15)
 					}
+					updates["retry_cnt"] = gorm.Expr("retry_cnt + ?", 1)
 
 					logger.Error(
 						"send outbox event failed",
@@ -124,53 +160,42 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 						"retry_cnt", e.RetryCnt,
 						"next_status", outboxStatusName(status),
 					)
-
-					updates := map[string]any{
-						"status":        status,
-						"next_retry_at": gorm.Expr("DATE_ADD(NOW(), INTERVAL ? SECOND)", 15),
-						"retry_cnt":     gorm.Expr("retry_cnt + ?", 1),
-						"lock_owner":    nil,
-						"locked_until":  nil,
-					}
-
-					// 发送失败的更新失败错误可忽略，原消息在数据库的锁会释放
-					result = db.Model(&model.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
-					if result.Error != nil {
-						updateFailedCnt++
-						logger.Error(
-							"mark outbox event retry failed",
-							"error", result.Error,
-							"event_id", e.ID,
-							"topic", e.Topic,
-							"message_key", e.MessageKey,
-							"lock_owner", lockOwner,
-							"next_status", outboxStatusName(status),
-						)
-					}
-					continue
 				}
 
-				// 发送成功回填表释放锁
-				updates := map[string]any{
-					"status":       model.OutboxEventStatusSent,
-					"lock_owner":   nil,
-					"locked_until": nil,
-				}
-				result = db.Model(&model.OutboxEvent{}).Where("id = ? AND lock_owner = ?", e.ID, lockOwner).Updates(updates)
+				// 只回填还持有有效租约的事件
+				updates["status"] = status
+				result = batchDB.Model(&model.OutboxEvent{}).
+					Where("id = ? AND status = ? AND lock_owner = ? AND locked_until > NOW()", e.ID, model.OutboxEventStatusProcessing, lockOwner).
+					Updates(updates)
 				if result.Error != nil {
 					updateFailedCnt++
 					logger.Error(
-						"mark outbox event sent failed",
+						"update outbox event status failed",
 						"error", result.Error,
 						"event_id", e.ID,
 						"topic", e.Topic,
 						"message_key", e.MessageKey,
 						"lock_owner", lockOwner,
+						"next_status", outboxStatusName(status),
 					)
 					continue
 				}
-				sentCnt++
+				if result.RowsAffected != 1 {
+					leaseLostCnt++
+					logger.Warn("outbox event lease lost", "event_id", e.ID, "lock_owner", lockOwner)
+					continue
+				}
+				switch status {
+				case model.OutboxEventStatusSent:
+					sentCnt++
+				case model.OutboxEventStatusRetry:
+					retryCnt++
+				case model.OutboxEventStatusFailed:
+					failedCnt++
+				default:
+				}
 			}
+			cancelBatch()
 
 			logger.Info(
 				"outbox batch processed",
@@ -181,6 +206,7 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 				"retry", retryCnt,
 				"failed", failedCnt,
 				"update_failed", updateFailedCnt,
+				"lease_lost", leaseLostCnt,
 			)
 		}
 	}

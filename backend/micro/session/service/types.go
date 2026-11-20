@@ -58,17 +58,6 @@ type SessionService interface {
 	//	- error: 可能返回的错误
 	Delete(ctx context.Context, userID int64, sessionID int64) error
 
-	// UpdateUnread 更新未读数
-	//
-	// Parameter:
-	//	- userID: 用户 ID
-	//	- sessionID: 会话 ID
-	//	- updates: 未读数更新信息
-	//
-	// Return:
-	//	- error: 可能返回的错误
-	UpdateUnread(ctx context.Context, userID int64, sessionID int64, updates domain.UpdateUnread) error
-
 	// ClearUnread 清除未读数
 	//
 	// Parameter:
@@ -78,16 +67,6 @@ type SessionService interface {
 	// Return:
 	//	- error: 可能返回的错误
 	ClearUnread(ctx context.Context, userID int64, sessionID int64) error
-
-	// CreateMessage 创建消息
-	//
-	// Parameter:
-	//	- message: 消息
-	//
-	// Return:
-	//	- domain.Message: 消息
-	//	- error: 可能返回的错误
-	CreateMessage(ctx context.Context, message domain.Message) (domain.Message, error)
 
 	// StartSessionRegisterConsumer 启动会话注册消费者
 	//
