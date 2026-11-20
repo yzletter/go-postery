@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 
 	"github.com/yzletter/go-postery/backend/conf"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
@@ -46,14 +47,22 @@ func main() {
 	MySQLGormDB := infraMySQL.Init(CommonConf.MySQL)                               // 初始化 MySQL
 	KafkaProducer := infraKafka.InitBatchProducer([]string{CommonConf.Kafka.Addr}) // 初始化 Kafka 批量生产方
 
-	// 开启协程
-	go service.ScanOutbox(ctx, MySQLGormDB, KafkaProducer) // 开启扫表发消息协程
+	scannerDone := make(chan struct{})
+	go func() {
+		defer close(scannerDone)
+		service.ScanOutbox(ctx, MySQLGormDB, KafkaProducer) // 开启扫表发消息协程
+	}()
 
 	// 优雅退出
 	utils.ListenTermSignal(func() {
-		infraKafka.Close()
-		infraMySQL.Close()
-		KafkaProducer.Close()
+		// 先停扫表
 		cancel()
+		<-scannerDone
+		if err := KafkaProducer.Close(); err != nil {
+			slog.Error("Close Kafka Writer Failed", "error", err)
+		} else {
+			slog.Info("Close Kafka Writer Success")
+		}
+		infraMySQL.Close()
 	})
 }

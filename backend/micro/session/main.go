@@ -20,11 +20,11 @@ import (
 	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
-	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraRabbitMQ "github.com/yzletter/go-postery/backend/infra/mq/rabbitmq"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/micro/session/config"
 	server "github.com/yzletter/go-postery/backend/micro/session/grpc"
 	"github.com/yzletter/go-postery/backend/micro/session/repository"
@@ -74,7 +74,7 @@ func main() {
 	RabbitMQ := infraRabbitMQ.Init(CommonMicroConf.RabbitMQ) // 初始化 RabbitMQ
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL)    // 初始化 MySQL
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0)      // 初始化 雪花算法
-	SessionKafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, main2.KafkaSessionTopic, main2.KafkaSessionGroup)
+	SessionKafkaConsumer := outboxService.NewConsumer(CommonMicroConf.Kafka, MySQLGormDB, main2.KafkaSessionTopic, main2.KafkaSessionGroup)
 
 	// DAO 层
 	MessageDAO := dao.NewMessageDAO(MySQLGormDB)
@@ -148,7 +148,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(infraRabbitMQ.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(cancel).AddFunc(SessionKafkaConsumer.Wait).AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(infraRabbitMQ.Close).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

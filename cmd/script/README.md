@@ -41,6 +41,25 @@ ETCD_CONFIG_FILE=./script/config.local.conf \
 
 配置格式为 `key=value`，以第一个等号分隔，因此值中可以继续包含等号。空值写成 `key=`，不要给值额外添加引号。
 
+## Kafka 消费失败与回放
+
+升级已有数据库时，先单独从 `create_table.sql` 执行 `CREATE TABLE IF NOT EXISTS consumer_failed_events`，再升级 Interactive、Search、Session 和 Rank 服务。新环境初始化时会创建该表。
+
+业务处理重试耗尽后，消费者先写失败记录，再提交 Kafka 位点。格式错误的消息直接记录。排查并修复故障后，按记录 ID 请求回放：
+
+```sql
+SELECT id, consumer_group, topic, partition_id, message_offset, replay_count, last_error
+FROM consumer_failed_events
+WHERE status = 'manual_required'
+ORDER BY id DESC;
+
+UPDATE consumer_failed_events
+SET status = 'replay_pending'
+WHERE id = 123 AND status = 'manual_required';
+```
+
+对应服务每 5 秒领取一条待回放记录，直接用原消息执行一次业务处理。成功后标记为 `resolved`。如果再次失败，同一行恢复为 `manual_required`，并更新错误原因和回放次数。回放进程中断时，租约到期后也会恢复为待人工确认。
+
 ## 公共配置（16 个）
 
 | Key | 默认值 |

@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	inter_grpc "github.com/yzletter/go-postery/backend/api/proto/interactive/v1"
 	"github.com/yzletter/go-postery/backend/api/proto/post/v1"
@@ -14,6 +14,7 @@ import (
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/micro/rank/domain"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository"
 	"golang.org/x/sync/errgroup"
@@ -24,11 +25,11 @@ type rankService struct {
 	userClient  manager.UserClient
 	postClient  manager.PostClient
 	interClient manager.InteractiveClient
-	consumer    *kafka.Reader
+	consumer    *outboxService.Consumer
 }
 
 // NewRankService 构造函数
-func NewRankService(rankRepo repository.RankRepository, userClient manager.UserClient, postClient manager.PostClient, interClient manager.InteractiveClient, consumer *kafka.Reader) RankService {
+func NewRankService(rankRepo repository.RankRepository, userClient manager.UserClient, postClient manager.PostClient, interClient manager.InteractiveClient, consumer *outboxService.Consumer) RankService {
 	return &rankService{
 		rankRepo:    rankRepo,
 		userClient:  userClient,
@@ -231,60 +232,29 @@ func (svc *rankService) CronRankTopK() {
 }
 
 func (svc *rankService) StartKafkaConsumer(ctx context.Context) {
-	backoff := time.Second
+	svc.consumer.Run(ctx, svc.consumeScoreEvent, nil)
+}
 
-	for {
-		select {
-		case <-ctx.Done():
-			slog.Info("close kafka consumer goroutine")
-			return
-		default:
-			msg, err := svc.consumer.FetchMessage(ctx)
-			if err != nil {
-				if ctx.Err() != nil {
-					return
-				}
-				slog.Warn("fetch rank event failed", "error", err)
+// consumeScoreEvent 更新或删除榜单分数，处理失败交给消费者重试
+func (svc *rankService) consumeScoreEvent(ctx context.Context, messages ...kafka.Message) error {
+	var e model.UpdateScoreEventPayload
+	if err := outboxService.DecodeMessage(messages[0], &e); err != nil {
+		return err
+	}
+	if e.BizID <= 0 {
+		return fmt.Errorf("%w: invalid rank business id", outboxService.ErrInvalidMessage)
+	}
 
-				// 失败进行退避
-				time.Sleep(backoff)
-				if backoff < 10*time.Second {
-					backoff *= 2
-				}
-				continue
-			}
-
-			// 重置退避
-			backoff = time.Second
-
-			// 反序列化消息
-			var e model.UpdateScoreEventPayload
-			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
-				slog.Warn("unmarshal rank event failed", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				// 脏消息 Commit 掉
-				_ = svc.consumer.CommitMessages(ctx, msg)
-				continue
-			}
-
-			// 判断类型, 计算分数
-			switch e.Biz {
-			case model.UpdateUserScore:
-				_ = svc.RankUser(ctx, e.BizID)
-			case model.UpdatePostScore:
-				_ = svc.RankPost(ctx, e.BizID)
-			case model.DeleteUserScore:
-				_ = svc.DeleteUserScore(ctx, e.BizID)
-			case model.DeletePostScore:
-				_ = svc.DeletePostScore(ctx, e.BizID)
-			default:
-				slog.Warn("unknown rank event biz", "biz", e.Biz, "biz_id", e.BizID)
-			}
-
-			// 将消息全都 Commit 不管成功失败
-			if err := svc.consumer.CommitMessages(ctx, msg); err != nil {
-				slog.Error("commit rank event failed", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				continue
-			}
-		}
+	switch e.Biz {
+	case model.UpdateUserScore:
+		return svc.RankUser(ctx, e.BizID)
+	case model.UpdatePostScore:
+		return svc.RankPost(ctx, e.BizID)
+	case model.DeleteUserScore:
+		return svc.DeleteUserScore(ctx, e.BizID)
+	case model.DeletePostScore:
+		return svc.DeletePostScore(ctx, e.BizID)
+	default:
+		return fmt.Errorf("%w: unknown rank event type %d", outboxService.ErrInvalidMessage, e.Biz)
 	}
 }

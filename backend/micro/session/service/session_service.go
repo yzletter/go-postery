@@ -15,6 +15,7 @@ import (
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/micro/session/domain"
 	session_bff_dto "github.com/yzletter/go-postery/backend/micro/session/dto"
 	repository "github.com/yzletter/go-postery/backend/micro/session/repository"
@@ -26,11 +27,11 @@ type sessionService struct {
 	sessionRepo   repository.SessionRepository
 	messageRepo   repository.MessageRepository
 	mqConn        *amqp.Connection
-	kafkaConsumer *kafka.Reader
+	kafkaConsumer *outboxService.Consumer
 	idGen         ports.IDGenerator
 }
 
-func NewSessionService(wsGateway manager.WSGatewayClient, sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, mq *amqp.Connection, consumer *kafka.Reader, idGen ports.IDGenerator) SessionService {
+func NewSessionService(wsGateway manager.WSGatewayClient, sessionRepo repository.SessionRepository, messageRepo repository.MessageRepository, mq *amqp.Connection, consumer *outboxService.Consumer, idGen ports.IDGenerator) SessionService {
 	return &sessionService{
 		wsGateway:     wsGateway,
 		sessionRepo:   sessionRepo,
@@ -221,56 +222,19 @@ func intercept(message domain.Message, uid int64) bool {
 }
 
 func (svc *sessionService) StartSessionRegisterConsumer(ctx context.Context) {
-	backoff := time.Second
-	for {
-		select {
-		case <-ctx.Done():
-			slog.Info("session register consumer closed")
-			return
-		default:
-			message, err := svc.kafkaConsumer.FetchMessage(ctx)
-			if err != nil {
-				if ctx.Err() != nil { // 正常退出
-					return
-				}
+	svc.kafkaConsumer.Run(ctx, svc.consumeRegisterEvent, nil)
+}
 
-				slog.Warn("fetch session register event failed", "backoff", backoff, "error", err)
-
-				// 简单退避，避免狂刷日志
-				time.Sleep(backoff)
-				if backoff < 10*time.Second {
-					backoff *= 2
-				}
-				continue
-			}
-
-			backoff = time.Second
-			var payload model.NewUserEventPayload
-			if err := sonic.Unmarshal(message.Value, &payload); err != nil {
-				// 脏消息
-				slog.Warn("invalid session register event, skip", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
-				_ = svc.kafkaConsumer.CommitMessages(ctx, message) // 把脏消息 Commit 掉，避免卡住
-				continue
-			}
-
-			slog.Info("session register event received", "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "uid", payload.ID)
-
-			// 进行注册, 幂等
-			if err := svc.register(payload.ID); err != nil {
-				slog.Error("register session queue failed", "uid", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
-				time.Sleep(time.Second) // 最小退避，避免打爆
-				continue                // 不 commit -> 重试
-			}
-
-			// 把消息 Commit 掉
-			if err := svc.kafkaConsumer.CommitMessages(ctx, message); err != nil {
-				slog.Error("commit session register event failed", "uid", payload.ID, "topic", message.Topic, "partition", message.Partition, "offset", message.Offset, "error", err)
-
-				// Commit 失败通常会导致重复消费，但不会丢消息，可接受
-				continue
-			}
-		}
+// consumeRegisterEvent 为新用户声明聊天队列，重复处理时复用原有队列
+func (svc *sessionService) consumeRegisterEvent(_ context.Context, messages ...kafka.Message) error {
+	var payload model.NewUserEventPayload
+	if err := outboxService.DecodeMessage(messages[0], &payload); err != nil {
+		return err
 	}
+	if payload.ID <= 0 {
+		return fmt.Errorf("%w: invalid session register user id", outboxService.ErrInvalidMessage)
+	}
+	return svc.register(payload.ID)
 }
 
 func (svc *sessionService) ListByUID(ctx context.Context, userID int64) ([]domain.Session, error) {

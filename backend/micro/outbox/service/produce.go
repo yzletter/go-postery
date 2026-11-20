@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,7 +37,14 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			logger.Info("outbox scanner stopped", "reason", ctx.Err())
 			return
 		case <-ticker.C:
-			batchCtx, cancelBatch := context.WithTimeout(ctx, batchTimeout)
+			// Scanner 可能在停机信号和 ticker 同时就绪时选中 ticker, 所以抢占前再检查一次 ctx.Err(), 判断是否停机了
+			if ctx.Err() != nil {
+				return
+			}
+
+			// 收到停机信号时，cancel() 会连当前批次一起取消，Kafka 已确认的消息也可能来不及回填 sent
+			// 所以用 context.WithoutCancel(ctx)
+			batchCtx, cancelBatch := context.WithTimeout(context.WithoutCancel(ctx), batchTimeout)
 			batchDB := db.WithContext(batchCtx)
 
 			// 加锁
@@ -106,22 +114,12 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 				continue
 			}
 
-			// 同步批量发送，等 Kafka 返回后再回填状态
-			messages := make([]kafka.Message, len(events))
-			for i, e := range events {
-				messages[i] = kafka.Message{
-					Topic: e.Topic,
-					Key:   []byte(e.MessageKey),
-					Value: []byte(e.MessageValue),
-				}
-			}
+			// 按 Topic 批量发送，等 Kafka 返回后再回填状态
 			sendCtx, cancelSend := context.WithTimeout(batchCtx, sendTimeout)
-			sendErr := producer.WriteMessages(sendCtx, messages...)
+			sendErrors := sendOutboxEvents(sendCtx, producer, events)
 			cancelSend()
 
-			// Kafka 可能只确认一部分消息，逐条按发送结果回填
-			var writeErrors kafka.WriteErrors
-			hasWriteErrors := errors.As(sendErr, &writeErrors) && len(writeErrors) == len(events)
+			// 逐条按发送结果回填
 			var sentCnt, retryCnt, failedCnt, updateFailedCnt, leaseLostCnt int
 
 			for i, e := range events {
@@ -130,10 +128,7 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 					break
 				}
 
-				err := sendErr
-				if hasWriteErrors {
-					err = writeErrors[i]
-				}
+				err := sendErrors[i]
 
 				status := model.OutboxEventStatusSent
 				updates := map[string]any{
@@ -210,6 +205,47 @@ func ScanOutbox(ctx context.Context, db *gorm.DB, producer *kafka.Writer) {
 			)
 		}
 	}
+}
+
+// sendOutboxEvents 按 Topic 并发发送，返回与 events 顺序一致的发送结果。
+func sendOutboxEvents(ctx context.Context, producer *kafka.Writer, events []*model.OutboxEvent) []error {
+	indexesByTopic := make(map[string][]int)
+	for i, e := range events {
+		indexesByTopic[e.Topic] = append(indexesByTopic[e.Topic], i)
+	}
+
+	sendErrors := make([]error, len(events))
+	var wg sync.WaitGroup
+	// 每组独立发送，避免单个 Topic 的元数据错误或超时影响其他组。
+	// 一轮最多抢占 lockBatch 条，所有组共用本轮发送超时。
+	for _, indexes := range indexesByTopic {
+		wg.Go(func() {
+			messages := make([]kafka.Message, len(indexes))
+			for i, index := range indexes {
+				e := events[index]
+				messages[i] = kafka.Message{
+					Topic: e.Topic,
+					Key:   []byte(e.MessageKey),
+					Value: []byte(e.MessageValue),
+				}
+			}
+
+			sendErr := producer.WriteMessages(ctx, messages...)
+			// Kafka 可能只确认组内一部分消息，按组内下标对应回原事件。
+			var writeErrors kafka.WriteErrors
+			if errors.As(sendErr, &writeErrors) && len(writeErrors) == len(indexes) {
+				for i, index := range indexes {
+					sendErrors[index] = writeErrors[i]
+				}
+				return
+			}
+			for _, index := range indexes {
+				sendErrors[index] = sendErr
+			}
+		})
+	}
+	wg.Wait()
+	return sendErrors
 }
 
 func outboxStatusName(status int) string {

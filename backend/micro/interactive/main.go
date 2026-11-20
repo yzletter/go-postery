@@ -20,7 +20,6 @@ import (
 	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
-	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	"github.com/yzletter/go-postery/backend/micro/interactive/config"
@@ -30,6 +29,7 @@ import (
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository/dao"
 	"github.com/yzletter/go-postery/backend/micro/interactive/service"
 	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/pkg"
 	"github.com/yzletter/go-postery/backend/pkg/ratelimit"
 	"github.com/yzletter/go-postery/backend/utils"
@@ -73,7 +73,7 @@ func main() {
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis)
 	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL)
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka,
+	KafkaConsumer := outboxService.NewConsumer(CommonMicroConf.Kafka, MySQLGormDB,
 		main2.KafkaTopicInteractiveLike,                                                                        // topic
 		main2.KafkaInteractiveGroup,                                                                            // group
 		main2.KafkaTopicInteractiveFollow, main2.KafkaTopicInteractiveComment, main2.KafkaTopicInteractiveRead, // topic
@@ -159,7 +159,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(infraKafka.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(cancel).AddFunc(KafkaConsumer.Wait).AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

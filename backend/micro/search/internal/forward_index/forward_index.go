@@ -1,9 +1,12 @@
 package forward_index
 
 import (
+	"errors"
 	"os"
 	"strings"
 )
+
+var ErrNotFound = errors.New("no data")
 
 type ForwardIndex interface {
 	// Open 初始化 DB

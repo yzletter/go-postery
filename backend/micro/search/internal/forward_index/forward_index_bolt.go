@@ -72,16 +72,16 @@ func (index *BoltForwardIndex) BatchSet(keys, values [][]byte) error {
 
 func (index *BoltForwardIndex) Get(k []byte) ([]byte, error) {
 	var value []byte
-	index.db.View(func(tx *bolt.Tx) error {
-		value = tx.Bucket(index.bucket).Get(k)
+	err := index.db.View(func(tx *bolt.Tx) error {
+		raw := tx.Bucket(index.bucket).Get(k)
+		if raw == nil {
+			return ErrNotFound
+		}
+		// Bolt 返回的字节只在当前读事务内有效，返回前复制一份
+		value = append([]byte(nil), raw...)
 		return nil
 	})
-
-	if len(value) == 0 {
-		return nil, errors.New("no data")
-	}
-
-	return value, nil
+	return value, err
 }
 
 func (index *BoltForwardIndex) BatchGet(keys [][]byte) ([][]byte, error) {

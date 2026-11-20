@@ -17,13 +17,14 @@ import (
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraRedis "github.com/yzletter/go-postery/backend/infra/cache/redis"
+	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
-	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	"github.com/yzletter/go-postery/backend/infra/snowflake"
 	"github.com/yzletter/go-postery/backend/infra/tokenizer"
 	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/micro/search/config"
 	server "github.com/yzletter/go-postery/backend/micro/search/grpc"
 	"github.com/yzletter/go-postery/backend/micro/search/service"
@@ -67,8 +68,9 @@ func main() {
 	TracerShutdown := infraJaeger.InitJaeger(ctx, CommonMicroConf.Jaeger, Service) // 初始化 JaegerTracer
 
 	// Infrastructure 层
-	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                           // 初始化 Redis
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, main2.KafkaSearchTopic, main2.KafkaSearchGroup) // 初始化 KafkaConsumer
+	RedisClient := infraRedis.Init(CommonMicroConf.Redis)                                                                          // 初始化 Redis
+	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL)                                                                          // 初始化 MySQL 死信表连接
+	KafkaConsumer := outboxService.NewConsumer(CommonMicroConf.Kafka, MySQLGormDB, main2.KafkaSearchTopic, main2.KafkaSearchGroup) // 初始化 KafkaConsumer
 	//Tokenizer := tokenizer.NewJiebaTokenizer()                                                                    // 初始化分词器
 	Tokenizer := tokenizer.NewSegoTokenizer()           // 初始化分词器
 	IDGenerator := snowflake.NewSnowflakeIDGenerator(0) // 初始化 雪花算法
@@ -140,7 +142,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(cancel).AddFunc(KafkaConsumer.Wait).AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

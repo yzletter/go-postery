@@ -72,22 +72,33 @@ func (indexer *Indexer) UpdateDoc(doc *model2.Document) (int, error) {
 		return 0, nil
 	}
 
-	indexer.DeleteDoc(docID)
+	if _, err := indexer.DeleteDocChecked(docID); err != nil {
+		return 0, err
+	}
 	return indexer.AddDoc(doc)
 }
 
 func (indexer *Indexer) DeleteDoc(docID string) int {
-	docBytes, err := indexer.forwardIndex.Get([]byte(docID))
+	count, err := indexer.DeleteDocChecked(docID)
 	if err != nil {
-		return 0
-	} else if len(docBytes) == 0 {
-		return 0
+		slog.Error("delete search document failed", "doc_id", docID, "error", err)
+	}
+	return count
+}
+
+// DeleteDocChecked 删除正排和倒排索引，将实际存储错误返回给调用方
+func (indexer *Indexer) DeleteDocChecked(docID string) (int, error) {
+	docBytes, err := indexer.forwardIndex.Get([]byte(docID))
+	if errors.Is(err, forward_index.ErrNotFound) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
 	}
 
 	var document model2.Document
 	if err = sonic.Unmarshal(docBytes, &document); err != nil {
-		slog.Warn("invalid search document, skip delete", "doc_id", docID, "error", err)
-		return 0
+		return 0, err
 	}
 
 	// 删倒排
@@ -97,11 +108,10 @@ func (indexer *Indexer) DeleteDoc(docID string) int {
 
 	// 删正排
 	if err = indexer.forwardIndex.Delete([]byte(docID)); err != nil {
-		slog.Error("delete forward index failed", "doc_id", docID, "error", err)
-		return 0
+		return 0, err
 	}
 
-	return 1
+	return 1, nil
 }
 
 func (indexer *Indexer) Search(query *model2.TermQuery, onFlag uint64, offFlag uint64, orFlags []uint64) []*model2.Document {

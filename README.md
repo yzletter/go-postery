@@ -57,6 +57,17 @@
 |        ![观测.png](docs/imgs/%E8%A7%82%E6%B5%8B.png)         | ![抽奖.png](docs/imgs/lottery.png)                           |
 |          ![远程配置中心.png](docs/imgs/远程配置中心.png)          |                                                              |
 
+## 设计思路图
+
+### Outbox 可靠投递
+![outbox可靠投递.jpg](docs/imgs/outbox%E5%8F%AF%E9%9D%A0%E6%8A%95%E9%80%92.jpg)
+
+### Lottery 流程
+![Lottery模块流程.jpg](docs/imgs/Lottery%E6%A8%A1%E5%9D%97%E6%B5%81%E7%A8%8B.jpg)
+
+### Agent 编排
+![Agent编排图.jpg](docs/imgs/Agent%E7%BC%96%E6%8E%92%E5%9B%BE.jpg)
+
 ## 项目难点
 
 ### 1. 多 Agent 面试的状态编排与会话恢复

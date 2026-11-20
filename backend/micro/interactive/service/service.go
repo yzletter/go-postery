@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
-	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/segmentio/kafka-go"
 	"github.com/yzletter/go-postery/backend/grpc/errs"
 	"github.com/yzletter/go-postery/backend/grpc/manager"
 	"github.com/yzletter/go-postery/backend/micro/interactive/domain"
 	"github.com/yzletter/go-postery/backend/micro/interactive/repository"
 	"github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/ports"
 )
 
@@ -21,11 +21,11 @@ type interactiveService struct {
 
 	postClient manager.PostClient
 	idGen      ports.IDGenerator
-	consumer   *kafka.Reader
+	consumer   *outboxService.Consumer
 }
 
 func NewInteractiveService(interRepo repository.InteractiveRepository,
-	postClient manager.PostClient, idGen ports.IDGenerator, consumer *kafka.Reader) InteractiveService {
+	postClient manager.PostClient, idGen ports.IDGenerator, consumer *outboxService.Consumer) InteractiveService {
 	return &interactiveService{
 		interRepo:  interRepo,
 		postClient: postClient,
@@ -62,206 +62,87 @@ func (svc *interactiveService) GetUserInteractive(ctx context.Context, id int64)
 	return userInter, nil
 }
 
-const (
-	batch        = 50
-	flushTimeout = 5 * time.Second
-)
+const readBatchSize = 50
 
-// StartKafkaConsumer 启动互动消息消费者
+// StartKafkaConsumer 启动互动消息消费者。
 func (svc *interactiveService) StartKafkaConsumer(ctx context.Context) {
-	backoff := time.Second
-	readMsgs := make([]kafka.Message, 0, batch)
+	svc.consumer.Run(ctx, svc.consumeMessages, map[string]int{model.KafkaTopicInteractiveRead: readBatchSize})
+}
 
-	flush := func(ctx context.Context) {
-		if len(readMsgs) == 0 {
-			return
-		}
-		if err := svc.batchConsumeReadMessage(ctx, readMsgs); err != nil {
-			return
-		}
-		readMsgs = readMsgs[:0]
+// consumeMessages 处理互动事件。阅读事件按批处理，其他事件逐条更新计数
+func (svc *interactiveService) consumeMessages(ctx context.Context, messages ...kafka.Message) error {
+	msg := messages[0]
+	if msg.Topic == model.KafkaTopicInteractiveRead {
+		return svc.consumeReadMessages(ctx, messages)
 	}
 
-	for {
-		// 带超时进行 Fetch
-		fetchCtx, cancel := context.WithTimeout(ctx, flushTimeout)
-		msg, err := svc.consumer.FetchMessage(fetchCtx)
-		cancel()
-		if err != nil {
-			// 消费者退出
-			if ctx.Err() != nil {
-				shutdownCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-				// 退出前 flush
-				flush(shutdownCtx)
-				cancel()
+	// 使用原消息中的事件 ID 去重，重试和回放时都沿用该 ID
+	processedEvent := &model.ProcessedEvent{
+		ID:       svc.idGen.NextID(),
+		Consumer: model.KafkaInteractiveGroup,
+		Topic:    msg.Topic,
+	}
 
-				slog.Info("close interactive event consumer success")
-				return
-			}
-
-			// Fetch 超时, 很久没有消息
-			if errors.Is(err, context.DeadlineExceeded) {
-				// flush
-				flush(ctx)
-				continue
-			}
-
-			// 其他错误进行退避
-			slog.Warn("fetch interactive event failed", "error", err)
-			time.Sleep(backoff)
-			if backoff < 10*time.Second {
-				backoff *= 2
-			}
-			continue
+	switch msg.Topic {
+	case model.KafkaTopicInteractiveLike:
+		var e model.NewLikeEventPayload
+		if err := outboxService.DecodeMessage(msg, &e); err != nil {
+			return err
 		}
-
-		// 重置退避
-		backoff = time.Second
-
-		switch msg.Topic {
-		// 阅读消息
-		case model.KafkaTopicInteractiveRead:
-			// 积攒消息
-			readMsgs = append(readMsgs, msg)
-			if len(readMsgs) >= batch {
-				// 积攒够了进行 flush
-				flush(ctx)
-			}
-		// 点赞消息
-		case model.KafkaTopicInteractiveLike:
-			// 反序列化消息
-			var e model.NewLikeEventPayload
-			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
-				slog.Warn("invalid like event, skip", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				// 脏消息 Commit 掉
-				_ = svc.consumer.CommitMessages(ctx, msg)
-				continue
-			}
-
-			// 判断 delta
-			delta := 1
-			if e.LikeType != model.Like {
-				delta = -1
-			}
-
-			processedEvent := &model.ProcessedEvent{
-				ID:       svc.idGen.NextID(),
-				Consumer: model.KafkaInteractiveGroup,
-				EventID:  e.ID,
-				Topic:    msg.Topic,
-			}
-
-			// 消费消息
-			if err := svc.interRepo.ChangeInteractiveCntWithOutbox(ctx, domain.BizLike, e.PostID, e.EventAt, int64(delta), processedEvent); err != nil {
-				slog.Error("change like count failed", "post_id", e.PostID, "delta", delta, "error", err)
-				continue
-			}
-
-			// Commit 消息
-			if err := svc.consumer.CommitMessages(ctx, msg); err != nil {
-				slog.Error("commit like event failed", "post_id", e.PostID, "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				continue
-			}
-
-		// 关注消息
-		case model.KafkaTopicInteractiveFollow:
-			// 反序列化消息
-			var e model.NewFollowEventPayload
-			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
-				slog.Warn("invalid follow event, skip", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				// 脏消息 Commit 掉
-				_ = svc.consumer.CommitMessages(ctx, msg)
-				continue
-			}
-
-			// 判断 delta
-			delta := 1
-			if e.FollowType != model.Follow {
-				delta = -1
-			}
-
-			processedEvent := &model.ProcessedEvent{
-				ID:       svc.idGen.NextID(),
-				Consumer: model.KafkaInteractiveGroup,
-				EventID:  e.ID,
-				Topic:    msg.Topic,
-			}
-
-			// 消费消息
-			if err := svc.interRepo.ChangeInteractiveCntWithOutbox(ctx, domain.BizFollow, e.Followee, e.EventAt, int64(delta), processedEvent); err != nil {
-				slog.Error("change follow count failed", "followee", e.Followee, "delta", delta, "error", err)
-				continue
-			}
-
-			// Commit 消息
-			if err := svc.consumer.CommitMessages(ctx, msg); err != nil {
-				slog.Error("commit follow event failed", "followee", e.Followee, "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				continue
-			}
-		// 评论消息
-		case model.KafkaTopicInteractiveComment:
-			// 反序列化消息
-			var e model.NewCommentEventPayload
-			if err := sonic.Unmarshal(msg.Value, &e); err != nil {
-				slog.Warn("invalid comment event, skip", "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				// 脏消息 Commit 掉
-				_ = svc.consumer.CommitMessages(ctx, msg)
-				continue
-			}
-
-			// 判断 delta
-			delta := e.Cnt
-			if e.CommentType != model.Create {
-				// 删评论
-				delta = -e.Cnt
-			}
-
-			processedEvent := model.ProcessedEvent{
-				ID:       svc.idGen.NextID(),
-				Consumer: model.KafkaInteractiveGroup,
-				EventID:  e.ID,
-				Topic:    msg.Topic,
-			}
-
-			// 消费消息
-			if err := svc.interRepo.ChangeInteractiveCntWithOutbox(ctx, domain.BizComment, e.PostID, e.EventAt, int64(delta), &processedEvent); err != nil {
-				slog.Error("change comment count failed", "post_id", e.PostID, "delta", delta, "error", err)
-				continue
-			}
-
-			// Commit 消息
-			if err := svc.consumer.CommitMessages(ctx, msg); err != nil {
-				slog.Error("commit comment event failed", "post_id", e.PostID, "topic", msg.Topic, "partition", msg.Partition, "offset", msg.Offset, "error", err)
-				continue
-			}
+		if e.ID <= 0 || e.PostID <= 0 || (e.LikeType != model.Like && e.LikeType != model.Unlike) {
+			return fmt.Errorf("%w: invalid like event", outboxService.ErrInvalidMessage)
 		}
-
+		delta := int64(1)
+		if e.LikeType == model.Unlike {
+			delta = -1
+		}
+		processedEvent.EventID = e.ID
+		return svc.interRepo.ChangeInteractiveCntWithOutbox(ctx, domain.BizLike, e.PostID, e.EventAt, delta, processedEvent)
+	case model.KafkaTopicInteractiveFollow:
+		var e model.NewFollowEventPayload
+		if err := outboxService.DecodeMessage(msg, &e); err != nil {
+			return err
+		}
+		if e.ID <= 0 || e.Followee <= 0 || (e.FollowType != model.Follow && e.FollowType != model.Unfollow) {
+			return fmt.Errorf("%w: invalid follow event", outboxService.ErrInvalidMessage)
+		}
+		delta := int64(1)
+		if e.FollowType == model.Unfollow {
+			delta = -1
+		}
+		processedEvent.EventID = e.ID
+		return svc.interRepo.ChangeInteractiveCntWithOutbox(ctx, domain.BizFollow, e.Followee, e.EventAt, delta, processedEvent)
+	case model.KafkaTopicInteractiveComment:
+		var e model.NewCommentEventPayload
+		if err := outboxService.DecodeMessage(msg, &e); err != nil {
+			return err
+		}
+		if e.ID <= 0 || e.PostID <= 0 || e.Cnt <= 0 || (e.CommentType != model.Create && e.CommentType != model.Del) {
+			return fmt.Errorf("%w: invalid comment event", outboxService.ErrInvalidMessage)
+		}
+		delta := int64(e.Cnt)
+		if e.CommentType == model.Del {
+			delta = -delta
+		}
+		processedEvent.EventID = e.ID
+		return svc.interRepo.ChangeInteractiveCntWithOutbox(ctx, domain.BizComment, e.PostID, e.EventAt, delta, processedEvent)
+	default:
+		return fmt.Errorf("%w: unexpected interactive topic %q", outboxService.ErrInvalidMessage, msg.Topic)
 	}
 }
 
-// 批量消费阅读消息
-func (svc *interactiveService) batchConsumeReadMessage(ctx context.Context, readMsgs []kafka.Message) error {
-	// 聚集 payloads
-	payloads := make([]*model.NewReadEventPayload, 0)
-	for _, readMsg := range readMsgs {
+// consumeReadMessages 批量更新阅读数，同一事务中对事件去重。
+func (svc *interactiveService) consumeReadMessages(ctx context.Context, messages []kafka.Message) error {
+	payloads := make([]*model.NewReadEventPayload, 0, len(messages))
+	for _, msg := range messages {
 		var e model.NewReadEventPayload
-		if err := sonic.Unmarshal(readMsg.Value, &e); err != nil {
-			slog.Warn("invalid read event, skip", "topic", readMsg.Topic, "partition", readMsg.Partition, "offset", readMsg.Offset, "error", err)
-			continue
+		if err := outboxService.DecodeMessage(msg, &e); err != nil {
+			return err
+		}
+		if e.ID <= 0 || e.PostID <= 0 {
+			return fmt.Errorf("%w: invalid read event", outboxService.ErrInvalidMessage)
 		}
 		payloads = append(payloads, &e)
 	}
-
-	// 消费
-	if err := svc.interRepo.IncrReadCnt(ctx, model.KafkaInteractiveGroup, model.KafkaTopicInteractiveRead, payloads...); err != nil {
-		return err
-	}
-
-	// 批量 Commit
-	if err := svc.consumer.CommitMessages(ctx, readMsgs...); err != nil {
-		slog.Error("commit read events failed", "count", len(readMsgs), "error", err)
-		return err
-	}
-
-	return nil
+	return svc.interRepo.IncrReadCnt(ctx, model.KafkaInteractiveGroup, model.KafkaTopicInteractiveRead, payloads...)
 }

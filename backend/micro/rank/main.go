@@ -18,11 +18,12 @@ import (
 	infraEtcd "github.com/yzletter/go-postery/backend/infra/cache/etcd"
 	infraRedis "github.com/yzletter/go-postery/backend/infra/cache/redis"
 	"github.com/yzletter/go-postery/backend/infra/crontab"
+	infraMySQL "github.com/yzletter/go-postery/backend/infra/database/mysql"
 	"github.com/yzletter/go-postery/backend/infra/graceful_stop"
 	infraJaeger "github.com/yzletter/go-postery/backend/infra/jaeger"
-	infraKafka "github.com/yzletter/go-postery/backend/infra/mq/kafka"
 	infraSlog "github.com/yzletter/go-postery/backend/infra/slog"
 	main2 "github.com/yzletter/go-postery/backend/micro/outbox/model"
+	outboxService "github.com/yzletter/go-postery/backend/micro/outbox/service"
 	"github.com/yzletter/go-postery/backend/micro/rank/config"
 	server "github.com/yzletter/go-postery/backend/micro/rank/grpc"
 	"github.com/yzletter/go-postery/backend/micro/rank/repository"
@@ -70,7 +71,8 @@ func main() {
 
 	// Infrastructure 层
 	RedisClient := infraRedis.Init(CommonMicroConf.Redis) // Init Redis
-	KafkaConsumer := infraKafka.InitConsumer(CommonMicroConf.Kafka, main2.KafkaTopicRankUpdateScore, main2.KafkaRankGroup)
+	MySQLGormDB := infraMySQL.Init(CommonMicroConf.MySQL) // 初始化 MySQL 死信表连接
+	KafkaConsumer := outboxService.NewConsumer(CommonMicroConf.Kafka, MySQLGormDB, main2.KafkaTopicRankUpdateScore, main2.KafkaRankGroup)
 	Cron := crontab.NewCrontabBuilder() // init Crontab
 
 	// Cache 层
@@ -151,7 +153,7 @@ func main() {
 
 	// Graceful Stop
 	graceful_stop.NewGracefulStopBuilder().NotifySignal(syscall.SIGINT).NotifySignal(syscall.SIGTERM).
-		AddFunc(infraRedis.Close).AddFunc(infraKafka.Close).AddFunc(cancel).AddFunc(TracerShutdown).
+		AddFunc(cancel).AddFunc(KafkaConsumer.Wait).AddFunc(infraRedis.Close).AddFunc(infraMySQL.Close).AddFunc(TracerShutdown).
 		AddFunc(func() {
 			// 注销服务
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

@@ -42,3 +42,29 @@ type ProcessedEvent struct {
 func (e ProcessedEvent) TableName() string {
 	return "processed_events"
 }
+
+// FailedEvent 回放状态
+const (
+	FailedEventStatusManualRequired = "manual_required" // 等待人工排查
+	FailedEventStatusReplayPending  = "replay_pending"  // 已人工发起回放，等待领取
+	FailedEventStatusReplaying      = "replaying"       // 已领取，回放中
+	FailedEventStatusResolved       = "resolved"        // 业务处理成功
+)
+
+// FailedEvent 保存原始 Kafka 消息和最近一次处理错误，供人工回放。
+type FailedEvent struct {
+	ID            int64  `gorm:"column:id;primaryKey;autoIncrement"`
+	ConsumerGroup string `gorm:"column:consumer_group"`
+	Topic         string `gorm:"column:topic"`
+	Partition     int    `gorm:"column:partition_id"`
+	Offset        int64  `gorm:"column:message_offset"`
+	MessageKey    []byte `gorm:"column:message_key"`
+	MessageValue  []byte `gorm:"column:message_value"`
+	Headers       string `gorm:"column:message_headers"`
+	LastError     string `gorm:"column:last_error"`
+	Status        string `gorm:"column:status"`
+}
+
+func (e FailedEvent) TableName() string {
+	return "consumer_failed_events"
+}

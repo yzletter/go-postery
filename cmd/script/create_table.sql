@@ -420,6 +420,29 @@ CREATE TABLE IF NOT EXISTS processed_events
     KEY idx_topic_created (topic, created_at)
 ) DEFAULT CHARSET = utf8mb4 COMMENT '已消费消息表';
 
+CREATE TABLE IF NOT EXISTS consumer_failed_events
+(
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    consumer_group  VARCHAR(64)  NOT NULL COMMENT '原消费组',
+    topic           VARCHAR(128) NOT NULL COMMENT '原 Topic',
+    partition_id    INT          NOT NULL COMMENT '原分区',
+    message_offset  BIGINT       NOT NULL COMMENT '原消费位点',
+    message_key     BLOB         DEFAULT NULL,
+    message_value   LONGBLOB     DEFAULT NULL,
+    message_headers JSON         NOT NULL,
+    last_error      TEXT         NOT NULL,
+    status          VARCHAR(24)  NOT NULL DEFAULT 'manual_required',
+    replay_count    INT          NOT NULL DEFAULT 0,
+    lock_owner      CHAR(36)     DEFAULT NULL,
+    locked_until    DATETIME     DEFAULT NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_failed_event (consumer_group, topic, partition_id, message_offset),
+    KEY idx_failed_event_replay (consumer_group, status, id),
+    KEY idx_failed_event_lease (consumer_group, status, locked_until)
+) DEFAULT CHARSET = utf8mb4 COMMENT 'Kafka 消费失败及回放记录';
+
 -- Interview 微服务模块建表语句
 
 -- 切到 go_postery 数据库
